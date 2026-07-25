@@ -1,0 +1,70 @@
+# CompX Orbit — Supabase project config
+# Linked project ref: esiiawfjzmuqplzzdoog
+project_id = "esiiawfjzmuqplzzdoog"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = [
+  "http://localhost:3000/auth/callback",
+  "https://compxorbit.com/auth/callback",
+]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+enable_confirmations = true
+
+[auth.external.google]
+enabled = true
+client_id = "env(GOOGLE_CLIENT_ID)"
+secret = "env(GOOGLE_CLIENT_SECRET)"
+redirect_uri = "https://esiiawfjzmuqplzzdoog.supabase.co/auth/v1/callback"
+
+[storage]
+enabled = true
+file_size_limit = "200MiB"
+
+# ------------------------------------------------------------
+# Edge Functions
+# verify_jwt = false  -> the extension calls these with only the
+#                        anon key; the license key is the credential.
+# verify_jwt = true   -> requires a signed-in Supabase user.
+# ------------------------------------------------------------
+[functions.license-activate]
+verify_jwt = false
+
+[functions.license-heartbeat]
+verify_jwt = false
+
+[functions.license-deactivate]
+verify_jwt = false
+
+[functions.release-manifest]
+verify_jwt = false
+
+[functions.release-download]
+verify_jwt = false
+
+[functions.device-reset]
+verify_jwt = true
+
+[functions.admin-force-reset]
+verify_jwt = true

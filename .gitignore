@@ -1,0 +1,25 @@
+# dependencies / build output
+node_modules
+.next
+out
+*.log
+.DS_Store
+
+# environment
+.env
+.env.local
+
+# NEVER commit signing keys or service-role credentials
+keys/
+*.pem
+secrets.env
+
+# Firebase migration artefacts (contain customer emails)
+users.json
+migration-report.json
+
+# Supabase CLI local state
+.supabase/
+
+# TypeScript incremental build cache
+tsconfig.tsbuildinfo

@@ -1,0 +1,35 @@
+{
+  "name": "compx-orbit",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CompX Orbit website + Supabase licensing backend",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "keys": "node scripts/generate-keys.mjs",
+    "migrate:preview": "node scripts/migrate-firebase.mjs users.json",
+    "migrate:commit": "node scripts/migrate-firebase.mjs users.json --commit",
+    "db:push": "supabase db push",
+    "fn:deploy": "supabase functions deploy"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.5.1",
+    "@supabase/supabase-js": "^2.45.4",
+    "jose": "^5.9.6",
+    "next": "14.2.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.39",
+    "tailwindcss": "^3.4.7",
+    "typescript": "^5.5.4"
+  }
+}
