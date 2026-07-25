@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
       confirmationLink,
     });
 
-    const fromEmail = process.env.EMAIL_FROM || "CompX Orbit <onboarding@resend.dev>";
+    const fromEmail = process.env.EMAIL_FROM || "CompX Orbit <hello@compxorbit.com>";
 
     const { data, error } = await resend.emails.send({
       from: fromEmail,
