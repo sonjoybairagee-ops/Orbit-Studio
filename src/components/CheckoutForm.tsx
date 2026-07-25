@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const BKASH_NUMBER = process.env.NEXT_PUBLIC_BKASH_NUMBER ?? "01810520280";
+const PADDLE_LIVE_TOKEN = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ?? "live_73bd9290c2f284764d988b1054f";
+const PADDLE_PRICE_ID = "pri_01kydan5yvz9a050efd199wrjv";
 
 export function CheckoutForm({ plan }: { plan: any }) {
   const router = useRouter();
@@ -20,12 +22,26 @@ export function CheckoutForm({ plan }: { plan: any }) {
   const displayPrice = method === "bkash" ? bkashBdtAmount : (plan.price ?? 2);
 
   useEffect(() => {
-    const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
-    if (!token || document.getElementById("paddle-js")) return;
+    if (document.getElementById("paddle-js")) return;
     const script = document.createElement("script");
     script.id = "paddle-js";
     script.src = "https://cdn.paddle.com/paddle/v2/paddle.js";
-    script.onload = () => (window as any).Paddle?.Initialize({ token });
+    script.onload = () => {
+      const Paddle = (window as any).Paddle;
+      if (!Paddle) return;
+      // Set environment based on token prefix
+      if (typeof Paddle.Environment?.set === "function") {
+        Paddle.Environment.set(
+          PADDLE_LIVE_TOKEN.startsWith("live_") ? "production" : "sandbox"
+        );
+      }
+      // Paddle v2 uses Setup()
+      if (typeof Paddle.Setup === "function") {
+        Paddle.Setup({ token: PADDLE_LIVE_TOKEN });
+      } else if (typeof Paddle.Initialize === "function") {
+        Paddle.Initialize({ token: PADDLE_LIVE_TOKEN });
+      }
+    };
     document.body.appendChild(script);
   }, []);
 
@@ -74,7 +90,11 @@ export function CheckoutForm({ plan }: { plan: any }) {
   async function payPaddle() {
     setBusy(true);
     setMsg(null);
-    const paddlePriceId = plan.paddle_price_id || "pri_01kydan5yvz9a050efd199wrjv";
+    const Paddle = (window as any).Paddle;
+    if (!Paddle) {
+      setBusy(false);
+      return setMsg("Paddle is still loading. Please wait a moment and try again.");
+    }
     const res = await fetch("/api/orders", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -83,11 +103,10 @@ export function CheckoutForm({ plan }: { plan: any }) {
     const json = await res.json();
     setBusy(false);
     if (!res.ok) return setMsg(json.error);
-    const Paddle = (window as any).Paddle;
-    if (!Paddle) return setMsg("Paddle is still loading. Please try again.");
+    // Always use official Paddle live price ID
     Paddle.Checkout.open({
-      items: [{ priceId: paddlePriceId, quantity: 1 }],
-      customData: { order_id: json.order.id },
+      items: [{ priceId: PADDLE_PRICE_ID, quantity: 1 }],
+      customData: { order_id: json.order?.id ?? "manual" },
     });
   }
 
