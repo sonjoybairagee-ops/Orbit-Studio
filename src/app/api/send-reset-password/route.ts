@@ -13,22 +13,35 @@ export async function POST(req: NextRequest) {
 
     const supabase = await createClient();
     
-    // Generate password reset link from Supabase Auth Admin
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    // Get request headers or env to determine site URL
+    const origin = req.headers.get("origin") || req.headers.get("referer") || "";
+    const envUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL;
+    const baseUrl = envUrl && !envUrl.includes("localhost") ? envUrl : (origin ? new URL(origin).origin : "http://localhost:3000");
+
+    const redirectTo = `${baseUrl}/auth/callback?next=/reset-password`;
+
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: "recovery",
       email: email.trim(),
       options: {
-        redirectTo: `${baseUrl}/auth/callback?next=/reset-password`,
+        redirectTo,
       },
     });
 
     if (linkError) {
-      // For security, don't expose error to public if user not found
       return NextResponse.json({ success: true });
     }
 
-    const resetLink = linkData?.properties?.action_link || `${baseUrl}/reset-password`;
+    let resetLink = linkData?.properties?.action_link || "";
+    
+    // Ensure the generated link redirects back to our callback route correctly
+    if (resetLink) {
+      const parsedUrl = new URL(resetLink);
+      parsedUrl.searchParams.set("redirect_to", redirectTo);
+      resetLink = parsedUrl.toString();
+    } else {
+      resetLink = `${baseUrl}/forgot-password`;
+    }
 
     const html = getResetPasswordEmailHtml({
       firstName: email.split("@")[0],
