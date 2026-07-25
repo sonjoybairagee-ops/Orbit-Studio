@@ -27,6 +27,7 @@ export default async function DashboardLayout({
                 ["⌘", "My extensions", "/dashboard"],
                 ["＋", "Browse products", "/pricing"],
                 ["◈", "Account security", "/dashboard"],
+                ["💬", "Support", "/dashboard/support"],
               ].map(([i, n, h]) => (
                 <Link
                   key={n}

@@ -16,6 +16,7 @@ export default async function AdminLayout({
     ["◎", "Customers", "/admin/users"],
     ["৳", "Payments", "/admin/payments"],
     ["↻", "Device resets", "/admin/resets"],
+    ["💬", "Support", "/admin/support"],
     ["⚠", "Sharing signals", "/admin/abuse"],
   ];
   return (
