@@ -17,7 +17,7 @@ export default function SignupPage() {
     e.preventDefault();
     setBusy(true);
     setMsg(null);
-    const { error } = await createClient().auth.signUp({
+    const { data: authData, error } = await createClient().auth.signUp({
       email,
       password,
       options: {
@@ -25,6 +25,24 @@ export default function SignupPage() {
         emailRedirectTo: `${location.origin}/auth/callback?next=/dashboard`,
       },
     });
+
+    if (!error && authData?.user) {
+      // Trigger Resend confirmation email via API route
+      try {
+        await fetch("/api/send-confirmation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: email.trim(),
+            firstName: fullName.trim() || email.split("@")[0],
+            token: authData.user.id,
+          }),
+        });
+      } catch (e) {
+        console.error("Failed to send custom confirmation email:", e);
+      }
+    }
+
     setBusy(false);
     setMsg(
       error
