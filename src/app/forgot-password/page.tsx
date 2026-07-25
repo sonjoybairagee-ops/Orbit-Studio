@@ -14,18 +14,24 @@ export default function ForgotPasswordPage() {
     setBusy(true);
     setError(null);
 
-    const { error } = await createClient().auth.resetPasswordForEmail(email, {
-      redirectTo: `${location.origin}/auth/callback?next=/reset-password`,
-    });
+    try {
+      const res = await fetch("/api/send-reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const json = await res.json();
+      setBusy(false);
 
-    setBusy(false);
-    if (error) {
-      setError(error.message);
-      return;
+      if (!res.ok && json.error) {
+        setError(json.error);
+        return;
+      }
+      setSent(true);
+    } catch {
+      setBusy(false);
+      setSent(true);
     }
-    // Always show the same confirmation, even for unknown addresses, so the
-    // form cannot be used to discover which emails have accounts.
-    setSent(true);
   }
 
   return (
