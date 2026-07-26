@@ -56,6 +56,7 @@ export async function POST(req: Request) {
     .from("licenses")
     .insert({
       user_id: order.user_id,
+      plan_id: order.plan_id,
       extension_id: order.extension_id,
       order_id: order.id,
       key: generateLicenseKey(),
