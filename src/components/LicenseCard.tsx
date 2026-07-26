@@ -435,21 +435,6 @@ export function LicenseCard({ license }: { license: LicenseView }) {
             </div>
           )}
 
-          {/* Installation Guide */}
-          <div className="mt-5 rounded-xl border border-white/10 bg-black/20 p-5">
-            <h4 className="text-sm font-black text-white flex items-center gap-2 mb-3">
-              <span className="text-[#45c66d]">🛠️</span> Installation Guide
-            </h4>
-            <ol className="list-decimal list-inside space-y-2 text-sm text-[#8fa896] ml-1 marker:font-bold marker:text-[#45c66d]">
-              <li>
-                Download and install the <a href="https://aescripts.com/learn/zxp-installer/" target="_blank" rel="noreferrer" className="text-white hover:text-[#45c66d] underline decoration-white/30 underline-offset-2 transition-colors">AEScripts ZXP Installer</a> (Windows or macOS).
-              </li>
-              <li>Download your extension (.zxp file) from the buttons above.</li>
-              <li>Open <strong>ZXP Installer</strong> and simply drag & drop the downloaded .zxp file into it.</li>
-              <li>Restart After Effects or Premiere Pro. Go to <strong>Window {">"} Extensions</strong> to open the panel!</li>
-            </ol>
-          </div>
-
           <p className="muted mt-4 text-xs text-center">
             Official extension builds & Cloudflare R2 bonus asset packs (MOGRTs & SFX) are secured & tied to your active license.
           </p>

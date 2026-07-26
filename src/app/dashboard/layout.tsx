@@ -26,6 +26,7 @@ export default async function DashboardLayout({
                 ["▦", "Overview", "/dashboard"],
                 ["⌘", "My extensions", "/dashboard"],
                 ["＋", "Browse products", "/pricing"],
+                ["🛠️", "Installation guide", "/dashboard/installation"],
                 ["◈", "Account security", "/dashboard"],
                 ["💬", "Support", "/dashboard/support"],
               ].map(([i, n, h]) => (
