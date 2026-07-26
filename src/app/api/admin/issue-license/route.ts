@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth";
 import { resend } from "@/lib/resend";
 import {
@@ -28,6 +29,7 @@ export async function POST(req: Request) {
   }
 
   const supabase = await createClient();
+  const supabaseAdminClient = createAdminClient();
 
   // Find user by email from profiles table
   const { data: profile } = await supabase
@@ -38,7 +40,7 @@ export async function POST(req: Request) {
 
   const key = generateCXKey();
 
-  const { data: license, error } = await supabase
+  const { data: license, error } = await supabaseAdminClient
     .from("licenses")
     .insert({
       user_id: profile?.id ?? null,
