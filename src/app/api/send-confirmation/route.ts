@@ -14,7 +14,10 @@ export async function POST(req: NextRequest) {
 
     // Generate official Supabase email confirmation link with token_hash using Admin Client
     const admin = createAdminClient();
-    const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
+    let linkData = null;
+
+    // Try signup link first
+    const signupRes = await admin.auth.admin.generateLink({
       type: "signup",
       email: email.trim(),
       options: {
@@ -22,12 +25,26 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    if (signupRes.data?.properties?.action_link || signupRes.data?.properties?.hashed_token) {
+      linkData = signupRes.data;
+    } else {
+      // If user already exists, generate magiclink to allow immediate confirmation and login
+      const magicRes = await admin.auth.admin.generateLink({
+        type: "magiclink",
+        email: email.trim(),
+        options: {
+          redirectTo: `${baseUrl}/auth/callback?next=/dashboard`,
+        },
+      });
+      linkData = magicRes.data;
+    }
+
     let confirmationLink = `${baseUrl}/auth/callback?next=/dashboard`;
 
     if (linkData?.properties?.action_link) {
       confirmationLink = linkData.properties.action_link;
     } else if (linkData?.properties?.hashed_token) {
-      confirmationLink = `${baseUrl}/auth/callback?token_hash=${linkData.properties.hashed_token}&type=signup&next=/dashboard`;
+      confirmationLink = `${baseUrl}/auth/callback?token_hash=${linkData.properties.hashed_token}&type=email&next=/dashboard`;
     }
 
     const html = getConfirmationEmailHtml({

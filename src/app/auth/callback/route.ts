@@ -27,14 +27,17 @@ export async function GET(request: NextRequest) {
   const supabase = await createClient();
 
   // 1. Handle standard Supabase email confirmation with token_hash & type
-  if (tokenHash && type) {
-    const { error } = await supabase.auth.verifyOtp({
-      token_hash: tokenHash,
-      type: type,
-    });
-    if (!error) {
-      const safeNext = next.startsWith("/") ? next : "/dashboard";
-      return NextResponse.redirect(`${origin}${safeNext}`);
+  if (tokenHash) {
+    const otpTypes = [type, "signup", "email", "magiclink"].filter(Boolean);
+    for (const otpType of otpTypes) {
+      const { error } = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: otpType as any,
+      });
+      if (!error) {
+        const safeNext = next.startsWith("/") ? next : "/dashboard";
+        return NextResponse.redirect(`${origin}${safeNext}`);
+      }
     }
   }
 
