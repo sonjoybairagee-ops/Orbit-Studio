@@ -332,7 +332,7 @@ export function LicenseCard({ license }: { license: LicenseView }) {
           <div className="mb-3 flex items-center justify-between">
             <p className="label mb-0">Official Downloads</p>
             <span className="text-[10px] font-bold text-[#45c66d]">
-              {isLegacy ? "v1.1.1 Legacy Build" : "v2.3.1 Released (Windows & macOS)"}
+              {isLegacy ? "v1.1.2 Legacy Build" : "v2.3.1 Released (Windows & macOS)"}
             </span>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -347,15 +347,16 @@ export function LicenseCard({ license }: { license: LicenseView }) {
                   📦
                 </span>
                 <span className="truncate">
-                  {busy === "dl-compx-v111" ? "Preparing…" : "Download CompX Precomp Manager (v1.1.1)"}
+                  {busy === "dl-compx-v111" ? "Preparing…" : "Download CompX Precomp Manager (v1.1.2)"}
                 </span>
               </button>
             ) : (
-              /* New Paid Users ($2 USD) -> CompX Orbit Studio v2.3.1 + R2 Bonus Assets */
+            {/* New Paid Users ($2 USD) -> CompX Orbit Studio v2.3.1 + R2 Bonus Assets */}
               <>
                 {license.products.map((p) => {
-                  const isAe = p.slug.includes("studio") && !p.slug.includes("premiere");
-                  const shortName = isAe ? "Orbit Studio (AE)" : "Orbit Studio (Premiere)";
+                  // Detect Premiere by slug ending in -pr, -premiere, or containing "premiere"
+                  const isPr = /premiere|[-_]pr$/i.test(p.slug);
+                  const shortName = isPr ? "Orbit Studio (Premiere)" : "Orbit Studio (AE)";
                   return (
                     <button
                       key={p.slug}
@@ -363,8 +364,8 @@ export function LicenseCard({ license }: { license: LicenseView }) {
                       disabled={busy !== null}
                       onClick={() => download(p.slug)}
                     >
-                      <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-black text-white ${isAe ? "bg-[#00005b]" : "bg-[#00005b]"}`}>
-                        {isAe ? "Ae" : "Pr"}
+                      <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-black text-white ${isPr ? "bg-[#9999ff]" : "bg-[#00005b]"}`}>
+                        {isPr ? "Pr" : "Ae"}
                       </span>
                       <span className="truncate">{busy === `dl-${p.slug}` ? "Preparing…" : `Download ${shortName}`}</span>
                     </button>
