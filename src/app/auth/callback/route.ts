@@ -47,12 +47,13 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // 2. Handle PKCE code exchange
+  // 2. Handle Google & OAuth PKCE code exchange
   if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error && data.session) {
       const safeNext = next.startsWith("/") ? next : "/dashboard";
-      return NextResponse.redirect(`${origin}${safeNext}`);
+      const response = NextResponse.redirect(`${origin}${safeNext}`);
+      return response;
     }
   }
 

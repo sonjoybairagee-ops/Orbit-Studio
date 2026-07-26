@@ -12,11 +12,12 @@ export function GoogleButton({ next = "/dashboard" }: { next?: string }) {
   async function signIn() {
     setBusy(true);
     setError(null);
+    const origin = typeof window !== "undefined" && !window.location.host.includes("localhost") ? window.location.origin : "https://compxorbit.com";
     const { error } = await createClient().auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-        queryParams: { access_type: "offline", prompt: "consent" },
+        redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        queryParams: { access_type: "offline", prompt: "select_account" },
       },
     });
     // On success the browser navigates away, so we only land here on failure.
