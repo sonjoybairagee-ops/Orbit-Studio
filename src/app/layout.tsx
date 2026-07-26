@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { AuthHashRedirect } from "@/components/AuthHashRedirect";
 import "./globals.css";
 
 const SITE_URL =
@@ -85,6 +86,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <AuthHashRedirect />
         <a href="#main" className="skip-link">
           Skip to content
         </a>
