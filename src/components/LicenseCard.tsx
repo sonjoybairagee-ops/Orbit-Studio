@@ -331,27 +331,40 @@ export function LicenseCard({ license }: { license: LicenseView }) {
             <span className="text-[10px] font-bold text-[#45c66d]">v2.3.1 Released (Windows & macOS)</span>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {license.products.map((p) => {
-              const isAe = p.slug.includes("studio") && !p.slug.includes("premiere");
-              const shortName = isAe ? "Orbit Studio (AE)" : "Orbit Studio (Premiere)";
-              return (
-                <button
-                  key={p.slug}
-                  className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#45c66d] hover:text-[#45c66d]"
-                  disabled={busy !== null}
-                  onClick={() => download(p.slug)}
-                >
-                  <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-black text-white ${isAe ? "bg-[#00005b]" : "bg-[#00005b]"}`}>
-                    {isAe ? "Ae" : "Pr"}
-                  </span>
-                  <span className="truncate">{busy === `dl-${p.slug}` ? "Preparing…" : `Download ${shortName}`}</span>
-                </button>
-              );
-            })}
-
-            {/* Cloudflare R2 Large Bonus Assets for Orbit Studio */}
-            {!isLegacy && (
+            {/* If Legacy v1.1.1 User (Redeemed Key) */}
+            {isLegacy ? (
+              <button
+                className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#45c66d] hover:text-[#45c66d]"
+                disabled={busy !== null}
+                onClick={() => download("compx-v111")}
+              >
+                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[#45c66d]/20 text-[#45c66d] text-[10px] font-black">
+                  📦
+                </span>
+                <span className="truncate">{busy === "dl-compx-v111" ? "Preparing…" : "Download CompX v1.1.1 (Legacy)"}</span>
+              </button>
+            ) : (
+              /* New Paid Users ($2 USD) -> CompX Orbit Studio v2.3.1 + R2 Bonus Assets */
               <>
+                {license.products.map((p) => {
+                  const isAe = p.slug.includes("studio") && !p.slug.includes("premiere");
+                  const shortName = isAe ? "Orbit Studio (AE)" : "Orbit Studio (Premiere)";
+                  return (
+                    <button
+                      key={p.slug}
+                      className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#45c66d] hover:text-[#45c66d]"
+                      disabled={busy !== null}
+                      onClick={() => download(p.slug)}
+                    >
+                      <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-black text-white ${isAe ? "bg-[#00005b]" : "bg-[#00005b]"}`}>
+                        {isAe ? "Ae" : "Pr"}
+                      </span>
+                      <span className="truncate">{busy === `dl-${p.slug}` ? "Preparing…" : `Download ${shortName}`}</span>
+                    </button>
+                  );
+                })}
+
+                {/* Cloudflare R2 Bonus Downloads for $2 Paid Orbit Studio Users */}
                 <a
                   href="/api/download-asset?file=compx-orbit-50-mogrt-templates.zip"
                   className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#eab308] hover:text-[#eab308]"
