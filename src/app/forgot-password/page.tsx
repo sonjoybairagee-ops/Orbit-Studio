@@ -14,25 +14,21 @@ export default function ForgotPasswordPage() {
     setBusy(true);
     setError(null);
 
-    try {
-      const res = await fetch("/api/send-reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim() }),
-      });
-      const json = await res.json();
-      setBusy(false);
+    const supabase = createClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+    });
 
-      if (!res.ok && json.error) {
-        setError(json.error);
-        return;
-      }
-      setSent(true);
-    } catch {
-      setBusy(false);
-      setSent(true);
+    setBusy(false);
+
+    if (error) {
+      setError(error.message);
+      return;
     }
+    
+    setSent(true);
   }
+
 
   return (
     <div className="shell grid min-h-[calc(100vh-150px)] place-items-center py-14">

@@ -91,11 +91,30 @@ export async function GET(req: Request) {
     .eq("is_latest", true)
     .maybeSingle();
 
-  if (!release)
+  // Try direct path from extensions bucket for Orbit Studio & Premiere if release record doesn't exist
+  if (!release) {
+    let fallbackPath = "";
+    if (slug === "orbit-studio") {
+      fallbackPath = "orbit-studio/2.3.1/CompX-Orbit-Studio-v2.3.1.zxp";
+    } else if (slug === "orbit-premiere") {
+      fallbackPath = "orbit-premiere/2.3.1/CompX-Orbit-Premiere-v2.3.1.zxp";
+    }
+
+    if (fallbackPath) {
+      const { data: directSigned } = await svc.storage
+        .from("extensions")
+        .createSignedUrl(fallbackPath, 120, { download: true });
+
+      if (directSigned?.signedUrl) {
+        return NextResponse.json({ url: directSigned.signedUrl, version: "2.3.1" });
+      }
+    }
+
     return NextResponse.json(
       { error: "No release has been published yet." },
       { status: 404 },
     );
+  }
 
   const { data: signed, error } = await svc.storage
     .from("releases")

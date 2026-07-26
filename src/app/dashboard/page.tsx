@@ -36,7 +36,7 @@ export default async function DashboardPage() {
     expires_at: r.expires_at,
     last_reset_at: r.last_reset_at,
     revoked_reason: r.revoked_reason,
-    planName: r.plans?.name ?? "License",
+    planName: r.plans?.name ?? "CompX Legacy Access",
     products: (r.plans?.plan_extensions ?? [])
       .map((pe: any) => pe.extensions)
       .filter(Boolean),

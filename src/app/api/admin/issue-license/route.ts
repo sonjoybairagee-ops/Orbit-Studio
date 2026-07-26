@@ -40,11 +40,22 @@ export async function POST(req: Request) {
 
   const key = generateCXKey();
 
+  let finalPlanId = planId;
+  if (!finalPlanId) {
+    const { data: legacyPlan } = await supabaseAdminClient
+      .from("plans")
+      .select("id")
+      .or("slug.ilike.%legacy%,name.ilike.%1.1.1%,name.ilike.%Precomp%")
+      .limit(1)
+      .maybeSingle();
+    finalPlanId = legacyPlan?.id;
+  }
+
   const { data: license, error } = await supabaseAdminClient
     .from("licenses")
     .insert({
       user_id: null, // Must be claimed manually via redeem key
-      plan_id: planId,
+      plan_id: finalPlanId,
       key,
       status: "active",
       license_type: "paid",
