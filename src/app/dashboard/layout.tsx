@@ -11,7 +11,7 @@ export default async function DashboardLayout({
   const user = await getSessionUser();
   if (!user) redirect("/login");
   return (
-    <div className="shell py-10">
+    <div className="w-full max-w-[1800px] mx-auto px-6 py-10">
       <div className="dashboard-grid">
         <aside className="sidebar card p-3 flex flex-col justify-between gap-4">
           <div>
