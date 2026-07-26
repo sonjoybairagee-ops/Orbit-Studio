@@ -13,14 +13,14 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
 
-  // /auth/callback redirects here with ?error=... when OAuth or a
-  // confirmation link fails.
+  // /auth/callback redirects here with ?error=... or ?msg=...
   useEffect(() => {
-    const fromCallback = searchParams.get("error");
-    if (fromCallback) setError(fromCallback);
+    const fromCallbackErr = searchParams.get("error");
+    if (fromCallbackErr) setError(fromCallbackErr);
+    const fromCallbackMsg = searchParams.get("msg");
+    if (fromCallbackMsg) setMsg(fromCallbackMsg);
   }, [searchParams]);
 
   async function onSubmit(e: React.FormEvent) {
@@ -73,6 +73,11 @@ function LoginForm() {
           <GoogleButton next="/dashboard" />
         </div>
         <AuthDivider />
+        {msg && (
+          <div className="mt-5 rounded-lg border border-[#45c66d]/40 bg-[#45c66d]/10 p-3 text-sm text-[#45c66d] font-semibold">
+            ✅ {msg}
+          </div>
+        )}
         {error && (
           <div className="mt-5 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300">
             {error}

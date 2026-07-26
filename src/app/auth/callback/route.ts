@@ -50,14 +50,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // 3. Fallback: Check if user is already signed in
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user) {
-    const safeNext = next.startsWith("/") ? next : "/dashboard";
-    return NextResponse.redirect(`${origin}${safeNext}`);
-  }
-
-  return NextResponse.redirect(
-    `${origin}/login?error=${encodeURIComponent("Sign-in link expired or invalid.")}`,
-  );
+  // 3. Fallback: Always redirect directly to /dashboard
+  const safeNext = next.startsWith("/") ? next : "/dashboard";
+  return NextResponse.redirect(`${origin}${safeNext}`);
 }

@@ -17,38 +17,29 @@ export default function SignupPage() {
     e.preventDefault();
     setBusy(true);
     setMsg(null);
-    const { data: authData, error } = await createClient().auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName },
-        emailRedirectTo: `${typeof window !== "undefined" && !window.location.host.includes("localhost") ? window.location.origin : "https://compxorbit.com"}/auth/callback?next=/dashboard`,
-      },
-    });
 
-    if (!error && authData?.user) {
-      // Trigger Resend confirmation email via API route
-      try {
-        await fetch("/api/send-confirmation", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: email.trim(),
-            firstName: fullName.trim() || email.split("@")[0],
-            token: authData.user.id,
-          }),
-        });
-      } catch (e) {
-        console.error("Failed to send custom confirmation email:", e);
-      }
+    try {
+      const res = await fetch("/api/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          fullName: fullName.trim(),
+        }),
+      });
+      const result = await res.json();
+
+      setMsg(
+        result.error
+          ? result.error
+          : "Account created. Check your email to confirm your account.",
+      );
+    } catch (err) {
+      setMsg("Something went wrong. Please try again.");
+    } finally {
+      setBusy(false);
     }
-
-    setBusy(false);
-    setMsg(
-      error
-        ? error.message
-        : "Account created. Check your email to confirm your account.",
-    );
   }
 
   return (
