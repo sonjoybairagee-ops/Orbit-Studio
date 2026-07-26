@@ -1,18 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resend } from "@/lib/resend";
 import { getConfirmationEmailHtml } from "@/lib/emails/confirmation";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, firstName, token } = await req.json();
+    const { email, firstName } = await req.json();
 
-    // Determine base URL dynamically from request headers or environment
     const host = req.headers.get("host") || "";
     const protocol = req.headers.get("x-forwarded-proto") || "https";
     const dynamicUrl = host && !host.includes("localhost") ? `${protocol}://${host}` : null;
-    
     const baseUrl = dynamicUrl || process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://compxorbit.com";
-    const confirmationLink = `${baseUrl}/auth/callback?token=${token}`;
+
+    // Generate official Supabase email confirmation link with token_hash using Admin Client
+    const admin = createAdminClient();
+    const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
+      type: "signup",
+      email: email.trim(),
+      options: {
+        redirectTo: `${baseUrl}/auth/callback?next=/dashboard`,
+      },
+    });
+
+    let confirmationLink = `${baseUrl}/auth/callback?next=/dashboard`;
+
+    if (linkData?.properties?.action_link) {
+      confirmationLink = linkData.properties.action_link;
+    } else if (linkData?.properties?.hashed_token) {
+      confirmationLink = `${baseUrl}/auth/callback?token_hash=${linkData.properties.hashed_token}&type=signup&next=/dashboard`;
+    }
 
     const html = getConfirmationEmailHtml({
       firstName: firstName || email.split("@")[0],
