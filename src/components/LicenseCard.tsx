@@ -133,9 +133,15 @@ export function LicenseCard({ license }: { license: LicenseView }) {
             <span className="badge badge-green font-bold">✦ Lifetime Access</span>
             {isLegacy && <span className="badge">Legacy demo</span>}
           </div>
-          <p className="muted mt-1 text.sm font-medium">
-            {license.products.map((p) => p.name.replace(/\s*Bundle\s*/gi, " ")).join(" + ")}
-          </p>
+          {license.products.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {license.products.map((p) => (
+                <span key={p.slug} className="badge text-[11px] font-semibold text-[#aab0bd]">
+                  {p.name.replace(/CompX\s*/gi, "").replace(/\s*Bundle\s*/gi, " ").trim()}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <div className="text-right">
           <p className="text-xs font-bold uppercase tracking-widest text-[#6c7a71]">
