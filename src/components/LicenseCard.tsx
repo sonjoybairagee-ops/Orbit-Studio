@@ -352,42 +352,30 @@ export function LicenseCard({ license }: { license: LicenseView }) {
               </button>
             ) : (
               <>
-                {/* New Paid Users ($2 USD) -> CompX Orbit Studio v2.3.1 + R2 Bonus Assets */}
-                {license.products.map((p) => {
-                  // CompX Legacy extension bundled inside Orbit plan
-                  const isCompX = /compx/i.test(p.slug);
-                  // Detect Premiere by slug ending in -pr, -premiere, or containing "premiere"
-                  const isPr = !isCompX && /premiere|[-_]pr$/i.test(p.slug);
-
-                  const label = isCompX
-                    ? "CompX Precomp Manager (v1.1.2)"
-                    : isPr
-                    ? "Orbit Studio (Premiere)"
-                    : "Orbit Studio (AE)";
-
-                  const icon = isCompX ? "📦" : isPr ? "Pr" : "Ae";
-                  const iconBg = isCompX
-                    ? "bg-[#45c66d]/20 text-[#45c66d]"
-                    : isPr
-                    ? "bg-[#9999ff] text-white"
-                    : "bg-[#00005b] text-white";
-
-                  return (
-                    <button
-                      key={p.slug}
-                      className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#45c66d] hover:text-[#45c66d]"
-                      disabled={busy !== null}
-                      onClick={() => download(p.slug)}
-                    >
-                      <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-black ${iconBg}`}>
-                        {icon}
-                      </span>
-                      <span className="truncate">
-                        {busy === `dl-${p.slug}` ? "Preparing…" : `Download ${label}`}
-                      </span>
-                    </button>
-                  );
-                })}
+                {/* Orbit Studio extensions only — CompX is a separate product */}
+                {license.products
+                  .filter((p) => !/compx/i.test(p.slug))
+                  .map((p) => {
+                    const isPr = /premiere|[-_]pr$/i.test(p.slug);
+                    const label = isPr ? "Orbit Studio (Premiere)" : "Orbit Studio (AE)";
+                    const icon = isPr ? "Pr" : "Ae";
+                    const iconBg = isPr ? "bg-[#9999ff]" : "bg-[#00005b]";
+                    return (
+                      <button
+                        key={p.slug}
+                        className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#45c66d] hover:text-[#45c66d]"
+                        disabled={busy !== null}
+                        onClick={() => download(p.slug)}
+                      >
+                        <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-black text-white ${iconBg}`}>
+                          {icon}
+                        </span>
+                        <span className="truncate">
+                          {busy === `dl-${p.slug}` ? "Preparing…" : `Download ${label}`}
+                        </span>
+                      </button>
+                    );
+                  })}
 
                 {/* Cloudflare R2 Bonus Downloads for $2 Paid Orbit Studio Users */}
                 <a
