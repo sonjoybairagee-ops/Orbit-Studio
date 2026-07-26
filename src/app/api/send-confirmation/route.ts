@@ -6,7 +6,12 @@ export async function POST(req: NextRequest) {
   try {
     const { email, firstName, token } = await req.json();
 
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://www.compxorbit.com";
+    // Determine base URL dynamically from request headers or environment
+    const host = req.headers.get("host") || "";
+    const protocol = req.headers.get("x-forwarded-proto") || "https";
+    const dynamicUrl = host && !host.includes("localhost") ? `${protocol}://${host}` : null;
+    
+    const baseUrl = dynamicUrl || process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://compxorbit.com";
     const confirmationLink = `${baseUrl}/auth/callback?token=${token}`;
 
     const html = getConfirmationEmailHtml({

@@ -22,7 +22,7 @@ export default function SignupPage() {
       password,
       options: {
         data: { full_name: fullName },
-        emailRedirectTo: `${location.origin}/auth/callback?next=/dashboard`,
+        emailRedirectTo: `${typeof window !== "undefined" && !window.location.host.includes("localhost") ? window.location.origin : "https://compxorbit.com"}/auth/callback?next=/dashboard`,
       },
     });
 
