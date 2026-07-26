@@ -9,6 +9,7 @@ const NAV = [
   ["/#features", "Features"],
   ["/pricing", "Pricing"],
   ["/#install", "How it works"],
+  ["/contact", "Contact"],
 ];
 
 export async function Header() {
