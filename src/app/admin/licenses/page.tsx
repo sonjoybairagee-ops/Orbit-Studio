@@ -118,6 +118,9 @@ export default async function LicensesPage({
                     {x.license_type === "legacy_demo" && (
                       <span className="badge">legacy demo</span>
                     )}
+                    {x.license_type === "promotion" && (
+                      <span className="badge badge-purple">🎁 Promotion</span>
+                    )}
                   </div>
                   <p className="muted mt-2 text-sm">
                     {x.profiles?.email ?? x.legacy_email ?? "Unclaimed"}

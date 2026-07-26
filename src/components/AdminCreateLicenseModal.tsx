@@ -9,6 +9,7 @@ export function AdminCreateLicenseModal({ plans }: { plans: any[] }) {
   const [email, setEmail] = useState("");
   const [planId, setPlanId] = useState(plans[0]?.id ?? "");
   const [maxDevices, setMaxDevices] = useState(1);
+  const [isPromotion, setIsPromotion] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
 
@@ -26,6 +27,7 @@ export function AdminCreateLicenseModal({ plans }: { plans: any[] }) {
           email: email.trim(),
           planId,
           maxDevices,
+          isPromotion,
         }),
       });
       const json = await res.json();
@@ -116,7 +118,7 @@ export function AdminCreateLicenseModal({ plans }: { plans: any[] }) {
                 >
                   {formattedPlans.map((p: any) => (
                     <option key={p.id} value={p.id}>
-                      {p.cleanName} (${p.cleanPrice})
+                      {p.cleanName} (${p.cleanPrice} / {p.cleanPrice === 1 ? 129 : 249}৳)
                     </option>
                   ))}
                 </select>
@@ -133,6 +135,19 @@ export function AdminCreateLicenseModal({ plans }: { plans: any[] }) {
                   onChange={(e) => setMaxDevices(Number(e.target.value))}
                   required
                 />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="promo-check"
+                  checked={isPromotion}
+                  onChange={(e) => setIsPromotion(e.target.checked)}
+                  className="h-4 w-4 rounded border-white/20 bg-black text-[#45c66d] focus:ring-[#45c66d]"
+                />
+                <label htmlFor="promo-check" className="text-xs font-bold text-[#c7ccd6]">
+                  Complementary / Promotion (Free)
+                </label>
               </div>
 
               {msg && (

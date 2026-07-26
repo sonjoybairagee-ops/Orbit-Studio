@@ -47,6 +47,27 @@ export default async function AbusePage() {
     .filter((r: any) => r.hits.length > 0)
     .sort((a: any, b: any) => b.hits.length - a.hits.length);
 
+  // Red Alerts: Users with > 3 resets in the last 7 days
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const { data: recentResets } = await s
+    .from("device_reset_requests")
+    .select("user_id, profiles(email)")
+    .gte("created_at", sevenDaysAgo);
+
+  const resetCounts: Record<string, { count: number; email: string }> = {};
+  (recentResets ?? []).forEach((r: any) => {
+    if (!r.user_id) return;
+    if (!resetCounts[r.user_id]) {
+      resetCounts[r.user_id] = { count: 0, email: r.profiles?.email ?? "Unknown" };
+    }
+    resetCounts[r.user_id].count++;
+  });
+
+  const suspiciousUsers = Object.entries(resetCounts)
+    .filter(([_, data]) => data.count > 3)
+    .map(([userId, data]) => ({ userId, ...data }))
+    .sort((a, b) => b.count - a.count);
+
   return (
     <div>
       <p className="eyebrow">Trust and safety</p>
@@ -120,6 +141,44 @@ export default async function AbusePage() {
             range.
           </p>
         )}
+      </div>
+
+      <div className="card mt-8 overflow-hidden border-[#e35050]/30 bg-[#e35050]/5">
+        <div className="p-5 border-b border-white/10">
+          <h2 className="font-black text-[#e35050] flex items-center gap-2">
+            <span>🚩</span> Red Alerts (High Risk Users)
+          </h2>
+          <p className="muted mt-1 text-xs">Users who have reset their devices more than 3 times in the last 7 days.</p>
+        </div>
+        <div className="table-wrap">
+          <table className="data">
+            <thead>
+              <tr>
+                <th>Customer Email</th>
+                <th>Resets (7 days)</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {suspiciousUsers.map((user: any) => (
+                <tr key={user.userId}>
+                  <td className="font-semibold text-white">{user.email}</td>
+                  <td className="text-[#e35050] font-bold">{user.count} resets</td>
+                  <td>
+                    <Link href={`/admin/users/${user.userId}`} className="badge hover:bg-white/10">
+                      Review Profile →
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+              {suspiciousUsers.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="text-center p-8 muted">No red alerts triggered.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <p className="muted mt-4 text-sm">

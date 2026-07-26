@@ -20,7 +20,7 @@ export default async function AdminLayout({
     ["⚠", "Sharing signals", "/admin/abuse"],
   ];
   return (
-    <div className="shell py-10">
+    <div className="mx-auto w-full px-4 py-10 sm:px-8 xl:px-12">
       <div className="dashboard-grid">
         <aside className="sidebar card p-3">
           <div className="mb-3 hidden px-3 py-3 md:block">

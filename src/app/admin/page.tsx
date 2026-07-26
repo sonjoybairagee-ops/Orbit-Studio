@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export default async function AdminHome() {
   const s = await createClient();
-  const [p, r, l, u, e] = await Promise.all([
+  const [p, r, l, u, e, approvedData] = await Promise.all([
     s
       .from("orders")
       .select("*", { count: "exact", head: true })
@@ -21,6 +21,10 @@ export default async function AdminHome() {
       .from("extensions")
       .select("*", { count: "exact", head: true })
       .eq("is_active", true),
+    s
+      .from("orders")
+      .select("amount,currency,plans(name)")
+      .eq("status", "approved"),
   ]);
   const { data: recent } = await s
     .from("orders")
@@ -29,6 +33,22 @@ export default async function AdminHome() {
     )
     .order("created_at", { ascending: false })
     .limit(6);
+    
+  const approvedOrders = (approvedData as any[]) ?? [];
+  let totalUSD = 0;
+  let totalBDT = 0;
+  const productSales: Record<string, number> = {};
+
+  approvedOrders.forEach((o) => {
+    const amt = parseFloat(o.amount);
+    if (!isNaN(amt)) {
+      if (o.currency === "USD") totalUSD += amt;
+      else if (o.currency === "BDT") totalBDT += amt;
+    }
+    const pName = o.plans?.name || "Unknown Plan";
+    productSales[pName] = (productSales[pName] || 0) + 1;
+  });
+
   const cards = [
     ["Active products", e.count ?? 0, "◈"],
     ["Customers", u.count ?? 0, "◎"],
@@ -51,6 +71,30 @@ export default async function AdminHome() {
           ＋ Publish product
         </Link>
       </div>
+
+      <div className="stat-grid mt-8">
+        <div className="card p-5 bg-[#45c66d]/10 border-[#45c66d]/30">
+          <p className="muted text-xs font-bold uppercase tracking-wider text-[#45c66d]">Total USD Revenue</p>
+          <b className="mt-3 block text-3xl text-[#45c66d]">${totalUSD.toFixed(2)}</b>
+        </div>
+        <div className="card p-5 bg-[#45c66d]/10 border-[#45c66d]/30">
+          <p className="muted text-xs font-bold uppercase tracking-wider text-[#45c66d]">Total BDT Revenue</p>
+          <b className="mt-3 block text-3xl text-[#45c66d]">৳{totalBDT.toFixed(2)}</b>
+        </div>
+        <div className="card p-5 col-span-2">
+          <p className="muted text-xs font-bold uppercase tracking-wider">Plan Breakdown (Sales)</p>
+          <div className="mt-4 flex flex-wrap gap-4">
+            {Object.entries(productSales).map(([name, count]) => (
+              <div key={name} className="flex items-center gap-2">
+                <span className="badge badge-purple">{name}</span>
+                <span className="font-bold">{count}</span>
+              </div>
+            ))}
+            {Object.keys(productSales).length === 0 && <span className="muted text-sm">—</span>}
+          </div>
+        </div>
+      </div>
+
       <div className="stat-grid mt-8">
         {cards.map(([a, b, c]) => (
           <div key={a} className="card p-5">

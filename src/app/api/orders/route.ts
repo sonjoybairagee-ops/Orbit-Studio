@@ -43,17 +43,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Plan not found" }, { status: 404 });
 
   const isPrecomp = plan.slug === "compx-v111" || (plan.name && plan.name.includes("Precomp"));
-  const amount = isPrecomp ? 1 : 2;
+  const amount = method === "bkash" ? (isPrecomp ? 129 : 249) : (isPrecomp ? 1 : 2);
+  const currency = method === "bkash" ? "BDT" : (plan.currency ?? "USD");
 
   // Standard essential columns present in Supabase orders table
   const essentialPayload: any = {
     user_id: user.id,
     plan_id: plan.id,
     amount: amount,
-    currency: plan.currency ?? "USD",
+    currency: currency,
     method,
     txn_ref: txnRef ?? null,
     status: "pending",
+    ...(receiptUrl ? { receipt_path: receiptUrl } : {}),
   };
 
   // Try inserting with optional columns first
@@ -62,12 +64,11 @@ export async function POST(req: Request) {
     .insert({
       ...essentialPayload,
       ...(plan.extension_id ? { extension_id: plan.extension_id } : {}),
-      ...(receiptUrl ? { receipt_path: receiptUrl } : {}),
     })
     .select()
     .single();
 
-  // If column error occurs (e.g. extension_id, receipt_url missing in schema cache), retry with essential payload
+  // If column error occurs (e.g. extension_id missing in schema cache), retry with essential payload
   if (orderResult.error) {
     orderResult = await supabase
       .from("orders")

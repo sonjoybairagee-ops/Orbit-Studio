@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { email, planId, maxDevices } = await req.json();
+  const { email, planId, maxDevices, isPromotion } = await req.json();
   if (!email || !planId) {
     return NextResponse.json({ error: "Email and Plan ID required" }, { status: 400 });
   }
@@ -58,7 +58,7 @@ export async function POST(req: Request) {
       plan_id: finalPlanId,
       key,
       status: "active",
-      license_type: "paid",
+      license_type: isPromotion ? "promotion" : "paid",
       max_devices: maxDevices ?? 1,
       grace_days: 7,
       legacy_email: email.trim().toLowerCase(),
