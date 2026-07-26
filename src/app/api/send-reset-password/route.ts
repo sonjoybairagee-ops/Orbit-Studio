@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resend } from "@/lib/resend";
 import { getResetPasswordEmailHtml } from "@/lib/emails/resetPassword";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,16 +11,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
-    const supabase = await createClient();
-    
-    // Get request headers or env to determine site URL
-    const origin = req.headers.get("origin") || req.headers.get("referer") || "";
-    const envUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL;
-    const baseUrl = envUrl && !envUrl.includes("localhost") ? envUrl : (origin ? new URL(origin).origin : "https://www.compxorbit.com");
+    const host = req.headers.get("host") || "";
+    const protocol = req.headers.get("x-forwarded-proto") || "https";
+    const dynamicUrl = host && !host.includes("localhost") ? `${protocol}://${host}` : null;
+    const baseUrl = dynamicUrl || process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://compxorbit.com";
 
     const redirectTo = `${baseUrl}/auth/callback?next=/reset-password`;
 
-    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+    const admin = createAdminClient();
+    const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
       type: "recovery",
       email: email.trim(),
       options: {
