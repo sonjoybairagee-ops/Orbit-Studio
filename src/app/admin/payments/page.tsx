@@ -5,7 +5,7 @@ export default async function PaymentsPage() {
   const s = await createClient();
   const { data: orders } = await s
     .from("orders")
-    .select("*,profiles(email),extensions(name),plans(name)")
+    .select("*,profiles!orders_user_id_fkey(email),extensions(name),plans(name)")
     .eq("status", "pending")
     .order("created_at", { ascending: true });
   return (
@@ -36,10 +36,10 @@ export default async function PaymentsPage() {
                 </span>
                 <span className="badge">Txn: {o.txn_ref ?? "—"}</span>
                 <span className="badge">{o.method}</span>
-                {o.receipt_url && (
+                {o.receipt_path && (
                   <a
                     className="badge badge-amber hover:text-white"
-                    href={`/api/admin/receipt?path=${encodeURIComponent(o.receipt_url)}`}
+                    href={`/api/admin/receipt?path=${encodeURIComponent(o.receipt_path)}`}
                     target="_blank"
                     rel="noreferrer"
                   >

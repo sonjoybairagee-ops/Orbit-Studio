@@ -62,7 +62,7 @@ export async function POST(req: Request) {
     .insert({
       ...essentialPayload,
       ...(plan.extension_id ? { extension_id: plan.extension_id } : {}),
-      ...(receiptUrl ? { receipt_url: receiptUrl } : {}),
+      ...(receiptUrl ? { receipt_path: receiptUrl } : {}),
     })
     .select()
     .single();
