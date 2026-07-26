@@ -332,11 +332,11 @@ export function LicenseCard({ license }: { license: LicenseView }) {
           <div className="mb-3 flex items-center justify-between">
             <p className="label mb-0">Official Downloads</p>
             <span className="text-[10px] font-bold text-[#45c66d]">
-              {isLegacy ? "v1.1.2 Legacy Build" : "v2.3.1 Released (Windows & macOS)"}
+              {isLegacy ? "v1.1.2 Released" : "v2.3.1 Released (Windows & macOS)"}
             </span>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {/* If Legacy v1.1.1 User (Redeemed Key) */}
+            {/* If Legacy User (Redeemed Key) */}
             {isLegacy ? (
               <button
                 className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#45c66d] hover:text-[#45c66d]"
