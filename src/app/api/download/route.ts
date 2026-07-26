@@ -25,6 +25,27 @@ export async function GET(req: Request) {
 
   const svc = createAdminClient();
 
+  // Special fallback for Legacy CompX v1.1.1
+  if (slug === "compx-v111") {
+    // Check if signed link can be created directly from extensions bucket or fallback URL
+    const { data: signed, error: signErr } = await svc.storage
+      .from("extensions")
+      .createSignedUrl("compx-v111/1.1.1/CompX-Precomp-Manager-v1.1.1.zxp", 120, { download: true });
+
+    if (!signErr && signed?.signedUrl) {
+      return NextResponse.json({ url: signed.signedUrl, version: "1.1.1" });
+    }
+
+    // Secondary fallback check in releases bucket
+    const { data: signedRel, error: relErr } = await svc.storage
+      .from("releases")
+      .createSignedUrl("compx-v111/1.1.1/CompX-Precomp-Manager-v1.1.1.zxp", 120, { download: true });
+
+    if (!relErr && signedRel?.signedUrl) {
+      return NextResponse.json({ url: signedRel.signedUrl, version: "1.1.1" });
+    }
+  }
+
   const { data: ext } = await svc
     .from("extensions")
     .select("id, name")
