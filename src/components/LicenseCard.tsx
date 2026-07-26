@@ -72,7 +72,10 @@ export function LicenseCard({ license }: { license: LicenseView }) {
   const seatsUsed = license.activations.length;
   const seatsFree = Math.max(0, license.max_devices - seatsUsed);
   const cooldown = cooldownLeft(license.last_reset_at);
-  const isLegacy = license.license_type === "legacy_demo";
+  const isLegacy =
+    license.license_type === "legacy_demo" ||
+    (license.planName || "").toLowerCase().includes("v1.1.1") ||
+    (license.planName || "").toLowerCase().includes("legacy");
 
   // Strip "Bundle" from plan name for clean presentation
   const cleanPlanName = (license.planName || "").replace(/\s*Bundle\s*/gi, " ").trim();
@@ -328,7 +331,9 @@ export function LicenseCard({ license }: { license: LicenseView }) {
         <div className="mt-6 border-t border-white/10 pt-5">
           <div className="mb-3 flex items-center justify-between">
             <p className="label mb-0">Official Downloads</p>
-            <span className="text-[10px] font-bold text-[#45c66d]">v2.3.1 Released (Windows & macOS)</span>
+            <span className="text-[10px] font-bold text-[#45c66d]">
+              {isLegacy ? "v1.1.1 Legacy Build" : "v2.3.1 Released (Windows & macOS)"}
+            </span>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {/* If Legacy v1.1.1 User (Redeemed Key) */}
@@ -341,7 +346,9 @@ export function LicenseCard({ license }: { license: LicenseView }) {
                 <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[#45c66d]/20 text-[#45c66d] text-[10px] font-black">
                   📦
                 </span>
-                <span className="truncate">{busy === "dl-compx-v111" ? "Preparing…" : "Download CompX v1.1.1 (Legacy)"}</span>
+                <span className="truncate">
+                  {busy === "dl-compx-v111" ? "Preparing…" : "Download CompX Precomp Manager (v1.1.1)"}
+                </span>
               </button>
             ) : (
               /* New Paid Users ($2 USD) -> CompX Orbit Studio v2.3.1 + R2 Bonus Assets */
