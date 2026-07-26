@@ -11,7 +11,7 @@ export default async function UsersPage({
 
   let query = s
     .from("profiles")
-    .select("id,full_name,email,role,created_at,licenses(plans(name))")
+    .select("id,full_name,email,role,created_at,licenses(plans(name),extensions(name))")
     .order("created_at", { ascending: false })
     .limit(100);
 
@@ -60,7 +60,7 @@ export default async function UsersPage({
             <tbody>
               {(users ?? []).map((x: any) => {
                 const products = Array.from(
-                  new Set(x.licenses?.map((l: any) => l.plans?.name).filter(Boolean))
+                  new Set(x.licenses?.map((l: any) => l.plans?.name || l.extensions?.name).filter(Boolean))
                 );
                 return (
                   <tr key={x.id}>
