@@ -20,17 +20,33 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Please sign in first." }, { status: 401 });
   }
 
-  const cleanKey = parsed.data.key.trim().toUpperCase();
+  const rawKey = parsed.data.key.trim();
+  const cleanKeyAlpha = rawKey.replace(/[^A-Z0-9]/gi, "").toUpperCase();
   const admin = createAdminClient();
 
-  // Find license key matching clean string
-  const { data: license, error: fetchErr } = await admin
+  // 1. First attempt exact match
+  let { data: license } = await admin
     .from("licenses")
     .select("id, key, user_id, status")
-    .ilike("key", cleanKey)
+    .ilike("key", rawKey)
     .maybeSingle();
 
-  if (fetchErr || !license) {
+  // 2. If not found, fetch active licenses without user_id and match cleaned key
+  if (!license) {
+    const { data: allLicenses } = await admin
+      .from("licenses")
+      .select("id, key, user_id, status")
+      .is("user_id", null);
+
+    if (allLicenses) {
+      license = allLicenses.find((l) => {
+        const lClean = l.key.replace(/[^A-Z0-9]/gi, "").toUpperCase();
+        return lClean === cleanKeyAlpha;
+      }) ?? null;
+    }
+  }
+
+  if (!license) {
     return NextResponse.json({ error: "We could not find that key. Check it for typos." }, { status: 400 });
   }
 
