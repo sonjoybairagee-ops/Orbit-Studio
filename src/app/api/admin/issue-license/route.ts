@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { resend } from "@/lib/resend";
+import {
+  getNewLicenseEmailHtml,
+  getOldUserRedeemEmailHtml,
+} from "@/lib/emails/licenseTemplates";
 
 function generateCXKey() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -50,6 +55,46 @@ export async function POST(req: Request) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Fetch plan name for email
+  const { data: plan } = await supabase
+    .from("plans")
+    .select("name, extensions(name)")
+    .eq("id", planId)
+    .single();
+
+  const extName = (plan as any)?.extensions?.name || plan?.name || "CompX Extension";
+
+  // Send branded Resend Email to customer
+  try {
+    const isOldUserMigration = extName.includes("Precomp") || extName.includes("Legacy");
+    
+    const html = isOldUserMigration
+      ? getOldUserRedeemEmailHtml({
+          customerName: email.split("@")[0],
+          licenseKey: license.key,
+          extensionName: extName,
+        })
+      : getNewLicenseEmailHtml({
+          customerName: email.split("@")[0],
+          extensionName: extName,
+          licenseKey: license.key,
+          maxDevices: maxDevices ?? 1,
+        });
+
+    const subject = isOldUserMigration
+      ? `Redeem Your ${extName} License — CompX Orbit`
+      : `Your ${extName} License Key — CompX Orbit`;
+
+    await resend.emails.send({
+      from: process.env.EMAIL_FROM || "CompX Orbit <hello@compxorbit.com>",
+      to: email.trim(),
+      subject,
+      html,
+    });
+  } catch (emailErr) {
+    console.error("Failed to send license email:", emailErr);
   }
 
   return NextResponse.json({ key: license.key, license });

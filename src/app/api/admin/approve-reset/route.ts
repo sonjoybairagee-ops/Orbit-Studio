@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendEmail, resetApprovedEmail } from "@/lib/email";
+import { resend } from "@/lib/resend";
+import { getDeviceResetEmailHtml } from "@/lib/emails/licenseTemplates";
 
 const schema = z.object({
   requestId: z.string().uuid(),
@@ -58,13 +59,26 @@ export async function POST(req: Request) {
       .eq("id", rr.license_id);
 
     const email = (rr as any).profiles?.email;
-    const planName = (rr as any).licenses?.plans?.name ?? "CompX Orbit";
+    const extensionName = (rr as any).licenses?.plans?.name ?? "CompX Extension";
+    const licenseKey = (rr as any).licenses?.key ?? "";
+
     if (email) {
-      await sendEmail({
-        to: email,
-        subject: "Device reset approved",
-        html: resetApprovedEmail(planName),
-      });
+      try {
+        const html = getDeviceResetEmailHtml({
+          customerName: email.split("@")[0],
+          extensionName,
+          licenseKey,
+        });
+
+        await resend.emails.send({
+          from: process.env.EMAIL_FROM || "CompX Orbit <hello@compxorbit.com>",
+          to: email,
+          subject: `Device Reset Approved for ${extensionName} — CompX Orbit`,
+          html,
+        });
+      } catch (e) {
+        console.error("Failed to send device reset email:", e);
+      }
     }
   }
 
