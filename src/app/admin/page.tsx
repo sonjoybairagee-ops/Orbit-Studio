@@ -34,7 +34,7 @@ export default async function AdminHome() {
     .order("created_at", { ascending: false })
     .limit(6);
     
-  const approvedOrders = (approvedData as any[]) ?? [];
+  const approvedOrders = (approvedData.data as any[]) ?? [];
   let totalUSD = 0;
   let totalBDT = 0;
   const productSales: Record<string, number> = {};
