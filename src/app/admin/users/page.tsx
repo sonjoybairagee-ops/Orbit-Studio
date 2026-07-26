@@ -11,7 +11,7 @@ export default async function UsersPage({
 
   let query = s
     .from("profiles")
-    .select("id,full_name,email,role,created_at,licenses(plans(name),extensions(name))")
+    .select("id,full_name,email,role,created_at,licenses(plans(name))")
     .order("created_at", { ascending: false })
     .limit(100);
 
@@ -19,7 +19,10 @@ export default async function UsersPage({
     query = query.or(`full_name.ilike.%${q}%,email.ilike.%${q}%`);
   }
 
-  const { data: users } = await query;
+  const { data: users, error } = await query;
+  if (error) {
+    console.error("UsersPage query error:", error);
+  }
 
   return (
     <div>
@@ -60,7 +63,7 @@ export default async function UsersPage({
             <tbody>
               {(users ?? []).map((x: any) => {
                 const products = Array.from(
-                  new Set(x.licenses?.map((l: any) => l.plans?.name || l.extensions?.name).filter(Boolean))
+                  new Set(x.licenses?.map((l: any) => l.plans?.name).filter(Boolean))
                 );
                 return (
                   <tr key={x.id}>
