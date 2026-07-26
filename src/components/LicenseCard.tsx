@@ -354,9 +354,24 @@ export function LicenseCard({ license }: { license: LicenseView }) {
               <>
                 {/* New Paid Users ($2 USD) -> CompX Orbit Studio v2.3.1 + R2 Bonus Assets */}
                 {license.products.map((p) => {
+                  // CompX Legacy extension bundled inside Orbit plan
+                  const isCompX = /compx/i.test(p.slug);
                   // Detect Premiere by slug ending in -pr, -premiere, or containing "premiere"
-                  const isPr = /premiere|[-_]pr$/i.test(p.slug);
-                  const shortName = isPr ? "Orbit Studio (Premiere)" : "Orbit Studio (AE)";
+                  const isPr = !isCompX && /premiere|[-_]pr$/i.test(p.slug);
+
+                  const label = isCompX
+                    ? "CompX Precomp Manager (v1.1.2)"
+                    : isPr
+                    ? "Orbit Studio (Premiere)"
+                    : "Orbit Studio (AE)";
+
+                  const icon = isCompX ? "📦" : isPr ? "Pr" : "Ae";
+                  const iconBg = isCompX
+                    ? "bg-[#45c66d]/20 text-[#45c66d]"
+                    : isPr
+                    ? "bg-[#9999ff] text-white"
+                    : "bg-[#00005b] text-white";
+
                   return (
                     <button
                       key={p.slug}
@@ -364,10 +379,12 @@ export function LicenseCard({ license }: { license: LicenseView }) {
                       disabled={busy !== null}
                       onClick={() => download(p.slug)}
                     >
-                      <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-black text-white ${isPr ? "bg-[#9999ff]" : "bg-[#00005b]"}`}>
-                        {isPr ? "Pr" : "Ae"}
+                      <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-black ${iconBg}`}>
+                        {icon}
                       </span>
-                      <span className="truncate">{busy === `dl-${p.slug}` ? "Preparing…" : `Download ${shortName}`}</span>
+                      <span className="truncate">
+                        {busy === `dl-${p.slug}` ? "Preparing…" : `Download ${label}`}
+                      </span>
                     </button>
                   );
                 })}
