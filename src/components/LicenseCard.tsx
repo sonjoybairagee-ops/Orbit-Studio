@@ -347,9 +347,32 @@ export function LicenseCard({ license }: { license: LicenseView }) {
                 </button>
               );
             })}
+
+            {/* Cloudflare R2 Large Bonus Assets */}
+            <a
+              href="/api/download-asset?file=compx-orbit-50-mogrt-templates.zip"
+              className="btn-secondary flex items-center gap-2.5 px-5 py-2.5 text-xs font-bold transition-all hover:border-[#eab308] hover:text-[#eab308]"
+              title="Download 50+ MOGRTs Templates Pack from Cloudflare R2"
+            >
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded bg-amber-500/20 text-amber-400 text-[10px] font-black">
+                🎬
+              </span>
+              Download 50+ MOGRTs Pack
+            </a>
+
+            <a
+              href="/api/download-asset?file=compx-orbit-500-cinema-sfx.zip"
+              className="btn-secondary flex items-center gap-2.5 px-5 py-2.5 text-xs font-bold transition-all hover:border-[#3b82f6] hover:text-[#3b82f6]"
+              title="Download 500+ Cinema Audio SFX Collection from Cloudflare R2"
+            >
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded bg-blue-500/20 text-blue-400 text-[10px] font-black">
+                🎵
+              </span>
+              Download 500+ Cinema SFX
+            </a>
           </div>
           <p className="muted mt-3 text-xs">
-            Links expire after 60 seconds and are tied to your account.
+            Official extension builds & Cloudflare R2 bonus asset packs (MOGRTs & SFX) are secured & tied to your active license.
           </p>
         </div>
       )}
