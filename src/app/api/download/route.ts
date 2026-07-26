@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getR2DownloadUrl } from "@/lib/r2";
 
 // Issues a short-lived signed URL from the PRIVATE 'releases' bucket.
 // Entitlement is resolved through the plan, so a bundle license can
@@ -26,13 +25,33 @@ export async function GET(req: Request) {
 
   const svc = createAdminClient();
 
-  // Special fallback for Legacy CompX (v1.1.2 and v1.1.1) from Cloudflare R2
+  // Special fallback for Legacy CompX (v1.1.2 and v1.1.1)
   if (slug === "compx-v111") {
-    try {
-      const url = await getR2DownloadUrl("compx-v111.zxp", 120);
-      return NextResponse.json({ url, version: "1.1.2" });
-    } catch (err) {
-      return NextResponse.json({ error: "Legacy extension not found in storage." }, { status: 404 });
+    // Try v1.1.2 first with exact uploaded filename
+    const { data: signed112, error: signErr112 } = await svc.storage
+      .from("extensions")
+      .createSignedUrl("compx-v111/1.1.2/compX V1.1.2.zxp", 120, { download: true });
+
+    if (!signErr112 && signed112?.signedUrl) {
+      return NextResponse.json({ url: signed112.signedUrl, version: "1.1.2" });
+    }
+
+    // Try v1.1.2 formatted filename
+    const { data: signed112Alt, error: signErr112Alt } = await svc.storage
+      .from("extensions")
+      .createSignedUrl("compx-v111/1.1.2/CompX-Precomp-Manager-v1.1.2.zxp", 120, { download: true });
+
+    if (!signErr112Alt && signed112Alt?.signedUrl) {
+      return NextResponse.json({ url: signed112Alt.signedUrl, version: "1.1.2" });
+    }
+
+    // Fallback to v1.1.1
+    const { data: signed, error: signErr } = await svc.storage
+      .from("extensions")
+      .createSignedUrl("compx-v111/1.1.1/CompX-Precomp-Manager-v1.1.1.zxp", 120, { download: true });
+
+    if (!signErr && signed?.signedUrl) {
+      return NextResponse.json({ url: signed.signedUrl, version: "1.1.1" });
     }
   }
 
@@ -72,21 +91,22 @@ export async function GET(req: Request) {
     .eq("is_latest", true)
     .maybeSingle();
 
-  // Try direct path from R2 bucket for Orbit Studio & Premiere if release record doesn't exist
+  // Try direct path from extensions bucket for Orbit Studio & Premiere if release record doesn't exist
   if (!release) {
     let fallbackPath = "";
     if (slug === "orbit-studio") {
-      fallbackPath = "orbit-studio-ae.zxp";
+      fallbackPath = "orbit-studio/2.3.1/CompX-Orbit-Studio-v2.3.1.zxp";
     } else if (slug === "orbit-premiere") {
-      fallbackPath = "orbit-studio-pr.zxp";
+      fallbackPath = "orbit-premiere/2.3.1/CompX-Orbit-Premiere-v2.3.1.zxp";
     }
 
     if (fallbackPath) {
-      try {
-        const url = await getR2DownloadUrl(fallbackPath, 120);
-        return NextResponse.json({ url, version: "2.3.1" });
-      } catch (err) {
-        // Fall through to error
+      const { data: directSigned } = await svc.storage
+        .from("extensions")
+        .createSignedUrl(fallbackPath, 120, { download: true });
+
+      if (directSigned?.signedUrl) {
+        return NextResponse.json({ url: directSigned.signedUrl, version: "2.3.1" });
       }
     }
 
