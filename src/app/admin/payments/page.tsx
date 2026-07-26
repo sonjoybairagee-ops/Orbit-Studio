@@ -5,7 +5,7 @@ export default async function PaymentsPage() {
   const s = await createClient();
   const { data: orders } = await s
     .from("orders")
-    .select("*,profiles!orders_user_id_fkey(email),extensions(name),plans(name)")
+    .select("*,profiles!orders_user_id_fkey(email),plans(name)")
     .eq("status", "pending")
     .order("created_at", { ascending: true });
   return (
@@ -24,11 +24,11 @@ export default async function PaymentsPage() {
           >
             <div>
               <div className="flex items-center gap-2">
-                <b>{o.extensions?.name}</b>
+                <b>{o.plans?.name}</b>
                 <span className="badge badge-amber">Pending</span>
               </div>
               <p className="muted mt-2 text-sm">
-                {o.profiles?.email} · {o.plans?.name}
+                {o.profiles?.email}
               </p>
               <div className="mt-3 flex flex-wrap gap-2 text-xs">
                 <span className="badge">

@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   const svc = createAdminClient();
   const { data: order } = await svc
     .from("orders")
-    .select("*, extensions(name)")
+    .select("*, plans(name)")
     .eq("id", orderId)
     .single();
   if (!order)
@@ -78,7 +78,7 @@ export async function POST(req: Request) {
       to: profile.email,
       subject: "Your license key is ready",
       html: licenseIssuedEmail(
-        order.extensions?.name ?? "your extension",
+        order.plans?.name ?? "your extension",
         license.key,
       ),
     });

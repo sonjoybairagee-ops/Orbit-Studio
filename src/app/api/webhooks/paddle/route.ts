@@ -37,7 +37,7 @@ export async function POST(req: Request) {
   const svc = createAdminClient();
   const { data: order } = await svc
     .from("orders")
-    .select("*, extensions(name), profiles(email)")
+    .select("*, plans(name), profiles!orders_user_id_fkey(email)")
     .eq("id", orderId)
     .maybeSingle();
   if (!order) return NextResponse.json({ ignored: true });
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     await sendEmail({
       to: order.profiles.email,
       subject: "Your CompX license is ready",
-      html: licenseIssuedEmail(order.extensions?.name ?? "your extension", key),
+      html: licenseIssuedEmail(order.plans?.name ?? "your extension", key),
     });
 
   return NextResponse.json({ ok: true });

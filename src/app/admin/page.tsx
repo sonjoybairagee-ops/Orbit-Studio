@@ -25,7 +25,7 @@ export default async function AdminHome() {
   const { data: recent } = await s
     .from("orders")
     .select(
-      "id,amount,currency,status,created_at,profiles(email),extensions(name)",
+      "id,amount,currency,status,created_at,profiles!orders_user_id_fkey(email),plans(name)",
     )
     .order("created_at", { ascending: false })
     .limit(6);
