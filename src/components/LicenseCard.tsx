@@ -330,20 +330,21 @@ export function LicenseCard({ license }: { license: LicenseView }) {
             <p className="label mb-0">Official Downloads</p>
             <span className="text-[10px] font-bold text-[#45c66d]">v2.3.1 Released (Windows & macOS)</span>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {license.products.map((p) => {
-              const isAe = p.slug.includes("studio");
+              const isAe = p.slug.includes("studio") && !p.slug.includes("premiere");
+              const shortName = isAe ? "Orbit Studio (AE)" : "Orbit Studio (Premiere)";
               return (
                 <button
                   key={p.slug}
-                  className="btn-secondary flex items-center gap-2.5 px-5 py-2.5 text-xs font-bold transition-all hover:border-[#45c66d] hover:text-[#45c66d]"
+                  className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#45c66d] hover:text-[#45c66d]"
                   disabled={busy !== null}
                   onClick={() => download(p.slug)}
                 >
-                  <span className={`inline-flex h-5 w-5 items-center justify-center rounded text-[10px] font-black text-white ${isAe ? "bg-[#00005b]" : "bg-[#00005b]"}`}>
+                  <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-black text-white ${isAe ? "bg-[#00005b]" : "bg-[#00005b]"}`}>
                     {isAe ? "Ae" : "Pr"}
                   </span>
-                  {busy === `dl-${p.slug}` ? "Preparing Download…" : `Download ${p.name.replace(/\s*Bundle\s*/gi, " ")}`}
+                  <span className="truncate">{busy === `dl-${p.slug}` ? "Preparing…" : `Download ${shortName}`}</span>
                 </button>
               );
             })}
@@ -351,24 +352,24 @@ export function LicenseCard({ license }: { license: LicenseView }) {
             {/* Cloudflare R2 Large Bonus Assets */}
             <a
               href="/api/download-asset?file=compx-orbit-50-mogrt-templates.zip"
-              className="btn-secondary flex items-center gap-2.5 px-5 py-2.5 text-xs font-bold transition-all hover:border-[#eab308] hover:text-[#eab308]"
+              className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#eab308] hover:text-[#eab308]"
               title="Download 50+ MOGRTs Templates Pack from Cloudflare R2"
             >
-              <span className="inline-flex h-5 w-5 items-center justify-center rounded bg-amber-500/20 text-amber-400 text-[10px] font-black">
+              <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-amber-500/20 text-amber-400 text-[10px] font-black">
                 🎬
               </span>
-              Download 50+ MOGRTs Pack
+              <span className="truncate">Download 50+ MOGRTs Pack</span>
             </a>
 
             <a
               href="/api/download-asset?file=compx-orbit-500-cinema-sfx.zip"
-              className="btn-secondary flex items-center gap-2.5 px-5 py-2.5 text-xs font-bold transition-all hover:border-[#3b82f6] hover:text-[#3b82f6]"
+              className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#3b82f6] hover:text-[#3b82f6]"
               title="Download 500+ Cinema Audio SFX Collection from Cloudflare R2"
             >
-              <span className="inline-flex h-5 w-5 items-center justify-center rounded bg-blue-500/20 text-blue-400 text-[10px] font-black">
+              <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-blue-500/20 text-blue-400 text-[10px] font-black">
                 🎵
               </span>
-              Download 500+ Cinema SFX
+              <span className="truncate">Download 500+ Cinema SFX</span>
             </a>
           </div>
           <p className="muted mt-3 text-xs">
