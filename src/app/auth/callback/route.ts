@@ -26,15 +26,22 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient();
 
-  // 1. Handle standard Supabase email confirmation with token_hash & type
+  // 1. Handle password recovery or email confirmation with token_hash & type
   if (tokenHash) {
-    const otpTypes = [type, "signup", "email", "magiclink"].filter(Boolean);
+    const isRecovery = type === "recovery" || next === "/reset-password";
+    const otpTypes = isRecovery
+      ? ["recovery", type].filter(Boolean)
+      : [type, "signup", "email", "magiclink"].filter(Boolean);
+
     for (const otpType of otpTypes) {
       const { error } = await supabase.auth.verifyOtp({
         token_hash: tokenHash,
         type: otpType as any,
       });
       if (!error) {
+        if (isRecovery) {
+          return NextResponse.redirect(`${origin}/reset-password`);
+        }
         return NextResponse.redirect(`${origin}/login?confirmed=true`);
       }
     }
@@ -45,11 +52,14 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       const safeNext = next.startsWith("/") ? next : "/dashboard";
-      return NextResponse.redirect(`${origin}${safeNext}?welcome=true`);
+      return NextResponse.redirect(`${origin}${safeNext}`);
     }
   }
 
   // 3. Fallback check
+  if (next === "/reset-password") {
+    return NextResponse.redirect(`${origin}/reset-password`);
+  }
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
     return NextResponse.redirect(`${origin}/dashboard?welcome=true`);

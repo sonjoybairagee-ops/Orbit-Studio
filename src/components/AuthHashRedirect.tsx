@@ -11,6 +11,9 @@ export function AuthHashRedirect() {
       const params = new URLSearchParams(hash.substring(1));
       const accessToken = params.get("access_token");
       const refreshToken = params.get("refresh_token");
+      const type = params.get("type");
+
+      const targetPath = type === "recovery" ? "/reset-password" : "/dashboard";
 
       if (accessToken && refreshToken) {
         const supabase = createClient();
@@ -18,10 +21,10 @@ export function AuthHashRedirect() {
           access_token: accessToken,
           refresh_token: refreshToken,
         }).then(() => {
-          window.location.href = "/dashboard";
+          window.location.href = targetPath;
         });
       } else {
-        window.location.href = "/dashboard";
+        window.location.href = targetPath;
       }
     }
   }, []);
