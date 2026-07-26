@@ -212,22 +212,125 @@ export default async function Home() {
       <section id="install" className="shell install-section scroll-mt-24">
         <div className="section-heading">
           <p className="eyebrow">From purchase to panel</p>
-          <h2>Up and running in three steps.</h2>
+          <h2>Install in minutes.<br /><span className="text-gradient">Zero complexity.</span></h2>
+          <p style={{maxWidth:"52ch",margin:"0 auto"}}>Follow these steps to get CompX Orbit running inside After Effects or Premiere Pro. Works on Windows and macOS.</p>
         </div>
-        <div className="install-grid">
-          {[
-            ["01", "Choose your licence", "Pick one or two device seats. Both new Orbit extensions are included."],
-            ["02", "Download securely", "Sign in to your dashboard and download the latest private release."],
-            ["03", "Activate the panel", "Paste your CX key once. Signed offline access keeps Orbit out of your way."],
-          ].map(([no, title, copy]) => (
-            <article key={no}>
-              <span>{no}</span>
-              <h3>{title}</h3>
-              <p>{copy}</p>
-            </article>
-          ))}
+
+        {/* ── Step-by-step guide ── */}
+        <div className="install-guide">
+
+          {/* Step 1 */}
+          <div className="install-step">
+            <div className="install-step__num">01</div>
+            <div className="install-step__body">
+              <h3>Get the ZXP Installer tool</h3>
+              <p>You need a free tool to install <code>.zxp</code> extension files into Adobe apps. Use one of these:</p>
+              <div className="install-tools">
+                <a href="https://aescripts.com/learn/zxp-installer/" target="_blank" rel="noopener noreferrer" className="install-tool-card">
+                  <span className="install-tool-icon">⚙️</span>
+                  <div>
+                    <b>ZXP Installer</b>
+                    <small>by aescripts (Recommended · Free)</small>
+                  </div>
+                </a>
+                <a href="https://anastasiy.com/extension-manager/" target="_blank" rel="noopener noreferrer" className="install-tool-card">
+                  <span className="install-tool-icon">🧩</span>
+                  <div>
+                    <b>Extension Manager CC</b>
+                    <small>by Anastasiy (Free)</small>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 2 */}
+          <div className="install-step">
+            <div className="install-step__num">02</div>
+            <div className="install-step__body">
+              <h3>Download your extension</h3>
+              <p>Sign in to your dashboard and download the <code>.zxp</code> file for your plan:</p>
+              <div className="install-download-cards">
+                <div className="install-dl-card install-dl-card--new">
+                  <div className="install-dl-card__badge">New Purchase · $2</div>
+                  <b>CompX Orbit Studio</b>
+                  <small>v2.3.1 · After Effects + Premiere Pro</small>
+                  <code>CompX-Orbit-Studio-v2.3.1.zxp</code>
+                </div>
+                <div className="install-dl-card install-dl-card--legacy">
+                  <div className="install-dl-card__badge">Legacy · Free Redeem</div>
+                  <b>CompX Precomp Manager</b>
+                  <small>v1.1.1 · After Effects only</small>
+                  <code>CompX-Precomp-Manager-v1.1.1.zxp</code>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 3 */}
+          <div className="install-step">
+            <div className="install-step__num">03</div>
+            <div className="install-step__body">
+              <h3>Drag & drop into ZXP Installer</h3>
+              <p>Open the ZXP Installer tool, then drag the downloaded <code>.zxp</code> file onto it — or click <b>"Install"</b> and browse to the file. The tool handles everything automatically.</p>
+              <div className="install-note">
+                <span>💡</span>
+                <p><b>Make sure Adobe apps are closed</b> before installing. Restart After Effects / Premiere Pro after installation completes.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 4 */}
+          <div className="install-step">
+            <div className="install-step__num">04</div>
+            <div className="install-step__body">
+              <h3>Open the panel in Adobe</h3>
+              <p>After restarting, find the extension from the menu bar:</p>
+              <div className="install-path-cards">
+                <div className="install-path-card">
+                  <span className="adobe-icon-badge ae-badge" style={{fontSize:"0.7rem",padding:"2px 6px"}}>Ae</span>
+                  <code>Window → Extensions → CompX Orbit Studio</code>
+                </div>
+                <div className="install-path-card">
+                  <span className="adobe-icon-badge pr-badge" style={{fontSize:"0.7rem",padding:"2px 6px"}}>Pr</span>
+                  <code>Window → Extensions → CompX Orbit Studio</code>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 5 */}
+          <div className="install-step">
+            <div className="install-step__num">05</div>
+            <div className="install-step__body">
+              <h3>Activate with your license key</h3>
+              <p>On first launch, a license gate will appear. Copy your key from the dashboard and paste it:</p>
+              <div className="install-license-demo">
+                <div className="install-license-input">
+                  <span>License key</span>
+                  <code>CX-XXXX-XXXX-XXXX-XXXX</code>
+                </div>
+                <button className="install-activate-btn" disabled>Activate →</button>
+              </div>
+              <div className="install-note">
+                <span>🔒</span>
+                <p>One key activates <b>one device</b>. After Effects and Premiere Pro on the same machine share a single seat. Need to move? Release the device from your dashboard.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* CTA */}
+        <div style={{textAlign:"center",marginTop:"3rem"}}>
+          <p style={{color:"var(--muted)",marginBottom:"1rem"}}>Already installed? Go straight to your dashboard.</p>
+          <div style={{display:"flex",gap:"1rem",justifyContent:"center",flexWrap:"wrap"}}>
+            <a href="/dashboard" className="btn-primary">Go to Dashboard <span>→</span></a>
+            <a href="/pricing" className="btn-secondary">Get a license</a>
+          </div>
         </div>
       </section>
+
 
       <section className="shell final-cta">
         <div className="final-cta__grid" aria-hidden="true" />
