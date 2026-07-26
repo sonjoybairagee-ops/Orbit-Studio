@@ -23,3 +23,6 @@ migration-report.json
 
 # TypeScript incremental build cache
 tsconfig.tsbuildinfo
+
+# Zip files
+*.zip
