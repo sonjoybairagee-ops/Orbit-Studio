@@ -35,8 +35,7 @@ export async function GET(request: NextRequest) {
         type: otpType as any,
       });
       if (!error) {
-        const safeNext = next.startsWith("/") ? next : "/dashboard";
-        return NextResponse.redirect(`${origin}${safeNext}`);
+        return NextResponse.redirect(`${origin}/login?confirmed=true`);
       }
     }
   }
@@ -46,11 +45,15 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       const safeNext = next.startsWith("/") ? next : "/dashboard";
-      return NextResponse.redirect(`${origin}${safeNext}`);
+      return NextResponse.redirect(`${origin}${safeNext}?welcome=true`);
     }
   }
 
-  // 3. Fallback: Always redirect directly to /dashboard
-  const safeNext = next.startsWith("/") ? next : "/dashboard";
-  return NextResponse.redirect(`${origin}${safeNext}`);
+  // 3. Fallback check
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    return NextResponse.redirect(`${origin}/dashboard?welcome=true`);
+  }
+
+  return NextResponse.redirect(`${origin}/login?confirmed=true`);
 }

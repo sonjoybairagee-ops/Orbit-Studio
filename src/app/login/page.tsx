@@ -17,12 +17,15 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // /auth/callback redirects here with ?error=... or ?msg=...
+  // /auth/callback redirects here with ?error=... or ?msg=... or ?confirmed=true
   useEffect(() => {
     const fromCallbackErr = searchParams.get("error");
     if (fromCallbackErr) setError(fromCallbackErr);
     const fromCallbackMsg = searchParams.get("msg");
     if (fromCallbackMsg) setMsg(fromCallbackMsg);
+    if (searchParams.get("confirmed") === "true") {
+      setMsg("Email confirmed successfully! Account is ready — please sign in below.");
+    }
   }, [searchParams]);
 
   async function onSubmit(e: React.FormEvent) {
