@@ -56,6 +56,7 @@ export async function POST(req: Request) {
     order_id: order.id,
     key,
     status: "active",
+    legacy_email: (order.profiles as any)?.email ?? null,
   });
   if (licenseError)
     return NextResponse.json({ error: licenseError.message }, { status: 500 });
