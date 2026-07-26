@@ -351,8 +351,8 @@ export function LicenseCard({ license }: { license: LicenseView }) {
                 </span>
               </button>
             ) : (
-            {/* New Paid Users ($2 USD) -> CompX Orbit Studio v2.3.1 + R2 Bonus Assets */}
               <>
+                {/* New Paid Users ($2 USD) -> CompX Orbit Studio v2.3.1 + R2 Bonus Assets */}
                 {license.products.map((p) => {
                   // Detect Premiere by slug ending in -pr, -premiere, or containing "premiere"
                   const isPr = /premiere|[-_]pr$/i.test(p.slug);
