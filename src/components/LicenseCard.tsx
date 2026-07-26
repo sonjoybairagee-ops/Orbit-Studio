@@ -377,28 +377,32 @@ export function LicenseCard({ license }: { license: LicenseView }) {
                     );
                   })}
 
-                {/* Cloudflare R2 Bonus Downloads for $2 Paid Orbit Studio Users */}
-                <a
-                  href="/api/download-asset?file=compx-orbit-50-mogrt-templates.zip"
-                  className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#eab308] hover:text-[#eab308]"
-                  title="Download 50+ MOGRTs Templates Pack from Cloudflare R2"
-                >
-                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-amber-500/20 text-amber-400 text-[10px] font-black">
-                    🎬
-                  </span>
-                  <span className="truncate">Download 50+ MOGRTs Pack</span>
-                </a>
+                {/* Cloudflare R2 Bonus Downloads for $2 Paid Orbit Studio Users ONLY */}
+                {!isLegacy && (
+                  <>
+                    <a
+                      href="/api/download-asset?file=compx-orbit-50-mogrt-templates.zip"
+                      className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#eab308] hover:text-[#eab308]"
+                      title="Download 50+ MOGRTs Templates Pack from Cloudflare R2"
+                    >
+                      <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-amber-500/20 text-amber-400 text-[10px] font-black">
+                        🎬
+                      </span>
+                      <span className="truncate">Download 50+ MOGRTs Pack</span>
+                    </a>
 
-                <a
-                  href="/api/download-asset?file=compx-orbit-500-cinema-sfx.zip"
-                  className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#3b82f6] hover:text-[#3b82f6]"
-                  title="Download 500+ Premium Audio SFX Collection from Cloudflare R2"
-                >
-                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-blue-500/20 text-blue-400 text-[10px] font-black">
-                    🎵
-                  </span>
-                  <span className="truncate">Download 500+ Premium SFX</span>
-                </a>
+                    <a
+                      href="/api/download-asset?file=compx-orbit-500-cinema-sfx.zip"
+                      className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#3b82f6] hover:text-[#3b82f6]"
+                      title="Download 500+ Premium Audio SFX Collection from Cloudflare R2"
+                    >
+                      <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-blue-500/20 text-blue-400 text-[10px] font-black">
+                        🎵
+                      </span>
+                      <span className="truncate">Download 500+ Premium SFX</span>
+                    </a>
+                  </>
+                )}
               </>
             )}
           </div>

@@ -43,7 +43,7 @@ export async function POST(req: Request) {
   const { data: license, error } = await supabaseAdminClient
     .from("licenses")
     .insert({
-      user_id: profile?.id ?? null,
+      user_id: null, // Must be claimed manually via redeem key
       plan_id: planId,
       key,
       status: "active",
