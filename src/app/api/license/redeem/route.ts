@@ -1,25 +1,15 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
-const schema = z.object({ key: z.string().min(6).max(64) });
-
-// The RPC raises bare codes; turn them into something a customer can act on.
-const MESSAGES: Record<string, string> = {
-  AUTH_REQUIRED: "Please sign in first.",
-  KEY_NOT_FOUND: "We could not find that key. Check it for typos.",
-  ALREADY_CLAIMED:
-    "That key is already attached to another account. Contact support if this is yours.",
-  KEY_NOT_ACTIVE: "That key is no longer active. Please contact support.",
-  EMAIL_MISMATCH:
-    "That key was sent to a different email address. Sign in with that address instead.",
-};
+const schema = z.object({ key: z.string().min(4) });
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Enter a licence key." }, { status: 400 });
+    return NextResponse.json({ error: "Enter a valid licence key." }, { status: 400 });
   }
 
   const supabase = await createClient();
@@ -27,21 +17,43 @@ export async function POST(req: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: MESSAGES.AUTH_REQUIRED }, { status: 401 });
+    return NextResponse.json({ error: "Please sign in first." }, { status: 401 });
   }
 
-  const { data, error } = await supabase.rpc("claim_license", {
-    p_key: parsed.data.key,
-  });
+  const cleanKey = parsed.data.key.trim().toUpperCase();
+  const admin = createAdminClient();
 
-  if (error) {
-    const code = Object.keys(MESSAGES).find((c) => error.message.includes(c));
-    return NextResponse.json(
-      { error: code ? MESSAGES[code] : "Could not redeem that key." },
-      { status: code === "ALREADY_CLAIMED" ? 409 : 400 },
-    );
+  // Find license key matching clean string
+  const { data: license, error: fetchErr } = await admin
+    .from("licenses")
+    .select("id, key, user_id, status")
+    .ilike("key", cleanKey)
+    .maybeSingle();
+
+  if (fetchErr || !license) {
+    return NextResponse.json({ error: "We could not find that key. Check it for typos." }, { status: 400 });
   }
 
-  const row = Array.isArray(data) ? data[0] : data;
-  return NextResponse.json({ ok: true, key: row?.key ?? null });
+  if (license.user_id && license.user_id !== user.id) {
+    return NextResponse.json({ error: "That key is already attached to another account." }, { status: 409 });
+  }
+
+  if (license.status !== "active") {
+    return NextResponse.json({ error: "That key is no longer active." }, { status: 400 });
+  }
+
+  // Bind license to user
+  const { error: updateErr } = await admin
+    .from("licenses")
+    .update({
+      user_id: user.id,
+      legacy_email: user.email?.trim().toLowerCase(),
+    })
+    .eq("id", license.id);
+
+  if (updateErr) {
+    return NextResponse.json({ error: "Could not redeem that key. Please try again." }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true, key: license.key });
 }
