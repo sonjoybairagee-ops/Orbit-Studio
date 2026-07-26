@@ -10,6 +10,9 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
+  const tokenHash = searchParams.get("token_hash");
+  const type = searchParams.get("type") as any;
+  const token = searchParams.get("token");
   const next = searchParams.get("next") ?? "/dashboard";
 
   // Supabase reports failures as query params rather than HTTP errors.
@@ -21,22 +24,37 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  if (!code) {
-    return NextResponse.redirect(
-      `${origin}/login?error=${encodeURIComponent("Sign-in link is missing or malformed.")}`,
-    );
-  }
-
   const supabase = await createClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
 
-  if (error) {
-    return NextResponse.redirect(
-      `${origin}/login?error=${encodeURIComponent(error.message)}`,
-    );
+  // 1. Handle standard Supabase email confirmation with token_hash & type
+  if (tokenHash && type) {
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: type,
+    });
+    if (!error) {
+      const safeNext = next.startsWith("/") ? next : "/dashboard";
+      return NextResponse.redirect(`${origin}${safeNext}`);
+    }
   }
 
-  // Only allow relative redirects so this cannot be used as an open redirect.
-  const safeNext = next.startsWith("/") ? next : "/dashboard";
-  return NextResponse.redirect(`${origin}${safeNext}`);
+  // 2. Handle PKCE code exchange
+  if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) {
+      const safeNext = next.startsWith("/") ? next : "/dashboard";
+      return NextResponse.redirect(`${origin}${safeNext}`);
+    }
+  }
+
+  // 3. Fallback: Check if user is already signed in
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    const safeNext = next.startsWith("/") ? next : "/dashboard";
+    return NextResponse.redirect(`${origin}${safeNext}`);
+  }
+
+  return NextResponse.redirect(
+    `${origin}/login?error=${encodeURIComponent("Sign-in link expired or invalid.")}`,
+  );
 }
