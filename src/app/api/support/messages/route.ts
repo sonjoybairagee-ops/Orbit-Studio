@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
         userName: ticket.user_name,
         subject: ticket.subject,
         replyMessage: message,
-        ticketUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/dashboard/support/${ticket_id}`,
+        ticketUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.compxorbit.com"}/dashboard/support/${ticket_id}`,
       });
 
       await resend.emails.send({

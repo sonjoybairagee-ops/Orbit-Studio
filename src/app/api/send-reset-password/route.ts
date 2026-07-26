@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     // Get request headers or env to determine site URL
     const origin = req.headers.get("origin") || req.headers.get("referer") || "";
     const envUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL;
-    const baseUrl = envUrl && !envUrl.includes("localhost") ? envUrl : (origin ? new URL(origin).origin : "http://localhost:3000");
+    const baseUrl = envUrl && !envUrl.includes("localhost") ? envUrl : (origin ? new URL(origin).origin : "https://www.compxorbit.com");
 
     const redirectTo = `${baseUrl}/auth/callback?next=/reset-password`;
 

@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
   try {
     const { email, firstName, token } = await req.json();
 
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://www.compxorbit.com";
     const confirmationLink = `${baseUrl}/auth/callback?token=${token}`;
 
     const html = getConfirmationEmailHtml({
