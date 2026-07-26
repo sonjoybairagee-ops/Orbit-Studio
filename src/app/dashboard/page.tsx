@@ -5,7 +5,11 @@ import { LicenseCard, type LicenseView } from "@/components/LicenseCard";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: { verified?: string };
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -55,15 +59,17 @@ export default async function DashboardPage() {
   return (
     <div>
       {/* ── Email Confirmation Success Banner ── */}
-      <div className="mb-6 rounded-xl border border-[#45c66d]/40 bg-[#45c66d]/10 p-4 text-sm text-[#45c66d]">
-        <div className="flex items-center gap-3">
-          <span className="text-xl">✅</span>
-          <div>
-            <p className="font-bold text-white">Email confirmed successfully!</p>
-            <p className="text-xs text-[#aab0bd]">Welcome to CompX Orbit. Your account is verified and ready to use.</p>
+      {searchParams.verified === "true" && (
+        <div className="mb-6 rounded-xl border border-[#45c66d]/40 bg-[#45c66d]/10 p-4 text-sm text-[#45c66d]">
+          <div className="flex items-center gap-3">
+            <span className="text-xl">✅</span>
+            <div>
+              <p className="font-bold text-white">Email confirmed successfully!</p>
+              <p className="text-xs text-[#aab0bd]">Welcome to CompX Orbit. Your account is verified and ready to use.</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
