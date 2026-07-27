@@ -112,15 +112,28 @@ export function AdminCreateLicenseModal({ plans }: { plans: any[] }) {
                 <label className="label mb-1 block text-xs">Product / Plan</label>
                 <select
                   className="input text-xs font-bold"
-                  value={planId}
-                  onChange={(e) => setPlanId(e.target.value)}
+                  value={`${planId}|${isPromotion}`}
+                  onChange={(e) => {
+                    const [id, promo] = e.target.value.split("|");
+                    setPlanId(id);
+                    setIsPromotion(promo === "true");
+                  }}
                   required
                 >
-                  {formattedPlans.map((p: any) => (
-                    <option key={p.id} value={p.id}>
-                      {p.cleanName} (${p.cleanPrice} / {p.cleanPrice === 1 ? 129 : 249}৳)
-                    </option>
-                  ))}
+                  <optgroup label="Paid Licenses">
+                    {formattedPlans.map((p: any) => (
+                      <option key={`${p.id}|false`} value={`${p.id}|false`}>
+                        {p.cleanName} (${p.cleanPrice} / {p.cleanPrice === 1 ? 129 : 249}৳)
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Promotions / Free">
+                    {formattedPlans.map((p: any) => (
+                      <option key={`${p.id}|true`} value={`${p.id}|true`}>
+                        {p.cleanName} (Promotion / Free)
+                      </option>
+                    ))}
+                  </optgroup>
                 </select>
               </div>
 
@@ -137,18 +150,7 @@ export function AdminCreateLicenseModal({ plans }: { plans: any[] }) {
                 />
               </div>
 
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="promo-check"
-                  checked={isPromotion}
-                  onChange={(e) => setIsPromotion(e.target.checked)}
-                  className="h-4 w-4 rounded border-white/20 bg-black text-[#45c66d] focus:ring-[#45c66d]"
-                />
-                <label htmlFor="promo-check" className="text-xs font-bold text-[#c7ccd6]">
-                  Complementary / Promotion (Free)
-                </label>
-              </div>
+
 
               {msg && (
                 <div
