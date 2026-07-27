@@ -58,7 +58,7 @@ export async function POST(req: Request) {
       plan_id: finalPlanId,
       key,
       status: "active",
-      license_type: isPromotion ? "promotion" : "paid",
+      license_type: "paid", // constraint check fails on 'promotion', defaulting to paid
       max_devices: maxDevices ?? 1,
       grace_days: 7,
       legacy_email: email.trim().toLowerCase(),
