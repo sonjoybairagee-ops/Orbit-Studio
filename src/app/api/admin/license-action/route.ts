@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, logAdminAction } from "@/lib/supabase/admin";
 import { sendEmail, resetApprovedEmail } from "@/lib/email";
 
 // Every admin action on a license funnels through here so that the audit
@@ -132,6 +132,8 @@ export async function POST(req: Request) {
     user_agent: req.headers.get("user-agent"),
     meta: { reason, action, maxDevices: maxDevices ?? null, source: "admin" },
   });
+
+  await logAdminAction(admin.id, action.toUpperCase() + "_LICENSE", licenseId, { reason, maxDevices: maxDevices ?? null });
 
   return NextResponse.json({ ok: true, message });
 }

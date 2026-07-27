@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, logAdminAction } from "@/lib/supabase/admin";
 import { generateLicenseKey } from "@/lib/license";
 import { sendEmail, licenseIssuedEmail } from "@/lib/email";
 
@@ -43,6 +43,7 @@ export async function POST(req: Request) {
       .from("orders")
       .update({ status: "rejected", ...reviewed })
       .eq("id", orderId);
+    await logAdminAction(admin.id, "REJECTED_ORDER", orderId, { user_id: order.user_id, plan_id: order.plan_id });
     return NextResponse.json({ ok: true });
   }
 
@@ -83,6 +84,8 @@ export async function POST(req: Request) {
       ),
     });
   }
+
+  await logAdminAction(admin.id, "APPROVED_ORDER", orderId, { user_id: order.user_id, plan_id: order.plan_id, license_id: license.id });
 
   return NextResponse.json({ ok: true, license });
 }

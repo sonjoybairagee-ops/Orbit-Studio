@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, logAdminAction } from "@/lib/supabase/admin";
 import { resend } from "@/lib/resend";
 import { getDeviceResetEmailHtml } from "@/lib/emails/licenseTemplates";
 
@@ -91,6 +91,8 @@ export async function POST(req: Request) {
     user_agent: req.headers.get("user-agent"),
     meta: { reason: reason ?? null, source: "admin" },
   });
+
+  await logAdminAction(admin.id, action === "approve" ? "APPROVED_DEVICE_RESET" : "REJECTED_DEVICE_RESET", rr.license_id, { request_id: requestId, reason });
 
   return NextResponse.json({ ok: true });
 }

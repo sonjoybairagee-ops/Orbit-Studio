@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, logAdminAction } from "@/lib/supabase/admin";
 import { generateLicenseKey } from "@/lib/license";
 import { sendEmail, licenseIssuedEmail } from "@/lib/email";
 import { waitUntil } from "@vercel/functions";
@@ -99,11 +99,7 @@ export async function POST(req: Request) {
 
   // Audit Log
   if (approvedIds.length > 0) {
-    await svc.from("license_events").insert({
-      actor_id: admin.id,
-      event: "bulk_approve",
-      meta: { approved_count: approvedIds.length, approved_ids: approvedIds },
-    });
+    await logAdminAction(admin.id, "BULK_APPROVED_ORDERS", null, { approved_count: approvedIds.length, approved_ids: approvedIds });
   }
 
   // Background email dispatch with staggering

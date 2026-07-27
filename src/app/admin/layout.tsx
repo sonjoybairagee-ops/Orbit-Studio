@@ -18,6 +18,7 @@ export default async function AdminLayout({
     ["↻", "Device resets", "/admin/resets"],
     ["💬", "Support", "/admin/support"],
     ["⚠", "Sharing signals", "/admin/abuse"],
+    ["📋", "Activity logs", "/admin/logs"],
   ];
   return (
     <div className="mx-auto w-full px-4 py-10 sm:px-8 xl:px-12">

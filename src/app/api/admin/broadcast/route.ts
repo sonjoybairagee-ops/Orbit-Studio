@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, logAdminAction } from "@/lib/supabase/admin";
 import { sendEmail } from "@/lib/email";
 import { generateUnsubscribeToken } from "@/lib/unsubscribe";
 import { waitUntil } from "@vercel/functions";
@@ -67,11 +67,7 @@ export async function POST(req: Request) {
 
   if (emailsToSend.length > 0) {
     // Log the chunk execution
-    await svc.from("license_events").insert({
-      actor_id: admin.id,
-      event: "broadcast_sent_chunk",
-      meta: { subject, sent_count: emailsToSend.length },
-    });
+    await logAdminAction(admin.id, "SENT_BROADCAST", null, { subject, sent_count: emailsToSend.length });
 
     waitUntil(
       (async () => {

@@ -9,3 +9,18 @@ export function createAdminClient() {
     { auth: { autoRefreshToken: false, persistSession: false } },
   );
 }
+
+export async function logAdminAction(
+  adminId: string,
+  action: string,
+  targetId?: string | null,
+  details?: Record<string, any>
+) {
+  const svc = createAdminClient();
+  await svc.from("admin_logs").insert({
+    admin_id: adminId,
+    action,
+    target_id: targetId,
+    details,
+  });
+}
