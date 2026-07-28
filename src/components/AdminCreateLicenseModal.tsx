@@ -120,10 +120,17 @@ export function AdminCreateLicenseModal({ plans }: { plans: any[] }) {
                   }}
                   required
                 >
-                  <optgroup label="Paid Licenses">
+                  <optgroup label="Global Pay (USD)">
                     {formattedPlans.map((p: any) => (
-                      <option key={`${p.id}|false`} value={`${p.id}|false`}>
-                        {p.cleanName} (${p.cleanPrice} / {p.cleanPrice === 1 ? 129 : 249}৳)
+                      <option key={`${p.id}|false|usd`} value={`${p.id}|false`}>
+                        {p.cleanName} (${p.cleanPrice})
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Local Pay (BDT)">
+                    {formattedPlans.map((p: any) => (
+                      <option key={`${p.id}|false|bdt`} value={`${p.id}|false`}>
+                        {p.cleanName} ({p.cleanPrice === 1 ? 129 : 249}৳)
                       </option>
                     ))}
                   </optgroup>

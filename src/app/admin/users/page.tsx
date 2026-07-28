@@ -4,19 +4,32 @@ import { createClient } from "@/lib/supabase/server";
 export default async function UsersPage({
   searchParams,
 }: {
-  searchParams: { q?: string };
+  searchParams: { q?: string; plan?: string };
 }) {
   const s = await createClient();
   const q = searchParams.q?.trim() ?? "";
+  const plan = searchParams.plan?.trim() ?? "";
+
+  // Fetch all plans for the dropdown
+  const { data: allPlans } = await s.from("plans").select("id,name").order("name");
+
+  let selectStr = "id,full_name,email,role,created_at,licenses(plan_id, plans(name))";
+  if (plan) {
+    selectStr = "id,full_name,email,role,created_at,licenses!inner(plan_id, plans(name))";
+  }
 
   let query = s
     .from("profiles")
-    .select("id,full_name,email,role,created_at,licenses(plans(name))")
+    .select(selectStr)
     .order("created_at", { ascending: false })
     .limit(100);
 
   if (q) {
     query = query.or(`full_name.ilike.%${q}%,email.ilike.%${q}%`);
+  }
+  
+  if (plan) {
+    query = query.eq("licenses.plan_id", plan);
   }
 
   const { data: users, error } = await query;
@@ -38,13 +51,28 @@ export default async function UsersPage({
           <a href="/api/admin/export-users" download className="btn-secondary px-3 py-1.5 text-xs font-bold">
             Export CSV 📥
           </a>
-          <form action="/admin/users">
+          <form action="/admin/users" className="flex items-center gap-2">
+            <select
+              name="plan"
+              defaultValue={plan}
+              className="input !mt-0 w-[200px]"
+            >
+              <option value="">All Products</option>
+              {allPlans?.map((p: any) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
             <input
               name="q"
               defaultValue={q}
               className="input !mt-0 w-[240px]"
               placeholder="Search name or email…"
             />
+            <button type="submit" className="btn-secondary px-3 py-1.5 text-xs font-bold">
+              Filter
+            </button>
           </form>
         </div>
       </div>
@@ -81,8 +109,8 @@ export default async function UsersPage({
                       {products.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
                           {products.map((p: any) => (
-                            <span key={p} className="badge badge-purple text-[10px]">
-                              {p.replace(/Bundle/gi, "").trim()}
+                            <span key={p as string} className="badge badge-purple text-[10px]">
+                              {(p as string).replace(/Bundle/gi, "").trim()}
                             </span>
                           ))}
                         </div>
