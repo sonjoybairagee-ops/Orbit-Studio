@@ -794,24 +794,27 @@ body{background:radial-gradient(900px 520px at 76% -8%,rgba(69,198,109,.12),tran
   display: flex;
   flex-direction: column;
   gap: 8px;
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
 .orb-scroll::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+  width: 4px !important;
+  height: 4px !important;
+}
+.orb-scroll::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+.orb-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 4px;
+}
+.orb-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(69, 198, 109, 0.3) !important;
 }
 
-/* Universal scrollbar hiding for entire extension window */
-.orb-win *, .orb-win *::-webkit-scrollbar {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
-}
-.orb-win *::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+/* Allow scrollbars in extension window */
+.orb-win * {
+  /* Removed hidden scrollbars */
 }
 
 /* ── Section & Layout Components ── */
