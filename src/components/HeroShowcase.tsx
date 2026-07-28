@@ -67,104 +67,9 @@ function playSynthSfx(type: string) {
 function ToolsPanel() {
   const [activeAlign, setActiveAlign] = useState<string | null>(null);
   const [activeAnchor, setActiveAnchor] = useState<string>("c");
-  
-  // New States for Preview Stage
-  const [layerPos, setLayerPos] = useState({ x: "50%", y: "50%", tx: "-50%", ty: "-50%" });
-  const [anchPos, setAnchPos] = useState({ x: "50%", y: "50%" });
-  const [isPrecomp, setIsPrecomp] = useState(false);
-  const [fxState, setFxState] = useState<"none" | "active" | "locked">("active");
-  const [pastaLayers, setPastaLayers] = useState<number[]>([]);
-  const [bounceTrigger, setBounceTrigger] = useState(0);
-  const [trimState, setTrimState] = useState<{w: string, l: string}>({ w: "100%", l: "0%" });
-
-  const handleAlign = (id: string) => {
-    setActiveAlign(id);
-    let { x, y, tx, ty } = layerPos;
-    if (id === "left") { x = "10px"; tx = "0%"; }
-    if (id === "hcenter") { x = "50%"; tx = "-50%"; }
-    if (id === "right") { x = "calc(100% - 90px)"; tx = "0%"; }
-    if (id === "top") { y = "10px"; ty = "0%"; }
-    if (id === "vcenter") { y = "50%"; ty = "-50%"; }
-    if (id === "bottom") { y = "calc(100% - 46px)"; ty = "0%"; }
-    setLayerPos({ x, y, tx, ty });
-  };
-
-  const handleAnchor = (id: string) => {
-    setActiveAnchor(id);
-    let x = "50%", y = "50%";
-    if (id.includes("l")) x = "0%";
-    if (id.includes("r")) x = "100%";
-    if (id.includes("t")) y = "0%";
-    if (id.includes("b")) y = "100%";
-    setAnchPos({ x, y });
-  };
-
-  const handlePasta = () => {
-    if (pastaLayers.length < 4) {
-      setPastaLayers([...pastaLayers, pastaLayers.length]);
-    }
-  };
-
-  const handleClear = () => {
-    setLayerPos({ x: "50%", y: "50%", tx: "-50%", ty: "-50%" });
-    setAnchPos({ x: "50%", y: "50%" });
-    setIsPrecomp(false);
-    setFxState("active");
-    setPastaLayers([]);
-    setTrimState({ w: "100%", l: "0%" });
-    setActiveAlign(null);
-    setActiveAnchor("c");
-  };
 
   return (
     <div className="orb-scroll">
-      
-      {/* PREVIEW STAGE */}
-      <div className="orb-live-comp">
-        <div className="orb-live-comp-bg" />
-        
-        {/* Pasta Ghost Layers */}
-        {pastaLayers.map(i => (
-          <div 
-            key={i} 
-            className="orb-live-layer pasta-ghost"
-            style={{ 
-              left: layerPos.x, top: layerPos.y, 
-              transform: `translate(calc(${layerPos.tx} + ${(i + 1) * 8}px), calc(${layerPos.ty} + ${(i + 1) * 8}px))`
-            }}
-          >
-            Shape
-          </div>
-        ))}
-        
-        {/* Main Layer */}
-        <div 
-          key={bounceTrigger}
-          className={`orb-live-layer ${isPrecomp ? "precomp" : ""} ${bounceTrigger > 0 ? "bounce" : ""}`}
-          style={{ 
-            "--layer-x": layerPos.x, 
-            "--layer-y": layerPos.y,
-            "--layer-tx": layerPos.tx, 
-            "--layer-ty": layerPos.ty 
-          } as React.CSSProperties}
-        >
-          {isPrecomp ? "Precomp 1" : "Shape"}
-          
-          <div className="orb-anchor-point" style={{ "--anch-x": anchPos.x, "--anch-y": anchPos.y } as React.CSSProperties} />
-          
-          {fxState !== "none" && (
-            <div className={`orb-fx-badge ${fxState === "locked" ? "locked" : ""}`}>
-              {fxState === "locked" ? "FX 🔒" : "FX"}
-            </div>
-          )}
-        </div>
-        
-        {/* Timeline Trim */}
-        <div className="orb-live-timeline">
-          <div className="orb-live-timeline-fill" style={{ "--trim-w": trimState.w, "--trim-l": trimState.l } as React.CSSProperties} />
-        </div>
-      </div>
-
       {/* ALIGN */}
       <div className="orb-section">
         <div className="orb-sec-head">
@@ -185,7 +90,7 @@ function ToolsPanel() {
                 key={b.id}
                 type="button"
                 className={`orb-btn ${activeAlign === b.id ? "active" : ""}`}
-                onClick={() => handleAlign(b.id)}
+                onClick={() => setActiveAlign(b.id)}
               >
                 {b.label}
               </button>
@@ -217,7 +122,7 @@ function ToolsPanel() {
                 key={b.id}
                 type="button"
                 className={`orb-btn ${activeAnchor === b.id ? "active" : ""}`}
-                onClick={() => handleAnchor(b.id)}
+                onClick={() => setActiveAnchor(b.id)}
               >
                 {b.label}
               </button>
@@ -234,9 +139,9 @@ function ToolsPanel() {
         </div>
         <div className="orb-sec-body">
           <div className="orb-grid-2">
-            <button type="button" className="orb-btn" onClick={() => setIsPrecomp(!isPrecomp)}>Precomp Tog</button>
-            <button type="button" className="orb-btn" onClick={() => setIsPrecomp(true)}>Precomp Sep</button>
-            <button type="button" className="orb-btn" onClick={() => setIsPrecomp(false)}>Unprecomp</button>
+            <button type="button" className="orb-btn">Precomp Tog</button>
+            <button type="button" className="orb-btn">Precomp Sep</button>
+            <button type="button" className="orb-btn">Unprecomp</button>
             <button type="button" className="orb-btn primary">Organize</button>
           </div>
         </div>
@@ -247,7 +152,7 @@ function ToolsPanel() {
         <div className="orb-sec-head">
           <span><i className="orb-sec-bar" /> PROPERTY CLIPBOARD</span>
           <div className="orb-sec-right">
-            <span className="orb-action" onClick={handleClear} style={{cursor:'pointer', userSelect:'none'}}>CLEAR</span>
+            <span className="orb-action">CLEAR</span>
             <span className="orb-help">?</span>
           </div>
         </div>
@@ -258,16 +163,16 @@ function ToolsPanel() {
               <button type="button" className="orb-btn-sm">2</button>
               <button type="button" className="orb-btn-sm">3</button>
             </div>
-            <button type="button" className="orb-btn-sm pasta flex1" onClick={handlePasta}>Pasta</button>
+            <button type="button" className="orb-btn-sm pasta flex1">Pasta</button>
             <label className="orb-chk-lbl"><input type="checkbox" readOnly /> Shape</label>
           </div>
           <div className="orb-grid-2">
-            <button type="button" className="orb-btn" onClick={() => setTrimState({ w: "60%", l: "40%" })}>Trim Before</button>
-            <button type="button" className="orb-btn" onClick={() => setTrimState({ w: "60%", l: "0%" })}>Trim After</button>
-            <button type="button" className="orb-btn lock" onClick={() => setFxState("locked")}>FX Lock</button>
-            <button type="button" className="orb-btn danger" onClick={() => setFxState("none")}>FX Remove</button>
+            <button type="button" className="orb-btn">Trim Before</button>
+            <button type="button" className="orb-btn">Trim After</button>
+            <button type="button" className="orb-btn lock">FX Lock</button>
+            <button type="button" className="orb-btn danger">FX Remove</button>
           </div>
-          <button type="button" className="orb-btn-wide bounce margin-v" onClick={() => setBounceTrigger(t => t + 1)}>Bounce</button>
+          <button type="button" className="orb-btn-wide bounce margin-v">Bounce</button>
         </div>
       </div>
     </div>
