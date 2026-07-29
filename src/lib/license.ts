@@ -1,6 +1,6 @@
 import { randomBytes } from "crypto";
 
-export function generateLicenseKey(prefix = "LIC"): string {
+export function generateLicenseKey(prefix = "CX"): string {
   const raw = randomBytes(16).toString("hex").toUpperCase();
   const groups = (raw.match(/.{1,4}/g) ?? []).slice(0, 4);
   return `${prefix}-${groups.join("-")}`;
