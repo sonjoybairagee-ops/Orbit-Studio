@@ -30,7 +30,7 @@ export default async function PaymentsPage({
           <p className="eyebrow">Manual verification</p>
           <h1 className="mt-2 text-3xl font-black">Payments</h1>
           <p className="muted mt-2">
-            Inspect receipts and approve verified bKash payments to issue licenses
+            Inspect receipts and approve verified bKash or Nagad payments to issue licenses
             instantly.
           </p>
         </div>

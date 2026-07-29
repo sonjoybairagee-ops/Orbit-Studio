@@ -4,12 +4,13 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const BKASH_NUMBER = process.env.NEXT_PUBLIC_BKASH_NUMBER ?? "01810520280";
+const NAGAD_NUMBER = process.env.NEXT_PUBLIC_NAGAD_NUMBER ?? "01993825578";
 const PADDLE_LIVE_TOKEN = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ?? "live_73bd9290c2f284764d988b1054f";
 const PADDLE_PRICE_ID = "pri_01kydan5yvz9a050efd199wrjv";
 
 export function CheckoutForm({ plan }: { plan: any }) {
   const router = useRouter();
-  const [method, setMethod] = useState<"bkash" | "paddle">("bkash");
+  const [method, setMethod] = useState<"bkash" | "nagad" | "paddle">("bkash");
   const [txnRef, setTxnRef] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
@@ -18,8 +19,8 @@ export function CheckoutForm({ plan }: { plan: any }) {
   const isPrecomp = plan.slug === "compx-v111" || (plan.name && plan.name.includes("Precomp"));
   const bkashBdtAmount = isPrecomp ? 129 : 249;
 
-  const displayCurrency = method === "bkash" ? "BDT" : (plan.currency ?? "USD");
-  const displayPrice = method === "bkash" ? bkashBdtAmount : (plan.price ?? 2);
+  const displayCurrency = (method === "bkash" || method === "nagad") ? "BDT" : (plan.currency ?? "USD");
+  const displayPrice = (method === "bkash" || method === "nagad") ? bkashBdtAmount : (plan.price ?? 2);
 
   useEffect(() => {
     if (document.getElementById("paddle-js")) return;
@@ -45,7 +46,7 @@ export function CheckoutForm({ plan }: { plan: any }) {
     document.body.appendChild(script);
   }, []);
 
-  async function submitBkash(e: React.FormEvent) {
+  async function submitManualPayment(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setMsg(null);
@@ -75,7 +76,7 @@ export function CheckoutForm({ plan }: { plan: any }) {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         planId: plan.id,
-        method: "bkash",
+        method: method,
         txnRef,
         receiptUrl,
       }),
@@ -155,8 +156,7 @@ export function CheckoutForm({ plan }: { plan: any }) {
       </section>
 
       <section className="card p-6 sm:p-8">
-        <h2 className="text-xl font-black">Payment method</h2>
-        <div className="mt-5 grid grid-cols-2 gap-2">
+        <h2 className="text-xl font-black">Payment method</        <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
           <button
             onClick={() => setMethod("bkash")}
             className={
@@ -169,39 +169,50 @@ export function CheckoutForm({ plan }: { plan: any }) {
             bKash (249 BDT)
           </button>
           <button
+            onClick={() => setMethod("nagad")}
+            className={
+              method === "nagad"
+                ? "flex items-center justify-center gap-2 rounded-xl bg-[#f6921e] px-4 py-3 text-sm font-black text-white shadow-[0_0_20px_rgba(246,146,30,0.4)] transition-all"
+                : "btn-secondary py-3 text-sm font-bold"
+            }
+          >
+            <span className="rounded bg-white/20 px-1.5 py-0.5 text-[10px]">Nagad</span>
+            Nagad (249 BDT)
+          </button>
+          <button
             onClick={() => setMethod("paddle")}
             className={
               method === "paddle"
-                ? "btn-primary py-3 text-sm font-black"
-                : "btn-secondary py-3 text-sm font-bold"
+                ? "btn-primary py-3 text-sm font-black sm:col-span-1 col-span-2"
+                : "btn-secondary py-3 text-sm font-bold sm:col-span-1 col-span-2"
             }
           >
             Global card ($2 USD)
           </button>
         </div>
-        {method === "bkash" ? (
-          <form onSubmit={submitBkash} className="mt-6 space-y-5">
-            {/* bKash Official Send Money Awareness Notice */}
-            <div className="rounded-xl border border-[#e2136e]/40 bg-[#e2136e]/10 p-4 text-sm leading-6 text-white shadow-[0_0_25px_rgba(226,19,110,0.15)]">
+        {method === "bkash" || method === "nagad" ? (
+          <form onSubmit={submitManualPayment} className="mt-6 space-y-5">
+            {/* Manual Send Money Awareness Notice */}
+            <div className={`rounded-xl border p-4 text-sm leading-6 text-white ${method === 'bkash' ? 'border-[#e2136e]/40 bg-[#e2136e]/10 shadow-[0_0_25px_rgba(226,19,110,0.15)]' : 'border-[#f6921e]/40 bg-[#f6921e]/10 shadow-[0_0_25px_rgba(246,146,30,0.15)]'}`}>
               <div className="mb-2 flex items-center justify-between">
-                <span className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[#ff6ca5]">
-                  <span className="inline-block h-2 w-2 rounded-full bg-[#e2136e] animate-ping" />
-                  ⚠️ bKash Payment Instructions
+                <span className={`flex items-center gap-2 text-xs font-black uppercase tracking-widest ${method === 'bkash' ? 'text-[#ff6ca5]' : 'text-[#f6921e]'}`}>
+                  <span className={`inline-block h-2 w-2 rounded-full animate-ping ${method === 'bkash' ? 'bg-[#e2136e]' : 'bg-[#f6921e]'}`} />
+                  ⚠️ {method === 'bkash' ? 'bKash' : 'Nagad'} Payment Instructions
                 </span>
-                <span className="rounded-md bg-[#e2136e] px-2 py-0.5 text-[10px] font-black text-white">
+                <span className={`rounded-md px-2 py-0.5 text-[10px] font-black text-white ${method === 'bkash' ? 'bg-[#e2136e]' : 'bg-[#f6921e]'}`}>
                   PERSONAL (SEND MONEY)
                 </span>
               </div>
-              <p className="text-sm font-bold leading-relaxed text-[#ffd4e5]">
-                অবশ্যই বিকাশের <b className="text-white underline decoration-[#e2136e] underline-offset-4">Send Money (সেন্ড মানি)</b> অপশন ব্যবহার করে টাকা পাঠাবেন। (Merchant / Payment করা যাবে না)।
+              <p className={`text-sm font-bold leading-relaxed ${method === 'bkash' ? 'text-[#ffd4e5]' : 'text-[#fce4c8]'}`}>
+                অবশ্যই {method === 'bkash' ? 'বিকাশের' : 'নগদের'} <b className={`text-white underline underline-offset-4 ${method === 'bkash' ? 'decoration-[#e2136e]' : 'decoration-[#f6921e]'}`}>Send Money (সেন্ড মানি)</b> অপশন ব্যবহার করে টাকা পাঠাবেন। (Merchant / Payment করা যাবে না)।
               </p>
-              <div className="mt-3 grid gap-2 rounded-lg border border-[#e2136e]/30 bg-black/40 p-3 sm:grid-cols-2">
+              <div className={`mt-3 grid gap-2 rounded-lg border bg-black/40 p-3 sm:grid-cols-2 ${method === 'bkash' ? 'border-[#e2136e]/30' : 'border-[#f6921e]/30'}`}>
                 <div>
-                  <span className="text-[11px] font-bold text-[#ff8ebc]">bKash Number:</span>
-                  <p className="font-mono text-base font-black text-[#ffc36f]">{BKASH_NUMBER}</p>
+                  <span className={`text-[11px] font-bold ${method === 'bkash' ? 'text-[#ff8ebc]' : 'text-[#fbcd9a]'}`}>{method === 'bkash' ? 'bKash' : 'Nagad'} Number:</span>
+                  <p className="font-mono text-base font-black text-[#ffc36f]">{method === 'bkash' ? BKASH_NUMBER : NAGAD_NUMBER}</p>
                 </div>
                 <div>
-                  <span className="text-[11px] font-bold text-[#ff8ebc]">Exact Amount:</span>
+                  <span className={`text-[11px] font-bold ${method === 'bkash' ? 'text-[#ff8ebc]' : 'text-[#fbcd9a]'}`}>Exact Amount:</span>
                   <p className="font-mono text-base font-black text-[#45c66d]">BDT {bkashBdtAmount} ৳</p>
                 </div>
               </div>
@@ -255,10 +266,10 @@ export function CheckoutForm({ plan }: { plan: any }) {
                 >
                   <span className="mb-2 text-3xl text-[#45c66d]">📥</span>
                   <p className="text-sm font-bold text-white">
-                    Click to upload bKash payment screenshot
+                    Click to upload {method === 'bkash' ? 'bKash' : 'Nagad'} payment screenshot
                   </p>
                   <p className="muted mt-1 text-xs">
-                    PNG, JPG or JPEG screenshot from bKash app (Max 10MB)
+                    PNG, JPG or JPEG screenshot from {method === 'bkash' ? 'bKash' : 'Nagad'} app (Max 10MB)
                   </p>
                 </div>
               )}

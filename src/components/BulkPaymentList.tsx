@@ -96,9 +96,11 @@ export function BulkPaymentList({ orders }: { orders: any[] }) {
                 <span className={`badge ${
                   o.method === "bkash" 
                     ? "bg-[#e2136e]/20 text-[#ff6ca5] border border-[#e2136e]/30" 
-                    : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                    : o.method === "nagad"
+                      ? "bg-[#f6921e]/20 text-[#f6921e] border border-[#f6921e]/30"
+                      : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
                 }`}>
-                  {o.method === "bkash" ? "bKash" : "Paddle"}
+                  {o.method === "bkash" ? "bKash" : o.method === "nagad" ? "Nagad" : "Paddle"}
                 </span>
                 {o.method === "paddle" && o.status === "pending" && (
                   <span className="badge bg-red-500/10 text-red-400 border border-red-500/20">

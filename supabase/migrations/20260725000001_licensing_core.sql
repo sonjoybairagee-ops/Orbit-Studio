@@ -71,7 +71,7 @@ create table if not exists public.orders (
   plan_id     uuid not null references public.plans(id),
   amount      numeric(10,2) not null,
   currency    text not null default 'USD',
-  method      text not null check (method in ('bkash','paddle','manual')),
+  method      text not null check (method in ('bkash','nagad','paddle','manual')),
   txn_ref     text,
   receipt_path text,
   status      text not null default 'pending' check (status in ('pending','approved','rejected')),

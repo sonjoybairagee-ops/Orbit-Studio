@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 
 const schema = z.object({
   planId: z.string(),
-  method: z.enum(["bkash", "paddle"]),
+  method: z.enum(["bkash", "nagad", "paddle"]),
   txnRef: z.string().optional().nullable(),
   receiptUrl: z.string().optional().nullable(),
 });
@@ -43,8 +43,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Plan not found" }, { status: 404 });
 
   const isPrecomp = plan.slug === "compx-v111" || (plan.name && plan.name.includes("Precomp"));
-  const amount = method === "bkash" ? (isPrecomp ? 129 : 249) : (isPrecomp ? 1 : 2);
-  const currency = method === "bkash" ? "BDT" : (plan.currency ?? "USD");
+  const amount = (method === "bkash" || method === "nagad") ? (isPrecomp ? 129 : 249) : (isPrecomp ? 1 : 2);
+  const currency = (method === "bkash" || method === "nagad") ? "BDT" : (plan.currency ?? "USD");
 
   // Standard essential columns present in Supabase orders table
   const essentialPayload: any = {

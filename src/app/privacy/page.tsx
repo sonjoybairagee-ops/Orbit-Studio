@@ -58,7 +58,7 @@ export default function PrivacyPage() {
           <b>Supabase</b> — database, authentication and private file storage.
         </li>
         <li>
-          <b>Paddle</b> and <b>bKash</b> — payment processing.
+          <b>Paddle</b>, <b>bKash</b>, and <b>Nagad</b> — payment processing.
         </li>
         <li>
           <b>Resend</b> — transactional email delivery.
