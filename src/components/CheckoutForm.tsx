@@ -156,7 +156,8 @@ export function CheckoutForm({ plan }: { plan: any }) {
       </section>
 
       <section className="card p-6 sm:p-8">
-        <h2 className="text-xl font-black">Payment method</        <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <h2 className="text-xl font-black">Payment method</h2>
+        <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
           <button
             onClick={() => setMethod("bkash")}
             className={
