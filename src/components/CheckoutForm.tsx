@@ -71,6 +71,15 @@ export function CheckoutForm({ plan }: { plan: any }) {
       receiptUrl = path;
     }
 
+    if (method === "bkash" || method === "nagad") {
+      const isOnlyNumbers = /^\d+$/.test(txnRef);
+      const isOnlyLetters = /^[a-zA-Z]+$/.test(txnRef);
+      if (isOnlyNumbers || isOnlyLetters || txnRef.length < 8 || txnRef.length > 12) {
+        setBusy(false);
+        return setMsg("Please enter a valid Transaction ID. It should be 8-12 characters and contain both letters and numbers.");
+      }
+    }
+
     const res = await fetch("/api/orders", {
       method: "POST",
       headers: { "content-type": "application/json" },

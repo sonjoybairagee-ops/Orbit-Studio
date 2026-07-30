@@ -23,6 +23,18 @@ export async function POST(req: Request) {
 
   const { planId, method, txnRef, receiptUrl } = parsed.data;
 
+  // Basic validation for manual payment transaction IDs
+  if (method === "bkash" || method === "nagad") {
+    if (!txnRef) {
+      return NextResponse.json({ error: "Transaction ID is required for this payment method" }, { status: 400 });
+    }
+    const isOnlyNumbers = /^\d+$/.test(txnRef);
+    const isOnlyLetters = /^[a-zA-Z]+$/.test(txnRef);
+    if (isOnlyNumbers || isOnlyLetters || txnRef.length < 8 || txnRef.length > 12) {
+      return NextResponse.json({ error: "Invalid Transaction ID format" }, { status: 400 });
+    }
+  }
+
   // Try finding plan by ID or Slug or fetch fallback plan
   let { data: plan } = await supabase
     .from("plans")
