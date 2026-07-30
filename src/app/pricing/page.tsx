@@ -95,7 +95,7 @@ export default async function PricingPage() {
           const isFeatured = index === 0;
           const checkoutId = plan.id;
           return (
-            <div key={plan.slug ?? plan.id} style={{ display: "flex", flexDirection: "column", gap: "20px", width: "100%" }}>
+            <div key={plan.slug ?? plan.id} style={{ display: "flex", flexDirection: "column", gap: "20px", width: "100%", alignItems: "center" }}>
               <article
                 className={`price-card ${isFeatured ? "is-featured" : ""}`}
               >
