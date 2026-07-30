@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export default async function AdminHome() {
   const s = await createClient();
-  const [p, r, l, u, e, approvedData] = await Promise.all([
+  const [p, r, l, u, e, approvedData, bannedData] = await Promise.all([
     s
       .from("orders")
       .select("*", { count: "exact", head: true })
@@ -25,6 +25,18 @@ export default async function AdminHome() {
       .from("orders")
       .select("amount,currency,plans(name)")
       .eq("status", "approved"),
+    s.from("profiles").select("*", { count: "exact", head: true }).eq("is_banned", true),
+  ]);
+  
+  // Calculate BDT Today (UTC+6)
+  const now = new Date();
+  const bdtTime = new Date(now.getTime() + (6 * 60 * 60 * 1000));
+  bdtTime.setUTCHours(0, 0, 0, 0);
+  const todayStartUTC = new Date(bdtTime.getTime() - (6 * 60 * 60 * 1000)).toISOString();
+
+  const [todaySignups, todayOrders] = await Promise.all([
+    s.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", todayStartUTC),
+    s.from("orders").select("amount,currency", { count: "exact" }).eq("status", "approved").gte("created_at", todayStartUTC),
   ]);
   const { data: recent } = await s
     .from("orders")
@@ -54,6 +66,9 @@ export default async function AdminHome() {
     ["Customers", u.count ?? 0, "◎"],
     ["Active licenses", l.count ?? 0, "⌁"],
     ["Action required", (p.count ?? 0) + (r.count ?? 0), "⚡"],
+    ["Today's Signups", todaySignups.count ?? 0, "📈"],
+    ["Today's Purchases", todayOrders.count ?? 0, "🛒"],
+    ["Banned Users", bannedData.count ?? 0, "🚫"],
   ];
   return (
     <div>

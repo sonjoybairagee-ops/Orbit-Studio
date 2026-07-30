@@ -49,6 +49,27 @@ export async function POST(req: Request) {
       if (banError) {
         return NextResponse.json({ error: "Order rejected, but failed to ban user: " + banError.message }, { status: 500 });
       }
+
+      // Update profile
+      const { error: dbError } = await svc
+        .from("profiles")
+        .update({
+          is_banned: true,
+          banned_at: new Date().toISOString(),
+          banned_by: admin.id,
+          ban_reason: "Fake order"
+        })
+        .eq("id", order.user_id);
+
+      if (dbError) {
+        // Attempt rollback
+        const { error: rollbackError } = await svc.auth.admin.updateUserById(order.user_id, { ban_duration: "none" });
+        if (rollbackError) {
+          console.error(`[CRITICAL] Failed to rollback auth ban for user ${order.user_id} after DB update failed. Auth and DB are in inconsistent state.`, rollbackError);
+        }
+        return NextResponse.json({ error: "Failed to update profile. User ban was rolled back." }, { status: 500 });
+      }
+
       await logAdminAction(admin.id, "BANNED_USER", order.user_id, { reason: "Fake order", order_id: orderId });
     }
 

@@ -5,18 +5,19 @@ import { BanUserButton } from "@/components/BanUserButton";
 export default async function UsersPage({
   searchParams,
 }: {
-  searchParams: { q?: string; plan?: string };
+  searchParams: { q?: string; plan?: string; status?: string };
 }) {
   const s = await createClient();
   const q = searchParams.q?.trim() ?? "";
   const plan = searchParams.plan?.trim() ?? "";
+  const status = searchParams.status?.trim() ?? "all";
 
   // Fetch all plans for the dropdown
   const { data: allPlans } = await s.from("plans").select("id,name").order("name");
 
-  let selectStr = "id,full_name,email,role,created_at,licenses(plan_id, plans(name))";
+  let selectStr = "id,full_name,email,role,created_at,is_banned,licenses(plan_id, plans(name))";
   if (plan) {
-    selectStr = "id,full_name,email,role,created_at,licenses!inner(plan_id, plans(name))";
+    selectStr = "id,full_name,email,role,created_at,is_banned,licenses!inner(plan_id, plans(name))";
   }
 
   let query = s
@@ -31,6 +32,12 @@ export default async function UsersPage({
   
   if (plan) {
     query = query.eq("licenses.plan_id", plan);
+  }
+
+  if (status === "active") {
+    query = query.eq("is_banned", false);
+  } else if (status === "banned") {
+    query = query.eq("is_banned", true);
   }
 
   const { data: users, error } = await query;
@@ -77,6 +84,27 @@ export default async function UsersPage({
           </form>
         </div>
       </div>
+      
+      <div className="mt-6 flex gap-2 border-b border-white/10 pb-4">
+        {[
+          { id: "all", label: "All Users" },
+          { id: "active", label: "Active" },
+          { id: "banned", label: "Banned" },
+        ].map((tab) => (
+          <Link
+            key={tab.id}
+            href={`/admin/users?status=${tab.id}${q ? `&q=${encodeURIComponent(q)}` : ""}${plan ? `&plan=${encodeURIComponent(plan)}` : ""}`}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium capitalize transition-colors ${
+              status === tab.id
+                ? "bg-[#45c66d] text-black"
+                : "bg-white/5 text-white hover:bg-white/10"
+            }`}
+          >
+            {tab.label}
+          </Link>
+        ))}
+      </div>
+
       <div className="card mt-8 overflow-hidden">
         <div className="table-wrap">
           <table className="data">
@@ -106,6 +134,11 @@ export default async function UsersPage({
                       <Link href={`/admin/users/${x.id}`} className="hover:text-[#45c66d]">
                         {x.email}
                       </Link>
+                      {x.is_banned && (
+                        <span className="ml-2 badge bg-red-600/20 text-red-500 border border-red-500/30 text-[10px]">
+                          BANNED
+                        </span>
+                      )}
                     </td>
                     <td>
                       {products.length > 0 ? (
@@ -132,7 +165,7 @@ export default async function UsersPage({
                     </td>
                     <td className="text-right">
                       {x.role !== "admin" && (
-                        <BanUserButton userId={x.id} />
+                        <BanUserButton userId={x.id} isBanned={x.is_banned} />
                       )}
                     </td>
                   </tr>

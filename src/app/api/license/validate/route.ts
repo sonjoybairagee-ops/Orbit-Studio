@@ -27,14 +27,24 @@ export async function POST(req: Request) {
     const admin = createAdminClient();
     const { data: license } = await admin
       .from("licenses")
-      .select("status")
+      .select("status, profiles!inner(is_banned)")
       .eq("id", payload.sub as string)
       .maybeSingle();
+      
     if (!license || license.status !== "active")
       return NextResponse.json(
         { valid: false, error: "License not active" },
         { status: 403 },
       );
+
+    // Check if user is banned
+    const profile = Array.isArray(license.profiles) ? license.profiles[0] : license.profiles;
+    if (profile?.is_banned) {
+      return NextResponse.json(
+        { valid: false, error: "Account suspended. Contact support at support@compxorbit.com" },
+        { status: 403 },
+      );
+    }
 
     return NextResponse.json({ valid: true });
   } catch {
