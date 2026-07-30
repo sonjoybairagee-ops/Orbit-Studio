@@ -4,7 +4,7 @@ import { LegalPage, LEGAL_UPDATED } from "@/components/LegalPage";
 export const metadata: Metadata = {
   title: "Refund Policy | CompX Orbit",
   description:
-    "Our 14 day refund promise for CompX Orbit licences, and the few cases it does not cover.",
+    "Our 14-day refund promise for global customers via Paddle, and our local payment refund policy.",
 };
 
 export default function RefundPage() {
@@ -12,12 +12,12 @@ export default function RefundPage() {
     <LegalPage title="Refund Policy" updated={LEGAL_UPDATED}>
       <div className="not-prose mb-8 rounded-xl border border-[#45c66d]/25 bg-[#45c66d]/10 p-5">
         <p className="text-lg font-black text-[#bdf2cc]">
-          14 days, no argument.
+          14-Day Global Refund Policy (Paddle Only)
         </p>
         <p className="muted mt-2 text-sm leading-7">
-          If the panel is not right for you, email us within 14 days of your
-          purchase and we will refund you in full. You do not have to explain
-          why.
+          For our global customers purchasing via Paddle, if the panel is not right for you, email us within 14 days of your
+          purchase and we will refund you in full as per Paddle's refund policy. You do not have to explain
+          why. <br/><br/><strong>Please note:</strong> Purchases made via bKash or other local payment methods are final and non-refundable.
         </p>
       </div>
 
@@ -34,9 +34,6 @@ export default function RefundPage() {
           <b>Card and PayPal via Paddle</b> — 5 to 10 business days back to the
           original method.
         </li>
-        <li>
-          <b>bKash</b> — 3 to 5 business days back to the sending number.
-        </li>
       </ul>
 
       <h2>What happens to your licence</h2>
@@ -48,7 +45,10 @@ export default function RefundPage() {
 
       <h2>What is not covered</h2>
       <ul>
-        <li>requests made more than 14 days after purchase;</li>
+        <li>
+          purchases made via <b>bKash</b> or other local payment methods (these are final and non-refundable);
+        </li>
+        <li>requests made more than 14 days after purchase (for Paddle customers);</li>
         <li>
           licences revoked for sharing or for breaking the{" "}
           <a href="/terms">Terms of Service</a>;
