@@ -53,33 +53,16 @@ export default async function PricingPage() {
     .eq("is_active", true)
     .order("sort_order", { ascending: true });
 
-  const dbPlans = (data ?? []).filter((p: any) => p.slug !== "orbit-bundle-2" && p.max_devices !== 2);
+  const dbPlans = (data ?? []).filter(
+    (p: any) =>
+      p.slug !== "orbit-bundle-2" &&
+      p.max_devices !== 2 &&
+      p.slug !== "compx-v111" &&
+      !(p.name && p.name.includes("Precomp"))
+  );
   const rawPlans = dbPlans.length ? dbPlans : [FALLBACK[0]];
 
-  // Make sure CompX Precomp Manager ($1) is present on the right
-  const hasCompx111 = rawPlans.some((p: any) => p.slug === "compx-v111" || (p.name && p.name.includes("Precomp")));
-  const combined = [...rawPlans];
-  if (!hasCompx111) {
-    combined.push(FALLBACK[1]);
-  }
-
-  const plans = combined.map((plan: any) => {
-    const isPrecomp = plan.slug === "compx-v111" || (plan.name && plan.name.includes("Precomp"));
-    if (isPrecomp) {
-      return {
-        ...plan,
-        name: "CompX Precomp Manager",
-        price: 1,
-        features: plan.features ?? [
-          "After Effects v1.1.1 Extension",
-          "Instant Precomp Management",
-          "Supabase License Engine",
-          "Lifetime updates",
-          "1 device",
-        ],
-      };
-    }
-
+  const plans = rawPlans.map((plan: any) => {
     let name = (plan.name ?? "").replace(/\s*Bundle\s*/gi, " ").replace(/\s+/g, " ").trim();
     if (!name.startsWith("Orbit Studio")) {
       name = "Orbit Studio" + (name ? ` — ${name}` : "");
