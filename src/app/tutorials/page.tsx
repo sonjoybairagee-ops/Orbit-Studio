@@ -32,7 +32,7 @@ export default function TutorialsPage() {
             <div className="aspect-video relative w-full">
               <iframe
                 className="absolute top-0 left-0 w-full h-full"
-                src="https://www.youtube.com/embed/xalYhDRnOh8"
+                src="https://www.youtube.com/embed/xalYhDRnOh8?si=BGENMoA0ULD-wv0n"
                 title="Orbit Studio Complete Tutorial | Master Every Feature in After Effects"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
