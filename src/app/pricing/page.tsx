@@ -95,10 +95,10 @@ export default async function PricingPage() {
           const isFeatured = index === 0;
           const checkoutId = plan.id;
           return (
-            <article
-              key={plan.slug ?? plan.id}
-              className={`price-card ${isFeatured ? "is-featured" : ""}`}
-            >
+            <div key={plan.slug ?? plan.id} style={{ display: "flex", flexDirection: "column", gap: "20px", width: "100%" }}>
+              <article
+                className={`price-card ${isFeatured ? "is-featured" : ""}`}
+              >
               {isFeatured && <span className="price-card__popular">Best for one workstation</span>}
               <div className="price-card__head">
                 <div>
@@ -132,16 +132,17 @@ export default async function PricingPage() {
               <Link href={`/checkout/${checkoutId}`} className="btn-primary price-card__cta">
                 Choose {plan.max_devices === 1 ? "1 device" : "2 devices"} <span>→</span>
               </Link>
-              <small className="price-card__foot" style={{ marginBottom: "16px" }}>Secure checkout · Key delivered to your dashboard</small>
-              <div style={{ display: "flex", justifyContent: "center", gap: "6px", flexWrap: "wrap", marginTop: "4px" }}>
-                <span style={{ padding: "4px 8px", background: "#E2136E", color: "#fff", fontSize: "10px", fontWeight: "bold", borderRadius: "4px" }}>bKash</span>
-                <span style={{ padding: "4px 8px", background: "#ED1C24", color: "#fff", fontSize: "10px", fontWeight: "bold", borderRadius: "4px" }}>Nagad</span>
-                <span style={{ padding: "4px 8px", background: "#1a1f1c", border: "1px solid rgba(116,196,138,0.2)", color: "#b6c2ba", fontSize: "10px", fontWeight: "600", borderRadius: "4px" }}>Visa</span>
-                <span style={{ padding: "4px 8px", background: "#1a1f1c", border: "1px solid rgba(116,196,138,0.2)", color: "#b6c2ba", fontSize: "10px", fontWeight: "600", borderRadius: "4px" }}>Mastercard</span>
-                <span style={{ padding: "4px 8px", background: "#1a1f1c", border: "1px solid rgba(116,196,138,0.2)", color: "#b6c2ba", fontSize: "10px", fontWeight: "600", borderRadius: "4px" }}>G Pay</span>
-                <span style={{ padding: "4px 8px", background: "#1a1f1c", border: "1px solid rgba(116,196,138,0.2)", color: "#b6c2ba", fontSize: "10px", fontWeight: "600", borderRadius: "4px" }}>Apple Pay</span>
-              </div>
+              <small className="price-card__foot">Secure checkout · Key delivered to your dashboard</small>
             </article>
+            <div style={{ display: "flex", justifyContent: "center", gap: "6px", flexWrap: "wrap" }}>
+              <span style={{ padding: "4px 8px", background: "#E2136E", color: "#fff", fontSize: "10px", fontWeight: "bold", borderRadius: "4px" }}>bKash</span>
+              <span style={{ padding: "4px 8px", background: "#ED1C24", color: "#fff", fontSize: "10px", fontWeight: "bold", borderRadius: "4px" }}>Nagad</span>
+              <span style={{ padding: "4px 8px", background: "#1a1f1c", border: "1px solid rgba(116,196,138,0.2)", color: "#b6c2ba", fontSize: "10px", fontWeight: "600", borderRadius: "4px" }}>Visa</span>
+              <span style={{ padding: "4px 8px", background: "#1a1f1c", border: "1px solid rgba(116,196,138,0.2)", color: "#b6c2ba", fontSize: "10px", fontWeight: "600", borderRadius: "4px" }}>Mastercard</span>
+              <span style={{ padding: "4px 8px", background: "#1a1f1c", border: "1px solid rgba(116,196,138,0.2)", color: "#b6c2ba", fontSize: "10px", fontWeight: "600", borderRadius: "4px" }}>G Pay</span>
+              <span style={{ padding: "4px 8px", background: "#1a1f1c", border: "1px solid rgba(116,196,138,0.2)", color: "#b6c2ba", fontSize: "10px", fontWeight: "600", borderRadius: "4px" }}>Apple Pay</span>
+            </div>
+          </div>
           );
         })}
       </section>
