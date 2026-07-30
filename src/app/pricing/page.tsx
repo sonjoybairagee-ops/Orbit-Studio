@@ -113,6 +113,7 @@ export default async function PricingPage() {
               <div className="price-card__price">
                 <span>{plan.currency}</span>
                 <b>${Number(plan.price).toFixed(0)}</b>
+                <span style={{ color: "#7e9084", fontSize: "20px", fontWeight: "700", marginLeft: "4px", alignSelf: "flex-end", marginBottom: "8px" }}>/ ৳{Number(plan.price * 120).toFixed(0)}</span>
                 <small>/ once</small>
               </div>
               <p className="price-card__sub">
@@ -131,7 +132,15 @@ export default async function PricingPage() {
               <Link href={`/checkout/${checkoutId}`} className="btn-primary price-card__cta">
                 Choose {plan.max_devices === 1 ? "1 device" : "2 devices"} <span>→</span>
               </Link>
-              <small className="price-card__foot">Secure checkout · Key delivered to your dashboard</small>
+              <small className="price-card__foot" style={{ marginBottom: "16px" }}>Secure checkout · Key delivered to your dashboard</small>
+              <div style={{ display: "flex", justifyContent: "center", gap: "6px", flexWrap: "wrap", marginTop: "4px" }}>
+                <span style={{ padding: "4px 8px", background: "#E2136E", color: "#fff", fontSize: "10px", fontWeight: "bold", borderRadius: "4px" }}>bKash</span>
+                <span style={{ padding: "4px 8px", background: "#ED1C24", color: "#fff", fontSize: "10px", fontWeight: "bold", borderRadius: "4px" }}>Nagad</span>
+                <span style={{ padding: "4px 8px", background: "#1a1f1c", border: "1px solid rgba(116,196,138,0.2)", color: "#b6c2ba", fontSize: "10px", fontWeight: "600", borderRadius: "4px" }}>Visa</span>
+                <span style={{ padding: "4px 8px", background: "#1a1f1c", border: "1px solid rgba(116,196,138,0.2)", color: "#b6c2ba", fontSize: "10px", fontWeight: "600", borderRadius: "4px" }}>Mastercard</span>
+                <span style={{ padding: "4px 8px", background: "#1a1f1c", border: "1px solid rgba(116,196,138,0.2)", color: "#b6c2ba", fontSize: "10px", fontWeight: "600", borderRadius: "4px" }}>G Pay</span>
+                <span style={{ padding: "4px 8px", background: "#1a1f1c", border: "1px solid rgba(116,196,138,0.2)", color: "#b6c2ba", fontSize: "10px", fontWeight: "600", borderRadius: "4px" }}>Apple Pay</span>
+              </div>
             </article>
           );
         })}
