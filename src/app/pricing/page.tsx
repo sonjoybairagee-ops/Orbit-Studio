@@ -134,13 +134,13 @@ export default async function PricingPage() {
               </Link>
               <small className="price-card__foot">Secure checkout · Key delivered to your dashboard</small>
             </article>
-            <div style={{ display: "flex", justifyContent: "center", gap: "6px", flexWrap: "wrap" }}>
-              <span style={{ padding: "4px 8px", background: "#E2136E", color: "#fff", fontSize: "10px", fontWeight: "bold", borderRadius: "4px" }}>bKash</span>
-              <span style={{ padding: "4px 8px", background: "#ED1C24", color: "#fff", fontSize: "10px", fontWeight: "bold", borderRadius: "4px" }}>Nagad</span>
-              <span style={{ padding: "4px 8px", background: "#1a1f1c", border: "1px solid rgba(116,196,138,0.2)", color: "#b6c2ba", fontSize: "10px", fontWeight: "600", borderRadius: "4px" }}>Visa</span>
-              <span style={{ padding: "4px 8px", background: "#1a1f1c", border: "1px solid rgba(116,196,138,0.2)", color: "#b6c2ba", fontSize: "10px", fontWeight: "600", borderRadius: "4px" }}>Mastercard</span>
-              <span style={{ padding: "4px 8px", background: "#1a1f1c", border: "1px solid rgba(116,196,138,0.2)", color: "#b6c2ba", fontSize: "10px", fontWeight: "600", borderRadius: "4px" }}>G Pay</span>
-              <span style={{ padding: "4px 8px", background: "#1a1f1c", border: "1px solid rgba(116,196,138,0.2)", color: "#b6c2ba", fontSize: "10px", fontWeight: "600", borderRadius: "4px" }}>Apple Pay</span>
+            <div style={{ display: "flex", justifyContent: "center", gap: "10px", flexWrap: "wrap", marginTop: "8px" }}>
+              <span style={{ padding: "8px 16px", background: "linear-gradient(135deg, #E2136E, #B40F57)", color: "#fff", fontSize: "13px", fontWeight: "700", borderRadius: "8px", boxShadow: "0 4px 12px rgba(226, 19, 110, 0.25)", letterSpacing: "0.5px" }}>bKash</span>
+              <span style={{ padding: "8px 16px", background: "linear-gradient(135deg, #ED1C24, #C6151B)", color: "#fff", fontSize: "13px", fontWeight: "700", borderRadius: "8px", boxShadow: "0 4px 12px rgba(237, 28, 36, 0.25)", letterSpacing: "0.5px" }}>Nagad</span>
+              <span style={{ padding: "8px 16px", background: "rgba(255, 255, 255, 0.04)", border: "1px solid rgba(255, 255, 255, 0.1)", color: "#e2e8f0", fontSize: "13px", fontWeight: "600", borderRadius: "8px", letterSpacing: "0.5px" }}>Visa</span>
+              <span style={{ padding: "8px 16px", background: "rgba(255, 255, 255, 0.04)", border: "1px solid rgba(255, 255, 255, 0.1)", color: "#e2e8f0", fontSize: "13px", fontWeight: "600", borderRadius: "8px", letterSpacing: "0.5px" }}>Mastercard</span>
+              <span style={{ padding: "8px 16px", background: "rgba(255, 255, 255, 0.04)", border: "1px solid rgba(255, 255, 255, 0.1)", color: "#e2e8f0", fontSize: "13px", fontWeight: "600", borderRadius: "8px", letterSpacing: "0.5px" }}>G Pay</span>
+              <span style={{ padding: "8px 16px", background: "rgba(255, 255, 255, 0.04)", border: "1px solid rgba(255, 255, 255, 0.1)", color: "#e2e8f0", fontSize: "13px", fontWeight: "600", borderRadius: "8px", letterSpacing: "0.5px" }}>Apple Pay</span>
             </div>
           </div>
           );
