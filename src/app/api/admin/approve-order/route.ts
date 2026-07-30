@@ -7,7 +7,7 @@ import { sendEmail, licenseIssuedEmail } from "@/lib/email";
 
 const schema = z.object({
   orderId: z.string().uuid(),
-  action: z.enum(["approve", "reject"]),
+  action: z.enum(["approve", "reject", "reject_ban"]),
 });
 
 export async function POST(req: Request) {
@@ -38,11 +38,20 @@ export async function POST(req: Request) {
     reviewed_at: new Date().toISOString(),
   };
 
-  if (action === "reject") {
+  if (action === "reject" || action === "reject_ban") {
     await svc
       .from("orders")
       .update({ status: "rejected", ...reviewed })
       .eq("id", orderId);
+      
+    if (action === "reject_ban") {
+      const { error: banError } = await svc.auth.admin.updateUserById(order.user_id, { ban_duration: "876000h" });
+      if (banError) {
+        return NextResponse.json({ error: "Order rejected, but failed to ban user: " + banError.message }, { status: 500 });
+      }
+      await logAdminAction(admin.id, "BANNED_USER", order.user_id, { reason: "Fake order", order_id: orderId });
+    }
+
     await logAdminAction(admin.id, "REJECTED_ORDER", orderId, { user_id: order.user_id, plan_id: order.plan_id });
     return NextResponse.json({ ok: true });
   }

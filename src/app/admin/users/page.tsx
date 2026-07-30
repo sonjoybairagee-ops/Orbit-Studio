@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { BanUserButton } from "@/components/BanUserButton";
 
 export default async function UsersPage({
   searchParams,
@@ -86,6 +87,7 @@ export default async function UsersPage({
                 <th>Products</th>
                 <th>Role</th>
                 <th>Joined</th>
+                <th className="text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -127,6 +129,11 @@ export default async function UsersPage({
                     </td>
                     <td className="muted">
                       {new Date(x.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="text-right">
+                      {x.role !== "admin" && (
+                        <BanUserButton userId={x.id} />
+                      )}
                     </td>
                   </tr>
                 );
