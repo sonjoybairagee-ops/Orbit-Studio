@@ -20,8 +20,9 @@ export function LicenseAdminActions({
   const [reason, setReason] = useState("");
   const [showReasonInput, setShowReasonInput] = useState<string | null>(null);
 
-  async function handleAction(action: string, extraMaxDevices?: number) {
-    if (!reason || reason.trim().length < 3) {
+  async function handleAction(action: string, extraMaxDevices?: number, reasonOverride?: string) {
+    const finalReason = reasonOverride || reason;
+    if (!finalReason || finalReason.trim().length < 3) {
       setError("Please provide a reason (at least 3 characters).");
       return;
     }
@@ -36,7 +37,7 @@ export function LicenseAdminActions({
         body: JSON.stringify({
           licenseId,
           action,
-          reason,
+          reason: finalReason,
           maxDevices: extraMaxDevices,
         }),
       });
@@ -92,6 +93,26 @@ export function LicenseAdminActions({
         </div>
       ) : (
         <>
+          <button
+            type="button"
+            onClick={() => {
+              const limitStr = prompt(`Enter new device limit for this license (current: ${maxDevices}):`, maxDevices.toString());
+              if (!limitStr) return;
+              const limit = parseInt(limitStr, 10);
+              if (isNaN(limit) || limit < 1 || limit > 10) {
+                setError("Limit must be a number between 1 and 10.");
+                return;
+              }
+              const r = prompt("Reason for updating limit:");
+              if (!r) return;
+              setReason(r);
+              handleAction("update_limit", limit, r);
+            }}
+            className="btn btn-xs btn-outline"
+          >
+            ⚙️ Update Limit
+          </button>
+
           <button
             type="button"
             onClick={() => setShowReasonInput("force_reset")}

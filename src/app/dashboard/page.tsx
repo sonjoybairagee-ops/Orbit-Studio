@@ -102,7 +102,7 @@ export default async function DashboardPage({
         </div>
       </div>
 
-      <div className="mt-8 grid gap-6 xl:grid-cols-2">
+      <div className={`mt-8 grid gap-6 ${licenses.length > 1 ? "xl:grid-cols-2" : "grid-cols-1"}`}>
         {licenses.length === 0 ? (
           <div className="card col-span-full p-10 text-center">
             <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl border border-[#45c66d]/25 bg-[#45c66d]/10 text-3xl">
