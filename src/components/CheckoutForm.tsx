@@ -272,7 +272,6 @@ export function CheckoutForm({ plan }: { plan: any }) {
               ) : (
                 <div
                   className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#45c66d]/30 bg-black/30 p-6 text-center transition-all hover:border-[#45c66d] hover:bg-[#45c66d]/5"
-                  onClick={() => document.getElementById("receipt-file-input")?.click()}
                 >
                   <span className="mb-2 text-3xl text-[#45c66d]">📥</span>
                   <p className="text-sm font-bold text-white">
