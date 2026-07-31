@@ -54,6 +54,23 @@ export async function POST(req: Request) {
   if (!plan)
     return NextResponse.json({ error: "Plan not found" }, { status: 404 });
 
+  // Prevent double submissions of manual payments
+  if (txnRef) {
+    const { data: existingTxn } = await supabase
+      .from("orders")
+      .select("id")
+      .eq("txn_ref", txnRef)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (existingTxn) {
+      return NextResponse.json(
+        { error: "This Transaction ID has already been submitted. Please wait for verification." },
+        { status: 400 }
+      );
+    }
+  }
+
   const isPrecomp = plan.slug === "compx-v111" || (plan.name && plan.name.includes("Precomp"));
   const amount = (method === "bkash" || method === "nagad") ? (isPrecomp ? 129 : 249) : (isPrecomp ? 1 : 2);
   const currency = (method === "bkash" || method === "nagad") ? "BDT" : (plan.currency ?? "USD");

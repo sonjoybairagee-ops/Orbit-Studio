@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -15,6 +15,7 @@ export function CheckoutForm({ plan }: { plan: any }) {
   const [file, setFile] = useState<File | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const submittingRef = useRef(false);
 
   const isPrecomp = plan.slug === "compx-v111" || (plan.name && plan.name.includes("Precomp"));
   const bkashBdtAmount = isPrecomp ? 129 : 249;
@@ -48,6 +49,8 @@ export function CheckoutForm({ plan }: { plan: any }) {
 
   async function submitManualPayment(e: React.FormEvent) {
     e.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setBusy(true);
     setMsg(null);
     let receiptUrl: string | null = null;
@@ -66,6 +69,7 @@ export function CheckoutForm({ plan }: { plan: any }) {
         .upload(path, file);
       if (error) {
         setBusy(false);
+        submittingRef.current = false;
         return setMsg("Receipt upload failed: " + error.message);
       }
       receiptUrl = path;
@@ -76,6 +80,7 @@ export function CheckoutForm({ plan }: { plan: any }) {
       const isOnlyLetters = /^[a-zA-Z]+$/.test(txnRef);
       if (isOnlyNumbers || isOnlyLetters || txnRef.length < 8 || txnRef.length > 12) {
         setBusy(false);
+        submittingRef.current = false;
         return setMsg("Please enter a valid Transaction ID. It should be 8-12 characters and contain both letters and numbers.");
       }
     }
@@ -92,6 +97,7 @@ export function CheckoutForm({ plan }: { plan: any }) {
     });
     const json = await res.json();
     setBusy(false);
+    submittingRef.current = false;
     if (!res.ok) return setMsg(json.error);
     setMsg("Payment submitted. Your license will appear after verification.");
     setTimeout(() => router.push("/dashboard"), 1500);
