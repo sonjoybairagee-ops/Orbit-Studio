@@ -96,6 +96,9 @@ export default async function Home() {
               <a href="#product-tour" className="btn-secondary home-hero__secondary">
                 Tour the real panel
               </a>
+              <a href="https://discord.gg/Je8pxakYf" target="_blank" rel="noopener noreferrer" className="btn-secondary home-hero__secondary">
+                Live Support
+              </a>
             </div>
             <div className="home-hero__trust">
               <span><b>7</b> focused workspaces</span>

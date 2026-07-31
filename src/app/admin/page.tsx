@@ -23,7 +23,7 @@ export default async function AdminHome() {
       .eq("is_active", true),
     s
       .from("orders")
-      .select("amount,currency,plans(name)")
+      .select("amount,currency,method,created_at,plans(name)")
       .eq("status", "approved"),
     s.from("profiles").select("*", { count: "exact", head: true }).eq("is_banned", true),
   ]);
@@ -50,6 +50,8 @@ export default async function AdminHome() {
   let totalUSD = 0;
   let totalBDT = 0;
   const productSales: Record<string, number> = {};
+  const methodSales: Record<string, number> = {};
+  const dateSales: Record<string, number> = {};
 
   approvedOrders.forEach((o) => {
     const amt = parseFloat(o.amount);
@@ -59,7 +61,17 @@ export default async function AdminHome() {
     }
     const pName = o.plans?.name || "Unknown Plan";
     productSales[pName] = (productSales[pName] || 0) + 1;
+    
+    const mName = o.method || "unknown";
+    methodSales[mName] = (methodSales[mName] || 0) + 1;
+    
+    if (o.created_at) {
+        const date = new Date(o.created_at).toISOString().split('T')[0];
+        dateSales[date] = (dateSales[date] || 0) + 1;
+    }
   });
+
+  const sortedDates = Object.entries(dateSales).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 7);
 
   const cards = [
     ["Active products", e.count ?? 0, "◈"],
@@ -106,6 +118,30 @@ export default async function AdminHome() {
               </div>
             ))}
             {Object.keys(productSales).length === 0 && <span className="muted text-sm">—</span>}
+          </div>
+        </div>
+        <div className="card p-5 col-span-2">
+          <p className="muted text-xs font-bold uppercase tracking-wider">Payment Method (Sales)</p>
+          <div className="mt-4 flex flex-wrap gap-4">
+            {Object.entries(methodSales).map(([name, count]) => (
+              <div key={name} className="flex items-center gap-2">
+                <span className="badge badge-amber">{name}</span>
+                <span className="font-bold">{count}</span>
+              </div>
+            ))}
+            {Object.keys(methodSales).length === 0 && <span className="muted text-sm">—</span>}
+          </div>
+        </div>
+        <div className="card p-5 col-span-2">
+          <p className="muted text-xs font-bold uppercase tracking-wider">Last 7 Days Sales</p>
+          <div className="mt-4 flex flex-wrap gap-4">
+            {sortedDates.map(([date, count]) => (
+              <div key={date} className="flex items-center gap-2">
+                <span className="badge badge-green">{date}</span>
+                <span className="font-bold">{count}</span>
+              </div>
+            ))}
+            {sortedDates.length === 0 && <span className="muted text-sm">—</span>}
           </div>
         </div>
       </div>
