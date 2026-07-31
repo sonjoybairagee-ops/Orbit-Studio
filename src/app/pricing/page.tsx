@@ -113,7 +113,7 @@ export default async function PricingPage() {
               <div className="price-card__price">
                 <span>{plan.currency}</span>
                 <b>${Number(plan.price).toFixed(0)}</b>
-                <span style={{ color: "#7e9084", fontSize: "20px", fontWeight: "700", marginLeft: "4px", alignSelf: "flex-end", marginBottom: "8px" }}>/ ৳{Number(plan.price * 120).toFixed(0)}</span>
+                <span style={{ color: "#7e9084", fontSize: "20px", fontWeight: "700", marginLeft: "4px", alignSelf: "flex-end", marginBottom: "8px" }}>/ ৳{Number(plan.price * 124.5).toFixed(0)}</span>
                 <small>/ once</small>
               </div>
               <p className="price-card__sub">
