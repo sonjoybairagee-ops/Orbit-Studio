@@ -257,7 +257,7 @@ export default async function UsersPage({
                           className="btn-secondary px-2.5 py-1 text-xs font-bold transition-all hover:border-[#45c66d] hover:text-[#45c66d]"
                           title="View user profile, licenses and orders"
                         >
-                          Details 👁️
+                          Details
                         </Link>
                         {x.role !== "admin" && (
                           <BanUserButton userId={x.id} isBanned={x.is_banned} />
