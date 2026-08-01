@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // GET  — user sees own tickets; admin sees all
 // POST — create new ticket (authenticated users only)
@@ -10,17 +11,20 @@ export async function GET(req: NextRequest) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("is_admin")
+    .select("role")
     .eq("id", user.id)
     .single();
 
-  let query = supabase
+  const isAdmin = profile?.role === "admin";
+  const client = isAdmin ? createAdminClient() : supabase;
+
+  let query = client
     .from("support_tickets")
     .select("*, support_messages(count)")
     .order("last_reply_at", { ascending: false });
 
-  // Admin sees all; regular user only sees own tickets (RLS also enforces this)
-  if (!profile?.is_admin) {
+  // Admin sees all; regular user only sees own tickets
+  if (!isAdmin) {
     query = query.eq("user_id", user.id);
   }
 

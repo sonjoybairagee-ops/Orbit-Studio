@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { resend } from "@/lib/resend";
 import { getSupportReplyEmailHtml } from "@/lib/emails/supportReply";
 
@@ -14,7 +15,16 @@ export async function GET(req: NextRequest) {
   const ticketId = searchParams.get("ticket_id");
   if (!ticketId) return NextResponse.json({ error: "ticket_id required" }, { status: 400 });
 
-  const { data, error } = await supabase
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  const isAdmin = profile?.role === "admin";
+  const client = isAdmin ? createAdminClient() : supabase;
+
+  const { data, error } = await client
     .from("support_messages")
     .select("*")
     .eq("ticket_id", ticketId)
@@ -37,11 +47,12 @@ export async function POST(req: NextRequest) {
   // Determine sender role
   const { data: profile } = await supabase
     .from("profiles")
-    .select("is_admin, full_name")
+    .select("role, full_name")
     .eq("id", user.id)
     .single();
 
-  const isAdmin = profile?.is_admin === true;
+  const isAdmin = profile?.role === "admin";
+  const client = isAdmin ? createAdminClient() : supabase;
   const sender = isAdmin ? "admin" : "user";
 
   // Verify ownership for non-admin users (defense-in-depth)
@@ -57,7 +68,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Insert message
-  const { data: newMsg, error: msgError } = await supabase
+  const { data: newMsg, error: msgError } = await client
     .from("support_messages")
     .insert({ ticket_id, sender, message })
     .select()
@@ -66,33 +77,37 @@ export async function POST(req: NextRequest) {
   if (msgError) return NextResponse.json({ error: msgError.message }, { status: 500 });
 
   // Update ticket last_reply_at and reopen if closed
-  await supabase
+  await client
     .from("support_tickets")
     .update({ last_reply_at: new Date().toISOString(), status: "open" })
     .eq("id", ticket_id);
 
   // If admin replied → send email to user
   if (isAdmin) {
-    const { data: ticket } = await supabase
+    const { data: ticket } = await client
       .from("support_tickets")
       .select("user_email, user_name, subject")
       .eq("id", ticket_id)
       .single();
 
     if (ticket?.user_email) {
-      const html = getSupportReplyEmailHtml({
-        userName: ticket.user_name,
-        subject: ticket.subject,
-        replyMessage: message,
-        ticketUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.compxorbit.com"}/dashboard/support/${ticket_id}`,
-      });
+      try {
+        const html = getSupportReplyEmailHtml({
+          userName: ticket.user_name,
+          subject: ticket.subject,
+          replyMessage: message,
+          ticketUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.compxorbit.com"}/dashboard/support/${ticket_id}`,
+        });
 
-      await resend.emails.send({
-        from: process.env.EMAIL_FROM || "CompX Orbit <hello@compxorbit.com>",
-        to: ticket.user_email,
-        subject: `Re: ${ticket.subject} — CompX Orbit Support`,
-        html,
-      });
+        await resend.emails.send({
+          from: process.env.EMAIL_FROM || "CompX Orbit <hello@compxorbit.com>",
+          to: ticket.user_email,
+          subject: `Re: ${ticket.subject} — CompX Orbit Support`,
+          html,
+        });
+      } catch (emailErr) {
+        console.error("Support reply email error:", emailErr);
+      }
     }
   }
 
@@ -107,14 +122,15 @@ export async function PATCH(req: NextRequest) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("is_admin")
+    .select("role")
     .eq("id", user.id)
     .single();
 
-  if (!profile?.is_admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (profile?.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+  const client = createAdminClient();
   const { ticket_id, status } = await req.json();
-  const { error } = await supabase
+  const { error } = await client
     .from("support_tickets")
     .update({ status })
     .eq("id", ticket_id);
