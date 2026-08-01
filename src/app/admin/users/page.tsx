@@ -2,6 +2,48 @@ import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BanUserButton } from "@/components/BanUserButton";
 
+function getUserSourceInfo(user: any) {
+  const licenses = user.licenses ?? [];
+  const isLegacy = !!user.legacy_source || licenses.some((l: any) => 
+    l.license_type === "legacy_demo" || 
+    l.plans?.name?.toLowerCase().includes("legacy") || 
+    l.plans?.name?.toLowerCase().includes("v1.1.1")
+  );
+
+  const isPromo = licenses.some((l: any) => 
+    l.license_type === "nfr" || 
+    l.license_type === "promotion" || 
+    (l.notes || "").toLowerCase().includes("promo") ||
+    (l.notes || "").toLowerCase().includes("promotion")
+  );
+
+  const orders = licenses.flatMap((l: any) => l.orders ?? []).filter(Boolean);
+  const paidOrders = orders.filter((o: any) => o.status === "approved" || Number(o.amount) > 0);
+  const isPaid = paidOrders.length > 0 || licenses.some((l: any) => l.license_type === "paid" && !isPromo && !isLegacy);
+
+  let badgeLabel = "⚪ No License";
+  let badgeCls = "badge bg-gray-600/20 text-gray-400 border border-gray-500/30 text-[10px]";
+
+  if (isPromo) {
+    badgeLabel = "🎁 Free Promo";
+    badgeCls = "badge badge-purple text-[10px]";
+  } else if (isPaid) {
+    badgeLabel = "💳 Paid User";
+    badgeCls = "badge badge-green text-[10px]";
+  } else if (isLegacy) {
+    badgeLabel = "📦 Legacy User";
+    badgeCls = "badge badge-amber text-[10px]";
+  }
+
+  const paymentMethods = Array.from(new Set([
+    ...orders.map((o: any) => o.method).filter(Boolean),
+    ...(isPromo ? ["promo"] : []),
+    ...(isLegacy ? ["legacy"] : [])
+  ]));
+
+  return { isLegacy, isPromo, isPaid, badgeLabel, badgeCls, paymentMethods };
+}
+
 export default async function UsersPage({
   searchParams,
 }: {
@@ -15,16 +57,16 @@ export default async function UsersPage({
   // Fetch all plans for the dropdown
   const { data: allPlans } = await s.from("plans").select("id,name").order("name");
 
-  let selectStr = "id,full_name,email,role,created_at,is_banned,licenses(plan_id, plans(name))";
+  let selectStr = "id,full_name,email,role,legacy_source,created_at,is_banned,licenses(id,license_type,notes,status,created_at,orders(id,method,amount,currency,status),plans(name))";
   if (plan) {
-    selectStr = "id,full_name,email,role,created_at,is_banned,licenses!inner(plan_id, plans(name))";
+    selectStr = "id,full_name,email,role,legacy_source,created_at,is_banned,licenses!inner(id,license_type,notes,status,created_at,orders(id,method,amount,currency,status),plans(name))";
   }
 
   let query = s
     .from("profiles")
     .select(selectStr)
     .order("created_at", { ascending: false })
-    .limit(100);
+    .limit(200);
 
   if (q) {
     query = query.or(`full_name.ilike.%${q}%,email.ilike.%${q}%`);
@@ -44,6 +86,24 @@ export default async function UsersPage({
   if (error) {
     console.error("UsersPage query error:", error);
   }
+
+  let filteredUsers = users ?? [];
+  if (status === "paid") {
+    filteredUsers = filteredUsers.filter((u: any) => getUserSourceInfo(u).isPaid);
+  } else if (status === "promo") {
+    filteredUsers = filteredUsers.filter((u: any) => getUserSourceInfo(u).isPromo);
+  } else if (status === "legacy") {
+    filteredUsers = filteredUsers.filter((u: any) => getUserSourceInfo(u).isLegacy);
+  }
+
+  const tabs = [
+    { id: "all", label: "All Users" },
+    { id: "paid", label: "Paid Users 💳" },
+    { id: "promo", label: "Free / Promo 🎁" },
+    { id: "legacy", label: "Legacy Users 📦" },
+    { id: "active", label: "Active" },
+    { id: "banned", label: "Banned" },
+  ];
 
   return (
     <div>
@@ -85,12 +145,8 @@ export default async function UsersPage({
         </div>
       </div>
       
-      <div className="mt-6 flex gap-2 border-b border-white/10 pb-4">
-        {[
-          { id: "all", label: "All Users" },
-          { id: "active", label: "Active" },
-          { id: "banned", label: "Banned" },
-        ].map((tab) => (
+      <div className="mt-6 flex flex-wrap gap-2 border-b border-white/10 pb-4">
+        {tabs.map((tab) => (
           <Link
             key={tab.id}
             href={`/admin/users?status=${tab.id}${q ? `&q=${encodeURIComponent(q)}` : ""}${plan ? `&plan=${encodeURIComponent(plan)}` : ""}`}
@@ -112,6 +168,8 @@ export default async function UsersPage({
               <tr>
                 <th>User</th>
                 <th>Email</th>
+                <th>Type / Source</th>
+                <th>Payment Method</th>
                 <th>Products</th>
                 <th>Role</th>
                 <th>Joined</th>
@@ -119,7 +177,8 @@ export default async function UsersPage({
               </tr>
             </thead>
             <tbody>
-              {(users ?? []).map((x: any) => {
+              {filteredUsers.map((x: any) => {
+                const info = getUserSourceInfo(x);
                 const products = Array.from(
                   new Set(x.licenses?.map((l: any) => l.plans?.name).filter(Boolean))
                 );
@@ -138,6 +197,34 @@ export default async function UsersPage({
                         <span className="ml-2 badge bg-red-600/20 text-red-500 border border-red-500/30 text-[10px]">
                           BANNED
                         </span>
+                      )}
+                    </td>
+                    <td>
+                      <span className={info.badgeCls}>
+                        {info.badgeLabel}
+                      </span>
+                    </td>
+                    <td>
+                      {info.paymentMethods.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {info.paymentMethods.map((m) => {
+                            const mUpper = m.toUpperCase();
+                            let cls = "badge text-[10px]";
+                            if (m === "bkash") cls = "badge bg-pink-600/20 text-pink-400 border border-pink-500/30 text-[10px]";
+                            else if (m === "nagad") cls = "badge bg-orange-600/20 text-orange-400 border border-orange-500/30 text-[10px]";
+                            else if (m === "paddle") cls = "badge bg-blue-600/20 text-blue-400 border border-blue-500/30 text-[10px]";
+                            else if (m === "promo") cls = "badge badge-purple text-[10px]";
+                            else if (m === "legacy") cls = "badge badge-amber text-[10px]";
+                            else cls = "badge badge-amber text-[10px]";
+                            return (
+                              <span key={m} className={cls}>
+                                {m === "promo" ? "Free / Promo" : m === "legacy" ? "Legacy Claim" : mUpper}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <span className="muted text-xs">—</span>
                       )}
                     </td>
                     <td>
@@ -164,9 +251,18 @@ export default async function UsersPage({
                       {new Date(x.created_at).toLocaleDateString()}
                     </td>
                     <td className="text-right">
-                      {x.role !== "admin" && (
-                        <BanUserButton userId={x.id} isBanned={x.is_banned} />
-                      )}
+                      <div className="flex items-center justify-end gap-2">
+                        <Link
+                          href={`/admin/users/${x.id}`}
+                          className="btn-secondary px-2.5 py-1 text-xs font-bold transition-all hover:border-[#45c66d] hover:text-[#45c66d]"
+                          title="View user profile, licenses and orders"
+                        >
+                          Details 👁️
+                        </Link>
+                        {x.role !== "admin" && (
+                          <BanUserButton userId={x.id} isBanned={x.is_banned} />
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

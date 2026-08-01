@@ -54,14 +54,15 @@ export async function POST(req: Request) {
   const { data: license, error } = await supabaseAdminClient
     .from("licenses")
     .insert({
-      user_id: null, // Must be claimed manually via redeem key
+      user_id: profile?.id ?? null, // Auto-bind if user account already exists
       plan_id: finalPlanId,
       key,
       status: "active",
-      license_type: "paid", // constraint check fails on 'promotion', defaulting to paid
+      license_type: isPromotion ? "nfr" : "paid",
       max_devices: maxDevices ?? 1,
       grace_days: 7,
       legacy_email: email.trim().toLowerCase(),
+      notes: isPromotion ? "promotion" : null,
     })
     .select()
     .single();
