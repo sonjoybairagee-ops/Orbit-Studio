@@ -17,7 +17,20 @@ export async function GET(req: Request) {
     .select("id, email_opt_out")
     .eq("email_opt_out", false);
 
-  if (type === "plan") {
+  if (type === "paid") {
+    const { data: licenses } = await svc
+      .from("licenses")
+      .select("user_id")
+      .eq("status", "active")
+      .not("user_id", "is", null);
+
+    if (!licenses || licenses.length === 0) {
+      return NextResponse.json({ userIds: [] });
+    }
+
+    const userIds = Array.from(new Set(licenses.map((l) => l.user_id).filter(Boolean)));
+    query = query.in("id", userIds);
+  } else if (type === "plan") {
     if (!planId) return NextResponse.json({ error: "planId is required" }, { status: 400 });
 
     const { data: licenses } = await svc
@@ -30,7 +43,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ userIds: [] });
     }
 
-    const userIds = Array.from(new Set(licenses.map((l) => l.user_id)));
+    const userIds = Array.from(new Set(licenses.map((l) => l.user_id).filter(Boolean)));
     query = query.in("id", userIds);
   }
 

@@ -1,8 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { BroadcastForm } from "@/components/BroadcastForm";
 
 export default async function BroadcastPage() {
-  const s = await createClient();
+  const s = createAdminClient();
 
   const { data: plans } = await s.from("plans").select("id, name");
 

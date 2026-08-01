@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 export function BroadcastForm({ plans }: { plans: any[] }) {
-  const [audience, setAudience] = useState<"all" | "plan">("all");
+  const [audience, setAudience] = useState<"all" | "paid" | "plan">("all");
   const [planId, setPlanId] = useState<string>("");
   const [subject, setSubject] = useState("");
   const [html, setHtml] = useState("");
@@ -87,8 +87,8 @@ export function BroadcastForm({ plans }: { plans: any[] }) {
     <div className="card p-6">
       <form onSubmit={handleSend} className="space-y-6">
         <div>
-          <label className="label">Audience</label>
-          <div className="mt-2 flex gap-4">
+          <label className="label">Audience Target</label>
+          <div className="mt-2 flex flex-wrap gap-4">
             <label className="flex items-center gap-2 cursor-pointer">
               <input 
                 type="radio" 
@@ -97,8 +97,20 @@ export function BroadcastForm({ plans }: { plans: any[] }) {
                 onChange={() => setAudience("all")} 
                 disabled={busy}
               />
-              <span className="text-sm">All Customers</span>
+              <span className="text-sm">All Registered Accounts</span>
             </label>
+
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input 
+                type="radio" 
+                className="accent-[#45c66d]" 
+                checked={audience === "paid"} 
+                onChange={() => setAudience("paid")} 
+                disabled={busy}
+              />
+              <span className="text-sm font-bold text-[#45c66d]">Paid Customers Only 💳</span>
+            </label>
+
             <label className="flex items-center gap-2 cursor-pointer">
               <input 
                 type="radio" 
@@ -107,7 +119,7 @@ export function BroadcastForm({ plans }: { plans: any[] }) {
                 onChange={() => setAudience("plan")} 
                 disabled={busy}
               />
-              <span className="text-sm">Specific Plan</span>
+              <span className="text-sm">Specific Product / Plan</span>
             </label>
           </div>
           
