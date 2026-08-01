@@ -50,7 +50,7 @@ export default async function LicensesPage({
   }));
 
   if (statusFilter === "multi_device") {
-    licenses = licenses.filter((x: any) => x.max_devices > 1 || x.seats.length > 1);
+    licenses = licenses.filter((x: any) => x.max_devices > 1 || (x.activations ?? []).length > 1 || x.seats.length > 1);
   }
 
   const tabs = [
