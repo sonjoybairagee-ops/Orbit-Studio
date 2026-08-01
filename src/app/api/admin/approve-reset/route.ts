@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
   const { data: rr } = await svc
     .from("device_reset_requests")
-    .select("id, status, license_id, user_id, profiles ( email ), licenses ( plans ( name ) )")
+    .select("id, status, license_id, user_id, profiles!device_reset_requests_user_id_fkey ( email ), licenses ( plans ( name ) )")
     .eq("id", requestId)
     .maybeSingle();
 

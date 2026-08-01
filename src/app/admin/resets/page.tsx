@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { ReviewButtons } from "@/components/ReviewButtons";
 import { LicenseAdminActions } from "@/components/LicenseAdminActions";
 
@@ -7,12 +7,12 @@ export const dynamic = "force-dynamic";
 const COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 export default async function ResetsPage() {
-  const s = await createClient();
+  const s = createAdminClient();
   const { data: requests } = await s
     .from("device_reset_requests")
     .select(
       `id, reason, created_at, status,
-       profiles ( email ),
+       profiles!device_reset_requests_user_id_fkey ( email ),
        licenses ( id, key, status, max_devices, last_reset_at, reset_count,
                   plans ( name ),
                   activations ( id, device_label, last_seen, status ) )`,

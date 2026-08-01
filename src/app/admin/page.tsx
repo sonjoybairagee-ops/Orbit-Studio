@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export default async function AdminHome() {
-  const s = await createClient();
+  const s = createAdminClient();
   const [p, r, l, u, e, approvedData, bannedData] = await Promise.all([
     s
       .from("orders")
