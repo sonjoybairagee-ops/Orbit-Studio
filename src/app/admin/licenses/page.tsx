@@ -40,7 +40,6 @@ export default async function LicensesPage({
   if (statusFilter && statusFilter !== "multi_device") {
     query = query.eq("status", statusFilter);
   }
-  if (q) query = query.ilike("key", `%${q}%`);
 
   const { data: rows } = await query;
 
@@ -48,6 +47,18 @@ export default async function LicensesPage({
     ...x,
     seats: (x.activations ?? []).filter((a: any) => a.status === "active"),
   }));
+
+  if (q) {
+    const qLower = q.toLowerCase();
+    licenses = licenses.filter((x: any) => {
+      const keyMatch = x.key?.toLowerCase().includes(qLower);
+      const legacyEmailMatch = x.legacy_email?.toLowerCase().includes(qLower);
+      const profileEmailMatch = x.profiles?.email?.toLowerCase().includes(qLower);
+      const profileNameMatch = x.profiles?.full_name?.toLowerCase().includes(qLower);
+      const planNameMatch = x.plans?.name?.toLowerCase().includes(qLower);
+      return keyMatch || legacyEmailMatch || profileEmailMatch || profileNameMatch || planNameMatch;
+    });
+  }
 
   if (statusFilter === "multi_device") {
     licenses = licenses.filter((x: any) => x.max_devices > 1 || (x.activations ?? []).length > 1 || x.seats.length > 1);
@@ -79,7 +90,7 @@ export default async function LicensesPage({
           {tabs.map(([value, label]) => (
             <Link
               key={label}
-              href={value ? `/admin/licenses?status=${value}` : "/admin/licenses"}
+              href={value ? `/admin/licenses?status=${value}${q ? `&q=${encodeURIComponent(q)}` : ""}` : `/admin/licenses${q ? `?q=${encodeURIComponent(q)}` : ""}`}
               className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
                 statusFilter === value
                   ? "bg-[#45c66d] text-[#041008]"
@@ -91,11 +102,12 @@ export default async function LicensesPage({
           ))}
         </div>
         <form className="ml-auto" action="/admin/licenses">
+          {statusFilter && <input type="hidden" name="status" value={statusFilter} />}
           <input
             name="q"
             defaultValue={q}
-            className="input !mt-0 w-[240px]"
-            placeholder="Search a license key…"
+            className="input !mt-0 w-[260px]"
+            placeholder="Search key or email…"
           />
         </form>
       </div>
