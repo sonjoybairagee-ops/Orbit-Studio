@@ -14,6 +14,7 @@ const schema = z.object({
     "suspend",
     "reactivate",
     "set_seats",
+    "update_limit",
   ]),
   reason: z.string().min(3, "Please write a short reason.").max(500),
   maxDevices: z.number().int().min(1).max(10).optional(),
@@ -110,7 +111,7 @@ export async function POST(req: Request) {
     message = "License reactivated.";
   }
 
-  if (action === "set_seats") {
+  if (action === "set_seats" || action === "update_limit") {
     if (!maxDevices)
       return NextResponse.json(
         { error: "Please choose a device limit." },
@@ -127,7 +128,7 @@ export async function POST(req: Request) {
     license_id: licenseId,
     user_id: license.user_id,
     actor_id: admin.id,
-    event: action === "set_seats" ? "issue" : action,
+    event: (action === "set_seats" || action === "update_limit") ? "issue" : action,
     ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
     user_agent: req.headers.get("user-agent"),
     meta: { reason, action, maxDevices: maxDevices ?? null, source: "admin" },

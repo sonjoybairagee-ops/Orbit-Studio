@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { LicenseAdminActions } from "@/components/LicenseAdminActions";
 import { AdminCreateLicenseModal } from "@/components/AdminCreateLicenseModal";
 
@@ -19,7 +19,7 @@ export default async function LicensesPage({
 }: {
   searchParams: { q?: string; status?: string };
 }) {
-  const s = await createClient();
+  const s = createAdminClient();
   const q = searchParams.q?.trim() ?? "";
   const statusFilter = searchParams.status ?? "";
 
@@ -37,19 +37,26 @@ export default async function LicensesPage({
     .order("created_at", { ascending: false })
     .limit(200);
 
-  if (statusFilter) query = query.eq("status", statusFilter);
+  if (statusFilter && statusFilter !== "multi_device") {
+    query = query.eq("status", statusFilter);
+  }
   if (q) query = query.ilike("key", `%${q}%`);
 
   const { data: rows } = await query;
 
-  const licenses = (rows ?? []).map((x: any) => ({
+  let licenses = (rows ?? []).map((x: any) => ({
     ...x,
     seats: (x.activations ?? []).filter((a: any) => a.status === "active"),
   }));
 
+  if (statusFilter === "multi_device") {
+    licenses = licenses.filter((x: any) => x.max_devices > 1 || x.seats.length > 1);
+  }
+
   const tabs = [
     ["", "All"],
     ["active", "Active"],
+    ["multi_device", "Multi-Device"],
     ["suspended", "Suspended"],
     ["revoked", "Revoked"],
   ];
@@ -120,6 +127,9 @@ export default async function LicensesPage({
                     )}
                     {x.license_type === "promotion" && (
                       <span className="badge badge-purple">🎁 Promotion</span>
+                    )}
+                    {x.max_devices > 1 && (
+                      <span className="badge badge-purple font-bold">⚡ Multi-Device ({x.max_devices} slots)</span>
                     )}
                   </div>
                   <p className="muted mt-2 text-sm">

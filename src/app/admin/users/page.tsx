@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { BanUserButton } from "@/components/BanUserButton";
 
 export default async function UsersPage({
@@ -7,7 +7,7 @@ export default async function UsersPage({
 }: {
   searchParams: { q?: string; plan?: string; status?: string };
 }) {
-  const s = await createClient();
+  const s = createAdminClient();
   const q = searchParams.q?.trim() ?? "";
   const plan = searchParams.plan?.trim() ?? "";
   const status = searchParams.status?.trim() ?? "all";
