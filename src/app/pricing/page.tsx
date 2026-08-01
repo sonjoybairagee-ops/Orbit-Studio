@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { AgencyPricingCard } from "@/components/AgencyPricingCard";
 import { PaymentMethodsSection } from "@/components/PaymentMethodsSection";
 
 export const dynamic = "force-dynamic";
@@ -131,13 +132,16 @@ export default async function PricingPage() {
               </ul>
 
               <Link href={`/checkout/${checkoutId}`} className="btn-primary price-card__cta">
-                Choose {plan.max_devices === 1 ? "1 device" : "2 devices"} <span>→</span>
+                Choose 1 device <span>→</span>
               </Link>
               <small className="price-card__foot">Secure checkout · Key delivered to your dashboard</small>
             </article>
           </div>
           );
         })}
+
+        {/* Agency Multi-Device Plan Card */}
+        <AgencyPricingCard />
       </section>
 
       {/* Accepted Payment Methods Showcase */}

@@ -83,6 +83,13 @@ export async function POST(req: Request) {
     .update({ status: "approved", ...reviewed })
     .eq("id", orderId);
 
+  // Determine max_devices from order.max_devices, or calculate from order.amount
+  let maxDevicesToIssue = order.max_devices;
+  if (!maxDevicesToIssue || maxDevicesToIssue < 1) {
+    const unitPrice = order.currency === "BDT" ? 249 : 2;
+    maxDevicesToIssue = Math.max(1, Math.round(Number(order.amount) / unitPrice));
+  }
+
   const { data: license, error } = await svc
     .from("licenses")
     .insert({
@@ -92,6 +99,7 @@ export async function POST(req: Request) {
       order_id: order.id,
       key: generateLicenseKey(),
       status: "active",
+      max_devices: maxDevicesToIssue,
     })
     .select()
     .single();

@@ -7,6 +7,7 @@ const schema = z.object({
   method: z.enum(["bkash", "nagad", "paddle"]),
   txnRef: z.string().optional().nullable(),
   receiptUrl: z.string().optional().nullable(),
+  seats: z.number().optional().default(1),
 });
 
 export async function POST(req: Request) {
@@ -21,7 +22,8 @@ export async function POST(req: Request) {
   if (!parsed.success)
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
 
-  const { planId, method, txnRef, receiptUrl } = parsed.data;
+  const { planId, method, txnRef, receiptUrl, seats } = parsed.data;
+  const deviceSeats = Math.max(1, Math.min(20, seats ?? 1));
 
   // Basic validation for manual payment transaction IDs
   if (method === "bkash" || method === "nagad") {
@@ -72,7 +74,8 @@ export async function POST(req: Request) {
   }
 
   const isPrecomp = plan.slug === "compx-v111" || (plan.name && plan.name.includes("Precomp"));
-  const amount = (method === "bkash" || method === "nagad") ? (isPrecomp ? 129 : 249) : (isPrecomp ? 1 : 2);
+  const unitAmount = (method === "bkash" || method === "nagad") ? (isPrecomp ? 129 : 249) : (isPrecomp ? 1 : 2);
+  const amount = unitAmount * deviceSeats;
   const currency = (method === "bkash" || method === "nagad") ? "BDT" : (plan.currency ?? "USD");
 
   // Standard essential columns present in Supabase orders table
@@ -92,6 +95,7 @@ export async function POST(req: Request) {
     .from("orders")
     .insert({
       ...essentialPayload,
+      max_devices: deviceSeats,
       ...(plan.extension_id ? { extension_id: plan.extension_id } : {}),
     })
     .select()

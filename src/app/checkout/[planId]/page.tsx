@@ -5,11 +5,15 @@ import { CheckoutForm } from "@/components/CheckoutForm";
 
 export default async function CheckoutPage({
   params,
+  searchParams,
 }: {
   params: { planId: string };
+  searchParams: { seats?: string };
 }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
+
+  const requestedSeats = Math.max(1, Math.min(20, parseInt(searchParams.seats ?? "1", 10) || 1));
 
   const supabase = await createClient();
   const { data: rawPlan } = await supabase
@@ -56,5 +60,5 @@ export default async function CheckoutPage({
     }
   }
 
-  return <CheckoutForm plan={plan} />;
+  return <CheckoutForm plan={plan} seats={requestedSeats} />;
 }

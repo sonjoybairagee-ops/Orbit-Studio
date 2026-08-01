@@ -8,7 +8,7 @@ const NAGAD_NUMBER = process.env.NEXT_PUBLIC_NAGAD_NUMBER ?? "01993825578";
 const PADDLE_LIVE_TOKEN = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ?? "live_73bd9290c2f284764d988b1054f";
 const PADDLE_PRICE_ID = "pri_01kydan5yvz9a050efd199wrjv";
 
-export function CheckoutForm({ plan }: { plan: any }) {
+export function CheckoutForm({ plan, seats = 1 }: { plan: any; seats?: number }) {
   const router = useRouter();
   const [method, setMethod] = useState<"bkash" | "nagad" | "paddle">("bkash");
   const [txnRef, setTxnRef] = useState("");
@@ -17,11 +17,17 @@ export function CheckoutForm({ plan }: { plan: any }) {
   const [busy, setBusy] = useState(false);
   const submittingRef = useRef(false);
 
+  const deviceSeats = Math.max(1, seats);
   const isPrecomp = plan.slug === "compx-v111" || (plan.name && plan.name.includes("Precomp"));
-  const bkashBdtAmount = isPrecomp ? 129 : 249;
+  
+  const unitBdtAmount = isPrecomp ? 129 : 249;
+  const unitUsdAmount = isPrecomp ? 1 : 2;
+
+  const bkashBdtAmount = unitBdtAmount * deviceSeats;
+  const paddleUsdAmount = unitUsdAmount * deviceSeats;
 
   const displayCurrency = (method === "bkash" || method === "nagad") ? "BDT" : (plan.currency ?? "USD");
-  const displayPrice = (method === "bkash" || method === "nagad") ? bkashBdtAmount : (plan.price ?? 2);
+  const displayPrice = (method === "bkash" || method === "nagad") ? bkashBdtAmount : paddleUsdAmount;
 
   useEffect(() => {
     if (document.getElementById("paddle-js")) return;
@@ -93,6 +99,7 @@ export function CheckoutForm({ plan }: { plan: any }) {
         method: method,
         txnRef,
         receiptUrl,
+        seats: deviceSeats,
       }),
     });
     const json = await res.json();
@@ -114,14 +121,14 @@ export function CheckoutForm({ plan }: { plan: any }) {
     const res = await fetch("/api/orders", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ planId: plan.id, method: "paddle" }),
+      body: JSON.stringify({ planId: plan.id, method: "paddle", seats: deviceSeats }),
     });
     const json = await res.json();
     setBusy(false);
     if (!res.ok) return setMsg(json.error);
     // Always use official Paddle live price ID
     Paddle.Checkout.open({
-      items: [{ priceId: PADDLE_PRICE_ID, quantity: 1 }],
+      items: [{ priceId: PADDLE_PRICE_ID, quantity: deviceSeats }],
       customData: { order_id: json.order?.id ?? "manual" },
     });
   }
@@ -145,7 +152,10 @@ export function CheckoutForm({ plan }: { plan: any }) {
                 <h2 className="mt-3 text-2xl font-black">
                   {(plan.extensions?.name ?? plan.name ?? "").replace(/\s*Bundle\s*/gi, " ").trim()}
                 </h2>
-                <p className="muted mt-1">{(plan.name ?? "").replace(/\s*Bundle\s*/gi, " ").trim()} license</p>
+                <p className="muted mt-1">
+                  {(plan.name ?? "").replace(/\s*Bundle\s*/gi, " ").trim()} license
+                  {deviceSeats > 1 ? ` · Studio Team Plan (${deviceSeats} PCs)` : ""}
+                </p>
               </div>
               <div className="text-right">
                 <span className="muted text-xs font-bold">{displayCurrency}</span>
@@ -157,7 +167,7 @@ export function CheckoutForm({ plan }: { plan: any }) {
           </div>
           <div className="grid gap-3 p-6 sm:grid-cols-3">
             {[
-              "1 device activation",
+              `${deviceSeats} device activation${deviceSeats > 1 ? "s" : ""}`,
               "Private download",
               "Dashboard access",
             ].map((x) => (
@@ -182,7 +192,7 @@ export function CheckoutForm({ plan }: { plan: any }) {
             }
           >
             <span className="rounded bg-white/20 px-1.5 py-0.5 text-[10px]">bKash</span>
-            bKash (249 BDT)
+            bKash ({bkashBdtAmount} BDT)
           </button>
           <button
             onClick={() => setMethod("nagad")}
@@ -193,7 +203,7 @@ export function CheckoutForm({ plan }: { plan: any }) {
             }
           >
             <span className="rounded bg-white/20 px-1.5 py-0.5 text-[10px]">Nagad</span>
-            Nagad (249 BDT)
+            Nagad ({bkashBdtAmount} BDT)
           </button>
           <button
             onClick={() => setMethod("paddle")}
@@ -203,7 +213,7 @@ export function CheckoutForm({ plan }: { plan: any }) {
                 : "btn-secondary py-3 text-sm font-bold sm:col-span-1 col-span-2"
             }
           >
-            Global card ($2 USD)
+            Global card (${paddleUsdAmount} USD)
           </button>
         </div>
         {method === "bkash" || method === "nagad" ? (
