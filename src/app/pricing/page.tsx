@@ -97,46 +97,51 @@ export default async function PricingPage() {
           const isFeatured = index === 0;
           const checkoutId = plan.id;
           return (
-            <div key={plan.slug ?? plan.id} style={{ display: "flex", flexDirection: "column", gap: "20px", width: "100%", alignItems: "center" }}>
+            <div key={plan.slug ?? plan.id} style={{ display: "flex", flexDirection: "column", width: "100%", maxWidth: "460px" }}>
               <article
                 className={`price-card ${isFeatured ? "is-featured" : ""}`}
+                style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}
               >
-              {isFeatured && <span className="price-card__popular">Best for one workstation</span>}
-              <div className="price-card__head">
                 <div>
-                  <p>{plan.max_devices} {plan.max_devices === 1 ? "device" : "devices"}</p>
-                  <h2>{plan.name}</h2>
+                  {isFeatured && <span className="price-card__popular">Best for one workstation</span>}
+                  <div className="price-card__head">
+                    <div>
+                      <p>{plan.max_devices} {plan.max_devices === 1 ? "device" : "devices"}</p>
+                      <h2>{plan.name}</h2>
+                    </div>
+                    <div className="price-card__mark">
+                      <Image src="/compx-mark.png" alt="CompX Orbit" width={26} height={20} unoptimized />
+                    </div>
+                  </div>
+
+                  <div className="price-card__price">
+                    <span>{plan.currency}</span>
+                    <b>${Number(plan.price).toFixed(0)}</b>
+                    <span style={{ color: "#45c66d", fontSize: "20px", fontWeight: "700", marginLeft: "4px", alignSelf: "flex-end", marginBottom: "8px" }}>/ ৳{Number(plan.price * 124.5).toFixed(0)}</span>
+                    <small>/ once</small>
+                  </div>
+                  <p className="price-card__sub">
+                    A single licence unlocks both Orbit Studio panels on each
+                    activated computer.
+                  </p>
+
+                  <ul className="price-card__features">
+                    {(plan.features ?? []).map((feature: string) => (
+                      <li key={feature}>
+                        <span>✓</span> {feature}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <div className="price-card__mark">
-                  <Image src="/compx-mark.png" alt="CompX Orbit" width={26} height={20} unoptimized />
+
+                <div>
+                  <Link href={`/checkout/${checkoutId}`} className="btn-primary price-card__cta">
+                    Choose 1 device <span>→</span>
+                  </Link>
+                  <small className="price-card__foot">Secure checkout · Key delivered to your dashboard</small>
                 </div>
-              </div>
-
-              <div className="price-card__price">
-                <span>{plan.currency}</span>
-                <b>${Number(plan.price).toFixed(0)}</b>
-                <span style={{ color: "#7e9084", fontSize: "20px", fontWeight: "700", marginLeft: "4px", alignSelf: "flex-end", marginBottom: "8px" }}>/ ৳{Number(plan.price * 124.5).toFixed(0)}</span>
-                <small>/ once</small>
-              </div>
-              <p className="price-card__sub">
-                A single licence unlocks both Orbit Studio panels on each
-                activated computer.
-              </p>
-
-              <ul className="price-card__features">
-                {(plan.features ?? []).map((feature: string) => (
-                  <li key={feature}>
-                    <span>✓</span> {feature}
-                  </li>
-                ))}
-              </ul>
-
-              <Link href={`/checkout/${checkoutId}`} className="btn-primary price-card__cta">
-                Choose 1 device <span>→</span>
-              </Link>
-              <small className="price-card__foot">Secure checkout · Key delivered to your dashboard</small>
-            </article>
-          </div>
+              </article>
+            </div>
           );
         })}
 

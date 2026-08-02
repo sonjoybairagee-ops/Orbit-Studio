@@ -16,105 +16,108 @@ export function AgencyPricingCard() {
   const presetSeats = [2, 3, 5, 10];
 
   return (
-    <article className="price-card relative overflow-hidden border-2 border-[#45c66d]/40 bg-gradient-to-b from-[#45c66d]/15 via-black/80 to-black p-6 shadow-[0_0_40px_rgba(69,198,109,0.15)] transition-all hover:border-[#45c66d]/70">
-      <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-[#45c66d]/20 blur-2xl pointer-events-none" />
-      
-      <span className="price-card__popular !bg-[#45c66d] !text-[#041008] font-black uppercase tracking-wider text-[11px]">
-        🎬 Video Editing Agency & Team Plan
-      </span>
-
-      <div className="price-card__head mt-3">
-        <div>
-          <p className="text-[#45c66d] font-bold text-xs uppercase tracking-widest">
-            Multi-Device Workstations
-          </p>
-          <h2 className="text-2xl font-black text-white">Studio Team License</h2>
-        </div>
-        <div className="price-card__mark">
-          <Image src="/compx-mark.png" alt="CompX Orbit" width={26} height={20} unoptimized />
-        </div>
-      </div>
-
-      {/* Seat Selection Controls */}
-      <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
-        <label className="text-xs font-bold uppercase tracking-wider text-[#aab0bd] block mb-2">
-          Select Number of Devices / PCs:
-        </label>
-        
-        {/* Preset Pills */}
-        <div className="flex flex-wrap gap-2 mb-3">
-          {presetSeats.map((num) => (
-            <button
-              key={num}
-              type="button"
-              onClick={() => setSeats(num)}
-              className={`rounded-lg px-3 py-1 text-xs font-black transition-all ${
-                seats === num
-                  ? "bg-[#45c66d] text-black shadow-md scale-105"
-                  : "bg-white/10 text-white hover:bg-white/20"
-              }`}
-            >
-              {num} Devices ({num * unitBdt} ৳)
-            </button>
-          ))}
-        </div>
-
-        {/* Custom Stepper */}
-        <div className="flex items-center justify-between gap-4 rounded-lg bg-black/60 p-2 border border-white/10">
-          <button
-            type="button"
-            onClick={() => setSeats(Math.max(2, seats - 1))}
-            className="flex h-8 w-8 items-center justify-center rounded-md bg-white/10 text-lg font-bold text-white transition-all hover:bg-[#45c66d] hover:text-black"
-          >
-            -
-          </button>
-          <div className="text-center">
-            <span className="text-lg font-black text-[#45c66d]">{seats}</span>
-            <span className="text-xs text-white/70 ml-1">Workstations / PCs</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setSeats(Math.min(20, seats + 1))}
-            className="flex h-8 w-8 items-center justify-center rounded-md bg-white/10 text-lg font-bold text-white transition-all hover:bg-[#45c66d] hover:text-black"
-          >
-            +
-          </button>
-        </div>
-      </div>
-
-      {/* Dynamic Price Display */}
-      <div className="price-card__price mt-5">
-        <span>USD</span>
-        <b>${totalUsd}</b>
-        <span style={{ color: "#45c66d", fontSize: "22px", fontWeight: "800", marginLeft: "6px", alignSelf: "flex-end", marginBottom: "6px" }}>
-          / ৳{totalBdt}
+    <div style={{ display: "flex", flexDirection: "column", width: "100%", maxWidth: "460px" }}>
+      <article className="price-card is-featured" style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+        <span className="price-card__popular">
+          Flexible team & studio plan
         </span>
-        <small>/ once ({seats} PCs)</small>
-      </div>
 
-      <p className="price-card__sub text-xs muted mt-1">
-        Calculation: ৳{unitBdt} × {seats} devices = ৳{totalBdt} (Lifetime payment for {seats} workstations).
-      </p>
+        <div>
+          <div className="price-card__head">
+            <div>
+              <p>{seats} Workstations / PCs</p>
+              <h2>Studio Team License</h2>
+            </div>
+            <div className="price-card__mark">
+              <Image src="/compx-mark.png" alt="CompX Orbit" width={26} height={20} unoptimized />
+            </div>
+          </div>
 
-      {/* Features */}
-      <ul className="price-card__features mt-4 space-y-2">
-        <li><span>✓</span> After Effects + Premiere Pro Included</li>
-        <li><span>✓</span> <b>{seats} Device Activations</b> (Simultaneous Workstations)</li>
-        <li><span>✓</span> <b>1 Master License Key</b> for your entire studio team</li>
-        <li><span>✓</span> Centralized seat management & remote device release</li>
-        <li><span>✓</span> Universal asset library & lifetime updates</li>
-      </ul>
+          {/* Dynamic Price Display */}
+          <div className="price-card__price">
+            <span>USD</span>
+            <b>${totalUsd}</b>
+            <span style={{ color: "#45c66d", fontSize: "20px", fontWeight: "700", marginLeft: "4px", alignSelf: "flex-end", marginBottom: "8px" }}>
+              / ৳{totalBdt}
+            </span>
+            <small>/ once ({seats} PCs)</small>
+          </div>
 
-      {/* CTA Button */}
-      <Link
-        href={`/checkout/orbit-bundle?seats=${seats}`}
-        className="btn-primary price-card__cta mt-6 w-full text-center py-3 font-black text-sm bg-gradient-to-r from-[#45c66d] to-[#34a853] text-black shadow-lg hover:brightness-110"
-      >
-        Order {seats} Devices ({totalBdt} ৳) <span>→</span>
-      </Link>
-      <small className="price-card__foot mt-2 block text-center text-xs text-white/50">
-        Instant key delivery to dashboard · Secure verification
-      </small>
-    </article>
+          <p className="price-card__sub">
+            Lifetime payment for {seats} workstations (৳{unitBdt} × {seats} devices).
+          </p>
+
+          {/* Seat Selection Controls */}
+          <div style={{ marginTop: "16px", borderRadius: "12px", border: "1px solid rgba(69, 198, 109, 0.25)", background: "rgba(69, 198, 109, 0.08)", padding: "14px" }}>
+            <label style={{ fontSize: "11px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.08em", color: "#aab0bd", display: "block", marginBottom: "10px" }}>
+              Select Workstations:
+            </label>
+            
+            {/* Preset Pills */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "10px" }}>
+              {presetSeats.map((num) => (
+                <button
+                  key={num}
+                  type="button"
+                  onClick={() => setSeats(num)}
+                  style={{
+                    borderRadius: "8px",
+                    padding: "6px 10px",
+                    fontSize: "11px",
+                    fontWeight: "800",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    border: seats === num ? "1px solid #45c66d" : "1px solid rgba(255,255,255,0.12)",
+                    background: seats === num ? "#45c66d" : "rgba(255,255,255,0.06)",
+                    color: seats === num ? "#041008" : "#fff",
+                  }}
+                >
+                  {num} PCs (৳{num * unitBdt})
+                </button>
+              ))}
+            </div>
+
+            {/* Stepper */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", borderRadius: "8px", background: "rgba(0,0,0,0.6)", padding: "6px 12px", border: "1px solid rgba(255,255,255,0.1)" }}>
+              <button
+                type="button"
+                onClick={() => setSeats(Math.max(2, seats - 1))}
+                style={{ width: "32px", height: "32px", borderRadius: "6px", background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", fontSize: "16px", fontWeight: "bold", cursor: "pointer" }}
+              >
+                -
+              </button>
+              <div style={{ textAlign: "center" }}>
+                <span style={{ fontSize: "17px", fontWeight: "900", color: "#45c66d" }}>{seats}</span>
+                <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.7)", marginLeft: "5px" }}>Workstations / PCs</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSeats(Math.min(20, seats + 1))}
+                style={{ width: "32px", height: "32px", borderRadius: "6px", background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", fontSize: "16px", fontWeight: "bold", cursor: "pointer" }}
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          {/* Features */}
+          <ul className="price-card__features">
+            <li><span>✓</span> After Effects + Premiere Pro Included</li>
+            <li><span>✓</span> <b>{seats} Device Activations</b> (Simultaneous Workstations)</li>
+            <li><span>✓</span> <b>1 Master License Key</b> for your team</li>
+            <li><span>✓</span> Centralized seat management & remote device release</li>
+            <li><span>✓</span> Universal asset library & lifetime updates</li>
+          </ul>
+        </div>
+
+        <div>
+          {/* CTA Button */}
+          <Link href={`/checkout/orbit-bundle?seats=${seats}`} className="btn-primary price-card__cta">
+            Order {seats} Devices (৳{totalBdt}) <span>→</span>
+          </Link>
+          <small className="price-card__foot">Instant key delivery to dashboard · Secure verification</small>
+        </div>
+      </article>
+    </div>
   );
 }

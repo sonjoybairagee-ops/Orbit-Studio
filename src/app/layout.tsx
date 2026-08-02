@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AuthHashRedirect } from "@/components/AuthHashRedirect";
 import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"] });
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://compxorbit.com";
@@ -85,7 +88,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
+      <body className={inter.className}>
         <AuthHashRedirect />
         <a href="#main" className="skip-link">
           Skip to content
