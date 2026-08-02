@@ -387,7 +387,7 @@ export function LicenseCard({ license }: { license: LicenseView }) {
                 {!isLegacy && (
                   <>
                     <a
-                      href={`/api/download-asset?file=${encodeURIComponent("50 Mogrt pack.rar")}`}
+                      href={`/api/download-asset?file=${encodeURIComponent("50 Mogrt pack.zip")}`}
                       className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#eab308] hover:text-[#eab308]"
                       title="Download 50+ MOGRTs Templates Pack from Cloudflare R2"
                     >
