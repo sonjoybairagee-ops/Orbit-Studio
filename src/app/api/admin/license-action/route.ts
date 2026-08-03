@@ -48,13 +48,13 @@ export async function POST(req: Request) {
   let message = "";
 
   if (action === "force_reset") {
-    // Release every active seat AND clear the cooldown so the customer can
-    // activate again immediately.
+    // Release ALL seats (any status) AND clear the cooldown so the customer
+    // can activate again immediately.
     await svc
       .from("activations")
       .update({ status: "released", released_at: now })
       .eq("license_id", licenseId)
-      .eq("status", "active");
+      .neq("status", "released"); // release everything that isn't already released
 
     await svc
       .from("licenses")

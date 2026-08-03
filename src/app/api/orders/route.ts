@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
 
   const { planId, method, txnRef, receiptUrl, seats } = parsed.data;
-  const deviceSeats = Math.max(1, Math.min(20, seats ?? 1));
+  const deviceSeats = Math.max(1, Math.min(10, seats ?? 1));
 
   // Basic validation for manual payment transaction IDs
   if (method === "bkash" || method === "nagad") {
