@@ -25,14 +25,12 @@ export async function POST(req: Request) {
       );
 
     const admin = createAdminClient();
-
-    // Check license status + ban check
     const { data: license } = await admin
       .from("licenses")
-      .select("id, status, profiles!inner(is_banned)")
+      .select("status, profiles!inner(is_banned)")
       .eq("id", payload.sub as string)
       .maybeSingle();
-
+      
     if (!license || license.status !== "active")
       return NextResponse.json(
         { valid: false, error: "License not active" },
@@ -40,45 +38,28 @@ export async function POST(req: Request) {
       );
 
     // Check if user is banned
-    const profile = Array.isArray(license.profiles)
-      ? license.profiles[0]
-      : license.profiles;
-    if ((profile as any)?.is_banned) {
+    const profile = Array.isArray(license.profiles) ? license.profiles[0] : license.profiles;
+    if (profile?.is_banned) {
       return NextResponse.json(
-        {
-          valid: false,
-          error: "Account suspended. Contact support at support@compxorbit.com",
-        },
+        { valid: false, error: "Account suspended. Contact support at support@compxorbit.com" },
         { status: 403 },
       );
     }
 
-    // Check if this device still has an active seat in the activations table
+    // Check if activation seat is active (if seat entry exists in activations table)
     const { data: seat } = await admin
       .from("activations")
-      .select("id, status")
-      .eq("license_id", license.id)
+      .select("status")
+      .eq("license_id", payload.sub as string)
       .eq("device_hash", parsed.data.deviceId)
-      .eq("status", "active")
       .maybeSingle();
 
-    if (!seat) {
+    if (seat && seat.status !== "active") {
       return NextResponse.json(
-        {
-          valid: false,
-          code: "SEAT_RELEASED",
-          error:
-            "This device was unlinked from the license. Please activate again.",
-        },
+        { valid: false, error: "Device seat released or unlinked" },
         { status: 403 },
       );
     }
-
-    // Update last_seen for heartbeat tracking
-    await admin
-      .from("activations")
-      .update({ last_seen: new Date().toISOString() })
-      .eq("id", seat.id);
 
     return NextResponse.json({ valid: true });
   } catch {

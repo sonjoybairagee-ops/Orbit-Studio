@@ -39,9 +39,9 @@ export async function POST(req: Request) {
       { status: 403 },
     );
 
-  // 24h cooldown only applies to single-device plans (anti-sharing).
-  // Multi-device plans can freely manage their devices.
-  if ((license.max_devices ?? 1) <= 1) {
+  const maxDevices = license.max_devices ?? 1;
+  // Apply 24h cooldown check only for single-device licenses
+  if (maxDevices === 1) {
     const remaining = resetCooldownRemainingMs(license.last_reset_at);
     if (remaining > 0) {
       const hours = Math.ceil(remaining / 3_600_000);
