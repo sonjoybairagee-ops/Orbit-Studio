@@ -14,6 +14,7 @@ export type Activation = {
 
 export type LicenseView = {
   id: string;
+  order_id?: string | null;
   key: string;
   status: "active" | "suspended" | "revoked" | "expired";
   license_type: "paid" | "legacy_demo" | "trial" | "nfr";
@@ -332,14 +333,21 @@ export function LicenseCard({ license }: { license: LicenseView }) {
         </div>
       )}
 
-      {/* downloads */}
+      {/* downloads & invoice */}
       {license.status === "active" && (
         <div className="mt-6 border-t border-white/10 pt-5">
           <div className="mb-3 flex items-center justify-between">
-            <p className="label mb-0">Official Downloads</p>
-            <span className="text-[10px] font-bold text-[#45c66d]">
-              {isLegacy ? "v1.1.2 Released" : "v2.3.1 Released (Windows & macOS)"}
-            </span>
+            <p className="label mb-0">Official Downloads & Invoice</p>
+            {license.order_id && (
+              <a
+                href={`/invoice/${license.order_id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-bold text-[#45c66d] hover:underline flex items-center gap-1"
+              >
+                <span>📄</span> Official Invoice ↗
+              </a>
+            )}
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {/* If Legacy User (Redeemed Key) */}

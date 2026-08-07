@@ -35,12 +35,15 @@ export function getNewLicenseEmailHtml({
   extensionName,
   licenseKey,
   maxDevices = 1,
+  orderId,
 }: {
   customerName: string;
   extensionName: string;
   licenseKey: string;
   maxDevices?: number;
+  orderId?: string;
 }) {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://compxorbit.com";
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -80,11 +83,11 @@ export function getNewLicenseEmailHtml({
             </td>
           </tr>
           <tr>
-            <td style="padding:0 40px 24px 40px;">
+            <td style="padding:0 40px 16px 40px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="border-radius:8px; background-color:#22c55e; text-align:center;">
-                    <a href="${process.env.NEXT_PUBLIC_SITE_URL || "https://compxorbit.com"}/dashboard"
+                    <a href="${siteUrl}/dashboard"
                        style="display:block; padding:14px 0; color:#0a0a0a; text-decoration:none; font-size:14px; font-weight:700;">
                       Go to My Dashboard &nbsp;&#8594;
                     </a>
@@ -93,6 +96,20 @@ export function getNewLicenseEmailHtml({
               </table>
             </td>
           </tr>
+          ${
+            orderId
+              ? `
+          <tr>
+            <td style="padding:0 40px 24px 40px; text-align:center;">
+              <a href="${siteUrl}/invoice/${orderId}"
+                 style="color:#a0a0a0; text-decoration:underline; font-size:12px;">
+                📄 View & Download Official Payment Invoice / Memo
+              </a>
+            </td>
+          </tr>
+          `
+              : ""
+          }
           ${getEmailFooter()}
         </table>
       </td>

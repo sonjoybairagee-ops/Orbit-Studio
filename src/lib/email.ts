@@ -100,13 +100,21 @@ function createPremiumTemplate(title: string, content: string): string {
   `;
 }
 
-export function licenseIssuedEmail(extensionName: string, key: string): string {
+export function licenseIssuedEmail(
+  extensionName: string,
+  key: string,
+  customerName: string = "Creator",
+  maxDevices: number = 1,
+  orderId?: string
+): string {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://compxorbit.com";
   const content = `
-    <p style="margin-top: 0;">Thanks for purchasing <b>${extensionName}</b>. Your account is ready and your lifetime license has been automatically generated.</p>
+    <p style="margin-top: 0;">Thanks for purchasing <b>${extensionName}</b>. Your account is ready and your license key has been generated.</p>
     
     <div style="margin: 30px 0; padding: 20px; background-color: rgba(69, 198, 109, 0.05); border: 1px solid rgba(69, 198, 109, 0.2); border-radius: 10px; text-align: center;">
       <p style="margin: 0 0 8px 0; font-size: 11px; font-weight: 700; color: ${ORBIT_GREEN}; text-transform: uppercase; letter-spacing: 1px;">Your CX License Key</p>
       <code style="display: block; font-family: ui-monospace, monospace; font-size: 18px; font-weight: 700; color: ${TEXT_WHITE}; word-break: break-all; letter-spacing: 1px;">${key}</code>
+      <p style="margin: 8px 0 0 0; font-size: 11px; color: #8fa896;">Allowed Devices: ${maxDevices} Seat(s)</p>
     </div>
 
     <p style="margin-bottom: 25px;">You can now log in to your dashboard to download the extension files and manage your active devices.</p>
@@ -114,14 +122,26 @@ export function licenseIssuedEmail(extensionName: string, key: string): string {
     <table width="100%" border="0" cellspacing="0" cellpadding="0">
       <tr>
         <td align="center">
-          <a href="https://compxorbit.com/dashboard" style="display: inline-block; padding: 14px 28px; background: linear-gradient(180deg, #65dc86, #38b75f); color: #041008; font-weight: 700; font-size: 15px; text-decoration: none; border-radius: 8px; border: 1px solid #6ee08d; box-shadow: 0 8px 20px rgba(69, 198, 109, 0.25);">
+          <a href="${siteUrl}/dashboard" style="display: inline-block; padding: 14px 28px; background: linear-gradient(180deg, #65dc86, #38b75f); color: #041008; font-weight: 700; font-size: 15px; text-decoration: none; border-radius: 8px; border: 1px solid #6ee08d; box-shadow: 0 8px 20px rgba(69, 198, 109, 0.25);">
             Access your Dashboard &rarr;
           </a>
         </td>
       </tr>
     </table>
+
+    ${
+      orderId
+        ? `
+    <div style="margin-top: 20px; text-align: center;">
+      <a href="${siteUrl}/invoice/${orderId}" style="color: #a0a0a0; font-size: 13px; text-decoration: underline;">
+        📄 View & Download Official Payment Invoice / Memo
+      </a>
+    </div>
+    `
+        : ""
+    }
   `;
-  return createPremiumTemplate("Your license is ready \uD83C\uDF89", content);
+  return createPremiumTemplate("Your license is ready 🎉", content);
 }
 
 export function resetApprovedEmail(extensionName: string): string {

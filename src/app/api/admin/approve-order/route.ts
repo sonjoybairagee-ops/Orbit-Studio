@@ -109,7 +109,7 @@ export async function POST(req: Request) {
   // Email the license key to the buyer.
   const { data: profile } = await svc
     .from("profiles")
-    .select("email")
+    .select("email, full_name")
     .eq("id", order.user_id)
     .single();
   if (profile?.email) {
@@ -119,6 +119,9 @@ export async function POST(req: Request) {
       html: licenseIssuedEmail(
         order.plans?.name ?? "your extension",
         license.key,
+        profile.full_name || "Creator",
+        license.max_devices,
+        order.id
       ),
     });
   }

@@ -118,6 +118,17 @@ export function BulkPaymentList({ orders }: { orders: any[] }) {
                     View receipt ↗
                   </a>
                 )}
+                {o.status === "approved" && (
+                  <a
+                    className="badge badge-green hover:text-white"
+                    href={`/invoice/${o.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    📄 Invoice ↗
+                  </a>
+                )}
               </div>
             </div>
           </div>

@@ -20,7 +20,7 @@ export default async function DashboardPage({
   const { data: rows } = await supabase
     .from("licenses")
     .select(
-      `id, key, status, license_type, max_devices, grace_days, expires_at,
+      `id, order_id, key, status, license_type, max_devices, grace_days, expires_at,
        last_reset_at, revoked_reason, created_at,
        plans ( name, slug, plan_extensions ( extensions ( slug, name ) ) ),
        activations ( id, device_label, os, host_apps, app_version,
@@ -32,6 +32,7 @@ export default async function DashboardPage({
 
   const licenses: LicenseView[] = (rows ?? []).map((r: any) => ({
     id: r.id,
+    order_id: r.order_id,
     key: r.key,
     status: r.status,
     license_type: r.license_type,
