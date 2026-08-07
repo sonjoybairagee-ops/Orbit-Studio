@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 
   const { data: license } = await supabase
     .from("licenses")
-    .select("id, status, last_reset_at")
+    .select("id, status, last_reset_at, max_devices")
     .eq("id", parsed.data.licenseId)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -39,17 +39,21 @@ export async function POST(req: Request) {
       { status: 403 },
     );
 
-  const remaining = resetCooldownRemainingMs(license.last_reset_at);
-  if (remaining > 0) {
-    const hours = Math.ceil(remaining / 3_600_000);
-    return NextResponse.json(
-      {
-        error: `You already changed devices recently. The next reset unlocks in about ${hours} hour(s).`,
-        code: "COOLDOWN",
-        retryAfterSeconds: Math.ceil(remaining / 1000),
-      },
-      { status: 429 },
-    );
+  // 24h cooldown only applies to single-device plans (anti-sharing).
+  // Multi-device plans can freely manage their devices.
+  if ((license.max_devices ?? 1) <= 1) {
+    const remaining = resetCooldownRemainingMs(license.last_reset_at);
+    if (remaining > 0) {
+      const hours = Math.ceil(remaining / 3_600_000);
+      return NextResponse.json(
+        {
+          error: `You already changed devices recently. The next reset unlocks in about ${hours} hour(s).`,
+          code: "COOLDOWN",
+          retryAfterSeconds: Math.ceil(remaining / 1000),
+        },
+        { status: 429 },
+      );
+    }
   }
 
   const { data: existing } = await supabase

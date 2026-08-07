@@ -27,7 +27,7 @@ export async function POST(req: Request) {
   // Ownership check runs through the user's own session, so RLS applies.
   const { data: license } = await supabase
     .from("licenses")
-    .select("id, status, last_reset_at, reset_count")
+    .select("id, status, last_reset_at, reset_count, max_devices")
     .eq("id", parsed.data.licenseId)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -41,17 +41,21 @@ export async function POST(req: Request) {
       { status: 403 },
     );
 
-  const remaining = resetCooldownRemainingMs(license.last_reset_at);
-  if (remaining > 0) {
-    const hours = Math.ceil(remaining / 3_600_000);
-    return NextResponse.json(
-      {
-        error: `Device changes are limited to once every 24 hours. Try again in about ${hours} hour(s), or contact support for a forced reset.`,
-        code: "COOLDOWN",
-        retryAfterSeconds: Math.ceil(remaining / 1000),
-      },
-      { status: 429 },
-    );
+  // 24h cooldown only applies to single-device plans (anti-sharing).
+  // Multi-device plans (max_devices > 1) can freely manage their device slots.
+  if ((license.max_devices ?? 1) <= 1) {
+    const remaining = resetCooldownRemainingMs(license.last_reset_at);
+    if (remaining > 0) {
+      const hours = Math.ceil(remaining / 3_600_000);
+      return NextResponse.json(
+        {
+          error: `Device changes are limited to once every 24 hours. Try again in about ${hours} hour(s), or contact support for a forced reset.`,
+          code: "COOLDOWN",
+          retryAfterSeconds: Math.ceil(remaining / 1000),
+        },
+        { status: 429 },
+      );
+    }
   }
 
   const svc = createAdminClient();
