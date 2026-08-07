@@ -147,12 +147,14 @@ export function LedgerDashboard({ initialTransactions }: Props) {
     let monthExp = 0;
     let totalRev = 0;
     let totalExp = 0;
+    let totalExpBDT = 0;
+    let totalRevBDT = 0;
 
     const accountBalances: Record<string, { USD: number; BDT: number }> = {};
 
     const sourceBreakdown: Record<string, number> = {};
 
-    const dailyMap: Record<string, { date: string; rev: number; exp: number; orders: number; items: TransactionItem[] }> = {};
+    const dailyMap: Record<string, { date: string; rev: number; exp: number; revBDT: number; expBDT: number; orders: number; items: TransactionItem[] }> = {};
     const monthlyMap: Record<string, { month: string; rev: number; exp: number }> = {};
 
     transactions.forEach((t) => {
@@ -173,8 +175,13 @@ export function LedgerDashboard({ initialTransactions }: Props) {
       }
 
       // Total
-      if (t.type === "income") totalRev += usdVal;
-      else totalExp += usdVal;
+      if (t.type === "income") {
+        totalRev += usdVal;
+        if (t.currency === "BDT") totalRevBDT += t.amount;
+      } else {
+        totalExp += usdVal;
+        if (t.currency === "BDT") totalExpBDT += t.amount;
+      }
 
       // Account Balance tracking
       const accKey = t.account || "Other";
@@ -192,13 +199,15 @@ export function LedgerDashboard({ initialTransactions }: Props) {
 
       // Daily Grouping
       if (!dailyMap[dStr]) {
-        dailyMap[dStr] = { date: dStr, rev: 0, exp: 0, orders: 0, items: [] };
+        dailyMap[dStr] = { date: dStr, rev: 0, exp: 0, revBDT: 0, expBDT: 0, orders: 0, items: [] };
       }
       if (t.type === "income") {
         dailyMap[dStr].rev += usdVal;
+        if (t.currency === "BDT") dailyMap[dStr].revBDT += t.amount;
         dailyMap[dStr].orders += t.is_system ? 1 : 1;
       } else {
         dailyMap[dStr].exp += usdVal;
+        if (t.currency === "BDT") dailyMap[dStr].expBDT += t.amount;
       }
       dailyMap[dStr].items.push(t);
 
@@ -236,6 +245,8 @@ export function LedgerDashboard({ initialTransactions }: Props) {
       monthProfit,
       totalRev,
       totalExp,
+      totalExpBDT,
+      totalRevBDT,
       netProfit,
       profitMargin,
       totalCashUSD,
@@ -338,7 +349,9 @@ export function LedgerDashboard({ initialTransactions }: Props) {
         <div className="card p-4 border-l-4 border-l-rose-500">
           <p className="text-xs font-bold uppercase tracking-wider text-[#9198a8]">💸 Total Expenses</p>
           <p className="mt-2 text-2xl font-black text-rose-400">{formatUSD(analytics.totalExp)}</p>
-          <p className="mt-1 text-[11px] text-[#aab0bd]">Operational costs</p>
+          <p className="mt-1 text-[11px] text-[#aab0bd]">
+            {analytics.totalExpBDT > 0 ? `BDT: ${formatBDT(analytics.totalExpBDT)}` : "Operational costs"}
+          </p>
         </div>
 
         <div className="card p-4 border-l-4 border-l-[#45c66d]">
@@ -386,7 +399,7 @@ export function LedgerDashboard({ initialTransactions }: Props) {
                     <span className="text-white font-bold">{d.date}</span>
                     <span className="text-[#aab0bd]">
                       Rev: <span className="text-[#45c66d]">{formatUSD(d.rev)}</span> | Exp:{" "}
-                      <span className="text-rose-400">{formatUSD(d.exp)}</span> | Profit:{" "}
+                      <span className="text-rose-400">{formatUSD(d.exp)}{d.expBDT > 0 ? ` (${formatBDT(d.expBDT)})` : ""}</span> | Profit:{" "}
                       <span className="text-white font-bold">{formatUSD(d.rev - d.exp)}</span>
                     </span>
                   </div>
@@ -543,7 +556,10 @@ export function LedgerDashboard({ initialTransactions }: Props) {
                       >
                         <td className="p-4 text-white font-bold">{d.date}</td>
                         <td className="p-4 text-[#45c66d] font-bold">{formatUSD(d.rev)}</td>
-                        <td className="p-4 text-rose-400">{formatUSD(d.exp)}</td>
+                        <td className="p-4 text-rose-400 font-bold">
+                          {formatUSD(d.exp)}
+                          {d.expBDT > 0 && <span className="text-xs font-normal text-amber-400 block">({formatBDT(d.expBDT)})</span>}
+                        </td>
                         <td className={`p-4 font-bold ${profit >= 0 ? "text-[#45c66d]" : "text-rose-400"}`}>
                           {formatUSD(profit)}
                         </td>
