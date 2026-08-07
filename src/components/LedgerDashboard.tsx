@@ -129,8 +129,8 @@ export function LedgerDashboard({ initialTransactions }: Props) {
     }
   }
 
-  // Calculate USD equivalent helper (simplified standard conversion 1 USD = 118 BDT for unified view stats)
-  const toUSD = (amount: number, curr: string) => (curr === "BDT" ? amount / 118 : amount);
+  // Calculate USD equivalent helper (standard current conversion 1 USD = 128 BDT for unified view stats)
+  const toUSD = (amount: number, curr: string) => (curr === "BDT" ? amount / 128 : amount);
   const formatUSD = (val: number) => `$${val.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const formatBDT = (val: number) => `৳${val.toLocaleString("bn-BD")}`;
 
