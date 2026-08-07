@@ -19,22 +19,8 @@ type Props = {
   initialTransactions: TransactionItem[];
 };
 
-// Initial seed default mock transactions if database has no custom entries yet
-const INITIAL_DEMO_TRANSACTIONS: TransactionItem[] = [
-  { id: "demo-1", date: new Date().toISOString(), type: "income", category: "Subscription", account: "Stripe", source: "Website", amount: 49, currency: "USD", description: "Monthly Pro Pass" },
-  { id: "demo-2", date: new Date().toISOString(), type: "income", category: "Lifetime", account: "Paddle", source: "Gumroad", amount: 99, currency: "USD", description: "Lifetime Orbit Access" },
-  { id: "demo-3", date: new Date().toISOString(), type: "expense", category: "OpenAI API", account: "Card", source: "Direct Invoice", amount: 22, currency: "USD", description: "Monthly API usage" },
-  { id: "demo-4", date: new Date().toISOString(), type: "expense", category: "Proxy Server", account: "Wise", source: "Direct Invoice", amount: 18, currency: "USD", description: "Dedicated IP Proxy" },
-  { id: "demo-5", date: new Date(Date.now() - 86400000).toISOString(), type: "income", category: "License Sale", account: "bKash", source: "Website", amount: 3500, currency: "BDT", description: "Bkash Payment Ref #9X82" },
-  { id: "demo-6", date: new Date(Date.now() - 86400000).toISOString(), type: "expense", category: "Server Hosting", account: "Bank", source: "Direct Invoice", amount: 45, currency: "USD", description: "Vercel / Supabase Plan" },
-  { id: "demo-7", date: new Date(Date.now() - 172800000).toISOString(), type: "income", category: "AppSumo Deals", account: "Paddle", source: "AppSumo", amount: 1850, currency: "USD", description: "AppSumo Batch Payout" },
-  { id: "demo-8", date: new Date(Date.now() - 172800000).toISOString(), type: "income", category: "Direct Sale", account: "Nagad", source: "Direct Invoice", amount: 2450, currency: "BDT", description: "Direct Customer Manual Transfer" },
-];
-
 export function LedgerDashboard({ initialTransactions }: Props) {
-  const [transactions, setTransactions] = useState<TransactionItem[]>(
-    initialTransactions.length > 0 ? initialTransactions : INITIAL_DEMO_TRANSACTIONS
-  );
+  const [transactions, setTransactions] = useState<TransactionItem[]>(initialTransactions);
 
   const [activeTab, setActiveTab] = useState<"overview" | "ledger" | "monthly" | "accounts">("overview");
   const [searchQuery, setSearchQuery] = useState("");
@@ -162,29 +148,12 @@ export function LedgerDashboard({ initialTransactions }: Props) {
     let totalRev = 0;
     let totalExp = 0;
 
-    const accountBalances: Record<string, { USD: number; BDT: number }> = {
-      Paddle: { USD: 2180, BDT: 0 },
-      Bank: { USD: 3500, BDT: 0 },
-      Stripe: { USD: 1420, BDT: 0 },
-      Wise: { USD: 890, BDT: 0 },
-      bKash: { USD: 0, BDT: 65000 },
-      Nagad: { USD: 0, BDT: 18000 },
-      Cash: { USD: 0, BDT: 9500 },
-    };
+    const accountBalances: Record<string, { USD: number; BDT: number }> = {};
 
-    const sourceBreakdown: Record<string, number> = {
-      Website: 3250,
-      Gumroad: 820,
-      AppSumo: 1850,
-      "Direct Invoice": 640,
-    };
+    const sourceBreakdown: Record<string, number> = {};
 
     const dailyMap: Record<string, { date: string; rev: number; exp: number; orders: number; items: TransactionItem[] }> = {};
-    const monthlyMap: Record<string, { month: string; rev: number; exp: number }> = {
-      January: { month: "January", rev: 12500, exp: 3800 },
-      February: { month: "February", rev: 15200, exp: 4100 },
-      March: { month: "March", rev: 18900, exp: 5000 },
-    };
+    const monthlyMap: Record<string, { month: string; rev: number; exp: number }> = {};
 
     transactions.forEach((t) => {
       const d = new Date(t.date);
@@ -247,6 +216,14 @@ export function LedgerDashboard({ initialTransactions }: Props) {
     const monthProfit = monthRev - monthExp;
     const profitMargin = totalRev > 0 ? ((netProfit / totalRev) * 100).toFixed(1) : "0";
 
+    // Total cash across all accounts
+    let totalCashUSD = 0;
+    let totalCashBDT = 0;
+    Object.values(accountBalances).forEach((bal) => {
+      totalCashUSD += bal.USD;
+      totalCashBDT += bal.BDT;
+    });
+
     const dailyList = Object.values(dailyMap).sort((a, b) => b.date.localeCompare(a.date));
     const monthlyList = Object.values(monthlyMap);
 
@@ -261,6 +238,8 @@ export function LedgerDashboard({ initialTransactions }: Props) {
       totalExp,
       netProfit,
       profitMargin,
+      totalCashUSD,
+      totalCashBDT,
       accountBalances,
       sourceBreakdown,
       dailyList,
@@ -289,6 +268,24 @@ export function LedgerDashboard({ initialTransactions }: Props) {
 
   return (
     <div className="space-y-8">
+      {/* ── Empty State ── */}
+      {transactions.length === 0 && (
+        <div className="card p-10 text-center space-y-4">
+          <div className="text-5xl">📒</div>
+          <h2 className="text-2xl font-black text-white">No Transactions Yet</h2>
+          <p className="text-sm text-[#9198a8] max-w-md mx-auto">
+            Your ledger is empty. Add your first transaction manually using the button below,
+            or approved orders will automatically appear here.
+          </p>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="btn-primary inline-flex items-center gap-2 mx-auto"
+          >
+            <span>＋</span> Add First Transaction
+          </button>
+        </div>
+      )}
+
       {/* ── Page Header ── */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
         <div>
@@ -440,18 +437,42 @@ export function LedgerDashboard({ initialTransactions }: Props) {
 
       {/* ── PAYMENT ACCOUNTS CURRENT BALANCES ── */}
       <div className="card p-6">
-        <h2 className="text-lg font-bold text-white mb-1">Payment Accounts Balances</h2>
-        <p className="text-xs text-[#9198a8] mb-4">Current funds held per account & gateway</p>
+        <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
+          <div>
+            <h2 className="text-lg font-bold text-white mb-1">Payment Accounts Balances</h2>
+            <p className="text-xs text-[#9198a8]">Net balance per account (Income − Expenses)</p>
+          </div>
+
+          {/* ── Total Net Cash Summary ── */}
+          <div className="rounded-xl border-2 border-[#45c66d]/30 bg-[#45c66d]/5 px-5 py-3 text-right">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[#45c66d]">💰 Total Net Cash Available</p>
+            <div className="mt-1 flex items-baseline gap-3 justify-end">
+              <span className={`text-2xl font-black ${analytics.totalCashUSD >= 0 ? 'text-[#45c66d]' : 'text-rose-400'}`}>
+                {formatUSD(analytics.totalCashUSD)}
+              </span>
+              {analytics.totalCashBDT !== 0 && (
+                <span className={`text-base font-bold ${analytics.totalCashBDT >= 0 ? 'text-amber-400' : 'text-rose-400'}`}>
+                  + {formatBDT(analytics.totalCashBDT)}
+                </span>
+              )}
+            </div>
+            <p className="mt-1 text-[10px] text-[#9198a8]">After all expenses deducted</p>
+          </div>
+        </div>
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-7">
           {Object.entries(analytics.accountBalances).map(([acc, bal]) => (
             <div key={acc} className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center">
               <p className="text-xs font-bold text-[#9198a8] uppercase">{acc}</p>
-              {bal.USD > 0 && (
-                <p className="mt-2 text-lg font-extrabold text-[#45c66d]">{formatUSD(bal.USD)}</p>
+              {bal.USD !== 0 && (
+                <p className={`mt-2 text-lg font-extrabold ${bal.USD >= 0 ? 'text-[#45c66d]' : 'text-rose-400'}`}>
+                  {formatUSD(bal.USD)}
+                </p>
               )}
-              {bal.BDT > 0 && (
-                <p className="mt-1 text-sm font-bold text-amber-400">{formatBDT(bal.BDT)}</p>
+              {bal.BDT !== 0 && (
+                <p className={`mt-1 text-sm font-bold ${bal.BDT >= 0 ? 'text-amber-400' : 'text-rose-400'}`}>
+                  {formatBDT(bal.BDT)}
+                </p>
               )}
               {bal.USD === 0 && bal.BDT === 0 && (
                 <p className="mt-2 text-sm font-bold text-[#aab0bd]">$0.00</p>
