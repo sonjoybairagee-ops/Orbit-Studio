@@ -21,12 +21,17 @@ export async function GET() {
     console.error("Ledger query error:", ledgerError.message);
   }
 
-  // Fetch approved system orders to synthesize automatically into revenue if desired
+  // Fetch approved system orders to auto-collect as revenue
   const { data: approvedOrders } = await supabase
     .from("orders")
-    .select("id, amount_bdt, payment_method, status, created_at, txn_ref")
+    .select("id, amount, currency, method, status, created_at, txn_ref, plans(name)")
     .eq("status", "approved")
     .order("created_at", { ascending: false });
+
+  // Map method to display account name
+  const methodToAccount: Record<string, string> = {
+    bkash: "bKash", nagad: "Nagad", paddle: "Paddle", manual: "Bank",
+  };
 
   // Merge or map orders to transaction items
   const orderTransactions = (approvedOrders ?? []).map((o: any) => ({
@@ -34,11 +39,11 @@ export async function GET() {
     date: o.created_at,
     type: "income",
     category: "License Sale",
-    account: o.payment_method ? o.payment_method.toUpperCase() : "bKash",
+    account: methodToAccount[o.method] || o.method || "Other",
     source: "Website",
-    amount: Number(o.amount_bdt) || 0,
-    currency: "BDT",
-    description: `Approved Order #${o.id.slice(0, 8)} (Txn: ${o.txn_ref || "N/A"})`,
+    amount: Number(o.amount) || 0,
+    currency: o.currency || "USD",
+    description: `${o.plans?.name || "Product"} — Order #${o.id.slice(0, 8)} (Txn: ${o.txn_ref || "N/A"})`,
     is_system: true,
   }));
 

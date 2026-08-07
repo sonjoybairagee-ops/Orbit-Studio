@@ -17,23 +17,28 @@ export default async function AdminLedgerPage() {
     .select("*")
     .order("date", { ascending: false });
 
-  // Fetch approved orders
+  // Fetch approved orders (auto-revenue from system)
   const { data: approvedOrders } = await supabase
     .from("orders")
-    .select("id, amount_bdt, payment_method, status, created_at, txn_ref")
+    .select("id, amount, currency, method, status, created_at, txn_ref, plans(name)")
     .eq("status", "approved")
     .order("created_at", { ascending: false });
+
+  // Map method to display account name
+  const methodToAccount: Record<string, string> = {
+    bkash: "bKash", nagad: "Nagad", paddle: "Paddle", manual: "Bank",
+  };
 
   const orderTransactions: TransactionItem[] = (approvedOrders ?? []).map((o: any) => ({
     id: `order-${o.id}`,
     date: o.created_at,
-    type: "income",
+    type: "income" as const,
     category: "License Sale",
-    account: o.payment_method ? o.payment_method.toUpperCase() : "bKash",
+    account: methodToAccount[o.method] || o.method || "Other",
     source: "Website",
-    amount: Number(o.amount_bdt) || 0,
-    currency: "BDT",
-    description: `Approved Order #${o.id.slice(0, 8)} (Txn: ${o.txn_ref || "N/A"})`,
+    amount: Number(o.amount) || 0,
+    currency: o.currency || "USD",
+    description: `${(o.plans as any)?.name || "Product"} — Order #${o.id.slice(0, 8)} (Txn: ${o.txn_ref || "N/A"})`,
     is_system: true,
   }));
 
