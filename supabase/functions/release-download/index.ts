@@ -7,6 +7,7 @@
 import {
   admin, json, preflight, logEvent, isRateLimited, normalizeKey,
   loadLicense, licenseProblem, entitlementSlugs,
+  compareSemanticVersions, findStorageRelease,
 } from "../_shared/lib.ts";
 
 const LINK_TTL_SECONDS = 60;
@@ -56,11 +57,24 @@ Deno.serve(async (req) => {
 
   q = body.version ? q.eq("version", String(body.version)) : q.eq("is_latest", true);
 
-  const { data: rel } = await q.maybeSingle();
-  if (!rel) return json({ error: "Release not found." }, 404);
+  const { data: databaseRelease } = await q.maybeSingle();
+  const requestedVersion = body.version ? String(body.version) : undefined;
+  const storageRelease = await findStorageRelease(db, slug, channel, requestedVersion);
+  const useStorage = storageRelease && (
+    !databaseRelease || compareSemanticVersions(storageRelease.version, databaseRelease.version) > 0
+  );
+  const rel = useStorage ? {
+    version: storageRelease.version,
+    storage_path: storageRelease.storagePath,
+    sha256: null,
+    size_bytes: storageRelease.sizeBytes,
+    bucket: storageRelease.bucket,
+    source: "storage",
+  } : databaseRelease ? { ...databaseRelease, bucket: "releases", source: "database" } : null;
+  if (!rel) return json({ error: "Release package not found." }, 404);
 
   const { data: signed, error } = await db.storage
-    .from("releases")
+    .from(rel.bucket)
     .createSignedUrl(rel.storage_path, LINK_TTL_SECONDS, { download: true });
 
   if (error || !signed) {
@@ -69,7 +83,7 @@ Deno.serve(async (req) => {
 
   await logEvent(db, req, "download", {
     licenseId: lic.id, userId: lic.user_id, deviceHash: fingerprint,
-    meta: { slug, version: rel.version, channel },
+    meta: { slug, version: rel.version, channel, source: rel.source },
   });
 
   return json({

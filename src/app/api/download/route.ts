@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { compareSemanticVersions, findStorageRelease } from "@/lib/releases";
 
 // Issues a short-lived signed URL from the PRIVATE 'releases' bucket.
 // Entitlement is resolved through the plan, so a bundle license can
@@ -83,7 +84,7 @@ export async function GET(req: Request) {
       { status: 403 },
     );
 
-  const { data: release } = await svc
+  const { data: databaseRelease } = await svc
     .from("releases")
     .select("version, storage_path, sha256, size_bytes")
     .eq("extension_id", ext.id)
@@ -91,25 +92,24 @@ export async function GET(req: Request) {
     .eq("is_latest", true)
     .maybeSingle();
 
-  // Try direct path from extensions bucket for Orbit Studio & Premiere if release record doesn't exist
+  const storageRelease = await findStorageRelease(svc, slug, channel);
+  const useStorage = storageRelease && (
+    !databaseRelease || compareSemanticVersions(storageRelease.version, databaseRelease.version) > 0
+  );
+  const release = useStorage ? {
+    version: storageRelease.version,
+    storage_path: storageRelease.storagePath,
+    sha256: null,
+    size_bytes: storageRelease.sizeBytes,
+    bucket: storageRelease.bucket,
+    source: "storage",
+  } : databaseRelease ? {
+    ...databaseRelease,
+    bucket: "releases",
+    source: "database",
+  } : null;
+
   if (!release) {
-    let fallbackPath = "";
-    if (slug === "orbit-studio") {
-      fallbackPath = "orbit-studio/2.3.1/CompX-Orbit-Studio-v2.3.1.zxp";
-    } else if (slug === "orbit-premiere") {
-      fallbackPath = "orbit-premiere/2.3.1/CompX-Orbit-Premiere-v2.3.1.zxp";
-    }
-
-    if (fallbackPath) {
-      const { data: directSigned } = await svc.storage
-        .from("extensions")
-        .createSignedUrl(fallbackPath, 120, { download: true });
-
-      if (directSigned?.signedUrl) {
-        return NextResponse.json({ url: directSigned.signedUrl, version: "2.3.1" });
-      }
-    }
-
     return NextResponse.json(
       { error: "No release has been published yet." },
       { status: 404 },
@@ -117,7 +117,7 @@ export async function GET(req: Request) {
   }
 
   const { data: signed, error } = await svc.storage
-    .from("releases")
+    .from(release.bucket)
     .createSignedUrl(release.storage_path, 60, { download: true });
 
   if (error || !signed)
@@ -132,7 +132,7 @@ export async function GET(req: Request) {
     event: "download",
     ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
     user_agent: req.headers.get("user-agent"),
-    meta: { slug, version: release.version, channel, source: "dashboard" },
+    meta: { slug, version: release.version, channel, source: `dashboard:${release.source}` },
   });
 
   return NextResponse.json({

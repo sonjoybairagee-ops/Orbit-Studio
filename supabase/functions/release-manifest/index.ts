@@ -7,6 +7,7 @@
 import {
   admin, json, preflight, logEvent, normalizeKey,
   loadLicense, licenseProblem, entitlementSlugs,
+  compareSemanticVersions, findStorageRelease,
 } from "../_shared/lib.ts";
 
 Deno.serve(async (req) => {
@@ -41,7 +42,7 @@ Deno.serve(async (req) => {
     .from("extensions").select("id, name").eq("slug", slug).maybeSingle();
   if (!ext) return json({ error: "Unknown extension." }, 404);
 
-  const { data: rel } = await db
+  const { data: databaseRelease } = await db
     .from("releases")
     .select("version, channel, sha256, size_bytes, min_host_version, notes, published_at")
     .eq("extension_id", ext.id)
@@ -49,11 +50,26 @@ Deno.serve(async (req) => {
     .eq("is_latest", true)
     .maybeSingle();
 
-  if (!rel) return json({ error: "No release published yet." }, 404);
+  const storageRelease = await findStorageRelease(db, slug, channel);
+  const useStorage = storageRelease && (
+    !databaseRelease || compareSemanticVersions(storageRelease.version, databaseRelease.version) > 0
+  );
+  const rel = useStorage ? {
+    version: storageRelease.version,
+    channel,
+    sha256: null,
+    size_bytes: storageRelease.sizeBytes,
+    min_host_version: null,
+    notes: null,
+    published_at: storageRelease.publishedAt,
+    source: "storage",
+  } : databaseRelease ? { ...databaseRelease, source: "database" } : null;
+
+  if (!rel) return json({ error: "No release package was found." }, 404);
 
   await logEvent(db, req, "manifest", {
     licenseId: lic.id, userId: lic.user_id, deviceHash: fingerprint,
-    meta: { slug, version: rel.version, channel },
+    meta: { slug, version: rel.version, channel, source: rel.source },
   });
 
   return json({
@@ -67,5 +83,6 @@ Deno.serve(async (req) => {
     minHostVersion: rel.min_host_version,
     notes: rel.notes,
     publishedAt: rel.published_at,
+    source: rel.source,
   });
 });
