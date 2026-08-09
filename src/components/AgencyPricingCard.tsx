@@ -8,14 +8,16 @@ interface AgencyPlan {
   id: string;
   slug: string;
   max_devices: number;
+  unit_price_usd: number;
+  unit_price_bdt: number;
 }
 
 export function AgencyPricingCard({ plan }: { plan?: AgencyPlan }) {
   const [seats, setSeats] = useState<number>(2); // Default 2 seats (minimum)
   const MAX_SEATS = 10;
 
-  const unitUsd = 2;
-  const unitBdt = 249;
+  const unitUsd = plan?.unit_price_usd ?? 2;
+  const unitBdt = plan?.unit_price_bdt ?? 249;
 
   const totalUsd = seats * unitUsd;
   const totalBdt = seats * unitBdt;

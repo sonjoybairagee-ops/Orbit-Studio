@@ -35,44 +35,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ approved: [], failed: orderIds });
   }
 
-  const reviewed = {
-    reviewed_by: admin.id,
-    reviewed_at: new Date().toISOString(),
-  };
-
   const approvedIds: string[] = [];
   const failedIds: string[] = [];
   const emailsToSend: { to: string; subject: string; html: string }[] = [];
 
   for (const order of orders) {
     try {
-      // 1. Mark as approved
-      const { error: updateErr } = await svc
-        .from("orders")
-        .update({ status: "approved", ...reviewed })
-        .eq("id", order.id);
-
-      if (updateErr) throw updateErr;
-
-      // 2. Issue license
-      const { data: license, error: licErr } = await svc
-        .from("licenses")
-        .insert({
-          user_id: order.user_id,
-          plan_id: order.plan_id,
-          extension_id: order.extension_id,
-          order_id: order.id,
-          key: generateLicenseKey(),
-          status: "active",
-        })
-        .select()
-        .single();
-
-      if (licErr) throw licErr;
+      const { data: issued, error: issueError } = await svc.rpc(
+        "approve_order_and_issue_license",
+        {
+          p_order_id: order.id,
+          p_license_key: generateLicenseKey(),
+          p_admin_id: admin.id,
+          p_provider_transaction_id: null,
+        },
+      );
+      if (issueError) throw issueError;
+      const license = Array.isArray(issued) ? issued[0] : issued;
+      if (!license) throw new Error("License was not issued");
 
       approvedIds.push(order.id);
 
-      // 3. Queue email to send
+      // Queue email only after the transaction has committed.
       const { data: profile } = await svc
         .from("profiles")
         .select("email")
@@ -83,7 +67,13 @@ export async function POST(req: Request) {
         emailsToSend.push({
           to: profile.email,
           subject: "Your license key is ready",
-          html: licenseIssuedEmail(order.plans?.name ?? "your extension", license.key),
+          html: licenseIssuedEmail(
+            order.plans?.name ?? "your extension",
+            license.key,
+            profile.email.split("@")[0] || "Creator",
+            license.max_devices,
+            order.id,
+          ),
         });
       }
     } catch (e) {

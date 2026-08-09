@@ -9,6 +9,7 @@ const schema = z.object({
   deviceId: z.string().min(6),
   deviceLabel: z.string().optional(),
   os: z.string().optional(),
+  hostApp: z.string().optional(),
   appVersion: z.string().optional(),
 });
 
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json());
   if (!parsed.success)
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
-  const { key, deviceId, deviceLabel, os, appVersion } = parsed.data;
+  const { key, deviceId, deviceLabel, os, hostApp, appVersion } = parsed.data;
 
   const admin = createAdminClient();
   const { data: license } = await admin
@@ -47,66 +48,31 @@ export async function POST(req: Request) {
   }
 
   const maxAllowedDevices = license.max_devices || 1;
-
-  // Query active seats from activations table
-  const { data: seats } = await admin
-    .from("activations")
-    .select("id, device_hash, status")
-    .eq("license_id", license.id)
-    .eq("status", "active");
-
-  const existingSeat = (seats ?? []).find((s: any) => s.device_hash === deviceId);
-
-  if (existingSeat) {
-    // Device already has an active seat -> update last_seen
-    await admin
-      .from("activations")
-      .update({
-        last_seen: new Date().toISOString(),
-        ...(deviceLabel ? { device_label: deviceLabel } : {}),
-        ...(os ? { os } : {}),
-        ...(appVersion ? { app_version: appVersion } : {}),
-      })
-      .eq("id", existingSeat.id);
-  } else {
-    // New device -> check active seats count against max_devices limit
-    if ((seats?.length ?? 0) >= maxAllowedDevices) {
+  const { error: activationError } = await admin.rpc("activate_license_device", {
+    p_license_id: license.id,
+    p_device_hash: deviceId,
+    p_device_label: deviceLabel ?? null,
+    p_os: os ?? null,
+    p_host_app: hostApp ?? null,
+    p_app_version: appVersion ?? null,
+  });
+  if (activationError) {
+    const limit = activationError.message.match(/^DEVICE_LIMIT:(\d+):(\d+)$/);
+    if (limit) {
+      const maxDevices = Number(limit[1]);
       return NextResponse.json(
         {
-          error:
-            maxAllowedDevices === 1
-              ? "This license is already active on another device. Request a device reset from your dashboard."
-              : `All ${maxAllowedDevices} device slots for this license are in use. Release an existing device or request a reset.`,
+          error: maxDevices === 1
+            ? "This license is already active on another device. Request a device reset from your dashboard."
+            : `All ${maxDevices} device slots for this license are in use. Release an existing device or request a reset.`,
           code: "DEVICE_LIMIT",
-          maxDevices: maxAllowedDevices,
-          activeSeats: seats?.length ?? 0,
+          maxDevices,
+          activeSeats: Number(limit[2]),
         },
         { status: 409 },
       );
     }
-
-    // Insert new active seat in activations table
-    await admin.from("activations").insert({
-      license_id: license.id,
-      device_hash: deviceId,
-      device_label: deviceLabel || null,
-      os: os || null,
-      app_version: appVersion || null,
-      status: "active",
-      first_seen: new Date().toISOString(),
-      last_seen: new Date().toISOString(),
-    });
-  }
-
-  // Set legacy device_id & device_bound_at if not set yet
-  if (!license.device_id) {
-    await admin
-      .from("licenses")
-      .update({
-        device_id: deviceId,
-        device_bound_at: new Date().toISOString(),
-      })
-      .eq("id", license.id);
+    return NextResponse.json({ error: "Could not activate this device" }, { status: 409 });
   }
 
   const token = await signLicenseToken({

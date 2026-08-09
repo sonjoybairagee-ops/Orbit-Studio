@@ -33,10 +33,7 @@ export async function POST(req: Request) {
       { status: 409 },
     );
 
-  const reviewed = {
-    reviewed_by: admin.id,
-    reviewed_at: new Date().toISOString(),
-  };
+  const reviewed = { reviewed_by: admin.id, reviewed_at: new Date().toISOString() };
 
   if (action === "reject" || action === "reject_ban") {
     await svc
@@ -77,34 +74,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  // Approve -> mark paid and AUTO-ISSUE a license.
-  await svc
-    .from("orders")
-    .update({ status: "approved", ...reviewed })
-    .eq("id", orderId);
-
-  // Determine max_devices from order.max_devices, or calculate from order.amount
-  let maxDevicesToIssue = order.max_devices;
-  if (!maxDevicesToIssue || maxDevicesToIssue < 1) {
-    const unitPrice = order.currency === "BDT" ? 249 : 2;
-    maxDevicesToIssue = Math.max(1, Math.round(Number(order.amount) / unitPrice));
-  }
-
-  const { data: license, error } = await svc
-    .from("licenses")
-    .insert({
-      user_id: order.user_id,
-      plan_id: order.plan_id,
-      extension_id: order.extension_id,
-      order_id: order.id,
-      key: generateLicenseKey(),
-      status: "active",
-      max_devices: maxDevicesToIssue,
-    })
-    .select()
-    .single();
+  const { data: issued, error } = await svc.rpc("approve_order_and_issue_license", {
+    p_order_id: order.id,
+    p_license_key: generateLicenseKey(),
+    p_admin_id: admin.id,
+    p_provider_transaction_id: null,
+  });
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
+  const license = Array.isArray(issued) ? issued[0] : issued;
+  if (!license)
+    return NextResponse.json({ error: "License was not issued" }, { status: 500 });
 
   // Email the license key to the buyer.
   const { data: profile } = await svc

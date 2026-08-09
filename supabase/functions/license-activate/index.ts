@@ -60,52 +60,36 @@ Deno.serve(async (req) => {
     }, 403);
   }
 
-  // ---- seat management --------------------------------------
-  // A seat belongs to the MACHINE, so AE and Premiere on the same
-  // computer share one seat.
-  const { data: seats } = await db
-    .from("activations")
-    .select("id, device_hash, host_apps")
-    .eq("license_id", lic.id)
-    .eq("status", "active");
-
-  const mine = (seats ?? []).find((s: any) => s.device_hash === fingerprint);
-
-  if (mine) {
-    const apps: string[] = Array.from(new Set([...(mine.host_apps ?? []), hostApp].filter(Boolean)));
-    await db.from("activations").update({
-      last_seen: new Date().toISOString(),
-      host_apps: apps,
-      app_version: body.appVersion ?? null,
-      device_label: body.deviceLabel ?? null,
-    }).eq("id", mine.id);
-  } else {
-    if ((seats?.length ?? 0) >= lic.max_devices) {
+  // ---- atomic seat management -------------------------------
+  // The database function locks the license row before checking/inserting,
+  // preventing concurrent devices from exceeding max_devices.
+  const { error: activationError } = await db.rpc("activate_license_device", {
+    p_license_id: lic.id,
+    p_device_hash: fingerprint,
+    p_device_label: body.deviceLabel ?? null,
+    p_os: body.os ?? null,
+    p_host_app: hostApp || null,
+    p_app_version: body.appVersion ?? null,
+  });
+  if (activationError) {
+    const limit = String(activationError.message).match(/DEVICE_LIMIT:(\d+):(\d+)/);
+    if (limit) {
+      const maxDevices = Number(limit[1]);
+      const activeSeats = Number(limit[2]);
       await logEvent(db, req, "activate_fail", {
         licenseId: lic.id, deviceHash: fingerprint,
-        meta: { reason: "device_limit", seats: seats?.length, max: lic.max_devices },
+        meta: { reason: "device_limit", seats: activeSeats, max: maxDevices },
       });
       return json({
-        error: lic.max_devices === 1
+        error: maxDevices === 1
           ? "This license is already active on another device. Request a device reset from your dashboard."
-          : `All ${lic.max_devices} device slots are in use. Release one or request a reset.`,
+          : `All ${maxDevices} device slots are in use. Release one or request a reset.`,
         code: "DEVICE_LIMIT",
-        maxDevices: lic.max_devices,
+        maxDevices,
+        activeSeats,
       }, 409);
     }
-
-    const { error: insErr } = await db.from("activations").insert({
-      license_id: lic.id,
-      device_hash: fingerprint,
-      device_label: body.deviceLabel ?? null,
-      os: body.os ?? null,
-      host_apps: hostApp ? [hostApp] : [],
-      app_version: body.appVersion ?? null,
-    });
-    // Unique index protects against a double-click race; ignore duplicates.
-    if (insErr && !String(insErr.message).includes("duplicate")) {
-      return json({ error: "Activation failed. Please try again." }, 500);
-    }
+    return json({ error: "Activation failed. Please try again." }, 409);
   }
 
   // ---- signed entitlement -----------------------------------

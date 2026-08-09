@@ -14,6 +14,8 @@ const FALLBACK_SINGLE = {
   currency: "USD",
   billing_type: "lifetime",
   max_devices: 1,
+  unit_price_usd: 2,
+  unit_price_bdt: 249,
   paddle_price_id: "pri_01kydan5yvz9a050efd199wrjv",
   features: [
     "After Effects + Premiere Pro",
@@ -31,7 +33,7 @@ export default async function PricingPage() {
   const { data } = await supabase
     .from("plans")
     .select(
-      "id,slug,name,price,currency,billing_type,max_devices,features,sort_order,plan_extensions(extensions(slug,name))",
+      "id,slug,name,price,currency,billing_type,max_devices,unit_price_usd,unit_price_bdt,paddle_price_id,features,sort_order,plan_extensions(extensions(slug,name))",
     )
     .eq("is_public", true)
     .eq("is_active", true)
@@ -47,7 +49,7 @@ export default async function PricingPage() {
       !(p.name && p.name.includes("Precomp")),
   );
   const singlePlan = singlePlanRaw
-    ? { ...singlePlanRaw, name: "Orbit Studio", price: 2 }
+    ? { ...singlePlanRaw, name: "Orbit Studio" }
     : FALLBACK_SINGLE;
 
   // ── Multi-device plan (passed to AgencyPricingCard) ───────────────────────
@@ -58,7 +60,13 @@ export default async function PricingPage() {
 
   // Shape used by AgencyPricingCard
   const agencyPlan = multiPlanRaw
-    ? { id: multiPlanRaw.id, slug: multiPlanRaw.slug, max_devices: multiPlanRaw.max_devices }
+    ? {
+        id: multiPlanRaw.id,
+        slug: multiPlanRaw.slug,
+        max_devices: multiPlanRaw.max_devices,
+        unit_price_usd: Number(multiPlanRaw.unit_price_usd),
+        unit_price_bdt: Number(multiPlanRaw.unit_price_bdt),
+      }
     : undefined;
 
   return (
@@ -101,9 +109,9 @@ export default async function PricingPage() {
 
               <div className="price-card__price">
                 <span>{singlePlan.currency}</span>
-                <b>${Number(singlePlan.price).toFixed(0)}</b>
+                <b>${Number(singlePlan.unit_price_usd).toFixed(0)}</b>
                 <span style={{ color: "#45c66d", fontSize: "20px", fontWeight: "700", marginLeft: "4px", alignSelf: "flex-end", marginBottom: "8px" }}>
-                  / ৳{Number(singlePlan.price * 124.5).toFixed(0)}
+                  / ৳{Number(singlePlan.unit_price_bdt).toFixed(0)}
                 </span>
                 <small>/ once</small>
               </div>

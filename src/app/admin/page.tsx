@@ -3,41 +3,37 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export default async function AdminHome() {
   const s = createAdminClient();
-  const [p, r, l, u, e, approvedData, bannedData] = await Promise.all([
-    s
-      .from("orders")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "pending"),
+  const [metricsResult, r, e, bannedData] = await Promise.all([
+    s.rpc("admin_dashboard_metrics"),
     s
       .from("device_reset_requests")
       .select("*", { count: "exact", head: true })
       .eq("status", "pending"),
     s
-      .from("licenses")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "active"),
-    s.from("profiles").select("*", { count: "exact", head: true }),
-    s
       .from("extensions")
       .select("*", { count: "exact", head: true })
       .eq("is_active", true),
-    s
-      .from("orders")
-      .select("amount,currency,method,created_at,plans(name)")
-      .eq("status", "approved"),
     s.from("profiles").select("*", { count: "exact", head: true }).eq("is_banned", true),
   ]);
-  
-  // Calculate BDT Today (UTC+6)
-  const now = new Date();
-  const bdtTime = new Date(now.getTime() + (6 * 60 * 60 * 1000));
-  bdtTime.setUTCHours(0, 0, 0, 0);
-  const todayStartUTC = new Date(bdtTime.getTime() - (6 * 60 * 60 * 1000)).toISOString();
-
-  const [todaySignups, todayOrders] = await Promise.all([
-    s.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", todayStartUTC),
-    s.from("orders").select("amount,currency", { count: "exact" }).eq("status", "approved").gte("created_at", todayStartUTC),
-  ]);
+  if (metricsResult.error) {
+    throw new Error(`Could not load admin metrics: ${metricsResult.error.message}`);
+  }
+  const metrics = (metricsResult.data ?? {}) as any;
+  const revenue = metrics.revenue ?? {};
+  const planSales = (metrics.plan_sales ?? []) as Array<{
+    name: string;
+    orders: number;
+    seats: number;
+  }>;
+  const methodSales = (metrics.method_sales ?? []) as Array<{
+    method: string;
+    orders: number;
+  }>;
+  const dailySales = (metrics.daily_sales ?? []) as Array<{
+    date: string;
+    orders: number;
+  }>;
+  const pendingOrders = Number(metrics.pending_orders ?? 0);
   const { data: recent } = await s
     .from("orders")
     .select(
@@ -46,40 +42,19 @@ export default async function AdminHome() {
     .order("created_at", { ascending: false })
     .limit(6);
     
-  const approvedOrders = (approvedData.data as any[]) ?? [];
-  let totalUSD = 0;
-  let totalBDT = 0;
-  const productSales: Record<string, number> = {};
-  const methodSales: Record<string, number> = {};
-  const dateSales: Record<string, number> = {};
-
-  approvedOrders.forEach((o) => {
-    const amt = parseFloat(o.amount);
-    if (!isNaN(amt)) {
-      if (o.currency === "USD") totalUSD += amt;
-      else if (o.currency === "BDT") totalBDT += amt;
-    }
-    const pName = o.plans?.name || "Unknown Plan";
-    productSales[pName] = (productSales[pName] || 0) + 1;
-    
-    const mName = o.method || "unknown";
-    methodSales[mName] = (methodSales[mName] || 0) + 1;
-    
-    if (o.created_at) {
-        const date = new Date(o.created_at).toISOString().split('T')[0];
-        dateSales[date] = (dateSales[date] || 0) + 1;
-    }
-  });
-
-  const sortedDates = Object.entries(dateSales).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 7);
+  const totalUSD = Number(revenue.USD ?? 0);
+  const totalBDT = Number(revenue.BDT ?? 0);
 
   const cards = [
     ["Active products", e.count ?? 0, "◈"],
-    ["Customers", u.count ?? 0, "◎"],
-    ["Active licenses", l.count ?? 0, "⌁"],
-    ["Action required", (p.count ?? 0) + (r.count ?? 0), "⚡"],
-    ["Today's Signups", todaySignups.count ?? 0, "📈"],
-    ["Today's Purchases", todayOrders.count ?? 0, "🛒"],
+    ["All users", Number(metrics.users_total ?? 0), "◎"],
+    ["Paying customers", Number(metrics.paying_customers ?? 0), "◎"],
+    ["Active licenses", Number(metrics.active_licenses ?? 0), "⌁"],
+    ["Seats sold", Number(metrics.seats_sold ?? 0), "⌁"],
+    ["Seats in use", Number(metrics.active_seats_used ?? 0), "⌁"],
+    ["Action required", pendingOrders + (r.count ?? 0), "⚡"],
+    ["Today's Signups", Number(metrics.today_signups ?? 0), "📈"],
+    ["Today's Purchases", Number(metrics.today_orders ?? 0), "🛒"],
     ["Banned Users", bannedData.count ?? 0, "🚫"],
   ];
   return (
@@ -111,37 +86,37 @@ export default async function AdminHome() {
         <div className="card p-5 col-span-2">
           <p className="muted text-xs font-bold uppercase tracking-wider">Plan Breakdown (Sales)</p>
           <div className="mt-4 flex flex-wrap gap-4">
-            {Object.entries(productSales).map(([name, count]) => (
+            {planSales.map(({ name, orders, seats }) => (
               <div key={name} className="flex items-center gap-2">
                 <span className="badge badge-purple">{name}</span>
-                <span className="font-bold">{count}</span>
+                <span className="font-bold">{orders} orders / {seats} seats</span>
               </div>
             ))}
-            {Object.keys(productSales).length === 0 && <span className="muted text-sm">—</span>}
+            {planSales.length === 0 && <span className="muted text-sm">—</span>}
           </div>
         </div>
         <div className="card p-5 col-span-2">
           <p className="muted text-xs font-bold uppercase tracking-wider">Payment Method (Sales)</p>
           <div className="mt-4 flex flex-wrap gap-4">
-            {Object.entries(methodSales).map(([name, count]) => (
-              <div key={name} className="flex items-center gap-2">
-                <span className="badge badge-amber">{name}</span>
-                <span className="font-bold">{count}</span>
+            {methodSales.map(({ method, orders }) => (
+              <div key={method} className="flex items-center gap-2">
+                <span className="badge badge-amber">{method}</span>
+                <span className="font-bold">{orders}</span>
               </div>
             ))}
-            {Object.keys(methodSales).length === 0 && <span className="muted text-sm">—</span>}
+            {methodSales.length === 0 && <span className="muted text-sm">—</span>}
           </div>
         </div>
         <div className="card p-5 col-span-2">
           <p className="muted text-xs font-bold uppercase tracking-wider">Last 7 Days Sales</p>
           <div className="mt-4 flex flex-wrap gap-4">
-            {sortedDates.map(([date, count]) => (
+            {dailySales.map(({ date, orders }) => (
               <div key={date} className="flex items-center gap-2">
                 <span className="badge badge-green">{date}</span>
-                <span className="font-bold">{count}</span>
+                <span className="font-bold">{orders}</span>
               </div>
             ))}
-            {sortedDates.length === 0 && <span className="muted text-sm">—</span>}
+            {dailySales.length === 0 && <span className="muted text-sm">—</span>}
           </div>
         </div>
       </div>
@@ -184,7 +159,7 @@ export default async function AdminHome() {
                 {(recent ?? []).map((x: any) => (
                   <tr key={x.id}>
                     <td>{x.profiles?.email ?? "—"}</td>
-                    <td>{x.extensions?.name}</td>
+                    <td>{x.plans?.name ?? "—"}</td>
                     <td>
                       {x.currency} {x.amount}
                     </td>
@@ -212,7 +187,7 @@ export default async function AdminHome() {
               <b className="block">Payments</b>
               <small className="muted">Manual verification</small>
             </span>
-            <b className="text-2xl text-[#78e397]">{p.count ?? 0}</b>
+            <b className="text-2xl text-[#78e397]">{pendingOrders}</b>
           </Link>
           <Link
             href="/admin/resets"

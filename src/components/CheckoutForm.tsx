@@ -5,8 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 
 const BKASH_NUMBER = process.env.NEXT_PUBLIC_BKASH_NUMBER ?? "01810520280";
 const NAGAD_NUMBER = process.env.NEXT_PUBLIC_NAGAD_NUMBER ?? "01993825578";
-const PADDLE_LIVE_TOKEN = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ?? "live_73bd9290c2f284764d988b1054f";
-const PADDLE_PRICE_ID = "pri_01kydan5yvz9a050efd199wrjv";
+const PADDLE_LIVE_TOKEN = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ?? "";
 
 export function CheckoutForm({ plan, seats = 1 }: { plan: any; seats?: number }) {
   const router = useRouter();
@@ -18,10 +17,8 @@ export function CheckoutForm({ plan, seats = 1 }: { plan: any; seats?: number })
   const submittingRef = useRef(false);
 
   const deviceSeats = Math.max(1, seats);
-  const isPrecomp = plan.slug === "compx-v111" || (plan.name && plan.name.includes("Precomp"));
-  
-  const unitBdtAmount = isPrecomp ? 129 : 249;
-  const unitUsdAmount = isPrecomp ? 1 : 2;
+  const unitBdtAmount = Number(plan.unit_price_bdt ?? 0);
+  const unitUsdAmount = Number(plan.unit_price_usd ?? 0);
 
   const bkashBdtAmount = unitBdtAmount * deviceSeats;
   const paddleUsdAmount = unitUsdAmount * deviceSeats;
@@ -30,6 +27,7 @@ export function CheckoutForm({ plan, seats = 1 }: { plan: any; seats?: number })
   const displayPrice = (method === "bkash" || method === "nagad") ? bkashBdtAmount : paddleUsdAmount;
 
   useEffect(() => {
+    if (!PADDLE_LIVE_TOKEN) return;
     if (document.getElementById("paddle-js")) return;
     const script = document.createElement("script");
     script.id = "paddle-js";
@@ -113,6 +111,10 @@ export function CheckoutForm({ plan, seats = 1 }: { plan: any; seats?: number })
   async function payPaddle() {
     setBusy(true);
     setMsg(null);
+    if (!PADDLE_LIVE_TOKEN || !plan.paddle_price_id) {
+      setBusy(false);
+      return setMsg("Card checkout is not configured for this plan.");
+    }
     const Paddle = (window as any).Paddle;
     if (!Paddle) {
       setBusy(false);
@@ -126,9 +128,8 @@ export function CheckoutForm({ plan, seats = 1 }: { plan: any; seats?: number })
     const json = await res.json();
     setBusy(false);
     if (!res.ok) return setMsg(json.error);
-    // Always use official Paddle live price ID
     Paddle.Checkout.open({
-      items: [{ priceId: PADDLE_PRICE_ID, quantity: deviceSeats }],
+      items: [{ priceId: plan.paddle_price_id, quantity: deviceSeats }],
       customData: { order_id: json.order?.id ?? "manual" },
     });
   }

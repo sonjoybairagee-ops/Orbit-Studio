@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const schema = z.object({
-  planId: z.string(),
+  planId: z.string().regex(/^(?:[0-9a-f-]{36}|[a-z0-9-]+)$/i),
   method: z.enum(["bkash", "nagad", "paddle"]),
-  txnRef: z.string().optional().nullable(),
-  receiptUrl: z.string().optional().nullable(),
-  seats: z.number().optional().default(1),
+  txnRef: z.string().trim().optional().nullable(),
+  receiptUrl: z.string().max(500).optional().nullable(),
+  seats: z.number().int().min(1).max(10).optional().default(1),
 });
 
 export async function POST(req: Request) {
@@ -22,8 +23,13 @@ export async function POST(req: Request) {
   if (!parsed.success)
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
 
-  const { planId, method, txnRef, receiptUrl, seats } = parsed.data;
-  const deviceSeats = Math.max(1, Math.min(10, seats ?? 1));
+  const { planId, method, receiptUrl, seats } = parsed.data;
+  const txnRef = parsed.data.txnRef?.trim().toUpperCase() || null;
+  const deviceSeats = seats;
+
+  if (receiptUrl && !receiptUrl.startsWith(`${user.id}/`)) {
+    return NextResponse.json({ error: "Invalid receipt path" }, { status: 400 });
+  }
 
   // Basic validation for manual payment transaction IDs
   if (method === "bkash" || method === "nagad") {
@@ -37,32 +43,28 @@ export async function POST(req: Request) {
     }
   }
 
-  // Try finding plan by ID or Slug or fetch fallback plan
-  let { data: plan } = await supabase
+  const { data: plan } = await supabase
     .from("plans")
-    .select("*")
+    .select("id,slug,name,billing_type,is_active,is_public,unit_price_usd,unit_price_bdt,paddle_price_id")
     .or(`id.eq.${planId},slug.eq.${planId}`)
     .maybeSingle();
 
-  if (!plan) {
-    const { data: firstPlan } = await supabase
-      .from("plans")
-      .select("*")
-      .limit(1)
-      .maybeSingle();
-    plan = firstPlan;
-  }
-
-  if (!plan)
+  if (!plan || !plan.is_active || !plan.is_public)
     return NextResponse.json({ error: "Plan not found" }, { status: 404 });
+
+  if (method === "paddle" && !plan.paddle_price_id) {
+    return NextResponse.json({ error: "Card checkout is not configured for this plan" }, { status: 409 });
+  }
 
   // Prevent double submissions of manual payments
   if (txnRef) {
-    const { data: existingTxn } = await supabase
+    const { data: existingTxn } = await createAdminClient()
       .from("orders")
       .select("id")
-      .eq("txn_ref", txnRef)
-      .eq("user_id", user.id)
+      .eq("method", method)
+      .ilike("txn_ref", txnRef)
+      .in("status", ["pending", "approved"])
+      .limit(1)
       .maybeSingle();
 
     if (existingTxn) {
@@ -73,10 +75,16 @@ export async function POST(req: Request) {
     }
   }
 
-  const isPrecomp = plan.slug === "compx-v111" || (plan.name && plan.name.includes("Precomp"));
-  const unitAmount = (method === "bkash" || method === "nagad") ? (isPrecomp ? 129 : 249) : (isPrecomp ? 1 : 2);
+  const unitAmount = Number(
+    method === "bkash" || method === "nagad"
+      ? plan.unit_price_bdt
+      : plan.unit_price_usd,
+  );
+  if (!Number.isFinite(unitAmount) || unitAmount < 0) {
+    return NextResponse.json({ error: "Plan price is not configured" }, { status: 409 });
+  }
   const amount = unitAmount * deviceSeats;
-  const currency = (method === "bkash" || method === "nagad") ? "BDT" : (plan.currency ?? "USD");
+  const currency = (method === "bkash" || method === "nagad") ? "BDT" : "USD";
 
   // Standard essential columns present in Supabase orders table
   const essentialPayload: any = {
@@ -90,25 +98,14 @@ export async function POST(req: Request) {
     ...(receiptUrl ? { receipt_path: receiptUrl } : {}),
   };
 
-  // Try inserting with optional columns first
-  let orderResult = await supabase
+  const orderResult = await supabase
     .from("orders")
     .insert({
       ...essentialPayload,
       max_devices: deviceSeats,
-      ...(plan.extension_id ? { extension_id: plan.extension_id } : {}),
     })
     .select()
     .single();
-
-  // If column error occurs (e.g. extension_id missing in schema cache), retry with essential payload
-  if (orderResult.error) {
-    orderResult = await supabase
-      .from("orders")
-      .insert(essentialPayload)
-      .select()
-      .single();
-  }
 
   if (orderResult.error) {
     return NextResponse.json({ error: orderResult.error.message }, { status: 500 });

@@ -141,8 +141,9 @@ export default async function DashboardPage({
         <div>
           <p className="label">Need help or community support?</p>
           <p className="muted mt-2 text-sm leading-7 max-w-2xl">
-            One license covers one computer at a time, and both After Effects and
-            Premiere Pro on that computer share the same seat. You can move to a
+            Each device slot covers one computer at a time, and both After Effects and
+            Premiere Pro on that computer share the same slot. Multi-device licenses
+            can activate all purchased slots at once. You can move to a
             new machine yourself once every 24 hours. If a computer is lost or
             broken, request an admin reset or join our Discord community for instant support.
           </p>

@@ -46,15 +46,16 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check if activation seat is active (if seat entry exists in activations table)
+    // A valid token must still have a matching active device seat.
     const { data: seat } = await admin
       .from("activations")
-      .select("status")
+      .select("id")
       .eq("license_id", payload.sub as string)
       .eq("device_hash", parsed.data.deviceId)
+      .eq("status", "active")
       .maybeSingle();
 
-    if (seat && seat.status !== "active") {
+    if (!seat) {
       return NextResponse.json(
         { valid: false, error: "Device seat released or unlinked" },
         { status: 403 },
