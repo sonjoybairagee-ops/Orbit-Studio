@@ -64,7 +64,7 @@ export function BulkPaymentList({ orders }: { orders: any[] }) {
           }`}
         >
           <div className="flex items-start gap-4">
-            {o.status === "pending" && (
+            {(o.status === "pending" || o.status === "on_hold") && (
               <input
                 type="checkbox"
                 className="mt-1.5 h-5 w-5 accent-[#45c66d]"
@@ -81,10 +81,12 @@ export function BulkPaymentList({ orders }: { orders: any[] }) {
                       ? "badge-green"
                       : o.status === "pending"
                         ? "badge-amber"
-                        : ""
+                        : o.status === "on_hold"
+                          ? "bg-orange-500/20 text-orange-400 border border-orange-500/30"
+                          : ""
                   }`}
                 >
-                  {o.status}
+                  {o.status === "on_hold" ? "On Hold" : o.status}
                 </span>
               </div>
               <p className="muted mt-2 text-sm">{o.profiles?.email}</p>
@@ -118,6 +120,11 @@ export function BulkPaymentList({ orders }: { orders: any[] }) {
                     View receipt ↗
                   </a>
                 )}
+                {o.status === "on_hold" && o.hold_reason && (
+                  <span className="badge bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                    ⏸ {o.hold_reason}
+                  </span>
+                )}
                 {o.status === "approved" && (
                   <a
                     className="badge badge-green hover:text-white"
@@ -132,7 +139,7 @@ export function BulkPaymentList({ orders }: { orders: any[] }) {
               </div>
             </div>
           </div>
-          {o.status === "pending" && (
+          {(o.status === "pending" || o.status === "on_hold") && (
             <div onClick={(e) => e.preventDefault()}>
               <ReviewButtons
                 endpoint="/api/admin/approve-order"

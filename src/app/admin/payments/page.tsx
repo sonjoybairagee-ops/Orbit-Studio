@@ -46,7 +46,7 @@ export default async function PaymentsPage({
       </div>
 
       <div className="mt-6 flex gap-2 border-b border-white/10 pb-4">
-        {["pending", "approved", "rejected"].map((tab) => (
+        {["pending", "on_hold", "approved", "rejected"].map((tab) => (
           <Link
             key={tab}
             href={`/admin/payments?status=${tab}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
@@ -56,7 +56,7 @@ export default async function PaymentsPage({
                 : "bg-white/5 text-white hover:bg-white/10"
             }`}
           >
-            {tab}
+            {tab === "on_hold" ? "On Hold" : tab}
           </Link>
         ))}
       </div>

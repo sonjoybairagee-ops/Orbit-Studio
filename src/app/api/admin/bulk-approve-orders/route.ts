@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     .from("orders")
     .select("*, plans(name)")
     .in("id", orderIds)
-    .eq("status", "pending");
+    .in("status", ["pending", "on_hold"]);
 
   if (!orders || orders.length === 0) {
     return NextResponse.json({ approved: [], failed: orderIds });

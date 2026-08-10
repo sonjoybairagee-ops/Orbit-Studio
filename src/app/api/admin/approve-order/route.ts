@@ -7,7 +7,8 @@ import { sendEmail, licenseIssuedEmail } from "@/lib/email";
 
 const schema = z.object({
   orderId: z.string().uuid(),
-  action: z.enum(["approve", "reject", "reject_ban"]),
+  action: z.enum(["approve", "reject", "reject_ban", "hold"]),
+  holdReason: z.string().max(500).optional(),
 });
 
 export async function POST(req: Request) {
@@ -17,7 +18,7 @@ export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json());
   if (!parsed.success)
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
-  const { orderId, action } = parsed.data;
+  const { orderId, action, holdReason } = parsed.data;
 
   const svc = createAdminClient();
   const { data: order } = await svc
@@ -27,13 +28,22 @@ export async function POST(req: Request) {
     .single();
   if (!order)
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
-  if (order.status !== "pending")
+  if (order.status !== "pending" && order.status !== "on_hold")
     return NextResponse.json(
       { error: "Order already reviewed" },
       { status: 409 },
     );
 
   const reviewed = { reviewed_by: admin.id, reviewed_at: new Date().toISOString() };
+
+  if (action === "hold") {
+    await svc
+      .from("orders")
+      .update({ status: "on_hold", hold_reason: holdReason || null })
+      .eq("id", orderId);
+    await logAdminAction(admin.id, "HELD_ORDER", orderId, { user_id: order.user_id, plan_id: order.plan_id, reason: holdReason });
+    return NextResponse.json({ ok: true });
+  }
 
   if (action === "reject" || action === "reject_ban") {
     await svc
