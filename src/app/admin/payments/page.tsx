@@ -11,11 +11,13 @@ export default async function PaymentsPage({
   const status = searchParams.status || "pending";
   const q = searchParams.q?.trim() ?? "";
 
+  const orderBy = (status === "approved" || status === "rejected") ? "reviewed_at" : "created_at";
+
   let query = s
     .from("orders")
     .select("*,profiles!orders_user_id_fkey(email),plans(name)")
     .eq("status", status)
-    .order("created_at", { ascending: false });
+    .order(orderBy, { ascending: false });
 
   if (q) {
     query = query.or(`txn_ref.ilike.%${q}%,profiles.email.ilike.%${q}%`);

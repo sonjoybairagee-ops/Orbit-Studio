@@ -104,6 +104,19 @@ export function BulkPaymentList({ orders }: { orders: any[] }) {
                 }`}>
                   {o.method === "bkash" ? "bKash" : o.method === "nagad" ? "Nagad" : "Paddle"}
                 </span>
+                <span className="badge bg-white/5 border border-white/10 text-white/60">
+                  Submitted: {new Date(o.created_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                </span>
+                {o.status === "approved" && o.reviewed_at && (
+                  <span className="badge bg-[#45c66d]/10 text-[#45c66d] border border-[#45c66d]/30">
+                    Approved: {new Date(o.reviewed_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                )}
+                {o.status === "rejected" && o.reviewed_at && (
+                  <span className="badge bg-red-500/10 text-red-400 border border-red-500/20">
+                    Rejected: {new Date(o.reviewed_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                )}
                 {o.method === "paddle" && o.status === "pending" && (
                   <span className="badge bg-red-500/10 text-red-400 border border-red-500/20">
                     Unpaid (Abandoned Checkout)
