@@ -320,3 +320,74 @@ Then verify each of these:
 Every activate, heartbeat, reset, revoke and download is written to
 `license_events` with IP, country and user agent, so you always have the
 full history behind any decision.
+
+---
+
+## 12. Tier 4 — watermark tracing + version pinning (2026-08-16)
+
+Server-side support for the hardened client (v48+). Three pieces:
+
+**a. Migration** — run once, then never again:
+
+```cmd
+supabase db push
+```
+
+`20260816000001_tier4_watermark_and_pinning.sql` adds:
+
+| Column | Table | Purpose |
+|---|---|---|
+| `build_id` | `activations` | Which watermarked build claimed this seat |
+| `buyer_hash` | `activations` | sha256 of the buyer email (leak tracing) |
+| `min_app_version` | `releases` | Lowest extension version that may keep running |
+
+**b. Redeploy the touched functions** — the client now sends
+`buildId`/`buyerHash` on every activate / heartbeat / manifest call and
+reads `minVersion` from the manifest response:
+
+```cmd
+supabase functions deploy license-activate
+supabase functions deploy license-heartbeat
+supabase functions deploy release-manifest
+```
+
+(`_shared/lib.ts` also changed — grace is now clamped server-side to 7
+days, mirroring the client cap.)
+
+**c. Use it**
+
+- **Trace a leaked build:** a customer's zip carries a unique
+  `buildId` (first 8 chars in the ZIP name). When a cracked copy
+  appears, find its buildId and run:
+
+  ```sql
+  select license_id, buyer_hash, device_label, os, last_seen, created_at
+  from public.activations
+  where build_id = '<leaked-build-id>'
+    and status = 'active';
+  ```
+
+  The `buyer_hash` maps back to the buyer record in `builds` output of
+  `tools/build-release.js`. Revoke that license in the dashboard.
+
+- **Block old builds (version pinning):** when a release is published
+  (Dashboard → SQL Editor):
+
+  ```sql
+  update public.releases
+  set min_app_version = '2.4.0', is_latest = true
+  where version = '2.4.0' and channel = 'stable';
+  ```
+
+  Clients older than `2.4.0` then see a non-dismissible forced-update
+  notice instead of running. Bump `min_app_version` on every release —
+  cracked copies stop receiving updates and eventually die.
+
+**d. Build per-buyer ZIPs** (each buyer gets a unique watermark):
+
+```cmd
+node tools/build-release.js --buyer customer@email.com
+```
+
+Runs from the extension source folder (`tools/build-release.js`); writes
+`releases/compX-orbit-<buildid8>.zip` plus a `builds.json` record.

@@ -144,15 +144,19 @@ async function privateKey(): Promise<CryptoKey> {
 }
 
 /** Token lives 24h online; grace_until extends usable time offline. */
+/** Server-side grace cap — mirrors the client's MAX_OFFLINE_GRACE_DAYS. */
+export const MAX_GRACE_DAYS = 7;
+
 export async function signEntitlement(e: Entitlement): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
+  const graceSeconds = Math.min(e.graceDays, MAX_GRACE_DAYS) * 86400;
   return await new SignJWT({
     dev: e.deviceHash,
     ent: e.extensions,
     typ: e.licenseType,
     seats: e.maxDevices,
     email: e.email ?? null,
-    grace_until: now + e.graceDays * 86400,
+    grace_until: now + graceSeconds,
   })
     .setProtectedHeader({ alg: "ES256", typ: "JWT" })
     .setSubject(e.licenseId)

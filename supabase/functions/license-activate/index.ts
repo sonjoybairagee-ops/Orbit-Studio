@@ -92,6 +92,22 @@ Deno.serve(async (req) => {
     return json({ error: "Activation failed. Please try again." }, 409);
   }
 
+  // ---- per-buyer watermark (Tier 4) -------------------------
+  // tools/build-release.js embeds a unique buildId + buyerHash in each
+  // buyer's copy. Persist it on the seat so a leaked zip can be traced
+  // back to the buyer (query activations by build_id).
+  const buildId = String(body.buildId ?? "").trim() || null;
+  const buyerHash = String(body.buyerHash ?? "").trim() || null;
+  if (buildId || buyerHash) {
+    await db.from("activations").update({
+      build_id: buildId,
+      buyer_hash: buyerHash,
+    })
+      .eq("license_id", lic.id)
+      .eq("device_hash", fingerprint)
+      .eq("status", "active");
+  }
+
   // ---- signed entitlement -----------------------------------
   const token = await signEntitlement({
     licenseId: lic.id,
@@ -105,7 +121,7 @@ Deno.serve(async (req) => {
 
   await logEvent(db, req, "activate_ok", {
     licenseId: lic.id, userId: lic.user_id, deviceHash: fingerprint,
-    meta: { hostApp, appVersion: body.appVersion ?? null },
+    meta: { hostApp, appVersion: body.appVersion ?? null, buildId, buyerHash },
   });
 
   return json({

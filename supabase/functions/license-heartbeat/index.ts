@@ -21,6 +21,9 @@ Deno.serve(async (req) => {
   const key = normalizeKey(body.key);
   const fingerprint = String(body.fingerprint ?? "").trim();
   if (!key || !fingerprint) return json({ error: "Missing key or fingerprint" }, 400);
+  // Per-buyer watermark (Tier 4) — kept fresh on the seat for leak tracing.
+  const buildId = String(body.buildId ?? "").trim() || null;
+  const buyerHash = String(body.buyerHash ?? "").trim() || null;
 
   const lic = await loadLicense(db, key);
   const problem = licenseProblem(lic);
@@ -60,6 +63,8 @@ Deno.serve(async (req) => {
     last_seen: new Date().toISOString(),
     host_apps: apps,
     app_version: body.appVersion ?? null,
+    build_id: buildId,
+    buyer_hash: buyerHash,
   }).eq("id", seat.id);
 
   const slugs = entitlementSlugs(lic);
@@ -75,7 +80,7 @@ Deno.serve(async (req) => {
 
   await logEvent(db, req, "heartbeat", {
     licenseId: lic.id, userId: lic.user_id, deviceHash: fingerprint,
-    meta: { result: "ok", hostApp },
+    meta: { result: "ok", hostApp, buildId, buyerHash },
   });
 
   return json({ valid: true, token, entitlements: slugs });

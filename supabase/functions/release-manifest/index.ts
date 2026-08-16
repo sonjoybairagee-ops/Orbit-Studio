@@ -23,6 +23,8 @@ Deno.serve(async (req) => {
   const fingerprint = String(body.fingerprint ?? "").trim();
   const slug = String(body.slug ?? "");
   const channel = body.channel === "beta" ? "beta" : "stable";
+  const buildId = String(body.buildId ?? "").trim() || null;
+  const buyerHash = String(body.buyerHash ?? "").trim() || null;
 
   const lic = await loadLicense(db, key);
   const problem = licenseProblem(lic);
@@ -44,7 +46,7 @@ Deno.serve(async (req) => {
 
   const { data: databaseRelease } = await db
     .from("releases")
-    .select("version, channel, sha256, size_bytes, min_host_version, notes, published_at")
+    .select("version, channel, sha256, size_bytes, min_host_version, min_app_version, notes, published_at")
     .eq("extension_id", ext.id)
     .eq("channel", channel)
     .eq("is_latest", true)
@@ -60,6 +62,7 @@ Deno.serve(async (req) => {
     sha256: null,
     size_bytes: storageRelease.sizeBytes,
     min_host_version: null,
+    min_app_version: null,
     notes: null,
     published_at: storageRelease.publishedAt,
     source: "storage",
@@ -69,7 +72,7 @@ Deno.serve(async (req) => {
 
   await logEvent(db, req, "manifest", {
     licenseId: lic.id, userId: lic.user_id, deviceHash: fingerprint,
-    meta: { slug, version: rel.version, channel, source: rel.source },
+    meta: { slug, version: rel.version, channel, source: rel.source, buildId, buyerHash },
   });
 
   return json({
@@ -81,6 +84,7 @@ Deno.serve(async (req) => {
     sha256: rel.sha256,
     sizeBytes: rel.size_bytes,
     minHostVersion: rel.min_host_version,
+    minVersion: rel.min_app_version,
     notes: rel.notes,
     publishedAt: rel.published_at,
     source: rel.source,
