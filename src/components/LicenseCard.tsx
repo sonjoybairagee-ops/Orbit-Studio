@@ -354,11 +354,11 @@ export function LicenseCard({ license }: { license: LicenseView }) {
               )}
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {/* If Legacy User (Redeemed Key) */}
-              {isLegacy ? (
+            {/* If Legacy User (Redeemed Key) */}
+            {isLegacy ? (
+              <div className="grid grid-cols-1 gap-3">
                 <button
-                  className="col-span-full btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#45c66d] hover:text-[#45c66d]"
+                  className="w-full btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#45c66d] hover:text-[#45c66d]"
                   disabled={busy !== null}
                   onClick={() => download("compx-v111")}
                 >
@@ -369,43 +369,65 @@ export function LicenseCard({ license }: { license: LicenseView }) {
                     {busy === "dl-compx-v111" ? "Preparing…" : "Download CompX Precomp Manager (v1.1.2)"}
                   </span>
                 </button>
-              ) : (
-                <>
-                  {/* 1-Click Windows Installer (.exe) */}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* 💻 Windows Category Box */}
+                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                  <div className="mb-2.5 flex items-center justify-between">
+                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                      💻 Windows (1-Click Installer)
+                    </span>
+                    <span className="text-[10px] font-mono text-[#45c66d] bg-[#45c66d]/10 px-2 py-0.5 rounded border border-[#45c66d]/30 font-bold">
+                      Auto Setup (AE + PR)
+                    </span>
+                  </div>
                   <button
-                    className="col-span-full btn-primary flex items-center justify-center gap-2.5 px-4 py-3.5 text-xs font-black shadow-lg bg-[#45c66d] text-black hover:bg-[#39a85c] transition-all"
+                    className="w-full btn-primary flex items-center justify-center gap-2.5 px-4 py-3.5 text-xs font-black shadow-lg bg-[#45c66d] text-black hover:bg-[#39a85c] transition-all"
                     disabled={busy !== null}
                     onClick={() => download("windows-installer")}
                   >
-                    <span className="text-base">💻</span>
+                    <span className="text-base">🚀</span>
                     <span>
-                      {busy === "dl-windows-installer" ? "Preparing Installer…" : "Download Windows 1-Click Suite Installer (.exe)"}
+                      {busy === "dl-windows-installer" ? "Preparing Installer…" : "Download CompX Suite (.exe) — AE + PR Included"}
                     </span>
                   </button>
+                </div>
 
-                  {/* Orbit Studio ZXP extensions (Mac & Universal) */}
-                  {license.products
-                    .filter((p) => !/compx/i.test(p.slug))
-                    .map((p) => {
-                      const isPr = /premiere|[-_]pr$/i.test(p.slug);
-                      const label = isPr ? "macOS Package — Orbit Premiere (PR .zxp)" : "macOS Package — Orbit Studio (AE .zxp)";
-                      return (
-                        <button
-                          key={p.slug}
-                          className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#45c66d] hover:text-[#45c66d]"
-                          disabled={busy !== null}
-                          onClick={() => download(p.slug)}
-                        >
-                          <span className="text-base shrink-0">🍎</span>
-                          <span className="truncate">
-                            {busy === `dl-${p.slug}` ? "Preparing ZXP…" : label}
-                          </span>
-                        </button>
-                      );
-                    })}
-                </>
-              )}
-            </div>
+                {/* 🍏 Mac & Universal ZXP Category Box */}
+                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                  <div className="mb-2.5 flex items-center justify-between">
+                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                      🍏 Mac &amp; Universal (.zxp Builds)
+                    </span>
+                    <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30 font-bold">
+                      For macOS Users &amp; ZXP Installers
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {license.products
+                      .filter((p) => !/compx/i.test(p.slug))
+                      .map((p) => {
+                        const isPr = /premiere|[-_]pr$/i.test(p.slug);
+                        const label = isPr ? "Download Orbit Premiere PR (.zxp)" : "Download Orbit Studio AE (.zxp)";
+                        return (
+                          <button
+                            key={p.slug}
+                            className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#45c66d] hover:text-[#45c66d]"
+                            disabled={busy !== null}
+                            onClick={() => download(p.slug)}
+                          >
+                            <span className="text-base shrink-0">📦</span>
+                            <span className="truncate">
+                              {busy === `dl-${p.slug}` ? "Preparing ZXP…" : label}
+                            </span>
+                          </button>
+                        );
+                      })}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Section 2: Included Bonus Asset Bundles & Media Library */}
