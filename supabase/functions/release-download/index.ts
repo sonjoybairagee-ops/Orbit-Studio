@@ -73,9 +73,17 @@ Deno.serve(async (req) => {
   } : databaseRelease ? { ...databaseRelease, bucket: "releases", source: "database" } : null;
   if (!rel) return json({ error: "Release package not found." }, 404);
 
-  const { data: signed, error } = await db.storage
-    .from(rel.bucket)
+  let { data: signed, error } = await db.storage
+    .from("extensions")
     .createSignedUrl(rel.storage_path, LINK_TTL_SECONDS, { download: true });
+
+  if (error || !signed) {
+    const resAlt = await db.storage
+      .from("releases")
+      .createSignedUrl(rel.storage_path, LINK_TTL_SECONDS, { download: true });
+    signed = resAlt.data;
+    error = resAlt.error;
+  }
 
   if (error || !signed) {
     return json({ error: "Could not create the download link." }, 500);
