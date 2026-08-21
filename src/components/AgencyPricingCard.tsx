@@ -28,10 +28,10 @@ export function AgencyPricingCard({ plan }: { plan?: AgencyPlan }) {
   const checkoutTarget = plan?.id ?? "orbit-bundle";
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", width: "100%", maxWidth: "460px" }}>
-      <article className="price-card is-featured" style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+    <div className="w-full flex flex-col h-full">
+      <article className="price-card flex flex-col justify-between border border-white/10 hover:border-[#45c66d]/40 transition-all p-6 sm:p-7 rounded-2xl bg-black/40 h-full">
         <span className="price-card__popular">
-          Flexible team &amp; studio plan
+          FLEXIBLE TEAM &amp; STUDIO PLAN
         </span>
 
         <div>
