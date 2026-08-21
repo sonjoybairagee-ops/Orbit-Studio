@@ -97,10 +97,10 @@ export default async function PricingPage() {
 
               <div className="flex items-end justify-center gap-0.5 mt-3 mb-0.5">
                 <span className="text-lg font-bold text-white/40 mb-0.5">$</span>
-                <b className="text-4xl sm:text-5xl font-black text-white leading-none">2</b>
+                <b className="text-4xl sm:text-5xl font-black text-white leading-none">3</b>
               </div>
               <p className="text-center text-[10px] text-white/30 font-medium">ONE-TIME PAYMENT</p>
-              <p className="text-center text-[10px] text-purple-300/70 mb-3 font-semibold">৳249 / lifetime</p>
+              <p className="text-center text-[10px] text-purple-300/70 mb-3 font-semibold">৳349 / lifetime</p>
 
               <ul className="space-y-1.5 text-[11px] text-white/60 border-t border-white/[0.08] pt-3">
                 <li className="flex items-center gap-1.5"><span className="text-purple-400 text-xs">✓</span> After Effects Extension Panel</li>
@@ -114,7 +114,7 @@ export default async function PricingPage() {
 
             <div className="mt-4 pt-2 border-t border-white/5">
               <Link href={checkoutUrl} className="block w-full text-center py-2.5 rounded-xl text-xs font-bold border border-white/15 text-white/70 hover:border-purple-400/50 hover:text-white hover:bg-purple-500/10 transition-all">
-                Get Pro →
+                Get Studio — $3 →
               </Link>
               <p className="text-center text-[9px] text-white/20 mt-1.5">Key delivered to dashboard</p>
             </div>
@@ -153,7 +153,7 @@ export default async function PricingPage() {
 
             <div className="mt-4 pt-2 border-t border-white/5">
               <Link href={checkoutUrl} className="block w-full text-center py-2.5 rounded-xl text-xs font-black bg-[#3ddc6e] text-black hover:bg-[#35cc62] shadow-[0_4px_16px_rgba(61,220,110,0.25)] transition-all">
-                Get Ultimate — $2 →
+                Get Premiere — $2 →
               </Link>
               <p className="text-center text-[9px] text-white/25 mt-1.5">Instant download · Lifetime access</p>
             </div>
@@ -164,7 +164,7 @@ export default async function PricingPage() {
             <div>
               <div className="flex justify-center mb-3">
                 <span className="text-[9px] font-black tracking-[0.15em] text-black bg-amber-400 px-3 py-0.5 rounded-full uppercase shadow-lg">
-                  BEST VALUE
+                  BEST VALUE (SAVE 60%)
                 </span>
               </div>
 
@@ -176,7 +176,7 @@ export default async function PricingPage() {
               <div className="flex items-end justify-center gap-0.5 mt-3 mb-0.5">
                 <span className="text-lg font-bold text-white/40 mb-0.5">$</span>
                 <b className="text-4xl sm:text-5xl font-black text-white leading-none">2</b>
-                <span className="text-base line-through text-red-400/60 mb-0.5 ml-1">$4</span>
+                <span className="text-base line-through text-red-400/70 mb-0.5 ml-1">$5</span>
               </div>
               <p className="text-center text-[10px] text-white/30 font-medium">ONE-TIME PAYMENT</p>
               <p className="text-center text-[10px] text-amber-400/80 mb-3 font-semibold">৳249 / lifetime</p>
