@@ -7,6 +7,7 @@ import { signLicenseToken } from "@/lib/jwt";
 const schema = z.object({
   key: z.string().min(4),
   deviceId: z.string().min(6),
+  canonicalFingerprint: z.string().regex(/^[0-9a-fA-F]{64}$/).optional(),
   deviceLabel: z.string().optional(),
   os: z.string().optional(),
   hostApp: z.string().optional(),
@@ -17,7 +18,7 @@ export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json());
   if (!parsed.success)
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
-  const { key, deviceId, deviceLabel, os, hostApp, appVersion } = parsed.data;
+  const { key, deviceId, canonicalFingerprint, deviceLabel, os, hostApp, appVersion } = parsed.data;
 
   const admin = createAdminClient();
   const { data: license } = await admin
@@ -48,9 +49,10 @@ export async function POST(req: Request) {
   }
 
   const maxAllowedDevices = license.max_devices || 1;
-  const { error: activationError } = await admin.rpc("activate_license_device", {
+  const { data: activationData, error: activationError } = await admin.rpc("activate_license_device_v2", {
     p_license_id: license.id,
     p_device_hash: deviceId,
+    p_canonical_hash: canonicalFingerprint?.toLowerCase() ?? deviceId,
     p_device_label: deviceLabel ?? null,
     p_os: os ?? null,
     p_host_app: hostApp ?? null,
@@ -75,15 +77,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Could not activate this device" }, { status: 409 });
   }
 
+  const activation = Array.isArray(activationData) ? activationData[0] : activationData;
+  const effectiveDeviceId = String(activation?.device_hash ?? canonicalFingerprint ?? deviceId);
+
   const token = await signLicenseToken({
     sub: license.id,
     ext: license.extension_id,
-    device: deviceId,
+    device: effectiveDeviceId,
   });
 
   return NextResponse.json({
     ok: true,
     token,
+    fingerprint: effectiveDeviceId,
     extensionId: license.extension_id,
     maxDevices: maxAllowedDevices,
   });

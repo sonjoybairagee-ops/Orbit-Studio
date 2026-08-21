@@ -1,6 +1,6 @@
 // ============================================================
 // POST /license-activate
-// Body: { key, fingerprint, deviceLabel?, os?, hostApp?, appVersion? }
+// Body: { key, fingerprint, canonicalFingerprint?, deviceLabel?, os?, hostApp?, appVersion? }
 // Returns: { ok, token, entitlements, license }
 // ============================================================
 import {
@@ -29,6 +29,10 @@ Deno.serve(async (req) => {
 
   const key = normalizeKey(body.key);
   const fingerprint = String(body.fingerprint ?? "").trim();
+  const requestedCanonical = String(body.canonicalFingerprint ?? "" ).trim().toLowerCase();
+  const canonicalFingerprint = /^[0-9a-f]{64}$/.test(requestedCanonical)
+    ? requestedCanonical
+    : fingerprint;
   const hostApp = String(body.hostApp ?? "").toUpperCase(); // AEFT | PPRO
 
   if (key.length < 8) return json({ error: "Please enter a valid license key." }, 400);
@@ -63,9 +67,10 @@ Deno.serve(async (req) => {
   // ---- atomic seat management -------------------------------
   // The database function locks the license row before checking/inserting,
   // preventing concurrent devices from exceeding max_devices.
-  const { error: activationError } = await db.rpc("activate_license_device", {
+  const { data: activationData, error: activationError } = await db.rpc("activate_license_device_v2", {
     p_license_id: lic.id,
     p_device_hash: fingerprint,
+    p_canonical_hash: canonicalFingerprint,
     p_device_label: body.deviceLabel ?? null,
     p_os: body.os ?? null,
     p_host_app: hostApp || null,
@@ -92,6 +97,9 @@ Deno.serve(async (req) => {
     return json({ error: "Activation failed. Please try again." }, 409);
   }
 
+  const activation = Array.isArray(activationData) ? activationData[0] : activationData;
+  const effectiveFingerprint = String(activation?.device_hash ?? canonicalFingerprint);
+
   // ---- per-buyer watermark (Tier 4) -------------------------
   // tools/build-release.js embeds a unique buildId + buyerHash in each
   // buyer's copy. Persist it on the seat so a leaked zip can be traced
@@ -104,14 +112,14 @@ Deno.serve(async (req) => {
       buyer_hash: buyerHash,
     })
       .eq("license_id", lic.id)
-      .eq("device_hash", fingerprint)
+      .eq("device_hash", effectiveFingerprint)
       .eq("status", "active");
   }
 
   // ---- signed entitlement -----------------------------------
   const token = await signEntitlement({
     licenseId: lic.id,
-    deviceHash: fingerprint,
+    deviceHash: effectiveFingerprint,
     extensions: slugs,
     licenseType: lic.license_type,
     maxDevices: lic.max_devices,
@@ -120,13 +128,14 @@ Deno.serve(async (req) => {
   });
 
   await logEvent(db, req, "activate_ok", {
-    licenseId: lic.id, userId: lic.user_id, deviceHash: fingerprint,
+    licenseId: lic.id, userId: lic.user_id, deviceHash: effectiveFingerprint,
     meta: { hostApp, appVersion: body.appVersion ?? null, buildId, buyerHash },
   });
 
   return json({
     ok: true,
     token,
+    fingerprint: effectiveFingerprint,
     entitlements: slugs,
     license: {
       type: lic.license_type,
