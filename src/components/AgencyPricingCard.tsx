@@ -29,85 +29,70 @@ export function AgencyPricingCard({ plan }: { plan?: AgencyPlan }) {
 
   return (
     <div className="w-full flex flex-col h-full">
-      <article className="price-card flex flex-col justify-between border border-blue-500/30 hover:border-blue-500/60 transition-all p-5 sm:p-6 rounded-2xl bg-gradient-to-b from-blue-950/20 via-black/60 to-black/90 h-full relative">
+      <article className="flex flex-col justify-between rounded-2xl border border-white/10 bg-[#0e0e12] p-4 sm:p-5 h-full relative hover:border-cyan-500/40 hover:-translate-y-1 transition-all duration-300">
         <div>
-          <div className="flex justify-center">
-            <span className="text-[10px] font-bold tracking-widest text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/30 uppercase">
-              TEAMS &amp; STUDIOS
+          <div className="flex justify-center mb-3">
+            <span className="text-[9px] font-bold tracking-[0.15em] text-cyan-300/80 bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-0.5 rounded-full uppercase">
+              Teams &amp; Studios
             </span>
           </div>
 
-          <div className="price-card__head mt-4">
-            <div>
-              <p>{seats} Workstations / PCs</p>
-              <h2>Studio Team License</h2>
-            </div>
-            <div className="price-card__mark">
-              <Image src="/compx-mark.png" alt="CompX Orbit" width={26} height={20} unoptimized />
-            </div>
+          <div className="text-center">
+            <h2 className="text-lg font-black text-white tracking-tight">Studio Team License</h2>
+            <p className="text-[10px] text-cyan-400/70 font-mono">{seats} WORKSTATIONS / PCS</p>
           </div>
 
           {/* Dynamic Price Display */}
-          <div className="price-card__price">
-            <span>USD</span>
-            <b>${totalUsd}</b>
-            <span style={{ color: "#45c66d", fontSize: "20px", fontWeight: "700", marginLeft: "4px", alignSelf: "flex-end", marginBottom: "8px" }}>
-              / ৳{totalBdt}
-            </span>
-            <small>/ once ({seats} PCs)</small>
+          <div className="flex items-end justify-center gap-0.5 mt-3 mb-0.5">
+            <span className="text-lg font-bold text-white/40 mb-0.5">$</span>
+            <b className="text-4xl sm:text-5xl font-black text-white leading-none">{totalUsd}</b>
           </div>
-
-          <p className="price-card__sub">
-            Lifetime payment for {seats} workstations (৳{unitBdt} × {seats} devices).
-          </p>
+          <p className="text-center text-[10px] text-white/30 font-medium">ONE-TIME PAYMENT</p>
+          <p className="text-center text-[10px] text-cyan-300/80 mb-3 font-semibold">৳{totalBdt} / {seats} PCs</p>
 
           {/* Seat Selection Controls */}
-          <div style={{ marginTop: "16px", borderRadius: "12px", border: "1px solid rgba(69, 198, 109, 0.25)", background: "rgba(69, 198, 109, 0.08)", padding: "14px" }}>
-            <label style={{ fontSize: "11px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.08em", color: "#aab0bd", display: "block", marginBottom: "10px" }}>
-              Select Workstations:
-            </label>
+          <div className="mb-3 rounded-xl border border-white/10 bg-white/[0.03] p-2.5">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-white/50">
+                Workstations
+              </span>
+              <span className="text-[10px] font-black text-cyan-400 font-mono">
+                {seats} PCs (৳{totalBdt})
+              </span>
+            </div>
 
             {/* Preset Pills */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "10px" }}>
+            <div className="grid grid-cols-4 gap-1 mb-1.5">
               {presetSeats.map((num) => (
                 <button
                   key={num}
                   type="button"
                   onClick={() => setSeats(num)}
-                  style={{
-                    borderRadius: "8px",
-                    padding: "6px 10px",
-                    fontSize: "11px",
-                    fontWeight: "800",
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                    border: seats === num ? "1px solid #45c66d" : "1px solid rgba(255,255,255,0.12)",
-                    background: seats === num ? "#45c66d" : "rgba(255,255,255,0.06)",
-                    color: seats === num ? "#041008" : "#fff",
-                  }}
+                  className={`py-1 text-[10px] font-bold rounded-md transition-all ${
+                    seats === num
+                      ? "bg-cyan-500 text-black font-black shadow-sm"
+                      : "bg-white/[0.05] text-white/60 hover:text-white hover:bg-white/[0.1] border border-white/5"
+                  }`}
                 >
-                  {num} PCs (৳{num * unitBdt})
+                  {num} PCs
                 </button>
               ))}
             </div>
 
             {/* Stepper */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", borderRadius: "8px", background: "rgba(0,0,0,0.6)", padding: "6px 12px", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <div className="flex items-center justify-between rounded-md bg-black/50 px-2 py-1 border border-white/10">
               <button
                 type="button"
                 onClick={() => setSeats(Math.max(2, seats - 1))}
-                style={{ width: "32px", height: "32px", borderRadius: "6px", background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", fontSize: "16px", fontWeight: "bold", cursor: "pointer" }}
+                className="w-5 h-5 rounded bg-white/10 text-white font-bold hover:bg-white/20 transition-all flex items-center justify-center text-xs"
               >
-                -
+                −
               </button>
-              <div style={{ textAlign: "center" }}>
-                <span style={{ fontSize: "17px", fontWeight: "900", color: "#45c66d" }}>{seats}</span>
-                <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.7)", marginLeft: "5px" }}>Workstations / PCs</span>
-              </div>
+              <span className="text-xs font-black text-white font-mono">{seats} Workstations</span>
               <button
                 type="button"
                 onClick={() => setSeats(Math.min(MAX_SEATS, seats + 1))}
-                style={{ width: "32px", height: "32px", borderRadius: "6px", background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", fontSize: "16px", fontWeight: "bold", cursor: "pointer" }}
+                className="w-5 h-5 rounded bg-white/10 text-white font-bold hover:bg-white/20 transition-all flex items-center justify-center text-xs"
               >
                 +
               </button>
@@ -115,43 +100,31 @@ export function AgencyPricingCard({ plan }: { plan?: AgencyPlan }) {
           </div>
 
           {/* Features */}
-          <ul className="price-card__features">
-            <li><span>✓</span> After Effects + Premiere Pro Included</li>
-            <li><span>✓</span> <b>{seats} Device Activations</b> (Simultaneous Workstations)</li>
-            <li><span>✓</span> <b>1 Master License Key</b> for your team</li>
-            <li><span>✓</span> Centralized seat management &amp; remote device release</li>
-            <li><span>✓</span> Universal asset library &amp; lifetime updates</li>
+          <ul className="space-y-1.5 text-[11px] text-white/60 border-t border-white/[0.08] pt-3">
+            <li className="flex items-center gap-1.5"><span className="text-cyan-400 text-xs">✓</span> After Effects + Premiere Included</li>
+            <li className="flex items-center gap-1.5"><span className="text-cyan-400 text-xs">✓</span> <b className="text-white/90">{seats} Simultaneous PCs</b></li>
+            <li className="flex items-center gap-1.5"><span className="text-cyan-400 text-xs">✓</span> <b>1 Master License Key</b></li>
+            <li className="flex items-center gap-1.5"><span className="text-cyan-400 text-xs">✓</span> Centralized seat management</li>
+            <li className="flex items-center gap-1.5"><span className="text-cyan-400 text-xs">✓</span> Lifetime updates &amp; asset library</li>
           </ul>
         </div>
 
-        <div>
-          {/* CTA Button — links to real plan UUID with seats query param */}
-          <Link href={`/checkout/${checkoutTarget}?seats=${seats}`} className="btn-primary price-card__cta">
-            Order {seats} Devices (৳{totalBdt}) <span>→</span>
+        <div className="mt-4 pt-2 border-t border-white/5">
+          <Link
+            href={`/checkout/${checkoutTarget}?seats=${seats}`}
+            className="block w-full text-center py-2.5 rounded-xl text-xs font-bold border border-cyan-400/40 text-cyan-200 hover:bg-cyan-500/20 hover:text-white transition-all"
+          >
+            Order {seats} Seats (৳{totalBdt}) →
           </Link>
-          <small className="price-card__foot">Instant key delivery to dashboard · Secure verification</small>
+          <p className="text-center text-[9px] text-white/20 mt-1.5">Instant key delivery to dashboard</p>
 
-          {/* Enterprise / 10+ devices notice */}
-          <div style={{
-            marginTop: "12px",
-            borderRadius: "10px",
-            border: "1px solid rgba(69,198,109,0.18)",
-            background: "rgba(69,198,109,0.05)",
-            padding: "10px 14px",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-          }}>
-            <span style={{ fontSize: "18px" }}>🏢</span>
-            <p style={{ fontSize: "12px", color: "#aab0bd", margin: 0, lineHeight: "1.5" }}>
-              Need <b style={{ color: "#45c66d" }}>more than 10 devices?</b>{" "}
-              <Link
-                href="/contact"
-                style={{ color: "#45c66d", textDecoration: "underline", fontWeight: 700 }}
-              >
+          {/* Enterprise contact */}
+          <div className="mt-2 rounded-lg border border-white/5 bg-white/[0.02] p-1.5 text-center">
+            <p className="text-[10px] text-white/40">
+              Need &gt;10 PCs?{" "}
+              <Link href="/contact" className="text-cyan-400 font-bold hover:underline">
                 Contact us
-              </Link>{" "}
-              — আমরা আপনার চাহিদা অনুযায়ী custom plan তৈরি করে দেব।
+              </Link>
             </p>
           </div>
         </div>
