@@ -81,6 +81,77 @@ export async function GET(req: Request) {
     }
   }
 
+  // Orbit Studio / Premiere ZXP downloads
+  if (slug === "orbit-studio" || slug === "orbit-premiere") {
+    const { data: entitled } = await svc
+      .from("licenses")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .limit(1)
+      .maybeSingle();
+
+    if (!entitled)
+      return NextResponse.json(
+        { error: "Your account does not have an active license.", code: "NOT_ENTITLED" },
+        { status: 403 },
+      );
+
+    // Try database release first
+    const { data: extRecord } = await svc
+      .from("extensions")
+      .select("id")
+      .eq("slug", slug)
+      .maybeSingle();
+
+    if (extRecord) {
+      const { data: dbRelease } = await svc
+        .from("releases")
+        .select("version, storage_path")
+        .eq("extension_id", extRecord.id)
+        .eq("channel", channel)
+        .eq("is_latest", true)
+        .maybeSingle();
+
+      if (dbRelease?.storage_path) {
+        // Try extensions bucket
+        const { data: signedExt, error: errExt } = await svc.storage
+          .from("extensions")
+          .createSignedUrl(dbRelease.storage_path, 120, { download: true });
+
+        if (!errExt && signedExt?.signedUrl) {
+          return NextResponse.json({ url: signedExt.signedUrl, version: dbRelease.version });
+        }
+
+        // Try releases bucket
+        const { data: signedRel, error: errRel } = await svc.storage
+          .from("releases")
+          .createSignedUrl(dbRelease.storage_path, 120, { download: true });
+
+        if (!errRel && signedRel?.signedUrl) {
+          return NextResponse.json({ url: signedRel.signedUrl, version: dbRelease.version });
+        }
+      }
+    }
+
+    // Direct folder search fallback under extensions bucket
+    const { data: folderFiles } = await svc.storage
+      .from("extensions")
+      .list(`${slug}/2.4.14`);
+
+    if (folderFiles && folderFiles.length > 0) {
+      const zxpFile = folderFiles.find((f) => f.name.endsWith(".zxp")) || folderFiles[0];
+      const targetPath = `${slug}/2.4.14/${zxpFile.name}`;
+      const { data: signed, error: signErr } = await svc.storage
+        .from("extensions")
+        .createSignedUrl(targetPath, 120, { download: true });
+
+      if (!signErr && signed?.signedUrl) {
+        return NextResponse.json({ url: signed.signedUrl, version: "2.4.14" });
+      }
+    }
+  }
+
   const { data: ext } = await svc
     .from("extensions")
     .select("id, name")

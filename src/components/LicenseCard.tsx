@@ -383,9 +383,8 @@ export function LicenseCard({ license }: { license: LicenseView }) {
                   .filter((p) => !/compx/i.test(p.slug))
                   .map((p) => {
                     const isPr = /premiere|[-_]pr$/i.test(p.slug);
-                    const label = isPr ? "Orbit Premiere (PR .zxp)" : "Orbit Studio (AE .zxp)";
-                    const icon = isPr ? "Pr" : "Ae";
-                    const iconBg = isPr ? "bg-[#9999ff]" : "bg-[#00005b]";
+                    const label = isPr ? "macOS Package — Orbit Premiere (PR .zxp)" : "macOS Package — Orbit Studio (AE .zxp)";
+                    const icon = isPr ? "🍎" : "🍎";
                     return (
                       <button
                         key={p.slug}
@@ -393,11 +392,11 @@ export function LicenseCard({ license }: { license: LicenseView }) {
                         disabled={busy !== null}
                         onClick={() => download(p.slug)}
                       >
-                        <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-black text-white ${iconBg}`}>
+                        <span className="text-base shrink-0">
                           {icon}
                         </span>
                         <span className="truncate">
-                          {busy === `dl-${p.slug}` ? "Preparing…" : `Download ${label}`}
+                          {busy === `dl-${p.slug}` ? "Preparing ZXP…" : label}
                         </span>
                       </button>
                     );
