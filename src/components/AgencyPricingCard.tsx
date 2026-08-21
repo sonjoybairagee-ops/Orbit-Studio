@@ -29,13 +29,15 @@ export function AgencyPricingCard({ plan }: { plan?: AgencyPlan }) {
 
   return (
     <div className="w-full flex flex-col h-full">
-      <article className="price-card flex flex-col justify-between border border-white/10 hover:border-[#45c66d]/40 transition-all p-6 sm:p-7 rounded-2xl bg-black/40 h-full">
-        <span className="price-card__popular">
-          FLEXIBLE TEAM &amp; STUDIO PLAN
-        </span>
-
+      <article className="price-card flex flex-col justify-between border border-blue-500/30 hover:border-blue-500/60 transition-all p-5 sm:p-6 rounded-2xl bg-gradient-to-b from-blue-950/20 via-black/60 to-black/90 h-full relative">
         <div>
-          <div className="price-card__head">
+          <div className="flex justify-center">
+            <span className="text-[10px] font-bold tracking-widest text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/30 uppercase">
+              TEAMS &amp; STUDIOS
+            </span>
+          </div>
+
+          <div className="price-card__head mt-4">
             <div>
               <p>{seats} Workstations / PCs</p>
               <h2>Studio Team License</h2>

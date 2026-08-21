@@ -78,45 +78,47 @@ export default async function PricingPage() {
       </section>
 
       <section className="shell max-w-[1440px] mx-auto px-4 py-8" aria-label="Orbit plans">
-        {/* ── All 4 Products Side-by-Side Grid ── */}
+        {/* ── 4 Products Side-by-Side Compact Colorful Grid ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 items-stretch">
           
           {/* Card 1: Orbit Studio (After Effects) */}
-          <article className="price-card flex flex-col justify-between border border-white/10 hover:border-[#45c66d]/40 transition-all p-5 sm:p-6 rounded-2xl bg-black/40 h-full">
+          <article className="price-card flex flex-col justify-between border border-purple-500/30 hover:border-purple-500/60 transition-all p-5 sm:p-6 rounded-2xl bg-gradient-to-b from-purple-950/20 via-black/60 to-black/90 h-full relative">
             <div>
-              <span className="price-card__popular">AFTER EFFECTS EXTENSION</span>
-              <div className="price-card__head mt-3">
+              <div className="flex justify-center">
+                <span className="text-[10px] font-mono font-bold tracking-widest text-purple-300 bg-purple-500/10 px-3 py-1 rounded-full border border-purple-500/30 uppercase">
+                  AFTER EFFECTS EXTENSION
+                </span>
+              </div>
+              
+              <div className="price-card__head mt-4 text-center">
                 <div>
-                  <p className="text-xs font-mono text-[#aab0bd]">After Effects Panel</p>
-                  <h2 className="text-xl font-black text-white">Orbit Studio</h2>
-                </div>
-                <div className="price-card__mark">
-                  <Image src="/compx-mark.png" alt="CompX Orbit" width={24} height={18} unoptimized />
+                  <h2 className="text-2xl font-black text-white">Orbit Studio</h2>
+                  <p className="text-xs font-mono text-purple-300/80 mt-0.5">AFTER EFFECTS EXTENSION</p>
                 </div>
               </div>
 
-              <div className="price-card__price mt-4 flex items-baseline gap-1">
+              <div className="price-card__price mt-5 flex items-baseline justify-center gap-1">
                 <span className="text-xs text-[#aab0bd]">USD</span>
-                <b className="text-3xl font-black text-white">$2</b>
-                <span className="text-lg font-bold text-[#45c66d] ml-1">/ ৳249</span>
+                <b className="text-4xl font-black text-white">$2</b>
+                <span className="text-lg font-bold text-purple-400 ml-1">/ ৳249</span>
                 <small className="text-xs text-[#aab0bd]">/ once</small>
               </div>
-              <p className="price-card__sub mt-2 text-xs text-[#aab0bd] leading-5">
+              <p className="price-card__sub mt-2 text-xs text-[#aab0bd] text-center leading-5">
                 Essential workflow, 60+ tools &amp; color plates for After Effects.
               </p>
 
-              <ul className="price-card__features mt-5 space-y-2.5 text-xs">
-                <li><span className="text-[#45c66d] font-bold">✓</span> After Effects Extension Panel</li>
-                <li><span className="text-[#45c66d] font-bold">✓</span> 60+ workflow actions &amp; tools</li>
-                <li><span className="text-[#45c66d] font-bold">✓</span> 600+ color plates &amp; presets</li>
-                <li><span className="text-[#45c66d] font-bold">✓</span> Universal asset library</li>
-                <li><span className="text-[#45c66d] font-bold">✓</span> Lifetime updates &amp; support</li>
-                <li><span className="text-[#45c66d] font-bold">✓</span> 1 device activation</li>
+              <ul className="price-card__features mt-6 space-y-2.5 text-xs border-t border-white/10 pt-5">
+                <li><span className="text-purple-400 font-bold">✓</span> After Effects Extension Panel</li>
+                <li><span className="text-purple-400 font-bold">✓</span> 60+ workflow actions &amp; tools</li>
+                <li><span className="text-purple-400 font-bold">✓</span> 600+ color plates &amp; presets</li>
+                <li><span className="text-purple-400 font-bold">✓</span> Universal asset library</li>
+                <li><span className="text-purple-400 font-bold">✓</span> Lifetime updates &amp; support</li>
+                <li><span className="text-purple-400 font-bold">✓</span> 1 device activation</li>
               </ul>
             </div>
 
             <div className="mt-6 pt-4 border-t border-white/10">
-              <Link href={checkoutUrl} className="btn-secondary w-full flex justify-center items-center gap-2 py-2.5 text-xs font-bold">
+              <Link href={checkoutUrl} className="btn-secondary w-full flex justify-center items-center gap-2 py-3 text-xs font-bold border-purple-500/40 text-purple-200 hover:bg-purple-500/20">
                 Choose Orbit Studio <span>→</span>
               </Link>
               <small className="price-card__foot text-center block mt-2 text-[10px] text-[#6c7a71]">
@@ -126,32 +128,32 @@ export default async function PricingPage() {
           </article>
 
           {/* Card 2: Orbit Premiere (Premiere Pro) */}
-          <article className="price-card flex flex-col justify-between border border-white/10 hover:border-[#45c66d]/40 transition-all p-5 sm:p-6 rounded-2xl bg-black/40 h-full">
+          <article className="price-card flex flex-col justify-between border-2 border-[#45c66d]/60 shadow-[0_0_20px_rgba(69,198,109,0.15)] transition-all p-5 sm:p-6 rounded-2xl bg-gradient-to-b from-[#45c66d]/15 via-black/60 to-black/90 h-full relative">
             <div>
-              <span className="price-card__popular bg-blue-500/10 text-blue-400 border border-blue-500/30">
-                PREMIERE PRO EXTENSION
-              </span>
-              <div className="price-card__head mt-3">
+              <div className="flex justify-center">
+                <span className="text-[10px] font-black tracking-widest text-black bg-[#45c66d] px-3.5 py-1 rounded-full uppercase shadow">
+                  NEWLY LAUNCHED
+                </span>
+              </div>
+              
+              <div className="price-card__head mt-4 text-center">
                 <div>
-                  <p className="text-xs font-mono text-[#aab0bd]">Premiere Pro Panel</p>
-                  <h2 className="text-xl font-black text-white">Orbit Premiere</h2>
-                </div>
-                <div className="price-card__mark">
-                  <Image src="/compx-mark.png" alt="CompX Orbit" width={24} height={18} unoptimized />
+                  <h2 className="text-2xl font-black text-white">Orbit Premiere</h2>
+                  <p className="text-xs font-mono text-[#45c66d] mt-0.5 font-bold">PREMIERE PRO EXTENSION</p>
                 </div>
               </div>
 
-              <div className="price-card__price mt-4 flex items-baseline gap-1">
+              <div className="price-card__price mt-5 flex items-baseline justify-center gap-1">
                 <span className="text-xs text-[#aab0bd]">USD</span>
-                <b className="text-3xl font-black text-white">$2</b>
+                <b className="text-4xl font-black text-white">$2</b>
                 <span className="text-lg font-bold text-[#45c66d] ml-1">/ ৳249</span>
                 <small className="text-xs text-[#aab0bd]">/ once</small>
               </div>
-              <p className="price-card__sub mt-2 text-xs text-[#aab0bd] leading-5">
+              <p className="price-card__sub mt-2 text-xs text-[#aab0bd] text-center leading-5">
                 Silence cutter, auto cut &amp; audio editing tools for Premiere Pro.
               </p>
 
-              <ul className="price-card__features mt-5 space-y-2.5 text-xs">
+              <ul className="price-card__features mt-6 space-y-2.5 text-xs border-t border-white/10 pt-5">
                 <li><span className="text-[#45c66d] font-bold">✓</span> Premiere Pro Extension Panel</li>
                 <li><span className="text-[#45c66d] font-bold">✓</span> Silence Cutter &amp; Auto Cut</li>
                 <li><span className="text-[#45c66d] font-bold">✓</span> Audio &amp; Video workflow suite</li>
@@ -162,7 +164,7 @@ export default async function PricingPage() {
             </div>
 
             <div className="mt-6 pt-4 border-t border-white/10">
-              <Link href={checkoutUrl} className="btn-secondary w-full flex justify-center items-center gap-2 py-2.5 text-xs font-bold">
+              <Link href={checkoutUrl} className="btn-primary w-full flex justify-center items-center gap-2 py-3 text-xs font-black shadow-lg bg-[#45c66d] text-black hover:bg-[#38b25e]">
                 Choose Orbit Premiere <span>→</span>
               </Link>
               <small className="price-card__foot text-center block mt-2 text-[10px] text-[#6c7a71]">
@@ -172,46 +174,44 @@ export default async function PricingPage() {
           </article>
 
           {/* Card 3: Orbit Combo Pack (AE + PR Bundle) - BEST VALUE */}
-          <article className="price-card is-featured flex flex-col justify-between border-2 border-[#45c66d] shadow-[0_0_30px_rgba(69,198,109,0.25)] transition-all p-5 sm:p-6 rounded-2xl bg-gradient-to-b from-[#45c66d]/10 via-black/50 to-black/80 relative h-full">
-            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap bg-[#45c66d] text-black text-[10px] font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow-lg z-10">
-              ★ BEST VALUE COMBO ★
-            </div>
-
+          <article className="price-card flex flex-col justify-between border-2 border-amber-500/70 shadow-[0_0_25px_rgba(245,158,11,0.25)] transition-all p-5 sm:p-6 rounded-2xl bg-gradient-to-b from-amber-500/15 via-black/60 to-black/90 h-full relative">
             <div>
-              <span className="price-card__popular mt-1">DUAL EXTENSION BUNDLE</span>
-              <div className="price-card__head mt-3">
+              <div className="flex justify-center">
+                <span className="text-[10px] font-black tracking-widest text-black bg-amber-400 px-3.5 py-1 rounded-full uppercase shadow-lg z-10">
+                  ★ BEST VALUE ★
+                </span>
+              </div>
+              
+              <div className="price-card__head mt-4 text-center">
                 <div>
-                  <p className="text-xs font-mono text-[#45c66d] font-bold">After Effects + Premiere</p>
-                  <h2 className="text-xl font-black text-white">Orbit Combo Pack</h2>
-                </div>
-                <div className="price-card__mark">
-                  <Image src="/compx-mark.png" alt="CompX Orbit" width={24} height={18} unoptimized />
+                  <h2 className="text-2xl font-black text-white">Orbit Combo Pack</h2>
+                  <p className="text-xs font-mono text-amber-400 mt-0.5 font-bold">DUAL EXTENSION BUNDLE</p>
                 </div>
               </div>
 
-              <div className="price-card__price mt-4 flex items-baseline gap-1">
+              <div className="price-card__price mt-5 flex items-baseline justify-center gap-1">
                 <span className="text-xs text-[#aab0bd]">USD</span>
-                <b className="text-3xl font-black text-white">$2</b>
+                <b className="text-4xl font-black text-white">$2</b>
                 <span className="text-xs line-through text-red-400 font-bold ml-1">$4</span>
-                <span className="text-lg font-bold text-[#45c66d] ml-1">/ ৳249</span>
+                <span className="text-lg font-bold text-amber-400 ml-1">/ ৳249</span>
                 <small className="text-xs text-[#aab0bd]">/ once</small>
               </div>
-              <p className="price-card__sub mt-2 text-xs text-[#aab0bd] leading-5">
+              <p className="price-card__sub mt-2 text-xs text-[#aab0bd] text-center leading-5">
                 Unlock BOTH After Effects &amp; Premiere Pro extensions for just $2!
               </p>
 
-              <ul className="price-card__features mt-5 space-y-2.5 text-xs">
-                <li><span className="text-[#45c66d] font-bold">✓</span> <b>BOTH AE &amp; Premiere Plugins</b></li>
-                <li><span className="text-[#45c66d] font-bold">✓</span> 60+ AE actions + PR Silence Cutter</li>
-                <li><span className="text-[#45c66d] font-bold">✓</span> 600+ Color Plates &amp; Asset Library</li>
-                <li><span className="text-[#45c66d] font-bold">✓</span> 1 Shared License Key (1 PC)</li>
-                <li><span className="text-[#45c66d] font-bold">✓</span> Bonus 50+ MOGRTs &amp; 500+ SFX</li>
-                <li><span className="text-[#45c66d] font-bold">✓</span> Lifetime updates &amp; support</li>
+              <ul className="price-card__features mt-6 space-y-2.5 text-xs border-t border-white/10 pt-5">
+                <li><span className="text-amber-400 font-bold">✓</span> <b>BOTH AE &amp; Premiere Plugins</b></li>
+                <li><span className="text-amber-400 font-bold">✓</span> 60+ AE actions + PR Silence Cutter</li>
+                <li><span className="text-amber-400 font-bold">✓</span> 600+ Color Plates &amp; Asset Library</li>
+                <li><span className="text-amber-400 font-bold">✓</span> 1 Shared License Key (1 PC)</li>
+                <li><span className="text-amber-400 font-bold">✓</span> Bonus 50+ MOGRTs &amp; 500+ SFX</li>
+                <li><span className="text-amber-400 font-bold">✓</span> Lifetime updates &amp; support</li>
               </ul>
             </div>
 
             <div className="mt-6 pt-4 border-t border-white/10">
-              <Link href={checkoutUrl} className="btn-primary price-card__cta w-full flex justify-center items-center gap-2 py-3 text-xs font-black shadow-lg bg-[#45c66d] text-black hover:bg-[#39a85c]">
+              <Link href={checkoutUrl} className="btn-primary w-full flex justify-center items-center gap-2 py-3 text-xs font-black shadow-lg bg-gradient-to-r from-amber-500 to-amber-400 text-black hover:brightness-110">
                 Get Combo Pack ($2) <span>→</span>
               </Link>
               <small className="price-card__foot text-center block mt-2 text-[10px] text-[#8fa896]">
