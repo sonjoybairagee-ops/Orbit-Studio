@@ -56,6 +56,31 @@ export async function GET(req: Request) {
     }
   }
 
+  // Windows 1-Click Suite Installer (.exe)
+  if (slug === "windows-installer" || slug === "suite-installer") {
+    const { data: entitled } = await svc
+      .from("licenses")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .limit(1)
+      .maybeSingle();
+
+    if (!entitled)
+      return NextResponse.json(
+        { error: "Your account does not have an active license.", code: "NOT_ENTITLED" },
+        { status: 403 },
+      );
+
+    const { data: signed, error: signErr } = await svc.storage
+      .from("extensions")
+      .createSignedUrl("suite-installer/2.4.14/CompX-Orbit-Suite-Setup-v2.4.14.exe", 120, { download: true });
+
+    if (!signErr && signed?.signedUrl) {
+      return NextResponse.json({ url: signed.signedUrl, version: "2.4.14" });
+    }
+  }
+
   const { data: ext } = await svc
     .from("extensions")
     .select("id, name")

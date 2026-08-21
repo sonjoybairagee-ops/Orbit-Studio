@@ -366,12 +366,24 @@ export function LicenseCard({ license }: { license: LicenseView }) {
               </button>
             ) : (
               <>
-                {/* Orbit Studio extensions only — CompX is a separate product */}
+                {/* 1-Click Windows Installer (.exe) */}
+                <button
+                  className="col-span-full btn-primary flex items-center justify-center gap-2.5 px-4 py-3.5 text-xs font-black shadow-lg bg-[#45c66d] text-black hover:bg-[#39a85c] transition-all"
+                  disabled={busy !== null}
+                  onClick={() => download("windows-installer")}
+                >
+                  <span className="text-base">💻</span>
+                  <span>
+                    {busy === "dl-windows-installer" ? "Preparing Installer…" : "Download Windows 1-Click Suite Installer (.exe)"}
+                  </span>
+                </button>
+
+                {/* Orbit Studio ZXP extensions (Mac & Universal) */}
                 {license.products
                   .filter((p) => !/compx/i.test(p.slug))
                   .map((p) => {
                     const isPr = /premiere|[-_]pr$/i.test(p.slug);
-                    const label = isPr ? "Orbit Studio (Premiere)" : "Orbit Studio (AE)";
+                    const label = isPr ? "Orbit Premiere (PR .zxp)" : "Orbit Studio (AE .zxp)";
                     const icon = isPr ? "Pr" : "Ae";
                     const iconBg = isPr ? "bg-[#9999ff]" : "bg-[#00005b]";
                     return (
