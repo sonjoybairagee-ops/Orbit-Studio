@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { HeroShowcase } from "@/components/HeroShowcase";
 import { StoryGraphVisual } from "@/components/StoryGraphVisual";
 import { LayerExploder3D } from "@/components/LayerExploder3D";
+import { PremiereShowcase } from "@/components/PremiereShowcase";
 
 const WORKSPACES = [
   {
@@ -186,6 +187,11 @@ export default async function Home() {
       {/* ── Unique 3D Layer Exploder Feature Section ── */}
       <section className="shell py-12">
         <LayerExploder3D />
+      </section>
+
+      {/* ── Dedicated Orbit Premiere Interactive Showcase Section ── */}
+      <section className="shell py-8" id="premiere-showcase">
+        <PremiereShowcase />
       </section>
 
       <section className="shell bundle-section">
