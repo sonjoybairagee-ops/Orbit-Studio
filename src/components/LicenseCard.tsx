@@ -335,122 +335,130 @@ export function LicenseCard({ license }: { license: LicenseView }) {
 
       {/* downloads & invoice */}
       {license.status === "active" && (
-        <div className="mt-6 border-t border-white/10 pt-5">
-          <div className="mb-3 flex items-center justify-between">
-            <p className="label mb-0">Official Downloads & Invoice</p>
-            {license.order_id && (
-              <a
-                href={`/invoice/${license.order_id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-bold text-[#45c66d] hover:underline flex items-center gap-1"
-              >
-                <span>📄</span> Official Invoice ↗
-              </a>
-            )}
-          </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {/* If Legacy User (Redeemed Key) */}
-            {isLegacy ? (
-              <button
-                className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#45c66d] hover:text-[#45c66d]"
-                disabled={busy !== null}
-                onClick={() => download("compx-v111")}
-              >
-                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[#45c66d]/20 text-[#45c66d] text-[10px] font-black">
-                  📦
-                </span>
-                <span className="truncate">
-                  {busy === "dl-compx-v111" ? "Preparing…" : "Download CompX Precomp Manager (v1.1.2)"}
-                </span>
-              </button>
-            ) : (
-              <>
-                {/* 1-Click Windows Installer (.exe) */}
-                <button
-                  className="col-span-full btn-primary flex items-center justify-center gap-2.5 px-4 py-3.5 text-xs font-black shadow-lg bg-[#45c66d] text-black hover:bg-[#39a85c] transition-all"
-                  disabled={busy !== null}
-                  onClick={() => download("windows-installer")}
+        <div className="mt-6 border-t border-white/10 pt-5 space-y-6">
+          {/* Section 1: Software & Extension Installers */}
+          <div>
+            <div className="mb-3 flex items-center justify-between">
+              <p className="label mb-0 flex items-center gap-1.5 text-white font-bold">
+                <span>💻</span> Official Software &amp; Extension Installers
+              </p>
+              {license.order_id && (
+                <a
+                  href={`/invoice/${license.order_id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-bold text-[#45c66d] hover:underline flex items-center gap-1"
                 >
-                  <span className="text-base">💻</span>
-                  <span>
-                    {busy === "dl-windows-installer" ? "Preparing Installer…" : "Download Windows 1-Click Suite Installer (.exe)"}
+                  <span>📄</span> Official Invoice ↗
+                </a>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {/* If Legacy User (Redeemed Key) */}
+              {isLegacy ? (
+                <button
+                  className="col-span-full btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#45c66d] hover:text-[#45c66d]"
+                  disabled={busy !== null}
+                  onClick={() => download("compx-v111")}
+                >
+                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[#45c66d]/20 text-[#45c66d] text-[10px] font-black">
+                    📦
+                  </span>
+                  <span className="truncate">
+                    {busy === "dl-compx-v111" ? "Preparing…" : "Download CompX Precomp Manager (v1.1.2)"}
                   </span>
                 </button>
+              ) : (
+                <>
+                  {/* 1-Click Windows Installer (.exe) */}
+                  <button
+                    className="col-span-full btn-primary flex items-center justify-center gap-2.5 px-4 py-3.5 text-xs font-black shadow-lg bg-[#45c66d] text-black hover:bg-[#39a85c] transition-all"
+                    disabled={busy !== null}
+                    onClick={() => download("windows-installer")}
+                  >
+                    <span className="text-base">💻</span>
+                    <span>
+                      {busy === "dl-windows-installer" ? "Preparing Installer…" : "Download Windows 1-Click Suite Installer (.exe)"}
+                    </span>
+                  </button>
 
-                {/* Orbit Studio ZXP extensions (Mac & Universal) */}
-                {license.products
-                  .filter((p) => !/compx/i.test(p.slug))
-                  .map((p) => {
-                    const isPr = /premiere|[-_]pr$/i.test(p.slug);
-                    const label = isPr ? "macOS Package — Orbit Premiere (PR .zxp)" : "macOS Package — Orbit Studio (AE .zxp)";
-                    const icon = isPr ? "🍎" : "🍎";
-                    return (
-                      <button
-                        key={p.slug}
-                        className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#45c66d] hover:text-[#45c66d]"
-                        disabled={busy !== null}
-                        onClick={() => download(p.slug)}
-                      >
-                        <span className="text-base shrink-0">
-                          {icon}
-                        </span>
-                        <span className="truncate">
-                          {busy === `dl-${p.slug}` ? "Preparing ZXP…" : label}
-                        </span>
-                      </button>
-                    );
-                  })}
-
-                {/* Cloudflare R2 Bonus Downloads for $2 Paid Orbit Studio Users ONLY */}
-                {!isLegacy && (
-                  <>
-                    <a
-                      href={`/api/download-asset?file=${encodeURIComponent("50 Mogrt pack.zip")}`}
-                      className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#eab308] hover:text-[#eab308]"
-                      title="Download 50+ MOGRTs Templates Pack from Cloudflare R2"
-                    >
-                      <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-amber-500/20 text-amber-400 text-[10px] font-black">
-                        🎬
-                      </span>
-                      <span className="truncate">Download 50+ MOGRTs Pack</span>
-                    </a>
-
-                    <a
-                      href={`/api/download-asset?file=${encodeURIComponent("Sfx Part 1.zip")}`}
-                      className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#3b82f6] hover:text-[#3b82f6]"
-                      title="Download 500+ Premium Audio SFX Collection (Part 1)"
-                    >
-                      <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-blue-500/20 text-blue-400 text-[10px] font-black">
-                        🎵
-                      </span>
-                      <span className="truncate">Download Premium SFX (Part 1)</span>
-                    </a>
-
-                    <a
-                      href={`/api/download-asset?file=${encodeURIComponent("Sfx Part 2.zip")}`}
-                      className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#3b82f6] hover:text-[#3b82f6]"
-                      title="Download 500+ Premium Audio SFX Collection (Part 2)"
-                    >
-                      <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-blue-500/20 text-blue-400 text-[10px] font-black">
-                        🎵
-                      </span>
-                      <span className="truncate">Download Premium SFX (Part 2)</span>
-                    </a>
-                  </>
-                )}
-              </>
-            )}
+                  {/* Orbit Studio ZXP extensions (Mac & Universal) */}
+                  {license.products
+                    .filter((p) => !/compx/i.test(p.slug))
+                    .map((p) => {
+                      const isPr = /premiere|[-_]pr$/i.test(p.slug);
+                      const label = isPr ? "macOS Package — Orbit Premiere (PR .zxp)" : "macOS Package — Orbit Studio (AE .zxp)";
+                      return (
+                        <button
+                          key={p.slug}
+                          className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#45c66d] hover:text-[#45c66d]"
+                          disabled={busy !== null}
+                          onClick={() => download(p.slug)}
+                        >
+                          <span className="text-base shrink-0">🍎</span>
+                          <span className="truncate">
+                            {busy === `dl-${p.slug}` ? "Preparing ZXP…" : label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                </>
+              )}
+            </div>
           </div>
 
-          {/* Legacy v1.1.1 Upgrade Promo Card */}
+          {/* Section 2: Included Bonus Asset Bundles & Media Library */}
+          {!isLegacy && (
+            <div className="pt-4 border-t border-white/10">
+              <p className="label mb-3 flex items-center gap-1.5 text-amber-400 font-bold">
+                <span>🎁</span> Included Bonus Asset Bundles &amp; Media Library
+              </p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <a
+                  href={`/api/download-asset?file=${encodeURIComponent("50 Mogrt pack.zip")}`}
+                  className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#eab308] hover:text-[#eab308] bg-amber-500/5 border-amber-500/20"
+                  title="Download 50+ MOGRTs Templates Pack from Cloudflare R2"
+                >
+                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-amber-500/20 text-amber-400 text-[10px] font-black">
+                    🎬
+                  </span>
+                  <span className="truncate">Download 50+ MOGRTs Pack</span>
+                </a>
+
+                <a
+                  href={`/api/download-asset?file=${encodeURIComponent("Sfx Part 1.zip")}`}
+                  className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#3b82f6] hover:text-[#3b82f6] bg-blue-500/5 border-blue-500/20"
+                  title="Download 500+ Premium Audio SFX Collection (Part 1)"
+                >
+                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-blue-500/20 text-blue-400 text-[10px] font-black">
+                    🎵
+                  </span>
+                  <span className="truncate">Download Premium SFX (Part 1)</span>
+                </a>
+
+                <a
+                  href={`/api/download-asset?file=${encodeURIComponent("Sfx Part 2.zip")}`}
+                  className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#3b82f6] hover:text-[#3b82f6] bg-blue-500/5 border-blue-500/20"
+                  title="Download 500+ Premium Audio SFX Collection (Part 2)"
+                >
+                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-blue-500/20 text-blue-400 text-[10px] font-black">
+                    🎵
+                  </span>
+                  <span className="truncate">Download Premium SFX (Part 2)</span>
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* Legacy Upgrade Banner */}
           {isLegacy && (
             <div className="mt-4 rounded-xl border border-[#45c66d]/40 bg-[#45c66d]/10 p-4 text-left">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-black text-white">🚀 Upgrade to CompX Orbit Studio v2.3.1</p>
                   <p className="muted mt-1 text-xs">
-                    Get access to 7 Workspaces, 60+ Tools, 50+ MOGRTs & 500+ SFX Collection for just $2 USD (249 BDT).
+                    Get access to 7 Workspaces, 60+ Tools, 50+ MOGRTs &amp; 500+ SFX Collection for just $2 USD (249 BDT).
                   </p>
                 </div>
                 <a href="/pricing" className="btn-primary px-5 py-2 text-xs font-bold shrink-0">
@@ -461,7 +469,7 @@ export function LicenseCard({ license }: { license: LicenseView }) {
           )}
 
           <p className="muted mt-4 text-xs text-center">
-            Official extension builds & Cloudflare R2 bonus asset packs (MOGRTs & SFX) are secured & tied to your active license.
+            Official extension builds &amp; Cloudflare R2 bonus asset packs (MOGRTs &amp; SFX) are secured &amp; tied to your active license.
           </p>
         </div>
       )}
