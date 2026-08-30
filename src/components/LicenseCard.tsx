@@ -372,59 +372,82 @@ export function LicenseCard({ license }: { license: LicenseView }) {
               </div>
             ) : (
               <div className="space-y-4">
-                {/* 💻 Windows Category Box */}
-                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
-                  <div className="mb-2.5 flex items-center justify-between">
+                {/* 🌐 Universal (.zxp) Extension Installers for Windows & Mac */}
+                <div className="rounded-xl border border-[#45c66d]/30 bg-black/40 p-4 shadow-[0_0_20px_rgba(69,198,109,0.08)]">
+                  <div className="mb-2.5 flex items-center justify-between flex-wrap gap-2">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      💻 Windows (1-Click Installer)
+                      📦 Universal Extension Installers (.zxp)
                     </span>
-                    <span className="text-[10px] font-mono text-[#45c66d] bg-[#45c66d]/10 px-2 py-0.5 rounded border border-[#45c66d]/30 font-bold">
-                      Auto Setup (AE + PR)
+                    <span className="text-[10px] font-mono text-[#45c66d] bg-[#45c66d]/10 px-2.5 py-0.5 rounded-full border border-[#45c66d]/30 font-bold">
+                      🍏 Mac &amp; 💻 Windows Universal
                     </span>
                   </div>
-                  <button
-                    className="w-full btn-primary flex items-center justify-center gap-2.5 px-4 py-3.5 text-xs font-black shadow-lg bg-[#45c66d] text-black hover:bg-[#39a85c] transition-all"
-                    disabled={busy !== null}
-                    onClick={() => download("windows-installer")}
-                  >
-                    <span className="text-base">🚀</span>
-                    <span>
-                      {busy === "dl-windows-installer" ? "Preparing Installer…" : "Download CompX Suite (.exe) — AE + PR Included"}
-                    </span>
-                  </button>
-                </div>
 
-                {/* 🍏 Mac & Universal ZXP Category Box */}
-                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
-                  <div className="mb-2.5 flex items-center justify-between">
-                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      🍏 Mac &amp; Universal (.zxp Builds)
-                    </span>
-                    <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30 font-bold">
-                      For macOS Users &amp; ZXP Installers
-                    </span>
-                  </div>
+                  <p className="text-xs text-[#aab0bd] mb-3 leading-relaxed">
+                    Universal builds for both <b>Windows</b> and <b>macOS</b>. Install using any ZXP tool (e.g. Anastasiy Extension Manager or AEScripts ZXP Installer).
+                  </p>
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {license.products
                       .filter((p) => !/compx/i.test(p.slug))
                       .map((p) => {
                         const isPr = /premiere|[-_]pr$/i.test(p.slug);
-                        const label = isPr ? "Download Orbit Premiere PR (.zxp)" : "Download Orbit Studio AE (.zxp)";
+                        const appName = isPr ? "Orbit Premiere" : "Orbit Studio";
+                        const hostTag = isPr ? "Premiere Pro" : "After Effects";
+                        const hostBadge = isPr ? "Pr" : "Ae";
+
                         return (
                           <button
                             key={p.slug}
-                            className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#45c66d] hover:text-[#45c66d]"
+                            className="btn-primary flex items-center justify-between gap-3 px-4 py-3.5 text-xs font-black shadow-lg bg-[#45c66d] text-black hover:bg-[#39a85c] transition-all rounded-xl text-left"
                             disabled={busy !== null}
                             onClick={() => download(p.slug)}
                           >
-                            <span className="text-base shrink-0">📦</span>
-                            <span className="truncate">
-                              {busy === `dl-${p.slug}` ? "Preparing ZXP…" : label}
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="text-lg shrink-0">📦</span>
+                              <div className="min-w-0">
+                                <div className="font-black text-black text-xs truncate">
+                                  {busy === `dl-${p.slug}` ? "Preparing ZXP…" : `Download ${appName} (.zxp)`}
+                                </div>
+                                <div className="text-[10px] font-bold text-black/70 font-mono">
+                                  {hostTag} · Universal (Win &amp; Mac)
+                                </div>
+                              </div>
+                            </div>
+                            <span className="shrink-0 text-[10px] font-black bg-black/20 text-black px-2 py-1 rounded">
+                              {hostBadge}
                             </span>
                           </button>
                         );
                       })}
                   </div>
+                </div>
+
+                {/* 💻 Optional Windows 1-Click Installer */}
+                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                        💻 Windows 1-Click Setup (.exe)
+                      </span>
+                      <span className="text-[9px] font-mono text-white/50 bg-white/5 px-1.5 py-0.5 rounded border border-white/10">
+                        Optional
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[#6c7a71] mt-0.5">
+                      Installs both AE &amp; PR panels automatically on Windows without needing a ZXP tool.
+                    </p>
+                  </div>
+                  <button
+                    className="btn-secondary shrink-0 flex items-center justify-center gap-2 px-3.5 py-2 text-xs font-bold border-white/15 text-white/80 hover:text-white hover:border-[#45c66d] transition-all"
+                    disabled={busy !== null}
+                    onClick={() => download("windows-installer")}
+                  >
+                    <span>🚀</span>
+                    <span>
+                      {busy === "dl-windows-installer" ? "Preparing…" : "Download .exe Suite"}
+                    </span>
+                  </button>
                 </div>
               </div>
             )}
@@ -478,9 +501,9 @@ export function LicenseCard({ license }: { license: LicenseView }) {
             <div className="mt-4 rounded-xl border border-[#45c66d]/40 bg-[#45c66d]/10 p-4 text-left">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-black text-white">🚀 Upgrade to CompX Orbit Studio v2.3.1</p>
+                  <p className="text-sm font-black text-white">🚀 Upgrade to CompX Orbit Suite (AE + PR)</p>
                   <p className="muted mt-1 text-xs">
-                    Get access to 7 Workspaces, 60+ Tools, 50+ MOGRTs &amp; 500+ SFX Collection for just $2 USD (249 BDT).
+                    Get access to Orbit Studio (AE) &amp; Orbit Premiere (PR), 60+ Tools, 50+ MOGRTs &amp; 500+ SFX Collection for just $2 USD (249 BDT).
                   </p>
                 </div>
                 <a href="/pricing" className="btn-primary px-5 py-2 text-xs font-bold shrink-0">
