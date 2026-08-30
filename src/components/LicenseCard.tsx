@@ -422,33 +422,6 @@ export function LicenseCard({ license }: { license: LicenseView }) {
                       })}
                   </div>
                 </div>
-
-                {/* 💻 Optional Windows 1-Click Installer */}
-                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                        💻 Windows 1-Click Setup (.exe)
-                      </span>
-                      <span className="text-[9px] font-mono text-white/50 bg-white/5 px-1.5 py-0.5 rounded border border-white/10">
-                        Optional
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-[#6c7a71] mt-0.5">
-                      Installs both AE &amp; PR panels automatically on Windows without needing a ZXP tool.
-                    </p>
-                  </div>
-                  <button
-                    className="btn-secondary shrink-0 flex items-center justify-center gap-2 px-3.5 py-2 text-xs font-bold border-white/15 text-white/80 hover:text-white hover:border-[#45c66d] transition-all"
-                    disabled={busy !== null}
-                    onClick={() => download("windows-installer")}
-                  >
-                    <span>🚀</span>
-                    <span>
-                      {busy === "dl-windows-installer" ? "Preparing…" : "Download .exe Suite"}
-                    </span>
-                  </button>
-                </div>
               </div>
             )}
           </div>
