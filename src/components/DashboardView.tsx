@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LicenseCard, type LicenseView } from "@/components/LicenseCard";
@@ -20,7 +20,7 @@ interface DashboardViewProps {
 export function DashboardView({ user, licenses, verified }: DashboardViewProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"licenses" | "assets" | "redeem" | "install" | "support">("licenses");
-  const [refreshing, setRefreshing] = useState(false);
+  const [refreshing, startRefresh] = useTransition();
 
   const activeCount = licenses.filter((l) => l.status === "active").length;
   const isLegacyUser = licenses.some(
@@ -39,10 +39,8 @@ export function DashboardView({ user, licenses, verified }: DashboardViewProps) 
 
   const avatarInitial = formattedName.charAt(0) || "C";
 
-  async function handleRefresh() {
-    setRefreshing(true);
-    router.refresh();
-    setTimeout(() => setRefreshing(false), 800);
+  function handleRefresh() {
+    startRefresh(() => router.refresh());
   }
 
   async function handleSignOut() {
@@ -51,186 +49,29 @@ export function DashboardView({ user, licenses, verified }: DashboardViewProps) 
     router.push("/login");
   }
 
+  const tabs = [
+    ["licenses", "My licenses"], ["assets", "Bonus assets"], ["redeem", "Redeem key"],
+    ["install", "Installation"], ["support", "Support"],
+  ] as const;
   return (
-    <div className="w-full text-white">
-      {/* ── Email Verified Banner ── */}
-      {verified && (
-        <div className="mb-6 rounded-xl border border-[#45c66d]/40 bg-[#45c66d]/10 p-4 text-sm text-[#45c66d]">
-          <div className="flex items-center gap-3">
-            <span className="text-xl">✅</span>
-            <div>
-              <p className="font-bold text-white">Email confirmed successfully!</p>
-              <p className="text-xs text-[#aab0bd]">Welcome to CompX Orbit. Your account is verified and ready to use.</p>
-            </div>
-          </div>
+    <div className="account-dashboard">
+      {verified && <div role="status" className="account-notice">Email confirmed. Your account is ready to use.</div>}
+      <header className="account-header">
+        <div className="account-identity">
+          <span className="account-avatar" aria-hidden="true">{avatarInitial}</span>
+          <div><p className="account-eyebrow">YOUR ORBIT WORKSPACE</p><h1>Welcome, {formattedName}</h1><p className="account-email">{user.email}</p></div>
         </div>
-      )}
-
-      {/* ── Main Top Header (FLEX style) ── */}
-      <div className="flex flex-wrap items-start justify-between gap-6 pb-6 border-b border-white/[0.08]">
-        <div>
-          <p className="text-xs font-black uppercase tracking-widest text-[#45c66d]">
-            COMPX ORBIT PRO ENGINE
-          </p>
-          <h1 className="mt-1 text-2xl sm:text-3xl font-black tracking-tight text-white uppercase">
-            LICENSE &amp; PURCHASE HISTORY
-          </h1>
-          <p className="mt-1.5 text-xs sm:text-sm text-[#8c97a8]">
-            Access your purchased software licenses, view activations, and track extension downloads.
-          </p>
+        <div className="account-header-actions">
+          <span className="account-status">{activeCount > 0 ? activeCount + " active license" + (activeCount === 1 ? "" : "s") : "No active licenses"}</span>
+          <button onClick={handleRefresh} disabled={refreshing} aria-busy={refreshing}>{refreshing ? "Refreshing…" : "Refresh"}</button>
+          <button onClick={handleSignOut}>Sign out</button>
         </div>
-
-        {/* Header Right Actions */}
-        <div className="flex flex-wrap items-center gap-3">
-          <Link
-            href="/pricing"
-            className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-xs font-bold text-[#c2cbd8] hover:border-white/20 hover:text-white transition-all"
-          >
-            <span>←</span> BACK TO STORE
-          </Link>
-
-          <Link
-            href="/pricing"
-            className="flex items-center gap-1.5 rounded-xl bg-[#45c66d] px-5 py-2.5 text-xs font-black text-black shadow-[0_0_25px_rgba(69,198,109,0.3)] hover:bg-[#38b55e] hover:scale-[1.02] active:scale-[0.98] transition-all"
-          >
-            <span>＋</span> BUY PRODUCTS
-          </Link>
-        </div>
-      </div>
-
-      {/* ── Horizontal Tab Navigation Bar (FLEX style) ── */}
-      <div className="mt-6 flex flex-wrap items-center gap-2 border-b border-white/[0.08] pb-1">
-        <button
-          onClick={() => setActiveTab("licenses")}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-1 ${
-            activeTab === "licenses"
-              ? "border-[#45c66d] text-[#45c66d] bg-[#45c66d]/5 rounded-t-lg"
-              : "border-transparent text-[#8592a3] hover:text-white"
-          }`}
-        >
-          <span>✓</span> MY LICENSES ({licenses.length})
-        </button>
-
-        <button
-          onClick={() => setActiveTab("assets")}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-1 ${
-            activeTab === "assets"
-              ? "border-[#45c66d] text-[#45c66d] bg-[#45c66d]/5 rounded-t-lg"
-              : "border-transparent text-[#8592a3] hover:text-white"
-          }`}
-        >
-          <span>🎁</span> BONUS ASSETS &amp; SFX
-        </button>
-
-        <button
-          onClick={() => setActiveTab("redeem")}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-1 ${
-            activeTab === "redeem"
-              ? "border-[#45c66d] text-[#45c66d] bg-[#45c66d]/5 rounded-t-lg"
-              : "border-transparent text-[#8592a3] hover:text-white"
-          }`}
-        >
-          <span>🔑</span> REDEEM KEY
-        </button>
-
-        <button
-          onClick={() => setActiveTab("install")}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-1 ${
-            activeTab === "install"
-              ? "border-[#45c66d] text-[#45c66d] bg-[#45c66d]/5 rounded-t-lg"
-              : "border-transparent text-[#8592a3] hover:text-white"
-          }`}
-        >
-          <span>🛠️</span> HOW TO INSTALL
-        </button>
-
-        <button
-          onClick={() => setActiveTab("support")}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-wider transition-all border-b-2 -mb-1 ${
-            activeTab === "support"
-              ? "border-[#45c66d] text-[#45c66d] bg-[#45c66d]/5 rounded-t-lg"
-              : "border-transparent text-[#8592a3] hover:text-white"
-          }`}
-        >
-          <span>💬</span> COMMUNITY &amp; SUPPORT
-        </button>
-      </div>
-
-      {/* ── Main 2-Column Content Grid ── */}
-      <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* ── Left Column: User Profile & Quick Action Panel ── */}
-        <div className="lg:col-span-4 space-y-6">
-          {/* User Profile Card */}
-          <div className="rounded-2xl border border-white/[0.08] bg-[#0c100e]/90 p-5 sm:p-6 shadow-xl backdrop-blur-xl">
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#45c66d] to-[#25753e] text-2xl font-black text-black shadow-[0_0_20px_rgba(69,198,109,0.3)]">
-                {avatarInitial}
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-base font-black text-white truncate">{formattedName}</h3>
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="inline-flex items-center rounded-full bg-[#45c66d]/15 px-2 py-0.5 text-[10px] font-black text-[#45c66d] border border-[#45c66d]/30">
-                    {activeCount > 0 ? "Pro Member" : "Customer"}
-                  </span>
-                  <span className="text-[11px] text-[#697485]">✦ Lifetime</span>
-                </div>
-                <p className="mt-1 text-xs text-[#717b8c] truncate">{user.email}</p>
-              </div>
-            </div>
-
-            <div className="mt-6 pt-5 border-t border-white/[0.06] space-y-2">
-              <button
-                onClick={handleRefresh}
-                disabled={refreshing}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 px-4 py-2.5 text-xs font-bold text-[#c2cbd8] transition-all"
-              >
-                <svg
-                  width="13"
-                  height="13"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  className={refreshing ? "animate-spin" : ""}
-                >
-                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
-                </svg>
-                <span>{refreshing ? "REFRESHING DATA…" : "REFRESH DATA"}</span>
-              </button>
-
-              <button
-                onClick={handleSignOut}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-transparent hover:bg-red-500/10 px-4 py-2 text-xs font-bold text-[#8f9baa] hover:text-red-400 transition-all"
-              >
-                <span>⎋ SIGN OUT</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Quick Link Key Form (Left Sidebar) */}
-          <div className="rounded-2xl border border-white/[0.08] bg-[#0c100e]/90 p-5 sm:p-6 shadow-xl backdrop-blur-xl">
-            <RedeemForm />
-          </div>
-
-          {/* Legacy Upgrade Card */}
-          {isLegacyUser && (
-            <div className="rounded-2xl border border-[#45c66d]/40 bg-gradient-to-br from-[#45c66d]/15 to-transparent p-5 text-left shadow-[0_0_30px_rgba(69,198,109,0.1)]">
-              <p className="text-xs font-black uppercase tracking-widest text-[#45c66d]">
-                🚀 UPGRADE SUITE
-              </p>
-              <h4 className="mt-1 text-sm font-black text-white">Upgrade to Orbit Suite (AE + PR)</h4>
-              <p className="mt-1 text-xs text-[#aab0bd] leading-relaxed">
-                Unlock Orbit Studio (AE) &amp; Premiere (PR), 60+ Tools, 50+ MOGRTs &amp; 500+ SFX for just $4 USD (480 BDT).
-              </p>
-              <Link href="/pricing" className="btn-primary mt-3 w-full py-2 text-xs font-bold justify-center">
-                Upgrade Now ($4) →
-              </Link>
-            </div>
-          )}
-        </div>
-
-        {/* ── Right Column: Tab Content ── */}
-        <div className="lg:col-span-8 min-w-0">
+      </header>
+      <div className="account-heading"><div><h2>Your licenses & downloads</h2><p>Download your extensions, copy your key and manage your devices.</p></div><Link href="/pricing">Browse products ↗</Link></div>
+      <nav className="account-tabs" aria-label="Account sections">
+        {tabs.map(([id, label]) => <button key={id} id={"account-tab-" + id} aria-current={activeTab === id ? "page" : undefined} aria-controls="account-content" onClick={() => setActiveTab(id)}>{label}{id === "licenses" && <span>{licenses.length}</span>}</button>)}
+      </nav>
+      <section id="account-content" aria-labelledby={"account-tab-" + activeTab} aria-busy={refreshing} className="account-content">
           {/* TAB 1: MY LICENSES */}
           {activeTab === "licenses" && (
             <div className="space-y-6">
@@ -258,18 +99,18 @@ export function DashboardView({ user, licenses, verified }: DashboardViewProps) 
             <div className="space-y-6">
               <div className="rounded-2xl border border-white/[0.08] bg-[#0c100e]/90 p-6 shadow-xl">
                 <div className="flex items-center gap-2 text-amber-400">
-                  <span className="text-xl">🎁</span>
+                  
                   <h3 className="text-base font-black text-white">Included Bonus Assets &amp; Media Library</h3>
                 </div>
                 <p className="mt-1 text-xs text-[#8c97a8]">
-                  Cloudflare R2 high-speed download bundles tied to your active license.
+                  Download the bonus packs included with your active license.
                 </p>
 
                 <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {/* 50 MOGRTs */}
                   <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 flex flex-col justify-between">
                     <div>
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-wrap items-center justify-between gap-4">
                         <span className="text-2xl">🎬</span>
                         <span className="text-[10px] font-mono text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded">
                           116 MB
@@ -340,7 +181,7 @@ export function DashboardView({ user, licenses, verified }: DashboardViewProps) 
           {activeTab === "redeem" && (
             <div className="rounded-2xl border border-white/[0.08] bg-[#0c100e]/90 p-6 shadow-xl space-y-4">
               <h3 className="text-base font-black text-white flex items-center gap-2">
-                <span>🔑</span> Link or Redeem License Key
+                 Link or Redeem License Key
               </h3>
               <p className="text-xs text-[#8c97a8]">
                 If you purchased via external partner, promo, or email invoice, paste your key below to bind it permanently to your CompX account.
@@ -357,10 +198,10 @@ export function DashboardView({ user, licenses, verified }: DashboardViewProps) 
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-base font-black text-white flex items-center gap-2">
-                    <span>🛠️</span> Quick Installation Guide
+                     Quick Installation Guide
                   </h3>
                   <p className="text-xs text-[#8c97a8] mt-1">
-                    Install Orbit Studio or Orbit Premiere in under 60 seconds using any ZXP installer.
+                    Follow these steps to install Orbit Studio or Orbit Premiere with a ZXP installer.
                   </p>
                 </div>
                 <a
@@ -390,7 +231,7 @@ export function DashboardView({ user, licenses, verified }: DashboardViewProps) 
                   </span>
                   <h4 className="mt-2 text-xs font-bold text-white">Download Extension (.zxp)</h4>
                   <p className="mt-1 text-[11px] text-[#717b8c]">
-                    Click the green Orbit Studio (.zxp) or Orbit Premiere (.zxp) button above.
+                    Open My licenses, then download Orbit Studio (.zxp) or Orbit Premiere (.zxp).
                   </p>
                 </div>
 
@@ -421,12 +262,12 @@ export function DashboardView({ user, licenses, verified }: DashboardViewProps) 
           {activeTab === "support" && (
             <div className="rounded-2xl border border-white/[0.08] bg-[#0c100e]/90 p-6 shadow-xl space-y-4">
               <h3 className="text-base font-black text-white flex items-center gap-2">
-                <span>💬</span> Need Community Support or Help?
+                 Need Community Support or Help?
               </h3>
               <p className="text-xs text-[#8c97a8] leading-relaxed">
                 Join our private Discord community to chat directly with developers, get instant troubleshooting, and discover community presets.
               </p>
-              <div className="flex flex-wrap items-center gap-3 pt-2">
+              <div className="flex flex-wrap items-center gap-3 pt-2"><Link href="/dashboard/support" className="btn-primary">Contact support</Link>
                 <a
                   href="https://discord.gg/Je8pxakYf"
                   target="_blank"
@@ -443,69 +284,15 @@ export function DashboardView({ user, licenses, verified }: DashboardViewProps) 
                   href="/tutorials"
                   className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-xs font-bold text-[#c2cbd8] hover:border-white/20 hover:text-white transition-all"
                 >
-                  <span>▶ Video Tutorials</span>
+                  <span>Video tutorials</span>
                 </Link>
               </div>
             </div>
           )}
-        </div>
-      </div>
 
-      {/* ── Bottom Section: HOW TO INSTALL (Always visible clean guide matching FLEX reference) ── */}
-      <div className="mt-16 pt-12 border-t border-white/[0.08]">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase">
-            HOW TO INSTALL
-          </h2>
-          <p className="mt-2 text-xs sm:text-sm text-[#8c97a8] max-w-lg mx-auto">
-            Universal builds for Windows &amp; macOS. Compatible with Adobe After Effects &amp; Premiere Pro.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="rounded-2xl border border-white/[0.08] bg-[#0c100e]/80 p-5 transition-all hover:border-[#45c66d]/30">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#45c66d] text-sm font-black text-black shadow-[0_0_15px_rgba(69,198,109,0.3)]">
-              01
-            </span>
-            <h3 className="mt-3.5 text-sm font-black text-white">Download ZXP Tool</h3>
-            <p className="mt-1.5 text-xs text-[#8c97a8] leading-relaxed">
-              Download the free AEScripts ZXP Installer or Anastasiy Extension Manager.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-white/[0.08] bg-[#0c100e]/80 p-5 transition-all hover:border-[#45c66d]/30">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#45c66d] text-sm font-black text-black shadow-[0_0_15px_rgba(69,198,109,0.3)]">
-              02
-            </span>
-            <h3 className="mt-3.5 text-sm font-black text-white">Get Orbit .zxp</h3>
-            <p className="mt-1.5 text-xs text-[#8c97a8] leading-relaxed">
-              Click the green <b>Orbit Studio (.zxp)</b> or <b>Orbit Premiere (.zxp)</b> button above.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-white/[0.08] bg-[#0c100e]/80 p-5 transition-all hover:border-[#45c66d]/30">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#45c66d] text-sm font-black text-black shadow-[0_0_15px_rgba(69,198,109,0.3)]">
-              03
-            </span>
-            <h3 className="mt-3.5 text-sm font-black text-white">Drag &amp; Drop</h3>
-            <p className="mt-1.5 text-xs text-[#8c97a8] leading-relaxed">
-              Drag your downloaded <code>.zxp</code> file into the ZXP Installer to finish setup.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-white/[0.08] bg-[#0c100e]/80 p-5 transition-all hover:border-[#45c66d]/30">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#45c66d] text-sm font-black text-black shadow-[0_0_15px_rgba(69,198,109,0.3)]">
-              04
-            </span>
-            <h3 className="mt-3.5 text-sm font-black text-white">Open in Adobe App</h3>
-            <p className="mt-1.5 text-xs text-[#8c97a8] leading-relaxed">
-              Go to <b>Window &gt; Extensions &gt; Orbit Studio</b> and paste your license key!
-            </p>
-          </div>
-        </div>
-      </div>
+      </section>
+      {isLegacyUser && <aside className="account-upgrade"><div><strong>Ready for the full Orbit suite?</strong><p>Explore Orbit Studio and Orbit Premiere license options.</p></div><Link href="/pricing">Compare plans ↗</Link></aside>}
     </div>
   );
 }
-
 export default DashboardView;

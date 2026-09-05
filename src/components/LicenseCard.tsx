@@ -214,16 +214,21 @@ export function LicenseCard({ license }: { license: LicenseView }) {
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-black/40 border border-white/[0.05] p-3.5">
         <div className="flex items-center gap-3 min-w-0">
           <span className="text-xs font-bold uppercase tracking-wider text-[#6c788a]">Key:</span>
-          <code className="font-mono text-sm sm:text-base font-bold tracking-widest text-[#45c66d] truncate">
+          <code className="font-mono text-sm sm:text-base font-bold tracking-widest text-[#45c66d] break-all select-all">
             {license.key}
           </code>
         </div>
         <button
           className="flex items-center gap-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 px-3 py-1.5 text-xs font-bold text-white transition-all active:scale-95"
-          onClick={() => {
-            navigator.clipboard.writeText(license.key);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1800);
+          onClick={async () => {
+            setCopied(false);
+            try {
+              await navigator.clipboard.writeText(license.key);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1800);
+            } catch {
+              setNote({ kind: "err", text: "Could not copy the key. Select the key and copy it manually." });
+            }
           }}
         >
           {copied ? (
@@ -245,7 +250,7 @@ export function LicenseCard({ license }: { license: LicenseView }) {
 
       {/* ── Feedback Message ── */}
       {note && (
-        <div
+        <div role="status" aria-live="polite"
           className={`mt-3 rounded-xl p-3 text-xs font-bold ${
             note.kind === "ok"
               ? "bg-[#45c66d]/10 border border-[#45c66d]/30 text-[#45c66d]"
@@ -260,12 +265,12 @@ export function LicenseCard({ license }: { license: LicenseView }) {
       <div className="mt-5 rounded-xl border border-white/[0.05] bg-black/20 p-4">
         <div className="flex items-center justify-between text-xs pb-3 border-b border-white/[0.04]">
           <span className="font-bold text-white flex items-center gap-1.5">
-            <span>💻</span> Device Bindings:{" "}
+            <span>💻</span> Devices:{" "}
             <span className="text-[#45c66d]">
               {seatsUsed}/{license.max_devices} active
             </span>
           </span>
-          <span className="text-[11px] text-[#697485]">AE &amp; PR Shared Slot</span>
+          <span className="text-[11px] text-[#697485]">Shared by AE &amp; PR</span>
         </div>
 
         {seatsUsed === 0 ? (

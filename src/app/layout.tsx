@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import { AuthHashRedirect } from "@/components/AuthHashRedirect";
 import "./globals.css";
 import "./studio-landing.css";
+import "./dashboard.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
