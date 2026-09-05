@@ -16,11 +16,14 @@ export default async function CheckoutPage({
   const requestedSeats = Math.max(1, Math.min(10, parseInt(searchParams.seats ?? "1", 10) || 1));
 
   const supabase = await createClient();
-  const { data: rawPlan } = await supabase
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.planId);
+  const planQuery = supabase
     .from("plans")
-    .select("*, plan_extensions(extensions(name, slug))")
-    .or(`id.eq.${params.planId},slug.eq.${params.planId}`)
-    .maybeSingle();
+    .select("*, plan_extensions(extensions(name, slug))");
+
+  const { data: rawPlan } = isUuid
+    ? await planQuery.eq("id", params.planId).maybeSingle()
+    : await planQuery.eq("slug", params.planId).maybeSingle();
 
   if (!rawPlan || !rawPlan.is_active || !rawPlan.is_public) notFound();
 

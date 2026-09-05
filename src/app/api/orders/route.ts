@@ -43,11 +43,14 @@ export async function POST(req: Request) {
     }
   }
 
-  const { data: plan } = await supabase
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(planId);
+  const planQuery = supabase
     .from("plans")
-    .select("id,slug,name,billing_type,is_active,is_public,unit_price_usd,unit_price_bdt,paddle_price_id")
-    .or(`id.eq.${planId},slug.eq.${planId}`)
-    .maybeSingle();
+    .select("id,slug,name,billing_type,is_active,is_public,unit_price_usd,unit_price_bdt,paddle_price_id");
+
+  const { data: plan } = isUuid
+    ? await planQuery.eq("id", planId).maybeSingle()
+    : await planQuery.eq("slug", planId).maybeSingle();
 
   if (!plan || !plan.is_active || !plan.is_public)
     return NextResponse.json({ error: "Plan not found" }, { status: 404 });
