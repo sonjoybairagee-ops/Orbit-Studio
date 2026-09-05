@@ -37,9 +37,13 @@ export default async function CheckoutPage({
     } else {
       const isMulti = plan.max_devices > 1 || requestedSeats > 1;
       const cleanName = isMulti ? "Studio Team License" : (plan.name || "Orbit Studio");
-      const unitUsd = isMulti ? 5 : (Number(plan.unit_price_usd) >= 3 ? Number(plan.unit_price_usd) : 3);
-      const unitBdt = isMulti ? 600 : (Number(plan.unit_price_bdt) >= 360 ? Number(plan.unit_price_bdt) : 360);
-      plan = { ...plan, name: cleanName, unit_price_usd: unitUsd, unit_price_bdt: unitBdt };
+      const isPremiere = plan.slug === "orbit-premiere";
+      const isBundle = plan.slug === "orbit-bundle";
+      const defaultUsd = isMulti ? 4 : (isPremiere ? 2 : isBundle ? 4 : 3);
+      const defaultBdt = isMulti ? 480 : (isPremiere ? 240 : isBundle ? 480 : 360);
+      const unitUsd = Number(plan.unit_price_usd) > 0 ? Number(plan.unit_price_usd) : defaultUsd;
+      const unitBdt = Number(plan.unit_price_bdt) > 0 ? Number(plan.unit_price_bdt) : defaultBdt;
+      plan = { ...plan, name: cleanName, unit_price_usd: isMulti ? 4 : unitUsd, unit_price_bdt: isMulti ? 480 : unitBdt };
     }
   }
 

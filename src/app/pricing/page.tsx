@@ -10,12 +10,12 @@ const FALLBACK_SINGLE = {
   id: "orbit-bundle",
   slug: "orbit-bundle",
   name: "Orbit Studio",
-  price: 3,
+  price: 4,
   currency: "USD",
   billing_type: "lifetime",
   max_devices: 1,
-  unit_price_usd: 3,
-  unit_price_bdt: 360,
+  unit_price_usd: 4,
+  unit_price_bdt: 480,
   paddle_price_id: "pri_01kydan5yvz9a050efd199wrjv",
 };
 
@@ -52,15 +52,15 @@ export default async function PricingPage() {
         id: multiPlanRaw.id,
         slug: multiPlanRaw.slug,
         max_devices: multiPlanRaw.max_devices,
-        unit_price_usd: Number(multiPlanRaw.unit_price_usd) >= 5 ? Number(multiPlanRaw.unit_price_usd) : 5,
-        unit_price_bdt: Number(multiPlanRaw.unit_price_bdt) >= 600 ? Number(multiPlanRaw.unit_price_bdt) : 600,
+        unit_price_usd: Number(multiPlanRaw.unit_price_usd) >= 4 ? Number(multiPlanRaw.unit_price_usd) : 4,
+        unit_price_bdt: Number(multiPlanRaw.unit_price_bdt) >= 480 ? Number(multiPlanRaw.unit_price_bdt) : 480,
       }
     : {
         id: "orbit-bundle-2",
         slug: "orbit-bundle-2",
         max_devices: 2,
-        unit_price_usd: 5,
-        unit_price_bdt: 600,
+        unit_price_usd: 4,
+        unit_price_bdt: 480,
       };
 
   const checkoutUrl = `/checkout/${singlePlan.id}`;
@@ -142,10 +142,10 @@ export default async function PricingPage() {
 
               <div className="flex items-end justify-center gap-0.5 mt-3 mb-0.5">
                 <span className="text-lg font-bold text-white/40 mb-0.5">$</span>
-                <b className="text-4xl sm:text-5xl font-black text-white leading-none">3</b>
+                <b className="text-4xl sm:text-5xl font-black text-white leading-none">2</b>
               </div>
               <p className="text-center text-[10px] text-white/30 font-medium">ONE-TIME PAYMENT</p>
-              <p className="text-center text-[10px] text-[#3ddc6e]/80 mb-3 font-semibold">৳360 / lifetime</p>
+              <p className="text-center text-[10px] text-[#3ddc6e]/80 mb-3 font-semibold">৳240 / lifetime</p>
 
               <ul className="space-y-1.5 text-[11px] text-white/70 border-t border-white/10 pt-3">
                 <li className="flex items-center gap-1.5"><span className="text-[#3ddc6e] text-xs">✓</span> Premiere Pro Extension Panel</li>
@@ -159,7 +159,7 @@ export default async function PricingPage() {
 
             <div className="mt-4 pt-2 border-t border-white/5">
               <Link href="/checkout/orbit-premiere" className="block w-full text-center py-2.5 rounded-xl text-xs font-black bg-[#3ddc6e] text-black hover:bg-[#35cc62] shadow-[0_4px_16px_rgba(61,220,110,0.25)] transition-all">
-                Get Premiere — $3 →
+                Get Premiere — $2 →
               </Link>
               <p className="text-center text-[9px] text-white/25 mt-1.5">Instant download · Lifetime access</p>
             </div>
@@ -181,11 +181,11 @@ export default async function PricingPage() {
 
               <div className="flex items-end justify-center gap-0.5 mt-3 mb-0.5">
                 <span className="text-lg font-bold text-white/40 mb-0.5">$</span>
-                <b className="text-4xl sm:text-5xl font-black text-white leading-none">5</b>
-                <span className="text-base line-through text-red-400/70 mb-0.5 ml-1">$6</span>
+                <b className="text-4xl sm:text-5xl font-black text-white leading-none">4</b>
+                <span className="text-base line-through text-red-400/70 mb-0.5 ml-1">$5</span>
               </div>
               <p className="text-center text-[10px] text-white/30 font-medium">ONE-TIME PAYMENT</p>
-              <p className="text-center text-[10px] text-amber-400/80 mb-3 font-semibold">৳600 / lifetime</p>
+              <p className="text-center text-[10px] text-amber-400/80 mb-3 font-semibold">৳480 / lifetime</p>
 
               <ul className="space-y-1.5 text-[11px] text-white/70 border-t border-white/[0.08] pt-3">
                 <li className="flex items-center gap-1.5"><span className="text-amber-400 text-xs">✓</span> <b className="text-white/90">BOTH AE &amp; Premiere Plugins</b></li>
@@ -199,7 +199,7 @@ export default async function PricingPage() {
 
             <div className="mt-4 pt-2 border-t border-white/5">
               <Link href="/checkout/orbit-bundle" className="block w-full text-center py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-black hover:brightness-110 shadow-[0_4px_16px_rgba(245,158,11,0.2)] transition-all">
-                Get Combo Pack — $5 →
+                Get Combo Pack — $4 →
               </Link>
               <p className="text-center text-[9px] text-white/25 mt-1.5">Dual download · Lifetime access</p>
             </div>
@@ -238,7 +238,7 @@ export default async function PricingPage() {
         <div className="pricing-faq__list">
           {[
             ["Is this a subscription?", "No. The displayed price is a one-time payment for lifetime access to the purchased version and its included updates."],
-            ["Do I buy AE and Premiere separately?", "You can get Orbit Studio ($3) or Orbit Premiere ($3) individually, or choose the Orbit Combo Pack ($5) to unlock BOTH extensions together for maximum savings!"],
+            ["Do I buy AE and Premiere separately?", "You can get Orbit Studio ($3) or Orbit Premiere ($2) individually, or choose the Orbit Combo Pack ($4) to unlock BOTH extensions together for maximum savings!"],
             ["Can I move to another computer?", "Yes. Release the current device from your dashboard. A 24-hour cooldown protects the licence from sharing abuse."],
             ["Does my old CompX demo key unlock Orbit?", "No. LG legacy keys are only for CompX v1.1.1. Orbit is a new paid product."],
             ["What is the Studio Team License?", "A single license key that unlocks multiple workstations simultaneously. Perfect for studios and teams sharing one subscription."],

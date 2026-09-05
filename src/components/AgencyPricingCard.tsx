@@ -16,8 +16,8 @@ export function AgencyPricingCard({ plan }: { plan?: AgencyPlan }) {
   const [seats, setSeats] = useState<number>(2); // Default 2 seats (minimum)
   const MAX_SEATS = 10;
 
-  const unitUsd = plan?.unit_price_usd && plan.unit_price_usd >= 5 ? plan.unit_price_usd : 5;
-  const unitBdt = plan?.unit_price_bdt && plan.unit_price_bdt >= 600 ? plan.unit_price_bdt : 600;
+  const unitUsd = plan?.unit_price_usd && plan.unit_price_usd >= 4 ? plan.unit_price_usd : 4;
+  const unitBdt = plan?.unit_price_bdt && plan.unit_price_bdt >= 480 ? plan.unit_price_bdt : 480;
 
   const totalUsd = seats * unitUsd;
   const totalBdt = seats * unitBdt;

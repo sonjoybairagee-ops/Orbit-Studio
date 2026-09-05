@@ -220,10 +220,10 @@ export function DashboardView({ user, licenses, verified }: DashboardViewProps) 
               </p>
               <h4 className="mt-1 text-sm font-black text-white">Upgrade to Orbit Suite (AE + PR)</h4>
               <p className="mt-1 text-xs text-[#aab0bd] leading-relaxed">
-                Unlock Orbit Studio (AE) &amp; Premiere (PR), 60+ Tools, 50+ MOGRTs &amp; 500+ SFX for just $5 USD (600 BDT).
+                Unlock Orbit Studio (AE) &amp; Premiere (PR), 60+ Tools, 50+ MOGRTs &amp; 500+ SFX for just $4 USD (480 BDT).
               </p>
               <Link href="/pricing" className="btn-primary mt-3 w-full py-2 text-xs font-bold justify-center">
-                Upgrade Now ($5) →
+                Upgrade Now ($4) →
               </Link>
             </div>
           )}
