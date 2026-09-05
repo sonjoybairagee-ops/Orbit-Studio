@@ -35,15 +35,11 @@ export default async function CheckoutPage({
       // Keep legacy plan as-is, just normalize name and price
       plan = { ...plan, name: "CompX Precomp Manager" };
     } else {
-      // For Orbit plans, set a clean display name but KEEP the real max_devices and price.
-      // Price is calculated per-seat in CheckoutForm using unitBdt/unitUsd × seats,
-      // so the plan.price field is just the unit price (2 USD / 249 BDT).
-      // We always charge ৳249 × seats, so unit price stays 2 USD regardless of seats.
-      const cleanName =
-        plan.max_devices > 1
-          ? "Studio Team License"
-          : "Orbit Studio";
-      plan = { ...plan, name: cleanName };
+      const isMulti = plan.max_devices > 1 || requestedSeats > 1;
+      const cleanName = isMulti ? "Studio Team License" : (plan.name || "Orbit Studio");
+      const unitUsd = isMulti ? 5 : (Number(plan.unit_price_usd) >= 3 ? Number(plan.unit_price_usd) : 3);
+      const unitBdt = isMulti ? 600 : (Number(plan.unit_price_bdt) >= 360 ? Number(plan.unit_price_bdt) : 360);
+      plan = { ...plan, name: cleanName, unit_price_usd: unitUsd, unit_price_bdt: unitBdt };
     }
   }
 

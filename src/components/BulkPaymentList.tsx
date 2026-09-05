@@ -45,6 +45,15 @@ export function BulkPaymentList({ orders }: { orders: any[] }) {
     }
   };
 
+  // Anti-fraud Txn ID frequency analysis
+  const txnCounts: Record<string, number> = {};
+  orders.forEach((o) => {
+    if (o.txn_ref) {
+      const normalized = o.txn_ref.trim().toUpperCase();
+      txnCounts[normalized] = (txnCounts[normalized] || 0) + 1;
+    }
+  });
+
   return (
     <div className="space-y-3 pb-24">
       {results && (
@@ -56,113 +65,134 @@ export function BulkPaymentList({ orders }: { orders: any[] }) {
         </div>
       )}
 
-      {orders.map((o) => (
-        <label
-          key={o.id}
-          className={`card flex cursor-pointer flex-col justify-between gap-5 p-5 transition-colors hover:border-white/20 sm:flex-row sm:items-center ${
-            selected.includes(o.id) ? "border-[#45c66d]/50 bg-[#45c66d]/5" : ""
-          }`}
-        >
-          <div className="flex items-start gap-4">
+      {orders.map((o) => {
+        const normalizedTxn = o.txn_ref?.trim().toUpperCase();
+        const isDuplicateTxn = normalizedTxn && (txnCounts[normalizedTxn] || 0) > 1;
+        const isSuspiciousLength = normalizedTxn && (normalizedTxn.length < 8 || normalizedTxn.length > 12);
+        const isSuspiciousPattern = normalizedTxn && (/^\d+$/.test(normalizedTxn) || /^[a-zA-Z]+$/.test(normalizedTxn));
+
+        return (
+          <label
+            key={o.id}
+            className={`card flex cursor-pointer flex-col justify-between gap-5 p-5 transition-colors hover:border-white/20 sm:flex-row sm:items-center ${
+              selected.includes(o.id) ? "border-[#45c66d]/50 bg-[#45c66d]/5" : ""
+            } ${isDuplicateTxn ? "border-red-500/50 bg-red-500/[0.03]" : ""}`}
+          >
+            <div className="flex items-start gap-4">
+              {(o.status === "pending" || o.status === "on_hold") && (
+                <input
+                  type="checkbox"
+                  className="mt-1.5 h-5 w-5 accent-[#45c66d]"
+                  checked={selected.includes(o.id)}
+                  onChange={() => toggle(o.id)}
+                />
+              )}
+              <div>
+                <div className="flex items-center gap-2">
+                  <b>{o.plans?.name}</b>
+                  <span
+                    className={`badge ${
+                      o.status === "approved"
+                        ? "badge-green"
+                        : o.status === "pending"
+                          ? "badge-amber"
+                          : o.status === "on_hold"
+                            ? "bg-orange-500/20 text-orange-400 border border-orange-500/30"
+                            : ""
+                    }`}
+                  >
+                    {o.status === "on_hold" ? "On Hold" : o.status}
+                  </span>
+                  {isDuplicateTxn && (
+                    <span className="badge bg-red-600/20 text-red-400 border border-red-500/40 text-[10px] font-black animate-pulse">
+                      🚨 DUPLICATE TXN ({txnCounts[normalizedTxn]}x)
+                    </span>
+                  )}
+                  {!isDuplicateTxn && (isSuspiciousLength || isSuspiciousPattern) && o.method !== "paddle" && (
+                    <span className="badge bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold">
+                      ⚠️ Suspicious Txn Format
+                    </span>
+                  )}
+                </div>
+                <p className="muted mt-2 text-sm">{o.profiles?.email}</p>
+                <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                  <span className="badge font-mono font-bold">
+                    {o.currency} {o.amount}
+                  </span>
+                  <span className={`badge font-mono ${isDuplicateTxn ? "text-red-400 font-bold border-red-500/30" : ""}`}>
+                    Txn ID: {o.txn_ref ?? "—"}
+                  </span>
+                  <span
+                    className={`badge ${
+                      o.method === "bkash"
+                        ? "bg-[#e2136e]/20 text-[#ff6ca5] border border-[#e2136e]/30"
+                        : o.method === "nagad"
+                          ? "bg-[#f6921e]/20 text-[#f6921e] border border-[#f6921e]/30"
+                          : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                    }`}
+                  >
+                    {o.method === "bkash" ? "bKash" : o.method === "nagad" ? "Nagad" : "Paddle"}
+                  </span>
+                  <span className="badge bg-white/5 border border-white/10 text-white/60">
+                    Submitted: {new Date(o.created_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                  {o.status === "approved" && o.reviewed_at && (
+                    <span className="badge bg-[#45c66d]/10 text-[#45c66d] border border-[#45c66d]/30">
+                      Approved: {new Date(o.reviewed_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  )}
+                  {o.status === "rejected" && o.reviewed_at && (
+                    <span className="badge bg-red-500/10 text-red-400 border border-red-500/20">
+                      Rejected: {new Date(o.reviewed_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  )}
+                  {o.method === "paddle" && o.status === "pending" && (
+                    <span className="badge bg-red-500/10 text-red-400 border border-red-500/20">
+                      Unpaid (Abandoned Checkout)
+                    </span>
+                  )}
+                  {o.receipt_path && (
+                    <a
+                      className="badge badge-amber hover:text-white"
+                      href={`/api/admin/receipt?path=${encodeURIComponent(o.receipt_path)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      View receipt ↗
+                    </a>
+                  )}
+                  {o.status === "on_hold" && o.hold_reason && (
+                    <span className="badge bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                      ⏸ {o.hold_reason}
+                    </span>
+                  )}
+                  {o.status === "approved" && (
+                    <a
+                      className="badge badge-green hover:text-white"
+                      href={`/invoice/${o.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      📄 Invoice ↗
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
             {(o.status === "pending" || o.status === "on_hold") && (
-              <input
-                type="checkbox"
-                className="mt-1.5 h-5 w-5 accent-[#45c66d]"
-                checked={selected.includes(o.id)}
-                onChange={() => toggle(o.id)}
-              />
+              <div onClick={(e) => e.preventDefault()}>
+                <ReviewButtons
+                  endpoint="/api/admin/approve-order"
+                  payloadKey="orderId"
+                  id={o.id}
+                />
+              </div>
             )}
-            <div>
-              <div className="flex items-center gap-2">
-                <b>{o.plans?.name}</b>
-                <span
-                  className={`badge ${
-                    o.status === "approved"
-                      ? "badge-green"
-                      : o.status === "pending"
-                        ? "badge-amber"
-                        : o.status === "on_hold"
-                          ? "bg-orange-500/20 text-orange-400 border border-orange-500/30"
-                          : ""
-                  }`}
-                >
-                  {o.status === "on_hold" ? "On Hold" : o.status}
-                </span>
-              </div>
-              <p className="muted mt-2 text-sm">{o.profiles?.email}</p>
-              <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                <span className="badge">
-                  {o.currency} {o.amount}
-                </span>
-                <span className="badge">Txn ID: {o.txn_ref ?? "—"}</span>
-                <span className={`badge ${
-                  o.method === "bkash" 
-                    ? "bg-[#e2136e]/20 text-[#ff6ca5] border border-[#e2136e]/30" 
-                    : o.method === "nagad"
-                      ? "bg-[#f6921e]/20 text-[#f6921e] border border-[#f6921e]/30"
-                      : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
-                }`}>
-                  {o.method === "bkash" ? "bKash" : o.method === "nagad" ? "Nagad" : "Paddle"}
-                </span>
-                <span className="badge bg-white/5 border border-white/10 text-white/60">
-                  Submitted: {new Date(o.created_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-                </span>
-                {o.status === "approved" && o.reviewed_at && (
-                  <span className="badge bg-[#45c66d]/10 text-[#45c66d] border border-[#45c66d]/30">
-                    Approved: {new Date(o.reviewed_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-                  </span>
-                )}
-                {o.status === "rejected" && o.reviewed_at && (
-                  <span className="badge bg-red-500/10 text-red-400 border border-red-500/20">
-                    Rejected: {new Date(o.reviewed_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-                  </span>
-                )}
-                {o.method === "paddle" && o.status === "pending" && (
-                  <span className="badge bg-red-500/10 text-red-400 border border-red-500/20">
-                    Unpaid (Abandoned Checkout)
-                  </span>
-                )}
-                {o.receipt_path && (
-                  <a
-                    className="badge badge-amber hover:text-white"
-                    href={`/api/admin/receipt?path=${encodeURIComponent(o.receipt_path)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    View receipt ↗
-                  </a>
-                )}
-                {o.status === "on_hold" && o.hold_reason && (
-                  <span className="badge bg-orange-500/10 text-orange-400 border border-orange-500/20">
-                    ⏸ {o.hold_reason}
-                  </span>
-                )}
-                {o.status === "approved" && (
-                  <a
-                    className="badge badge-green hover:text-white"
-                    href={`/invoice/${o.id}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    📄 Invoice ↗
-                  </a>
-                )}
-              </div>
-            </div>
-          </div>
-          {(o.status === "pending" || o.status === "on_hold") && (
-            <div onClick={(e) => e.preventDefault()}>
-              <ReviewButtons
-                endpoint="/api/admin/approve-order"
-                payloadKey="orderId"
-                id={o.id}
-              />
-            </div>
-          )}
-        </label>
-      ))}
+          </label>
+        );
+      })}
 
       {orders.length === 0 && (
         <div className="card grid min-h-52 place-items-center text-center">

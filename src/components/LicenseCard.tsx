@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -29,13 +30,6 @@ export type LicenseView = {
   pendingReset: boolean;
 };
 
-const STATUS: Record<string, { label: string; cls: string }> = {
-  active: { label: "Active", cls: "badge-green" },
-  suspended: { label: "Suspended", cls: "badge-amber" },
-  revoked: { label: "Revoked", cls: "badge" },
-  expired: { label: "Expired", cls: "badge" },
-};
-
 const COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 function cooldownLeft(lastResetAt: string | null) {
@@ -62,24 +56,25 @@ function when(iso: string) {
 export function LicenseCard({ license }: { license: LicenseView }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
-  const [note, setNote] = useState<{ kind: "ok" | "err"; text: string } | null>(
-    null,
-  );
+  const [note, setNote] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [showReset, setShowReset] = useState(false);
   const [reason, setReason] = useState("");
 
-  const status = STATUS[license.status] ?? STATUS.expired;
   const seatsUsed = license.activations.length;
-  const seatsFree = Math.max(0, license.max_devices - seatsUsed);
   const cooldown = cooldownLeft(license.last_reset_at);
   const isLegacy =
     license.license_type === "legacy_demo" ||
     (license.planName || "").toLowerCase().includes("v1.1.1") ||
     (license.planName || "").toLowerCase().includes("legacy");
 
-  // Strip "Bundle" from plan name for clean presentation
-  const cleanPlanName = (license.planName || "").replace(/\s*Bundle\s*/gi, " ").trim();
+  const cleanPlanName = (license.planName || "")
+    .replace(/\s*Bundle\s*/gi, " ")
+    .replace(/compX\s*/gi, "")
+    .trim() || "Orbit Suite Pro";
+
+  // Determine primary last seen
+  const lastActiveIso = license.activations[0]?.last_seen;
 
   async function post(url: string, body: unknown, tag: string) {
     setBusy(tag);
@@ -110,9 +105,7 @@ export function LicenseCard({ license }: { license: LicenseView }) {
     setBusy(`dl-${slug}`);
     setNote(null);
     try {
-      const res = await fetch(
-        `/api/download?slug=${encodeURIComponent(slug)}`,
-      );
+      const res = await fetch(`/api/download?slug=${encodeURIComponent(slug)}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) setNote({ kind: "err", text: data.error ?? "Download failed." });
       else window.location.href = data.url;
@@ -124,371 +117,256 @@ export function LicenseCard({ license }: { license: LicenseView }) {
   }
 
   return (
-    <div className="card p-6 sm:p-7 border border-[#45c66d]/30 shadow-2xl">
-      {/* header */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-xl font-black text-white">{cleanPlanName}</h3>
-            <span className={status.cls}>{status.label}</span>
-            <span className="badge badge-green font-bold">✦ Lifetime Access</span>
-            {isLegacy && <span className="badge">Legacy demo</span>}
+    <div className="rounded-2xl border border-white/[0.08] bg-[#0c100e]/95 p-5 sm:p-6 shadow-[0_4px_30px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-all hover:border-[#45c66d]/30">
+      {/* ── Top Header Row (FLEX style) ── */}
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="rounded-md bg-[#45c66d]/15 px-2.5 py-1 text-xs font-black uppercase tracking-wider text-[#45c66d] border border-[#45c66d]/30">
+            {isLegacy ? "COMPX LEGACY" : cleanPlanName.toUpperCase()}
+          </span>
+
+          <div className="flex items-center gap-1.5 text-xs font-bold">
+            <span className="relative flex h-2 w-2">
+              {license.status === "active" && (
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#45c66d] opacity-75"></span>
+              )}
+              <span
+                className={`relative inline-flex rounded-full h-2 w-2 ${
+                  license.status === "active" ? "bg-[#45c66d]" : "bg-amber-400"
+                }`}
+              ></span>
+            </span>
+            <span
+              className={license.status === "active" ? "text-[#45c66d]" : "text-amber-400"}
+            >
+              {license.status.toUpperCase()}
+            </span>
           </div>
-          {license.products.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-2">
-              {license.products.map((p) => (
-                <span key={p.slug} className="badge text-[11px] font-semibold text-[#aab0bd]">
-                  {p.name.replace(/CompX\s*/gi, "").replace(/\s*Bundle\s*/gi, " ").trim()}
-                </span>
-              ))}
-            </div>
+
+          {lastActiveIso && (
+            <span className="text-xs text-[#717b8c]">
+              Last used: {when(lastActiveIso)}
+            </span>
           )}
         </div>
-        <div className="text-right">
-          <p className="text-xs font-bold uppercase tracking-widest text-[#6c7a71]">
-            Devices
-          </p>
-          <p className="text-2xl font-black text-[#45c66d]">
-            {seatsUsed}
-            <span className="muted text-base font-bold">/{license.max_devices}</span>
-          </p>
+
+        {/* ── Prominent Download Button (Top Right) ── */}
+        <div className="flex flex-wrap items-center gap-2">
+          {isLegacy ? (
+            <button
+              className="flex items-center gap-2 rounded-xl bg-[#45c66d] px-4 py-2 text-xs font-black text-black shadow-[0_0_20px_rgba(69,198,109,0.3)] transition-all hover:bg-[#38b55e] hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
+              disabled={busy !== null}
+              onClick={() => download("compx-v111")}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              <span>{busy === "dl-compx-v111" ? "Preparing…" : "DOWNLOAD (.ZXP)"}</span>
+            </button>
+          ) : (
+            <>
+              {license.products
+                .filter((p) => !/compx/i.test(p.slug))
+                .map((p) => {
+                  const isPr = /premiere|[-_]pr$/i.test(p.slug);
+                  const label = isPr ? "Orbit Premiere (.zxp)" : "Orbit Studio (.zxp)";
+                  return (
+                    <button
+                      key={p.slug}
+                      className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 ${
+                        isPr
+                          ? "bg-[#18231c] text-[#45c66d] border border-[#45c66d]/40 hover:bg-[#45c66d]/20"
+                          : "bg-[#45c66d] text-black shadow-[0_0_20px_rgba(69,198,109,0.3)] hover:bg-[#38b55e]"
+                      }`}
+                      disabled={busy !== null}
+                      onClick={() => download(p.slug)}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      <span>{busy === `dl-${p.slug}` ? "Preparing…" : label}</span>
+                    </button>
+                  );
+                })}
+            </>
+          )}
+
+          {license.order_id && (
+            <a
+              href={`/invoice/${license.order_id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-[#aab0bd] hover:border-white/20 hover:text-white transition-all"
+              title="View Invoice"
+            >
+              <span>📄</span>
+              <span className="hidden sm:inline">Invoice</span>
+            </a>
+          )}
         </div>
       </div>
 
-      {/* license key */}
-      <div className="mt-5 rounded-xl border border-[#45c66d]/40 bg-black/40 p-4 shadow-[0_0_20px_rgba(69,198,109,0.15)]">
-        <div className="mb-2 flex items-center justify-between">
-          <span className="text-[10px] font-black uppercase tracking-widest text-[#45c66d]">
-            🔑 YOUR CX LICENCE KEY
-          </span>
-          <span className="text-[10px] font-bold text-[#8fa896]">AE + PR Shared Seat</span>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <code className="flex-1 break-all font-mono text-base font-bold tracking-widest text-[#45c66d]">
+      {/* ── Key Display Row ── */}
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-black/40 border border-white/[0.05] p-3.5">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#6c788a]">Key:</span>
+          <code className="font-mono text-sm sm:text-base font-bold tracking-widest text-[#45c66d] truncate">
             {license.key}
           </code>
-          <button
-            className="btn-primary shrink-0 px-5 py-2 text-xs font-black shadow-lg"
-            onClick={() => {
-              navigator.clipboard.writeText(license.key);
-              setCopied(true);
-              setTimeout(() => setCopied(false), 1800);
-            }}
-          >
-            {copied ? "✓ Copied Key" : "Copy Key"}
-          </button>
         </div>
+        <button
+          className="flex items-center gap-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 px-3 py-1.5 text-xs font-bold text-white transition-all active:scale-95"
+          onClick={() => {
+            navigator.clipboard.writeText(license.key);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1800);
+          }}
+        >
+          {copied ? (
+            <>
+              <span className="text-[#45c66d]">✓</span>
+              <span className="text-[#45c66d]">Copied</span>
+            </>
+          ) : (
+            <>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              <span>Copy</span>
+            </>
+          )}
+        </button>
       </div>
-      <p className="muted mt-2 text-xs leading-6">
-        Paste this key into the panel the first time you open it. Works offline
-        for up to {license.grace_days} days between check-ins.
-      </p>
 
-      {license.status === "revoked" && license.revoked_reason && (
-        <div className="mt-4 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300">
-          This license was revoked: {license.revoked_reason}
-        </div>
-      )}
-
-      {license.expires_at && (
-        <p className="muted mt-3 text-sm">
-          Expires {when(license.expires_at)}
-        </p>
-      )}
-
+      {/* ── Feedback Message ── */}
       {note && (
         <div
-          className={`mt-4 rounded-lg border p-3 text-sm ${
+          className={`mt-3 rounded-xl p-3 text-xs font-bold ${
             note.kind === "ok"
-              ? "border-[#45c66d]/20 bg-[#45c66d]/10 text-[#9cf0b4]"
-              : "border-red-500/20 bg-red-500/10 text-red-300"
+              ? "bg-[#45c66d]/10 border border-[#45c66d]/30 text-[#45c66d]"
+              : "bg-red-500/10 border border-red-500/30 text-red-300"
           }`}
         >
           {note.text}
         </div>
       )}
 
-      {/* devices */}
-      <div className="mt-6">
-        <p className="label mb-3">Activated devices</p>
+      {/* ── Device Bindings Section ── */}
+      <div className="mt-5 rounded-xl border border-white/[0.05] bg-black/20 p-4">
+        <div className="flex items-center justify-between text-xs pb-3 border-b border-white/[0.04]">
+          <span className="font-bold text-white flex items-center gap-1.5">
+            <span>💻</span> Device Bindings:{" "}
+            <span className="text-[#45c66d]">
+              {seatsUsed}/{license.max_devices} active
+            </span>
+          </span>
+          <span className="text-[11px] text-[#697485]">AE &amp; PR Shared Slot</span>
+        </div>
 
         {seatsUsed === 0 ? (
-          <p className="muted rounded-xl border border-dashed border-white/10 p-4 text-sm">
-            No device activated yet. Open the panel in After Effects or Premiere
-            Pro and enter your key.
+          <p className="mt-3 text-xs text-[#717b8c] italic">
+            No devices bound yet. Paste your key in After Effects or Premiere Pro to activate.
           </p>
         ) : (
-          <ul className="space-y-3">
-            {license.activations.map((a) => (
-              <li
+          <div className="mt-3 space-y-2">
+            {license.activations.map((a, idx) => (
+              <div
                 key={a.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.02] p-4"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-white/[0.02] border border-white/[0.04] p-3 text-xs"
               >
-                <div className="min-w-0">
-                  <p className="truncate font-bold">
-                    {a.device_label ?? "Unnamed device"}
-                  </p>
-                  <p className="muted mt-1 text-xs">
-                    {[
-                      a.os,
-                      a.host_apps?.length
-                        ? a.host_apps
-                            .map((h) => (h === "AEFT" ? "After Effects" : "Premiere Pro"))
-                            .join(", ")
-                        : null,
-                      a.app_version ? `v${a.app_version}` : null,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </p>
-                  <p className="muted mt-1 text-xs">Last seen {when(a.last_seen)}</p>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#45c66d] shrink-0"></span>
+                  <div className="min-w-0">
+                    <p className="font-bold text-white truncate">
+                      Device #{idx + 1}: {a.device_label || "Active Computer"}
+                    </p>
+                    <p className="text-[11px] text-[#6e7a8a] mt-0.5">
+                      {[
+                        a.os,
+                        a.host_apps?.length
+                          ? a.host_apps.map((h) => (h === "AEFT" ? "After Effects" : "Premiere Pro")).join(", ")
+                          : null,
+                        a.app_version ? `v${a.app_version}` : null,
+                        `Last active ${when(a.last_seen)}`,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  </div>
                 </div>
+
                 <button
-                  className="btn-secondary shrink-0 px-4 py-2 text-xs"
-                  disabled={
-                    busy !== null || cooldown > 0 || license.status !== "active"
-                  }
+                  className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-[11px] font-bold text-red-400 hover:bg-red-500/20 hover:border-red-500/40 transition-all disabled:opacity-50"
+                  disabled={busy !== null || cooldown > 0 || license.status !== "active"}
                   onClick={() =>
-                    post(
-                      "/api/license/release-device",
-                      { licenseId: license.id, activationId: a.id },
-                      a.id,
-                    )
+                    post("/api/license/release-device", { licenseId: license.id, activationId: a.id }, a.id)
                   }
                 >
-                  {busy === a.id ? "Releasing…" : "Release device"}
+                  {busy === a.id ? "Releasing…" : "Release Device"}
                 </button>
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
 
-        {cooldown > 0 ? (
-          <p className="muted mt-3 text-xs leading-6">
-            Device changes are limited to once every 24 hours. Next change
-            unlocks in <b className="text-white">{humanHours(cooldown)}</b>. Lost
-            access to the old computer?{" "}
+        {/* ── Cooldown / Reset Notice ── */}
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/[0.04] text-[11px] text-[#717b8c]">
+          {cooldown > 0 ? (
+            <span>
+              Device transfer cooldown: <b className="text-white">{humanHours(cooldown)}</b> remaining.
+            </span>
+          ) : (
+            <span>One device change permitted every 24h.</span>
+          )}
+
+          {!license.pendingReset && (
             <button
-              className="font-bold text-[#45c66d] hover:underline"
-              onClick={() => setShowReset(true)}
+              className="text-[#45c66d] hover:underline font-semibold"
+              onClick={() => setShowReset(!showReset)}
             >
-              Request an admin reset
+              {showReset ? "Cancel Request" : "Request Admin Reset"}
             </button>
-            .
-          </p>
-        ) : (
-          seatsFree === 0 && (
-            <p className="muted mt-3 text-xs leading-6">
-              All seats are in use. Release one above to free it up, or{" "}
-              <button
-                className="font-bold text-[#45c66d] hover:underline"
-                onClick={() => setShowReset(true)}
-              >
-                request an admin reset
-              </button>{" "}
-              if the device is no longer reachable.
-            </p>
-          )
-        )}
+          )}
 
-        {license.pendingReset && (
-          <p className="mt-3 text-xs font-bold text-[#8ff0a9]">
-            A reset request is awaiting review.
-          </p>
-        )}
+          {license.pendingReset && (
+            <span className="font-bold text-amber-400">⏳ Reset request under review</span>
+          )}
+        </div>
       </div>
 
-      {/* reset request form */}
+      {/* ── Admin Reset Form Modal/Accordion ── */}
       {showReset && !license.pendingReset && (
-        <div className="mt-5 rounded-xl border border-white/10 bg-black/20 p-4">
-          <p className="label">Why do you need a reset?</p>
+        <div className="mt-4 rounded-xl border border-white/10 bg-black/40 p-4 animate-in fade-in">
+          <p className="text-xs font-bold text-white mb-1.5">Why do you need a device reset?</p>
           <textarea
-            className="input min-h-[90px] resize-y"
-            placeholder="e.g. My old laptop was stolen and I cannot release the seat myself."
+            className="w-full rounded-lg border border-white/10 bg-black/60 p-2.5 text-xs text-white placeholder-[#5d6878] focus:border-[#45c66d] focus:outline-none min-h-[70px]"
+            placeholder="e.g. My laptop motherboard crashed and I cannot release the seat myself."
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             maxLength={500}
           />
-          <div className="mt-3 flex gap-3">
+          <div className="mt-2.5 flex items-center gap-2">
             <button
-              className="btn-primary px-5 py-2 text-xs"
+              className="btn-primary px-4 py-1.5 text-xs font-bold"
               disabled={busy !== null || reason.trim().length < 5}
               onClick={() =>
-                post(
-                  "/api/device-reset",
-                  { licenseId: license.id, reason: reason.trim() },
-                  "reset",
-                )
+                post("/api/device-reset", { licenseId: license.id, reason: reason.trim() }, "reset")
               }
             >
-              {busy === "reset" ? "Sending…" : "Submit request"}
+              {busy === "reset" ? "Submitting…" : "Submit Request"}
             </button>
             <button
-              className="btn-secondary px-5 py-2 text-xs"
+              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-[#aab0bd] hover:bg-white/5"
               onClick={() => setShowReset(false)}
             >
               Cancel
             </button>
           </div>
-        </div>
-      )}
-
-      {/* downloads & invoice */}
-      {license.status === "active" && (
-        <div className="mt-6 border-t border-white/10 pt-5 space-y-6">
-          {/* Section 1: Software & Extension Installers */}
-          <div>
-            <div className="mb-3 flex items-center justify-between">
-              <p className="label mb-0 flex items-center gap-1.5 text-white font-bold">
-                <span>💻</span> Official Software &amp; Extension Installers
-              </p>
-              {license.order_id && (
-                <a
-                  href={`/invoice/${license.order_id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-bold text-[#45c66d] hover:underline flex items-center gap-1"
-                >
-                  <span>📄</span> Official Invoice ↗
-                </a>
-              )}
-            </div>
-
-            {/* If Legacy User (Redeemed Key) */}
-            {isLegacy ? (
-              <div className="grid grid-cols-1 gap-3">
-                <button
-                  className="w-full btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#45c66d] hover:text-[#45c66d]"
-                  disabled={busy !== null}
-                  onClick={() => download("compx-v111")}
-                >
-                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[#45c66d]/20 text-[#45c66d] text-[10px] font-black">
-                    📦
-                  </span>
-                  <span className="truncate">
-                    {busy === "dl-compx-v111" ? "Preparing…" : "Download CompX Precomp Manager (v1.1.2)"}
-                  </span>
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {/* 🌐 Universal (.zxp) Extension Installers for Windows & Mac */}
-                <div className="rounded-xl border border-[#45c66d]/30 bg-black/40 p-4 shadow-[0_0_20px_rgba(69,198,109,0.08)]">
-                  <div className="mb-2.5 flex items-center justify-between flex-wrap gap-2">
-                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      📦 Universal Extension Installers (.zxp)
-                    </span>
-                    <span className="text-[10px] font-mono text-[#45c66d] bg-[#45c66d]/10 px-2.5 py-0.5 rounded-full border border-[#45c66d]/30 font-bold">
-                      🍏 Mac &amp; 💻 Windows Universal
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-[#aab0bd] mb-3 leading-relaxed">
-                    Universal builds for both <b>Windows</b> and <b>macOS</b>. Install using any ZXP tool (e.g. Anastasiy Extension Manager or AEScripts ZXP Installer).
-                  </p>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {license.products
-                      .filter((p) => !/compx/i.test(p.slug))
-                      .map((p) => {
-                        const isPr = /premiere|[-_]pr$/i.test(p.slug);
-                        const appName = isPr ? "Orbit Premiere" : "Orbit Studio";
-                        const hostTag = isPr ? "Premiere Pro" : "After Effects";
-                        const hostBadge = isPr ? "Pr" : "Ae";
-
-                        return (
-                          <button
-                            key={p.slug}
-                            className="btn-primary flex items-center justify-between gap-3 px-4 py-3.5 text-xs font-black shadow-lg bg-[#45c66d] text-black hover:bg-[#39a85c] transition-all rounded-xl text-left"
-                            disabled={busy !== null}
-                            onClick={() => download(p.slug)}
-                          >
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <span className="text-lg shrink-0">📦</span>
-                              <div className="min-w-0">
-                                <div className="font-black text-black text-xs truncate">
-                                  {busy === `dl-${p.slug}` ? "Preparing ZXP…" : `Download ${appName} (.zxp)`}
-                                </div>
-                                <div className="text-[10px] font-bold text-black/70 font-mono">
-                                  {hostTag} · Universal (Win &amp; Mac)
-                                </div>
-                              </div>
-                            </div>
-                            <span className="shrink-0 text-[10px] font-black bg-black/20 text-black px-2 py-1 rounded">
-                              {hostBadge}
-                            </span>
-                          </button>
-                        );
-                      })}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Section 2: Included Bonus Asset Bundles & Media Library */}
-          {!isLegacy && (
-            <div className="pt-4 border-t border-white/10">
-              <p className="label mb-3 flex items-center gap-1.5 text-amber-400 font-bold">
-                <span>🎁</span> Included Bonus Asset Bundles &amp; Media Library
-              </p>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <a
-                  href={`/api/download-asset?file=${encodeURIComponent("50 Mogrt pack.zip")}`}
-                  className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#eab308] hover:text-[#eab308] bg-amber-500/5 border-amber-500/20"
-                  title="Download 50+ MOGRTs Templates Pack from Cloudflare R2"
-                >
-                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-amber-500/20 text-amber-400 text-[10px] font-black">
-                    🎬
-                  </span>
-                  <span className="truncate">Download 50+ MOGRTs Pack</span>
-                </a>
-
-                <a
-                  href={`/api/download-asset?file=${encodeURIComponent("Sfx Part 1.zip")}`}
-                  className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#3b82f6] hover:text-[#3b82f6] bg-blue-500/5 border-blue-500/20"
-                  title="Download 500+ Premium Audio SFX Collection (Part 1)"
-                >
-                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-blue-500/20 text-blue-400 text-[10px] font-black">
-                    🎵
-                  </span>
-                  <span className="truncate">Download Premium SFX (Part 1)</span>
-                </a>
-
-                <a
-                  href={`/api/download-asset?file=${encodeURIComponent("Sfx Part 2.zip")}`}
-                  className="btn-secondary flex items-center justify-center gap-2.5 px-4 py-3 text-xs font-bold transition-all hover:border-[#3b82f6] hover:text-[#3b82f6] bg-blue-500/5 border-blue-500/20"
-                  title="Download 500+ Premium Audio SFX Collection (Part 2)"
-                >
-                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-blue-500/20 text-blue-400 text-[10px] font-black">
-                    🎵
-                  </span>
-                  <span className="truncate">Download Premium SFX (Part 2)</span>
-                </a>
-              </div>
-            </div>
-          )}
-
-          {/* Legacy Upgrade Banner */}
-          {isLegacy && (
-            <div className="mt-4 rounded-xl border border-[#45c66d]/40 bg-[#45c66d]/10 p-4 text-left">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-black text-white">🚀 Upgrade to CompX Orbit Suite (AE + PR)</p>
-                  <p className="muted mt-1 text-xs">
-                    Get access to Orbit Studio (AE) &amp; Orbit Premiere (PR), 60+ Tools, 50+ MOGRTs &amp; 500+ SFX Collection for just $2 USD (249 BDT).
-                  </p>
-                </div>
-                <a href="/pricing" className="btn-primary px-5 py-2 text-xs font-bold shrink-0">
-                  Upgrade Now ($2) →
-                </a>
-              </div>
-            </div>
-          )}
-
-          <p className="muted mt-4 text-xs text-center">
-            Official extension builds &amp; Cloudflare R2 bonus asset packs (MOGRTs &amp; SFX) are secured &amp; tied to your active license.
-          </p>
         </div>
       )}
     </div>

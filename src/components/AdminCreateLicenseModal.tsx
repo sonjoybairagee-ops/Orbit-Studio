@@ -49,27 +49,11 @@ export function AdminCreateLicenseModal({ plans }: { plans: any[] }) {
     }
   }
 
-  const seen = new Set<string>();
-  const formattedPlans = (plans ?? [])
-    .map((p: any) => {
-      const isPrecomp =
-        p.slug?.includes("v111") ||
-        p.slug?.includes("legacy") ||
-        p.name?.includes("Precomp") ||
-        p.name?.includes("Legacy");
-      const cleanName = isPrecomp ? "CompX Precomp Manager" : "Orbit Studio";
-      const cleanPrice = isPrecomp ? 1 : 2;
-      return {
-        ...p,
-        cleanName,
-        cleanPrice,
-      };
-    })
-    .filter((p: any) => {
-      if (seen.has(p.cleanName)) return false;
-      seen.add(p.cleanName);
-      return true;
-    });
+  const formattedPlans = (plans ?? []).map((p: any) => ({
+    ...p,
+    cleanName: p.name || p.slug || "Orbit Plan",
+    cleanPrice: p.price ?? 3,
+  }));
 
   return (
     <>
@@ -120,21 +104,14 @@ export function AdminCreateLicenseModal({ plans }: { plans: any[] }) {
                   }}
                   required
                 >
-                  <optgroup label="Global Pay (USD)">
+                  <optgroup label="Standard Plans">
                     {formattedPlans.map((p: any) => (
-                      <option key={`${p.id}|false|usd`} value={`${p.id}|false`}>
-                        {p.cleanName} (${p.cleanPrice})
+                      <option key={`${p.id}|false`} value={`${p.id}|false`}>
+                        {p.cleanName} (${p.cleanPrice} / ৳{Math.round(p.cleanPrice * 120)})
                       </option>
                     ))}
                   </optgroup>
-                  <optgroup label="Local Pay (BDT)">
-                    {formattedPlans.map((p: any) => (
-                      <option key={`${p.id}|false|bdt`} value={`${p.id}|false`}>
-                        {p.cleanName} ({p.cleanPrice === 1 ? 129 : 249}৳)
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Promotions / Free">
+                  <optgroup label="Promotions / Free Gift / NFR">
                     {formattedPlans.map((p: any) => (
                       <option key={`${p.id}|true`} value={`${p.id}|true`}>
                         {p.cleanName} (Promotion / Free)

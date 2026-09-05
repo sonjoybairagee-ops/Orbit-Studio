@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { AdminAnalyticsChart } from "@/components/AdminAnalyticsChart";
+
+export const dynamic = "force-dynamic";
 
 export default async function AdminHome() {
   const s = createAdminClient();
@@ -44,86 +47,63 @@ export default async function AdminHome() {
     
   const totalUSD = Number(revenue.USD ?? 0);
   const totalBDT = Number(revenue.BDT ?? 0);
+  const todaySignups = Number(metrics.today_signups ?? 0);
+  const todayOrders = Number(metrics.today_orders ?? 0);
+  const activeLicenses = Number(metrics.active_licenses ?? 0);
+  const seatsSold = Number(metrics.seats_sold ?? 0);
 
   const cards = [
     ["Active products", e.count ?? 0, "◈"],
     ["All users", Number(metrics.users_total ?? 0), "◎"],
     ["Paying customers", Number(metrics.paying_customers ?? 0), "◎"],
-    ["Active licenses", Number(metrics.active_licenses ?? 0), "⌁"],
-    ["Seats sold", Number(metrics.seats_sold ?? 0), "⌁"],
+    ["Active licenses", activeLicenses, "⌁"],
+    ["Seats sold", seatsSold, "⌁"],
     ["Seats in use", Number(metrics.active_seats_used ?? 0), "⌁"],
     ["Action required", pendingOrders + (r.count ?? 0), "⚡"],
-    ["Today's Signups", Number(metrics.today_signups ?? 0), "📈"],
-    ["Today's Purchases", Number(metrics.today_orders ?? 0), "🛒"],
+    ["Today's Signups", todaySignups, "📈"],
+    ["Today's Purchases", todayOrders, "🛒"],
     ["Banned Users", bannedData.count ?? 0, "🚫"],
   ];
+
   return (
-    <div>
+    <div className="space-y-8">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <p className="eyebrow">Operations overview</p>
           <h1 className="mt-2 text-3xl font-black tracking-tight">
-            Admin command center
+            Admin Command Center
           </h1>
           <p className="muted mt-2">
-            Products, revenue and license health in one view.
+            Real-time revenue velocity, product licensing health, and fraud prevention signals.
           </p>
         </div>
-        <Link href="/admin/extensions" className="btn-primary">
-          ＋ Publish product
-        </Link>
-      </div>
-
-      <div className="stat-grid mt-8">
-        <div className="card p-5 bg-[#45c66d]/10 border-[#45c66d]/30">
-          <p className="muted text-xs font-bold uppercase tracking-wider text-[#45c66d]">Total USD Revenue</p>
-          <b className="mt-3 block text-3xl text-[#45c66d]">${totalUSD.toFixed(2)}</b>
-        </div>
-        <div className="card p-5 bg-[#45c66d]/10 border-[#45c66d]/30">
-          <p className="muted text-xs font-bold uppercase tracking-wider text-[#45c66d]">Total BDT Revenue</p>
-          <b className="mt-3 block text-3xl text-[#45c66d]">৳{totalBDT.toFixed(2)}</b>
-        </div>
-        <div className="card p-5 col-span-2">
-          <p className="muted text-xs font-bold uppercase tracking-wider">Plan Breakdown (Sales)</p>
-          <div className="mt-4 flex flex-wrap gap-4">
-            {planSales.map(({ name, orders, seats }) => (
-              <div key={name} className="flex items-center gap-2">
-                <span className="badge badge-purple">{name}</span>
-                <span className="font-bold">{orders} orders / {seats} seats</span>
-              </div>
-            ))}
-            {planSales.length === 0 && <span className="muted text-sm">—</span>}
-          </div>
-        </div>
-        <div className="card p-5 col-span-2">
-          <p className="muted text-xs font-bold uppercase tracking-wider">Payment Method (Sales)</p>
-          <div className="mt-4 flex flex-wrap gap-4">
-            {methodSales.map(({ method, orders }) => (
-              <div key={method} className="flex items-center gap-2">
-                <span className="badge badge-amber">{method}</span>
-                <span className="font-bold">{orders}</span>
-              </div>
-            ))}
-            {methodSales.length === 0 && <span className="muted text-sm">—</span>}
-          </div>
-        </div>
-        <div className="card p-5 col-span-2">
-          <p className="muted text-xs font-bold uppercase tracking-wider">Last 7 Days Sales</p>
-          <div className="mt-4 flex flex-wrap gap-4">
-            {dailySales.map(({ date, orders }) => (
-              <div key={date} className="flex items-center gap-2">
-                <span className="badge badge-green">{date}</span>
-                <span className="font-bold">{orders}</span>
-              </div>
-            ))}
-            {dailySales.length === 0 && <span className="muted text-sm">—</span>}
-          </div>
+        <div className="flex items-center gap-2">
+          <Link href="/admin/licenses" className="btn-secondary text-xs font-bold">
+            Issue License 🔑
+          </Link>
+          <Link href="/admin/extensions" className="btn-primary text-xs font-black">
+            ＋ Manage Products & Prices
+          </Link>
         </div>
       </div>
 
-      <div className="stat-grid mt-8">
+      {/* Visual Analytics Chart */}
+      <AdminAnalyticsChart
+        totalUSD={totalUSD}
+        totalBDT={totalBDT}
+        dailySales={dailySales}
+        planSales={planSales}
+        methodSales={methodSales}
+        todaySignups={todaySignups}
+        todayOrders={todayOrders}
+        activeLicenses={activeLicenses}
+        seatsSold={seatsSold}
+      />
+
+      {/* Key Operations Metric Cards */}
+      <div className="stat-grid">
         {cards.map(([a, b, c]) => (
-          <div key={a} className="card p-5">
+          <div key={a} className="card p-5 hover:border-white/20 transition-all">
             <div className="flex items-center justify-between">
               <p className="muted text-xs font-bold uppercase tracking-wider">
                 {a}

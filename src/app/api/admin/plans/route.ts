@@ -35,3 +35,43 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ plan: data });
 }
+
+const updateSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1).optional(),
+  unit_price_usd: z.number().min(0).optional(),
+  unit_price_bdt: z.number().min(0).optional(),
+  price: z.number().min(0).optional(),
+  is_public: z.boolean().optional(),
+  is_active: z.boolean().optional(),
+});
+
+export async function PATCH(req: Request) {
+  if (!(await requireAdmin()))
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const parsed = updateSchema.safeParse(await req.json());
+  if (!parsed.success)
+    return NextResponse.json({ error: "Invalid update data" }, { status: 400 });
+
+  const { id, ...updates } = parsed.data;
+  const s = createAdminClient();
+
+  // If unit_price_usd is set, sync price field as well
+  if (updates.unit_price_usd !== undefined && updates.price === undefined) {
+    updates.price = updates.unit_price_usd;
+  }
+
+  const { data, error } = await s
+    .from("plans")
+    .update(updates)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error)
+    return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json({ plan: data });
+}
+

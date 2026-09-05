@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { compareSemanticVersions, findStorageRelease } from "@/lib/releases";
+import { getR2DownloadUrl } from "@/lib/r2";
 
 // Issues a short-lived signed URL from the PRIVATE 'releases' bucket.
 // Entitlement is resolved through the plan, so a bundle license can
@@ -96,6 +97,60 @@ export async function GET(req: Request) {
         { error: "Your account does not have an active license.", code: "NOT_ENTITLED" },
         { status: 403 },
       );
+
+    // Orbit Studio (v2.4.15 served securely from Cloudflare R2)
+    if (slug === "orbit-studio") {
+      try {
+        const r2Url = await getR2DownloadUrl("CompX-Orbit-Studio-v2.4.15.zxp", 300);
+
+        await svc.from("license_events").insert({
+          license_id: entitled.id,
+          user_id: user.id,
+          event: "download",
+          ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+          user_agent: req.headers.get("user-agent"),
+          meta: { slug, version: "2.4.15", channel, source: "r2:compx-assets" },
+        });
+
+        return NextResponse.json({
+          url: r2Url || "https://assets.compxorbit.com/CompX-Orbit-Studio-v2.4.15.zxp",
+          version: "2.4.15",
+        });
+      } catch (err) {
+        console.error("R2 signed url error:", err);
+        return NextResponse.json({
+          url: "https://assets.compxorbit.com/CompX-Orbit-Studio-v2.4.15.zxp",
+          version: "2.4.15",
+        });
+      }
+    }
+
+    // Orbit Premiere (v2.4.15 served securely from Cloudflare R2)
+    if (slug === "orbit-premiere") {
+      try {
+        const r2Url = await getR2DownloadUrl("CompX-Orbit-Premiere-v2.4.15.zxp", 300);
+
+        await svc.from("license_events").insert({
+          license_id: entitled.id,
+          user_id: user.id,
+          event: "download",
+          ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+          user_agent: req.headers.get("user-agent"),
+          meta: { slug, version: "2.4.15", channel, source: "r2:compx-assets" },
+        });
+
+        return NextResponse.json({
+          url: r2Url || "https://assets.compxorbit.com/CompX-Orbit-Premiere-v2.4.15.zxp",
+          version: "2.4.15",
+        });
+      } catch (err) {
+        console.error("R2 signed url error for premiere:", err);
+        return NextResponse.json({
+          url: "https://assets.compxorbit.com/CompX-Orbit-Premiere-v2.4.15.zxp",
+          version: "2.4.15",
+        });
+      }
+    }
 
     // Try database release first
     const { data: extRecord } = await svc
