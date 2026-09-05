@@ -1,7 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { HeroShowcase } from "@/components/HeroShowcase";
+import { FullExtensionDemo } from "@/components/FullExtensionDemo";
 import { StoryGraphVisual } from "@/components/StoryGraphVisual";
 import { LayerExploder3D } from "@/components/LayerExploder3D";
 import { PremiereShowcase } from "@/components/PremiereShowcase";
@@ -62,41 +61,39 @@ export default async function Home() {
   const supabase = await createClient();
   const { data: plans } = await supabase
     .from("plans")
-    .select("id,slug,price,currency")
+    .select("id,slug,price,currency,unit_price_bdt")
     .eq("is_public", true)
-    .eq("is_active", true)
-    .order("price", { ascending: true })
-    .limit(1);
+    .eq("is_active", true);
 
-  const starter = plans?.[0];
-  const price = "$2";
-  const checkoutHref = starter ? `/checkout/${starter.id}` : "/pricing";
+  const bundlePlan = plans?.find((p) => p.slug === "orbit-bundle");
+  const comboPrice = bundlePlan?.price ?? 4;
+  const comboBdt = bundlePlan?.unit_price_bdt ?? 480;
+  const checkoutHref = bundlePlan ? `/checkout/${bundlePlan.slug}` : "/checkout/orbit-bundle";
 
   return (
-    <>
+    <div className="studio-landing">
       <section className="home-hero">
         <div className="home-hero__grid" aria-hidden="true" />
         <div className="shell home-hero__inner">
           <div className="home-hero__copy">
             <div className="home-hero__kicker">
-              <span><i /> Orbit Studio 2.3.1</span>
+              <span><i /> Orbit Studio 2.4.15</span>
               <span>After Effects + Premiere Pro</span>
             </div>
             <h1>
-              Your creative workflow,<br />
-              <span className="text-gradient">inside one orbit.</span>
+              Stay in flow.<br />
+              <span className="text-gradient">Create in Orbit.</span>
             </h1>
             <p>
-              A compact control center for production tools, captions, motion,
-              color, focus and assets—built to stay docked while you create.
+              Your tools, motion and assets. Right where you create. Seven focused workspaces, docked inside After Effects and Premiere Pro.
             </p>
             <div className="home-hero__actions">
               <Link href={checkoutHref} className="btn-primary home-hero__primary">
-                Get lifetime access · {price} <span>→</span>
+                Get lifetime access · ${comboPrice} <span>→</span>
               </Link>
               <a href="https://discord.gg/Je8pxakYf" target="_blank" rel="noopener noreferrer" className="btn-secondary home-hero__secondary flex items-center gap-2">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z" />
+                  <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.0777.0777 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z" />
                 </svg>
                 Join discord
               </a>
@@ -108,7 +105,8 @@ export default async function Home() {
             </div>
           </div>
           <div id="product-tour" className="home-hero__demo scroll-mt-28">
-            <HeroShowcase />
+            <div className="studio-preview-label"><span><i /> ORBIT STUDIO / CONTROL CENTER</span><span>INTERACTIVE PREVIEW ↙</span></div>
+            <FullExtensionDemo />
           </div>
         </div>
       </section>
@@ -128,7 +126,7 @@ export default async function Home() {
         <div className="section-heading section-heading--split">
           <div>
             <p className="eyebrow">Explore the control center</p>
-            <h2>Six workspaces.<br />One consistent language.</h2>
+            <h2>Seven workspaces.<br />One creative flow.</h2>
           </div>
           <p>
             Orbit groups tools by the job you are doing—not by a long,
@@ -138,7 +136,7 @@ export default async function Home() {
 
         <div className="workspace-grid">
           {WORKSPACES.map((item) => (
-            <article className="workspace-card" key={item.title}>
+            <article className={`workspace-card workspace-card--${item.code.toLowerCase()}`} key={item.title}>
               <div className="workspace-card__top">
                 <span>{item.no}</span>
                 <b>{item.code}</b>
@@ -150,6 +148,12 @@ export default async function Home() {
               </ul>
             </article>
           ))}
+          <a href="#product-tour" className="workspace-card workspace-card--tour">
+            <span className="eyebrow">Built to stay docked</span>
+            <h3>Find your<br />next shortcut.</h3>
+            <p>Explore the workspaces in the interactive panel above.</p>
+            <span className="studio-tour-link">Take a look inside <span aria-hidden="true">↗</span></span>
+          </a>
         </div>
       </section>
 
@@ -165,15 +169,13 @@ export default async function Home() {
           <p className="eyebrow">Built around real editing friction</p>
           <h2>Less hunting.<br />More finishing.</h2>
           <p>
-            The website now mirrors the extension architecture, so visitors
-            understand where every capability lives—and how the workflow fits
-            together—before they install anything.
+            Align layers, shape a curve and move straight into your next idea. Orbit keeps everyday actions together, so you can spend more time on the details that make the edit yours.
           </p>
           <div className="product-story__list">
             {[
-              ["01", "See the actual interface", "Every product view uses real Orbit screenshots—not generic mock controls."],
-              ["02", "Understand the workflow", "Features are grouped by workspace and explained in the order editors use them."],
-              ["03", "Buy one clear bundle", "After Effects and Premiere share one licence and one device seat."],
+              ["01", "Keep everyday tools close", "Align, anchor and organize layers from a single docked workspace."],
+              ["02", "Give every move your touch", "Fine-tune easing with visual curves and draggable Bezier handles."],
+              ["03", "Move between your Adobe apps", "After Effects and Premiere share one licence and one device seat."],
             ].map(([no, title, copy]) => (
               <div key={no}>
                 <span>{no}</span>
@@ -261,10 +263,10 @@ export default async function Home() {
               <p>Sign in to your dashboard and download the <code>.zxp</code> file for your plan:</p>
               <div className="install-download-cards">
                 <div className="install-dl-card install-dl-card--new">
-                  <div className="install-dl-card__badge">New Purchase · $2</div>
+                  <div className="install-dl-card__badge">Lifetime License · From $2</div>
                   <b>CompX Orbit Studio</b>
-                  <small>v2.3.1 · After Effects + Premiere Pro</small>
-                  <code>CompX-Orbit-Studio-v2.3.1.zxp</code>
+                  <small>v2.4.15 · After Effects + Premiere Pro</small>
+                  <code>CompX-Orbit-Studio-v2.4.15.zxp</code>
                 </div>
                 <div className="install-dl-card install-dl-card--legacy">
                   <div className="install-dl-card__badge">Legacy · Free Redeem</div>
@@ -345,12 +347,12 @@ export default async function Home() {
         <div className="final-cta__grid" aria-hidden="true" />
         <p className="eyebrow">Ready when your timeline is</p>
         <h2>Keep the tools close.<br /><span className="text-gradient">Keep the ideas moving.</span></h2>
-        <p>Lifetime access starts at {price}. After Effects and Premiere Pro included.</p>
+        <p>Lifetime access starts from $2 (Premiere), $3 (Studio), or $4 (Combo Bundle). No subscriptions.</p>
         <div>
-          <Link href={checkoutHref} className="btn-primary">Get CompX Orbit <span>→</span></Link>
+          <Link href={checkoutHref} className="btn-primary">Get CompX Orbit · ${comboPrice} <span>→</span></Link>
           <Link href="/pricing" className="btn-secondary">View pricing</Link>
         </div>
       </section>
-    </>
+    </div>
   );
 }
