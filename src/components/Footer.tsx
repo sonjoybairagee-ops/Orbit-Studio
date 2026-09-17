@@ -28,7 +28,15 @@ export function Footer() {
           <div className="muted mt-3 grid gap-2">
             <Link href="/pricing">Pricing</Link>
             <Link href="/#features">Features</Link>
-            <Link href="/login">Sign in</Link>
+            <Link href="/contact">Contact Support</Link>
+            <a
+              href="https://wa.me/8801922577297?text=Hi%2C%20I%20need%20support%20for%20CompX%20Orbit"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#25D366] hover:underline flex items-center gap-1 font-medium"
+            >
+              <span>💬 WhatsApp Support</span>
+            </a>
           </div>
         </div>
         <div className="text-sm">

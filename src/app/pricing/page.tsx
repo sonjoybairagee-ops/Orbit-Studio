@@ -242,6 +242,7 @@ export default async function PricingPage() {
             ["Can I move to another computer?", "Yes. Release the current device from your dashboard. A 24-hour cooldown protects the licence from sharing abuse."],
             ["Does my old CompX demo key unlock Orbit?", "No. LG legacy keys are only for CompX v1.1.1. Orbit is a new paid product."],
             ["What is the Studio Team License?", "A single license key that unlocks multiple workstations simultaneously. Perfect for studios and teams sharing one subscription."],
+            ["Have questions or need help before purchasing?", "You can chat with us directly on WhatsApp at +880 1922-577297 or email support@compxorbit.com. We are happy to assist you immediately!"],
           ].map(([q, a]) => (
             <details key={q}>
               <summary>{q}<span>+</span></summary>

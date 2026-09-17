@@ -140,6 +140,21 @@ export default function ContactPage() {
         {/* ── Right: Info ── */}
         <aside className="contact-sidebar">
 
+          {/* WhatsApp Support */}
+          <div className="contact-info-card border border-[#25D366]/30 bg-[#25D366]/[0.05]">
+            <div className="contact-info-icon text-[#25D366]">💬</div>
+            <h3>WhatsApp Support</h3>
+            <p>Chat directly with our support team on WhatsApp for instant assistance.</p>
+            <a
+              href="https://wa.me/8801922577297?text=Hi%2C%20I%20need%20support%20for%20CompX%20Orbit"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-xs font-black text-black hover:bg-[#20bd5a] transition-all mt-2"
+            >
+              <span>Chat on WhatsApp (+880 1922-577297) ↗</span>
+            </a>
+          </div>
+
           {/* Direct email */}
           <div className="contact-info-card">
             <div className="contact-info-icon">✉️</div>

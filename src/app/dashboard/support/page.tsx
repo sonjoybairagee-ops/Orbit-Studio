@@ -200,6 +200,25 @@ export default function DashboardSupportPage() {
   // Ticket list view
   return (
     <div>
+      {/* WhatsApp Fast Support Banner */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#25D366]/30 bg-[#25D366]/[0.06] p-4">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">💬</span>
+          <div>
+            <p className="text-sm font-bold text-white">Need an instant response? Chat on WhatsApp</p>
+            <p className="text-xs text-[#aab0bd]">Connect with support for immediate license, download or billing questions.</p>
+          </div>
+        </div>
+        <a
+          href="https://wa.me/8801922577297?text=Hi%2C%20I%20need%20support%20for%20CompX%20Orbit"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-4 py-2 text-xs font-black text-black hover:bg-[#20bd5a] transition-all shadow-[0_0_15px_rgba(37,211,102,0.2)] shrink-0"
+        >
+          <span>WhatsApp (+880 1922-577297) ↗</span>
+        </a>
+      </div>
+
       <div className="flex items-center justify-between mb-6">
         <div>
           <p className="eyebrow">Help Center</p>
