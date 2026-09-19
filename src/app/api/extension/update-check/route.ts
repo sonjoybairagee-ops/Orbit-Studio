@@ -63,6 +63,12 @@ const DEFAULT_LATEST: Record<
     releaseNotes: ["Legacy Precomp manager maintenance update."],
     isMandatory: false,
   },
+  creatorlens: {
+    version: "0.1.0",
+    publicUrl: "https://compxorbit.com/dashboard",
+    releaseNotes: ["Chrome side panel with CompX license activation."],
+    isMandatory: false,
+  },
 };
 
 export async function GET(req: Request) {
@@ -103,6 +109,8 @@ async function handleUpdateCheck(req: Request) {
       slug = "orbit-premiere";
     } else if (slug.includes("legacy") || slug.includes("111")) {
       slug = "compx-legacy";
+    } else if (slug.includes("creatorlens") || hostApp === "CHROME") {
+      slug = "creatorlens";
     } else {
       slug = "orbit-studio";
     }
@@ -147,7 +155,7 @@ async function handleUpdateCheck(req: Request) {
       {
         ok: true,
         slug,
-        name: ext?.name || (slug === "orbit-premiere" ? "CompX Orbit Premiere" : "CompX Orbit Studio"),
+        name: ext?.name || (slug === "orbit-premiere" ? "CompX Orbit Premiere" : slug === "creatorlens" ? "Compx Creator" : "CompX Orbit Studio"),
         currentVersion,
         latestVersion,
         hasUpdate,

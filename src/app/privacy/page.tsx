@@ -33,14 +33,30 @@ export default function PrivacyPage() {
           app and version, plus the time and IP address of activations,
           check-ins and resets.
         </li>
+        <li>
+          <b>Compx Creator (Chrome)</b> — if you activate the Chrome side panel:
+          the licence key and a random device id stored in that browser; the
+          YouTube watch-page URL and video id of the tab you have open; public
+          video title, channel and counts we fetch through YouTube on our
+          server; research projects, notes and saved videos; optional captions
+          you paste yourself; and AI drafts we generate for you. We do not
+          collect your general browsing history. We do not scrape hidden
+          YouTube captions.
+        </li>
       </ul>
 
       <h2>2. About the device fingerprint</h2>
       <p>
-        The panel builds a one-way hash from your network adapter address and
-        computer name. We store only that hash. It cannot be reversed, and it
-        tells us nothing about your files, projects or what you do inside After
-        Effects or Premiere Pro. The panels do not read your project contents.
+        The After Effects and Premiere Pro panels build a one-way hash from
+        your network adapter address and computer name. We store only that
+        hash. It cannot be reversed, and it tells us nothing about your files,
+        projects or what you do inside those apps. Those panels do not read
+        your project contents.
+      </p>
+      <p>
+        Compx Creator in Chrome does not use that hardware hash. It stores a
+        random device id in the extension so your licence seat stays on that
+        browser until you remove the key.
       </p>
 
       <h2>3. Why we use it</h2>
@@ -48,7 +64,11 @@ export default function PrivacyPage() {
         <li>to create your account and deliver your licence and downloads;</li>
         <li>to check that a licence is valid and within its device limit;</li>
         <li>to detect licence sharing and fraud;</li>
-        <li>to send transactional email such as receipts and reset notices.</li>
+        <li>to send transactional email such as receipts and reset notices;</li>
+        <li>
+          for Compx Creator, to show public YouTube details, store your research
+          set, and generate original hooks, titles and outlines from that set.
+        </li>
       </ul>
       <p>We do not sell your data and we do not run advertising trackers.</p>
 
@@ -64,7 +84,13 @@ export default function PrivacyPage() {
           <b>Resend</b> — transactional email delivery.
         </li>
         <li>
-          <b>Google</b> — only if you choose to sign in with Google.
+          <b>Google</b> — sign-in if you choose Google, and YouTube Data API v3
+          for public video metadata used by Compx Creator. The Chrome extension
+          never receives our YouTube API key.
+        </li>
+        <li>
+          <b>OpenAI</b> — structured analysis and drafting for Compx Creator.
+          The Chrome extension never receives our OpenAI API key.
         </li>
       </ul>
 
@@ -73,6 +99,9 @@ export default function PrivacyPage() {
         Account and licence records are kept for as long as your licence is
         valid, and for up to six years afterwards where tax law requires it.
         Activation and check-in logs are kept for 24 months, then deleted.
+        Compx Creator research rows (projects, notes, pasted transcripts,
+        analyses and drafts) stay until you delete them or we delete the
+        account they belong to.
       </p>
 
       <h2>6. Your rights</h2>

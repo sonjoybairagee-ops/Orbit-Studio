@@ -52,6 +52,17 @@ Deno.serve(async (req) => {
 
   // ---- does this plan cover the panel that is asking? -------
   const slugs = entitlementSlugs(lic);
+  if (hostApp === "CHROME" && !slugs.includes("creatorlens")) {
+    await logEvent(db, req, "activate_fail", {
+      licenseId: lic.id, deviceHash: fingerprint,
+      meta: { reason: "not_entitled", requested: "creatorlens", hostApp },
+    });
+    return json({
+      error: "This license does not include this extension.",
+      code: "NOT_ENTITLED",
+      entitlements: slugs,
+    }, 403);
+  }
   if (body.extensionSlug && !slugs.includes(String(body.extensionSlug))) {
     await logEvent(db, req, "activate_fail", {
       licenseId: lic.id, deviceHash: fingerprint,

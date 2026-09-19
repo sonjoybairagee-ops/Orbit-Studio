@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { signLicenseToken } from "@/lib/jwt";
+import { corsJson, corsPreflight } from "@/lib/extension-cors";
+import { entitlementSlugs, licenseCoversRequest } from "@/lib/license-entitlements";
 
 // Called by the browser extension or panel on activation.
 const schema = z.object({
@@ -12,37 +13,51 @@ const schema = z.object({
   os: z.string().optional(),
   hostApp: z.string().optional(),
   appVersion: z.string().optional(),
+  extensionSlug: z.string().optional(),
 });
+
+export function OPTIONS() {
+  return corsPreflight();
+}
 
 export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json());
   if (!parsed.success)
-    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
-  const { key, deviceId, canonicalFingerprint, deviceLabel, os, hostApp, appVersion } = parsed.data;
+    return corsJson({ error: "Invalid input" }, { status: 400 });
+  const { key, deviceId, canonicalFingerprint, deviceLabel, os, hostApp, appVersion, extensionSlug } = parsed.data;
 
   const admin = createAdminClient();
   const { data: license } = await admin
     .from("licenses")
-    .select("*, profiles(is_banned)")
-    .eq("key", key)
+    .select("*, profiles(is_banned), plans(slug, name, plan_extensions(extensions(slug, host_app)))")
+    .eq("key", key.trim().toUpperCase().replace(/\s+/g, ""))
     .maybeSingle();
 
   if (!license)
-    return NextResponse.json({ error: "Invalid license key" }, { status: 404 });
+    return corsJson({ error: "Invalid license key" }, { status: 404 });
+  if (!licenseCoversRequest(license, hostApp, extensionSlug))
+    return corsJson(
+      {
+        error: "This license does not include this extension.",
+        code: "NOT_ENTITLED",
+        entitlements: entitlementSlugs(license),
+      },
+      { status: 403 },
+    );
   if (license.status !== "active")
-    return NextResponse.json(
+    return corsJson(
       { error: `License ${license.status}` },
       { status: 403 },
     );
   if (license.expires_at && new Date(license.expires_at) < new Date())
-    return NextResponse.json({ error: "License expired" }, { status: 403 });
+    return corsJson({ error: "License expired" }, { status: 403 });
 
   // Check if user profile is banned
   const profile = Array.isArray(license.profiles)
     ? license.profiles[0]
     : license.profiles;
   if (profile?.is_banned) {
-    return NextResponse.json(
+    return corsJson(
       { error: "Account suspended. Contact support at support@compxorbit.com" },
       { status: 403 },
     );
@@ -62,7 +77,7 @@ export async function POST(req: Request) {
     const limit = activationError.message.match(/^DEVICE_LIMIT:(\d+):(\d+)$/);
     if (limit) {
       const maxDevices = Number(limit[1]);
-      return NextResponse.json(
+      return corsJson(
         {
           error: maxDevices === 1
             ? "This license is already active on another device. Request a device reset from your dashboard."
@@ -74,11 +89,13 @@ export async function POST(req: Request) {
         { status: 409 },
       );
     }
-    return NextResponse.json({ error: "Could not activate this device" }, { status: 409 });
+    return corsJson({ error: "Could not activate this device" }, { status: 409 });
   }
 
   const activation = Array.isArray(activationData) ? activationData[0] : activationData;
   const effectiveDeviceId = String(activation?.device_hash ?? canonicalFingerprint ?? deviceId);
+  const slugs = entitlementSlugs(license);
+  const plan = Array.isArray(license.plans) ? license.plans[0] : license.plans;
 
   const token = await signLicenseToken({
     sub: license.id,
@@ -86,11 +103,18 @@ export async function POST(req: Request) {
     device: effectiveDeviceId,
   });
 
-  return NextResponse.json({
+  return corsJson({
     ok: true,
     token,
     fingerprint: effectiveDeviceId,
     extensionId: license.extension_id,
+    entitlements: slugs,
     maxDevices: maxAllowedDevices,
+    license: {
+      type: license.license_type,
+      plan: plan?.name ?? "Compx Creator",
+      maxDevices: maxAllowedDevices,
+      expiresAt: license.expires_at ?? null,
+    },
   });
 }

@@ -67,7 +67,7 @@ export async function findStorageRelease(
       .from("extensions")
       .list(versionPath, { limit: 100, sortBy: { column: "updated_at", order: "desc" } });
     if (filesError || !files) continue;
-    const packageFile = files.find((file) => file.name.toLowerCase().endsWith(".zxp"));
+    const packageFile = files.find((file) => /\.(zxp|zip)$/i.test(file.name));
     if (!packageFile) continue;
     const metadata = packageFile.metadata as Record<string, unknown> | null;
     return {

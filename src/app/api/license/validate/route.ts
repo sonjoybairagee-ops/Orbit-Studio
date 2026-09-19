@@ -1,17 +1,21 @@
-import { NextResponse } from "next/server";
 import { z } from "zod";
 import { verifyLicenseToken } from "@/lib/jwt";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { corsJson, corsPreflight } from "@/lib/extension-cors";
 
 const schema = z.object({
   token: z.string(),
   deviceId: z.string(),
 });
 
+export function OPTIONS() {
+  return corsPreflight();
+}
+
 export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json());
   if (!parsed.success)
-    return NextResponse.json(
+    return corsJson(
       { valid: false, error: "Invalid input" },
       { status: 400 },
     );
@@ -19,7 +23,7 @@ export async function POST(req: Request) {
   try {
     const payload = await verifyLicenseToken(parsed.data.token);
     if (payload.device !== parsed.data.deviceId)
-      return NextResponse.json(
+      return corsJson(
         { valid: false, error: "Device mismatch" },
         { status: 403 },
       );
@@ -32,7 +36,7 @@ export async function POST(req: Request) {
       .maybeSingle();
       
     if (!license || license.status !== "active")
-      return NextResponse.json(
+      return corsJson(
         { valid: false, error: "License not active" },
         { status: 403 },
       );
@@ -40,7 +44,7 @@ export async function POST(req: Request) {
     // Check if user is banned
     const profile = Array.isArray(license.profiles) ? license.profiles[0] : license.profiles;
     if (profile?.is_banned) {
-      return NextResponse.json(
+      return corsJson(
         { valid: false, error: "Account suspended. Contact support at support@compxorbit.com" },
         { status: 403 },
       );
@@ -56,15 +60,15 @@ export async function POST(req: Request) {
       .maybeSingle();
 
     if (!seat) {
-      return NextResponse.json(
+      return corsJson(
         { valid: false, error: "Device seat released or unlinked" },
         { status: 403 },
       );
     }
 
-    return NextResponse.json({ valid: true });
+    return corsJson({ valid: true });
   } catch {
-    return NextResponse.json(
+    return corsJson(
       { valid: false, error: "Invalid or expired token" },
       { status: 401 },
     );

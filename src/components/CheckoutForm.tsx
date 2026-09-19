@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-const BKASH_NUMBER = process.env.NEXT_PUBLIC_BKASH_NUMBER ?? "01810520280";
+const BKASH_NUMBER = process.env.NEXT_PUBLIC_BKASH_NUMBER ?? "01922577297";
 const NAGAD_NUMBER = process.env.NEXT_PUBLIC_NAGAD_NUMBER ?? "01993825578";
 const PADDLE_LIVE_TOKEN = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ?? "";
 

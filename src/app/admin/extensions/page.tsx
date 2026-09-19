@@ -36,14 +36,14 @@ export default async function ExtensionsPage() {
         <div className="grid gap-4 xl:grid-cols-2">
           {extensions.map((x: any) => {
             const isPrecomp = x.slug?.includes("v111") || x.slug?.includes("legacy");
-            const hostLabel = x.host_app === "AEFT" ? "After Effects (AE)" : x.host_app === "PPRO" ? "Premiere Pro (PR)" : x.host_app;
+            const hostLabel = x.host_app === "AEFT" ? "After Effects (AE)" : x.host_app === "PPRO" ? "Premiere Pro (PR)" : x.host_app === "CHROME" ? "Chrome" : x.host_app;
 
             return (
               <article key={x.id} className="card p-6 border border-[#45c66d]/20 shadow-xl relative overflow-hidden">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="grid h-12 w-12 place-items-center rounded-xl bg-[#45c66d]/10 font-black text-[#45c66d] text-lg">
-                      {x.host_app === "AEFT" ? "AE" : x.host_app === "PPRO" ? "PR" : "CX"}
+                      {x.host_app === "AEFT" ? "AE" : x.host_app === "PPRO" ? "PR" : x.host_app === "CHROME" ? "CH" : "CX"}
                     </div>
                     <div>
                       <h3 className="text-lg font-black text-white">{x.name}</h3>

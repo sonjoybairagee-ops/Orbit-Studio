@@ -170,13 +170,14 @@ export function LicenseCard({ license }: { license: LicenseView }) {
               {license.products
                 .filter((p) => !/compx/i.test(p.slug))
                 .map((p) => {
+                  const isChrome = p.slug === "creatorlens";
                   const isPr = /premiere|[-_]pr$/i.test(p.slug);
-                  const label = isPr ? "Orbit Premiere (.zxp)" : "Orbit Studio (.zxp)";
+                  const label = isChrome ? "Compx Creator (.zip)" : isPr ? "Orbit Premiere (.zxp)" : "Orbit Studio (.zxp)";
                   return (
                     <button
                       key={p.slug}
                       className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 ${
-                        isPr
+                        isPr && !isChrome
                           ? "bg-[#18231c] text-[#45c66d] border border-[#45c66d]/40 hover:bg-[#45c66d]/20"
                           : "bg-[#45c66d] text-black shadow-[0_0_20px_rgba(69,198,109,0.3)] hover:bg-[#38b55e]"
                       }`}
@@ -270,12 +271,18 @@ export function LicenseCard({ license }: { license: LicenseView }) {
               {seatsUsed}/{license.max_devices} active
             </span>
           </span>
-          <span className="text-[11px] text-[#697485]">Shared by AE &amp; PR</span>
+          <span className="text-[11px] text-[#697485]">
+            {license.products.some((p) => p.slug === "creatorlens") && license.products.every((p) => p.slug === "creatorlens")
+              ? "Chrome side panel"
+              : "Shared by AE & PR"}
+          </span>
         </div>
 
         {seatsUsed === 0 ? (
           <p className="mt-3 text-xs text-[#717b8c] italic">
-            No devices bound yet. Paste your key in After Effects or Premiere Pro to activate.
+            {license.products.some((p) => p.slug === "creatorlens") && license.products.every((p) => p.slug === "creatorlens")
+              ? "No devices bound yet. Paste your key in the Compx Creator Chrome side panel to activate."
+              : "No devices bound yet. Paste your key in After Effects or Premiere Pro to activate."}
           </p>
         ) : (
           <div className="mt-3 space-y-2">
@@ -294,7 +301,7 @@ export function LicenseCard({ license }: { license: LicenseView }) {
                       {[
                         a.os,
                         a.host_apps?.length
-                          ? a.host_apps.map((h) => (h === "AEFT" ? "After Effects" : "Premiere Pro")).join(", ")
+                          ? a.host_apps.map((h) => (h === "AEFT" ? "After Effects" : h === "PPRO" ? "Premiere Pro" : h === "CHROME" ? "Chrome" : h)).join(", ")
                           : null,
                         a.app_version ? `v${a.app_version}` : null,
                         `Last active ${when(a.last_seen)}`,

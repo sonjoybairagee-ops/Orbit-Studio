@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export const LEGAL_UPDATED = "25 July 2026";
+export const LEGAL_UPDATED = "18 September 2026";
 
 const TABS = [
   ["/terms", "Terms"],

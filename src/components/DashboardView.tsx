@@ -23,6 +23,7 @@ export function DashboardView({ user, licenses, verified }: DashboardViewProps) 
   const [refreshing, startRefresh] = useTransition();
 
   const activeCount = licenses.filter((l) => l.status === "active").length;
+  const hasCreatorLens = licenses.some((l) => l.products.some((p) => p.slug === "creatorlens"));
   const isLegacyUser = licenses.some(
     (l) =>
       l.license_type === "legacy_demo" ||
@@ -255,6 +256,15 @@ export function DashboardView({ user, licenses, verified }: DashboardViewProps) 
                   </p>
                 </div>
               </div>
+
+              {hasCreatorLens && (
+                <div className="rounded-xl border border-[#45c66d]/20 bg-black/40 p-4 space-y-3">
+                  <h4 className="text-sm font-black text-white">Compx Creator (Chrome)</h4>
+                  <p className="text-[11px] text-[#717b8c]">
+                    Download Compx Creator (.zip) from My licenses, open Chrome → Extensions → Load unpacked, and select the unzipped folder. Paste the same license key in Settings.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
