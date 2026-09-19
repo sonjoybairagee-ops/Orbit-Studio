@@ -77,7 +77,7 @@ export default async function Home() {
         <div className="shell home-hero__inner">
           <div className="home-hero__copy">
             <div className="home-hero__kicker">
-              <span><i /> Orbit Studio 2.4.15</span>
+              <span><i /> Orbit Studio 2.4.36</span>
               <span>After Effects + Premiere Pro</span>
             </div>
             <h1>
