@@ -98,10 +98,10 @@ export async function GET(req: Request) {
         { status: 403 },
       );
 
-    // Orbit Studio (v2.4.15 served securely from Cloudflare R2)
+    // Orbit Studio (v2.4.36 served securely from Cloudflare R2)
     if (slug === "orbit-studio") {
       try {
-        const r2Url = await getR2DownloadUrl("CompX-Orbit-Studio-v2.4.15.zxp", 300);
+        const r2Url = await getR2DownloadUrl("CompX-Orbit-Studio-v2.4.36.zxp", 300);
 
         await svc.from("license_events").insert({
           license_id: entitled.id,
@@ -109,26 +109,26 @@ export async function GET(req: Request) {
           event: "download",
           ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
           user_agent: req.headers.get("user-agent"),
-          meta: { slug, version: "2.4.15", channel, source: "r2:compx-assets" },
+          meta: { slug, version: "2.4.36", channel, source: "r2:compx-assets" },
         });
 
         return NextResponse.json({
-          url: r2Url || "https://assets.compxorbit.com/CompX-Orbit-Studio-v2.4.15.zxp",
-          version: "2.4.15",
+          url: r2Url || "https://assets.compxorbit.com/CompX-Orbit-Studio-v2.4.36.zxp",
+          version: "2.4.36",
         });
       } catch (err) {
         console.error("R2 signed url error:", err);
         return NextResponse.json({
-          url: "https://assets.compxorbit.com/CompX-Orbit-Studio-v2.4.15.zxp",
-          version: "2.4.15",
+          url: "https://assets.compxorbit.com/CompX-Orbit-Studio-v2.4.36.zxp",
+          version: "2.4.36",
         });
       }
     }
 
-    // Orbit Premiere (v2.4.15 served securely from Cloudflare R2)
+    // Orbit Premiere (v2.4.46 served securely from Cloudflare R2)
     if (slug === "orbit-premiere") {
       try {
-        const r2Url = await getR2DownloadUrl("CompX-Orbit-Premiere-v2.4.15.zxp", 300);
+        const r2Url = await getR2DownloadUrl("CompX-Orbit-Premiere-v2.4.46.zxp", 300);
 
         await svc.from("license_events").insert({
           license_id: entitled.id,
@@ -136,18 +136,18 @@ export async function GET(req: Request) {
           event: "download",
           ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
           user_agent: req.headers.get("user-agent"),
-          meta: { slug, version: "2.4.15", channel, source: "r2:compx-assets" },
+          meta: { slug, version: "2.4.46", channel, source: "r2:compx-assets" },
         });
 
         return NextResponse.json({
-          url: r2Url || "https://assets.compxorbit.com/CompX-Orbit-Premiere-v2.4.15.zxp",
-          version: "2.4.15",
+          url: r2Url || "https://assets.compxorbit.com/CompX-Orbit-Premiere-v2.4.46.zxp",
+          version: "2.4.46",
         });
       } catch (err) {
         console.error("R2 signed url error for premiere:", err);
         return NextResponse.json({
-          url: "https://assets.compxorbit.com/CompX-Orbit-Premiere-v2.4.15.zxp",
-          version: "2.4.15",
+          url: "https://assets.compxorbit.com/CompX-Orbit-Premiere-v2.4.46.zxp",
+          version: "2.4.46",
         });
       }
     }

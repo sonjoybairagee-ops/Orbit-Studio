@@ -33,9 +33,9 @@ const DEFAULT_LATEST: Record<
   }
 > = {
   "orbit-studio": {
-    version: "2.4.15",
-    r2Key: "CompX-Orbit-Studio-v2.4.15.zxp",
-    publicUrl: "https://assets.compxorbit.com/CompX-Orbit-Studio-v2.4.15.zxp",
+    version: "2.4.36",
+    r2Key: "CompX-Orbit-Studio-v2.4.36.zxp",
+    publicUrl: "https://assets.compxorbit.com/CompX-Orbit-Studio-v2.4.36.zxp",
     releaseNotes: [
       "High-speed Cloudflare R2 asset streaming and downloads.",
       "Optimized Color Plates and Motion Lab layer engine.",
@@ -46,9 +46,9 @@ const DEFAULT_LATEST: Record<
     minHostVersion: "2021",
   },
   "orbit-premiere": {
-    version: "2.4.15",
-    r2Key: "CompX-Orbit-Premiere-v2.4.15.zxp",
-    publicUrl: "https://assets.compxorbit.com/CompX-Orbit-Premiere-v2.4.15.zxp",
+    version: "2.4.46",
+    r2Key: "CompX-Orbit-Premiere-v2.4.46.zxp",
+    publicUrl: "https://assets.compxorbit.com/CompX-Orbit-Premiere-v2.4.46.zxp",
     releaseNotes: [
       "Premiere Pro essential cut tools & workflow actions.",
       "Fast caption & typography presets integration.",
