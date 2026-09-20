@@ -31,13 +31,11 @@
 <link rel="stylesheet" href="css/orbit-modules.css">
 <link rel="stylesheet" href="demo.css">
 <style>
-/* ── Panel switcher ── */
-.app-panel { display: none !important; }
-.app-panel.is-active-demo { display: block !important; }
-.app-tabs-row .app-tab { cursor: pointer; }
-
-/* ── Tab active state ── */
-.app-tabs-row .app-tab.active { color: var(--acc, #4da3ff) !important; }
+/* ── Panel visibility — match demo.css specificity with #app ── */
+#app .app-panel { display: none !important; }
+#app .app-panel.active { display: flex !important; flex-direction: column; height: calc(100vh - 68px); overflow-y: auto; }
+#app .app-tab { cursor: pointer; }
+#app .app-tab.active { color: var(--acc, #4da3ff) !important; }
 
 /* ── Demo feedback flash ── */
 @keyframes cx-flash {
@@ -56,9 +54,6 @@
 
 /* ── Subtle hover on tool buttons (demo only) ── */
 .tool-btn:not([disabled]):hover { opacity: .85; cursor: pointer; }
-
-/* ── Tab content scroll area ── */
-.app-panel { height: calc(100vh - 68px); overflow-y: auto; }
 
 /* ── New feature badge ── */
 .cx-new-badge {
@@ -146,7 +141,7 @@
 <!-- ═══════════════════════════════════════════════════════
      PANEL: TOOLS
 ════════════════════════════════════════════════════════ -->
-<div class="app-panel is-active-demo" id="panel-tools">
+<div class="app-panel active" id="panel-tools">
 <div class="tools-scroll">
 <div class="tool-dash-row tools-primary-row">
 
@@ -825,9 +820,9 @@
       tabs.forEach(function (t) { t.classList.remove('active'); });
       tab.classList.add('active');
 
-      panels.forEach(function (p) { p.classList.remove('is-active-demo'); });
+      panels.forEach(function (p) { p.classList.remove('active'); });
       var targetPanel = document.getElementById('panel-' + target);
-      if (targetPanel) targetPanel.classList.add('is-active-demo');
+      if (targetPanel) targetPanel.classList.add('active');
 
       // Button flash feedback
       tab.classList.add('cx-btn-flash');
