@@ -23,17 +23,21 @@ export default function TutorialsPage() {
           </p>
         </div>
 
-        {/* Video Player Section with Glow */}
-        <div className="relative">
-          {/* Subtle outer glow effect for the video container */}
-          <div className="absolute -inset-0.5 bg-gradient-to-b from-[#45c66d]/30 to-transparent blur-xl opacity-50 rounded-2xl"></div>
-          
-          <div className="relative bg-[#0b110d] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+        {/* NEW — Featured Tutorial (top) */}
+        <div className="mb-6">
+          <span className="inline-flex items-center gap-1.5 bg-[#45c66d]/15 text-[#45c66d] text-xs font-semibold px-3 py-1 rounded-full border border-[#45c66d]/30 mb-4">
+            ✦ Latest Tutorial
+          </span>
+        </div>
+
+        <div className="relative mb-20">
+          <div className="absolute -inset-0.5 bg-gradient-to-b from-[#45c66d]/40 to-transparent blur-xl opacity-60 rounded-2xl"></div>
+          <div className="relative bg-[#0b110d] border border-[#45c66d]/30 rounded-2xl overflow-hidden shadow-2xl">
             <div className="aspect-video relative w-full">
               <iframe
                 className="absolute top-0 left-0 w-full h-full"
-                src="https://www.youtube.com/embed/xalYhDRnOh8?si=BGENMoA0ULD-wv0n"
-                title="Orbit Studio Complete Tutorial | Master Every Feature in After Effects"
+                src="https://www.youtube.com/embed/pLOLRfngcWI"
+                title="Orbit Studio Complete Tutorial"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 referrerPolicy="strict-origin-when-cross-origin"
@@ -42,11 +46,44 @@ export default function TutorialsPage() {
             </div>
             <div className="p-6 md:p-8">
               <h2 className="text-2xl font-bold mb-2">
-                Orbit Studio Complete Tutorial | Master Every Feature in After Effects
+                Orbit Studio Complete Tutorial
               </h2>
               <p className="text-[#8da096]">
-                In this comprehensive guide, we walk through every feature of Orbit Studio so you can speed up your creative workflow in After Effects.
+                The ultimate complete guide to Orbit Studio for After Effects — covering every feature, workflow, and tip to supercharge your creative process.
               </p>
+            </div>
+          </div>
+        </div>
+
+        {/* More Tutorials */}
+        <div className="mb-10">
+          <h3 className="text-xl font-semibold text-white/70 mb-8 border-b border-white/10 pb-4">
+            More Tutorials
+          </h3>
+
+          {/* Old Tutorial */}
+          <div className="relative">
+            <div className="absolute -inset-0.5 bg-gradient-to-b from-[#45c66d]/20 to-transparent blur-xl opacity-40 rounded-2xl"></div>
+            <div className="relative bg-[#0b110d] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+              <div className="aspect-video relative w-full">
+                <iframe
+                  className="absolute top-0 left-0 w-full h-full"
+                  src="https://www.youtube.com/embed/xalYhDRnOh8?si=BGENMoA0ULD-wv0n"
+                  title="Orbit Studio Complete Tutorial | Master Every Feature in After Effects"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                ></iframe>
+              </div>
+              <div className="p-6 md:p-8">
+                <h2 className="text-xl font-bold mb-2">
+                  Orbit Studio Complete Tutorial | Master Every Feature in After Effects
+                </h2>
+                <p className="text-[#8da096]">
+                  In this comprehensive guide, we walk through every feature of Orbit Studio so you can speed up your creative workflow in After Effects.
+                </p>
+              </div>
             </div>
           </div>
         </div>
