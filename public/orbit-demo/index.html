@@ -31,74 +31,122 @@
 <link rel="stylesheet" href="css/orbit-modules.css">
 <link rel="stylesheet" href="demo.css">
 <style>
-/* ── Panel visibility — match demo.css specificity with #app ── */
+/* ── Panel show/hide (match orbit-dashboard.css #app specificity) ── */
 #app .app-panel { display: none !important; }
-#app .app-panel.active { display: flex !important; flex-direction: column; height: calc(100vh - 68px); overflow-y: auto; }
+#app .app-panel.active { display: block !important; }
 #app .app-tab { cursor: pointer; }
-#app .app-tab.active { color: var(--acc, #4da3ff) !important; }
 
-/* ── Demo feedback flash ── */
+/* ── click flash ── */
 @keyframes cx-flash {
-  0% { opacity: 1; transform: scale(1); }
-  40% { opacity: .55; transform: scale(.95); }
-  100% { opacity: 1; transform: scale(1); }
+  0%   { opacity:1;  transform:scale(1); }
+  40%  { opacity:.5; transform:scale(.95); }
+  100% { opacity:1;  transform:scale(1); }
 }
-.cx-btn-flash { animation: cx-flash .3s ease; }
+.cx-btn-flash { animation: cx-flash .28s ease; }
 
-/* ── Animated host pulse ── */
-@keyframes orbit-host-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: .4; }
-}
-.orbit-host-status i { animation: orbit-host-pulse 2.2s ease-in-out infinite; }
+/* ── host status blink ── */
+@keyframes orbit-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+.orbit-host-status i { animation: orbit-pulse 2s ease-in-out infinite; }
 
-/* ── Subtle hover on tool buttons (demo only) ── */
-.tool-btn:not([disabled]):hover { opacity: .85; cursor: pointer; }
-
-/* ── New feature badge ── */
+/* ── NEW badge ── */
 .cx-new-badge {
-  display: inline-flex; align-items: center;
-  background: linear-gradient(90deg, #4da3ff, #a978ff);
-  color: #fff; font-size: 8px; font-weight: 800;
-  letter-spacing: .1em; padding: 2px 6px; border-radius: 99px;
-  text-transform: uppercase; vertical-align: middle; margin-left: 5px;
+  display:inline-flex; align-items:center;
+  background:linear-gradient(90deg,#4da3ff,#a978ff);
+  color:#fff; font-size:7px; font-weight:800;
+  letter-spacing:.1em; padding:2px 5px; border-radius:99px;
+  text-transform:uppercase; vertical-align:middle; margin-left:4px;
 }
 
-/* ── Caption style preview pill ── */
+/* ── Other panel scrollable area ── */
+#app .app-panel:not(#panel-tools) .tools-scroll {
+  height: 100%;
+  overflow-y: auto;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+/* ─ Library sub-tabs ─ */
+.cx-lib-subtabs { display:flex; gap:6px; padding:8px 8px 0; }
+.cx-lib-subtab {
+  flex:1; height:26px; font-size:9px; font-weight:700; border-radius:6px; cursor:pointer;
+  border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.04); color:#888;
+}
+.cx-lib-subtab.active {
+  border-color:rgba(77,163,255,.4); background:rgba(77,163,255,.12); color:#4da3ff;
+}
+
+/* ─ SFX wave bars ─ */
+.cx-wave-row { display:flex; align-items:flex-end; gap:2px; height:22px; }
+.cx-wave-row i { flex:1; border-radius:2px; min-height:3px; }
+
+/* ─ SFX card grid ─ */
+.cx-lib-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-top:8px; }
+.cx-lib-card {
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
+  border-radius:8px; padding:7px; display:flex; flex-direction:column; gap:3px;
+}
+.cx-lib-wave-box {
+  height:32px; border-radius:5px;
+  background:rgba(77,163,255,.1); border:1px solid rgba(77,163,255,.16);
+  display:flex; align-items:center; justify-content:center;
+}
+.cx-lib-label { font-size:9px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cx-lib-meta  { font-size:7.5px; color:#888; }
+.cx-lib-use   {
+  margin-top:2px; height:20px; font-size:8px; border-radius:5px; cursor:pointer;
+  border:1px solid rgba(77,163,255,.3); background:rgba(77,163,255,.08); color:#8ec9ff;
+}
+
+/* ─ MOGRT grid ─ */
+.cx-mogrt-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:8px; }
+.cx-mogrt-card { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:8px; padding:10px; }
+.cx-mogrt-thumb { height:48px; border-radius:6px; margin-bottom:6px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; }
+.cx-mogrt-name { font-size:9px; font-weight:700; display:block; }
+.cx-mogrt-sub  { font-size:8px; color:#888; }
+.cx-mogrt-btn  { width:100%; height:22px; font-size:8px; margin-top:5px; border-radius:5px; cursor:pointer; border:1px solid rgba(77,163,255,.3); background:rgba(77,163,255,.08); color:#8ec9ff; }
+
+/* ─ FFX list ─ */
+.cx-ffx-list { display:flex; flex-direction:column; gap:5px; margin-top:8px; }
+.cx-ffx-row { display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:8px; }
+.cx-ffx-name { font-size:10px; font-weight:700; display:block; }
+.cx-ffx-sub  { font-size:8px; color:#888; }
+.cx-ffx-btn  { height:24px; font-size:9px; padding:0 10px; border-radius:5px; cursor:pointer; border:1px solid rgba(77,163,255,.3); background:rgba(77,163,255,.08); color:#8ec9ff; }
+
+/* ─ Caption preview ─ */
 .cx-cap-demo-preview {
-  background: rgba(123,97,255,.12);
-  border: 1px solid rgba(123,97,255,.35);
-  border-radius: 8px;
-  padding: 10px;
-  margin-top: 8px;
-  text-align: center;
-  font-size: 13px;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: .01em;
+  background:rgba(123,97,255,.12); border:1px solid rgba(123,97,255,.3);
+  border-radius:8px; padding:10px; text-align:center;
+  font-size:13px; font-weight:700; color:#fff; margin-top:8px;
 }
-.cx-cap-demo-preview span.hl { color: #7b61ff; }
+.cx-cap-demo-preview .hl { color:#7b61ff; }
 
-/* ── Library SFX wave preview ── */
-.cx-sfx-bar-row {
-  display: flex; align-items: flex-end; gap: 2px;
-  height: 28px; padding: 0 2px;
-}
-.cx-sfx-bar-row i {
-  flex: 1; border-radius: 2px;
-  background: linear-gradient(180deg, #4da3ff, #7b61ff);
-  opacity: .7;
-  transition: height .3s ease;
-}
+/* ─ Color grids ─ */
+.cx-color-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:5px; margin-top:8px; }
+.cx-color-swatch { height:26px; border-radius:5px; cursor:pointer; transition:transform .12s; }
+.cx-color-swatch:hover { transform:scale(1.12); }
+.cx-grad-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:8px; }
+.cx-grad-swatch { height:34px; border-radius:7px; cursor:pointer; transition:transform .12s; }
+.cx-grad-swatch:hover { transform:scale(1.06); }
+
+/* ─ Timer ─ */
+.cx-timer-big { font-size:32px; font-weight:800; color:#4da3ff; text-align:center; padding:14px 0 4px; font-variant-numeric:tabular-nums; letter-spacing:.04em; }
+.cx-timer-lbl { font-size:8px; color:#888; text-align:center; letter-spacing:.12em; }
+.cx-week-row  { display:flex; justify-content:space-between; font-size:10px; padding:5px 0; border-bottom:1px solid rgba(255,255,255,.06); }
+
+/* ─ Comp rows ─ */
+.cx-comp-row { display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:8px; margin-bottom:5px; }
+.cx-comp-name { font-size:10px; font-weight:700; display:block; }
+.cx-comp-meta { font-size:8px; color:#888; }
+.cx-comp-btn  { height:24px; font-size:9px; padding:0 10px; border-radius:5px; cursor:pointer; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); color:#ccc; }
 </style>
 </head>
 <body>
 <div id="app">
 
-<!-- ── Top Title Bar ── -->
+<!-- ── Title Bar ── -->
 <div class="cx-title-bar">
   <div class="cx-header-brand">
-    <img class="cx-header-logo" src="assets/compx-mark.png" alt="Orbit Studio logo" width="22" height="22" onerror="this.style.display='none'"/>
+    <img class="cx-header-logo" src="assets/compx-mark.png" alt="" width="22" height="22" onerror="this.style.display='none'"/>
     <div class="orbit-header-copy">
       <strong>CompX <span>Orbit</span> Studio</strong>
       <small>Motion tools for creators</small>
@@ -110,262 +158,224 @@
   </div>
 </div>
 
-<!-- ── Main Tab Strip ── -->
+<!-- ── Tab Rail ── -->
 <div class="cx-app-main">
 <nav class="app-tabs-row" id="appTabsRow" aria-label="CompX modules">
-<button class="app-tab active" data-apptab="tools" title="Tools"><span class="orbit-tab-icon"><svg viewBox="0 0 20 20"><path d="M4 16 16 4M12.5 3.5l4 4M3.5 12.5l4 4"/></svg></span><span class="orbit-tab-label">Tools</span></button>
-<button class="app-tab" data-apptab="studio" title="Studio"><span class="orbit-tab-icon"><svg viewBox="0 0 20 20"><rect x="3" y="3" width="5.5" height="5.5"/><rect x="11.5" y="3" width="5.5" height="5.5"/><rect x="3" y="11.5" width="5.5" height="5.5"/><rect x="11.5" y="11.5" width="5.5" height="5.5"/></svg></span><span class="orbit-tab-label">Studio</span></button>
-<button class="app-tab" data-apptab="toolkit" title="Toolkit"><span class="orbit-tab-icon"><svg viewBox="0 0 20 20"><path d="M3 6h14l1 2v8H2V8l1-2Z"/><path d="M7 6V4h6v2M4 10.5h3M13 10.5h3"/></svg></span><span class="orbit-tab-label">Toolkit</span></button>
-<button class="app-tab" data-apptab="advanced" title="Orbit 3D"><span class="orbit-tab-icon"><svg viewBox="0 0 20 20"><path d="M2 11h3l2-6 3 11 3-9 2 4h3"/></svg></span><span class="orbit-tab-label">Orbit 3D</span></button>
-<button class="app-tab" data-apptab="pro" title="Motion Lab"><span class="orbit-tab-icon"><svg viewBox="0 0 20 20"><rect x="2.5" y="4" width="15" height="12" rx="1"/><path d="m8 7 5 3-5 3Z"/></svg></span><span class="orbit-tab-label">Motion Lab</span></button>
-<button class="app-tab" data-apptab="colors" title="Colors"><span class="orbit-tab-icon"><svg viewBox="0 0 20 20"><path d="M10 3a7 7 0 1 0 0 14h1.2a1.6 1.6 0 0 0 0-3.2H10a1.3 1.3 0 0 1 0-2.6h2.5A4.5 4.5 0 0 0 17 6.7C17 4.6 14 3 10 3Z"/><circle cx="6.5" cy="7" r=".8"/><circle cx="9.5" cy="5.8" r=".8"/><circle cx="13" cy="6.7" r=".8"/></svg></span><span class="orbit-tab-label">Colors</span></button>
-<button class="app-tab" data-apptab="tracker" title="Tracker"><span class="orbit-tab-icon"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="5.5"/><circle cx="10" cy="10" r="1.8"/><path d="M10 1.5V5M10 15v3.5M1.5 10H5M15 10h3.5"/></svg></span><span class="orbit-tab-label">Tracker</span></button>
-<button class="app-tab" data-apptab="comps" title="Comp Saver"><span class="orbit-tab-icon"><svg viewBox="0 0 20 20"><path d="M4 2.5h10l2 2V17.5H4Z"/><path d="M7 2.5v5h6v-5M7 17.5v-6h6v6"/></svg></span><span class="orbit-tab-label">Comps</span></button>
-<button class="app-tab" data-apptab="sfx" title="Library"><span class="orbit-tab-icon"><svg viewBox="0 0 20 20"><path d="M2.5 5.5h6l1.5 2h7.5v9h-15Z"/><path d="M2.5 5.5v-2h6l1.5 2h6"/></svg></span><span class="orbit-tab-label">Library</span></button>
-<button class="app-tab rail-purge" data-apptab="purge" title="RAM Purge" type="button"><span class="orbit-tab-icon"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="4" y="5" width="12" height="10" rx="2"/><path d="M7 2v3m6-3v3M7 15v3m6-3v3M1 8h3m-3 4h3m12-4h3m-3 4h3M11 7l-3 4h4l-2 3"/></svg></span><span class="orbit-tab-label">Purge</span></button>
-  <button type="button" id="cx-settings-btn" class="cx-icon-btn rail-account" title="Plugin Settings">
-    <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="8" cy="8" r="2.2"></circle>
-      <path d="M8 1.5v1.6M8 12.9v1.6M14.5 8h-1.6M3.1 8H1.5M12.5 3.5l-1.1 1.1M4.6 11.4l-1.1 1.1M12.5 12.5l-1.1-1.1M4.6 4.6 3.5 3.5"></path>
-    </svg>
-  <span class="rail-account-label">Settings</span></button>
-  <button type="button" id="cx-signout-btn" class="cx-icon-btn rail-account" title="Sign Out">
-    <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"></path>
-      <polyline points="10 12 14 8 10 4"></polyline>
-      <line x1="14" y1="8" x2="5" y2="8"></line>
-    </svg>
-  <span class="rail-account-label">Logout</span></button>
+<button class="app-tab active" data-apptab="tools"    title="Tools"><span class="orbit-tab-icon"><svg viewBox="0 0 20 20"><path d="M4 16 16 4M12.5 3.5l4 4M3.5 12.5l4 4"/></svg></span><span class="orbit-tab-label">Tools</span></button>
+<button class="app-tab"        data-apptab="studio"   title="Studio"><span class="orbit-tab-icon"><svg viewBox="0 0 20 20"><rect x="3" y="3" width="5.5" height="5.5"/><rect x="11.5" y="3" width="5.5" height="5.5"/><rect x="3" y="11.5" width="5.5" height="5.5"/><rect x="11.5" y="11.5" width="5.5" height="5.5"/></svg></span><span class="orbit-tab-label">Studio</span></button>
+<button class="app-tab"        data-apptab="toolkit"  title="Toolkit"><span class="orbit-tab-icon"><svg viewBox="0 0 20 20"><path d="M3 6h14l1 2v8H2V8l1-2Z"/><path d="M7 6V4h6v2M4 10.5h3M13 10.5h3"/></svg></span><span class="orbit-tab-label">Toolkit</span></button>
+<button class="app-tab"        data-apptab="advanced" title="Orbit 3D"><span class="orbit-tab-icon"><svg viewBox="0 0 20 20"><path d="M2 11h3l2-6 3 11 3-9 2 4h3"/></svg></span><span class="orbit-tab-label">Orbit 3D</span></button>
+<button class="app-tab"        data-apptab="pro"      title="Motion Lab"><span class="orbit-tab-icon"><svg viewBox="0 0 20 20"><rect x="2.5" y="4" width="15" height="12" rx="1"/><path d="m8 7 5 3-5 3Z"/></svg></span><span class="orbit-tab-label">Motion Lab</span></button>
+<button class="app-tab"        data-apptab="colors"   title="Colors"><span class="orbit-tab-icon"><svg viewBox="0 0 20 20"><path d="M10 3a7 7 0 1 0 0 14h1.2a1.6 1.6 0 0 0 0-3.2H10a1.3 1.3 0 0 1 0-2.6h2.5A4.5 4.5 0 0 0 17 6.7C17 4.6 14 3 10 3Z"/><circle cx="6.5" cy="7" r=".8"/><circle cx="9.5" cy="5.8" r=".8"/><circle cx="13" cy="6.7" r=".8"/></svg></span><span class="orbit-tab-label">Colors</span></button>
+<button class="app-tab"        data-apptab="tracker"  title="Tracker"><span class="orbit-tab-icon"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="5.5"/><circle cx="10" cy="10" r="1.8"/><path d="M10 1.5V5M10 15v3.5M1.5 10H5M15 10h3.5"/></svg></span><span class="orbit-tab-label">Tracker</span></button>
+<button class="app-tab"        data-apptab="comps"    title="Comp Saver"><span class="orbit-tab-icon"><svg viewBox="0 0 20 20"><path d="M4 2.5h10l2 2V17.5H4Z"/><path d="M7 2.5v5h6v-5M7 17.5v-6h6v6"/></svg></span><span class="orbit-tab-label">Comps</span></button>
+<button class="app-tab"        data-apptab="sfx"      title="Library"><span class="orbit-tab-icon"><svg viewBox="0 0 20 20"><path d="M2.5 5.5h6l1.5 2h7.5v9h-15Z"/><path d="M2.5 5.5v-2h6l1.5 2h6"/></svg></span><span class="orbit-tab-label">Library</span></button>
+<button class="app-tab rail-purge" data-apptab="purge" title="RAM Purge"><span class="orbit-tab-icon"><svg viewBox="0 0 20 20" fill="none"><rect x="4" y="5" width="12" height="10" rx="2"/><path d="M7 2v3m6-3v3M7 15v3m6-3v3M1 8h3m-3 4h3m12-4h3m-3 4h3M11 7l-3 4h4l-2 3"/></svg></span><span class="orbit-tab-label">Purge</span></button>
+  <button type="button" class="cx-icon-btn rail-account" title="Settings">
+    <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v1.6M8 12.9v1.6M14.5 8h-1.6M3.1 8H1.5M12.5 3.5l-1.1 1.1M4.6 11.4l-1.1 1.1M12.5 12.5l-1.1-1.1M4.6 4.6 3.5 3.5"/></svg>
+    <span class="rail-account-label">Settings</span>
+  </button>
+  <button type="button" class="cx-icon-btn rail-account" title="Logout">
+    <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/><polyline points="10 12 14 8 10 4"/><line x1="14" y1="8" x2="5" y2="8"/></svg>
+    <span class="rail-account-label">Logout</span>
+  </button>
 </nav>
 
-<!-- ═══════════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════════════════
      PANEL: TOOLS
-════════════════════════════════════════════════════════ -->
+     Grid layout (orbit-dashboard.css):
+       "modify    transform"
+       "effects   project"
+       "actions   timeline"
+       "text      text"
+     Sections are direct grid children via display:contents wrappers
+══════════════════════════════════════════════════════ -->
 <div class="app-panel active" id="panel-tools">
 <div class="tools-scroll">
-<div class="tool-dash-row tools-primary-row">
 
-<!-- ALIGN & ANCHOR -->
-<div class="tool-section matrix-transform">
-<div class="tool-section-head">
-<div class="tool-section-title">ALIGN &amp; ANCHOR</div>
-<span class="tool-help" title="Align selected layers to comp or selection bounding box">?</span>
-</div>
-<div class="matrix-transform-body">
-<div class="matrix-align-block">
-<div class="matrix-mini-title">ALIGN</div>
-<div class="tool-grid tool-grid-3 icon-only">
-<button class="tool-btn" data-orbit-icon="left" title="Align Left">Left</button>
-<button class="tool-btn" data-orbit-icon="hcenter" title="Align H Center">H Center</button>
-<button class="tool-btn" data-orbit-icon="right" title="Align Right">Right</button>
-<button class="tool-btn" data-orbit-icon="top" title="Align Top">Top</button>
-<button class="tool-btn" data-orbit-icon="vcenter" title="Align V Center">V Center</button>
-<button class="tool-btn" data-orbit-icon="bottom" title="Align Bottom">Bottom</button>
-</div>
-</div>
-<div class="matrix-anchor-block" title="Move anchor point without shifting layer on screen">
-<div class="matrix-mini-title">ANCHOR POINT</div>
-<div class="tool-grid tool-grid-3 cx-anchor-grid icon-only">
-<button class="tool-btn anchor-dot-btn" title="Top Left"><span class="anchor-dot"></span></button>
-<button class="tool-btn anchor-dot-btn" title="Top"><span class="anchor-dot"></span></button>
-<button class="tool-btn anchor-dot-btn" title="Top Right"><span class="anchor-dot"></span></button>
-<button class="tool-btn anchor-dot-btn" title="Left"><span class="anchor-dot"></span></button>
-<button class="tool-btn anchor-dot-btn active" title="Center"><span class="anchor-dot center-dot"></span></button>
-<button class="tool-btn anchor-dot-btn" title="Right"><span class="anchor-dot"></span></button>
-<button class="tool-btn anchor-dot-btn" title="Bottom Left"><span class="anchor-dot"></span></button>
-<button class="tool-btn anchor-dot-btn" title="Bottom"><span class="anchor-dot"></span></button>
-<button class="tool-btn anchor-dot-btn" title="Bottom Right"><span class="anchor-dot"></span></button>
-</div>
-</div>
-<div class="matrix-flip-block">
-<div class="matrix-mini-title"><span>FLIP</span></div>
-<div class="tool-grid tool-grid-3">
-<button class="tool-btn" data-orbit-icon="flip-h" title="Flip Horizontal">H Flip</button>
-<button class="tool-btn" data-orbit-icon="flip-v" title="Flip Vertical">V Flip</button>
-<button class="tool-btn primary" data-orbit-icon="clipboard" title="Paste from clipboard">Pasta</button>
-</div>
-</div>
-</div>
-</div>
+<!-- display:contents wrappers — the orbit-dashboard.css makes them transparent -->
+<div class="tools-workflow-row tools-primary-row">
 
-<!-- PROJECT UTILITIES -->
-<div class="tool-section tools-project-row tools-project-section">
-<div class="tool-section-head">
-<div class="tool-section-title">PROJECT UTILITIES</div>
-<span class="tool-help" title="Precomp, unprecomp, and organize project panel items">?</span>
-</div>
-<div class="tool-grid tool-grid-2">
-<button class="tool-btn" data-orbit-icon="precomp" title="Precompose selection">Precomp</button>
-<button class="tool-btn" data-orbit-icon="layers" title="Precompose each layer separately">Precomp Separate</button>
-<button class="tool-btn" data-orbit-icon="unprecomp" title="Pull precomp layers back">Unprecomp</button>
-<button class="tool-btn primary" data-orbit-icon="folder" title="Auto-organize project panel">Organize</button>
-</div>
-</div>
+  <!-- grid-area: modify — QUICK MODIFY + NATIVE EFFECTS stacked inside -->
+  <div class="tool-section matrix-trim">
+    <div class="tool-section-head"><div class="tool-section-title">QUICK MODIFY</div></div>
+    <div class="tool-grid tool-grid-4">
+      <button class="tool-btn" data-tool="trimBefore"  data-orbit-icon="before" title="Trim before playhead">Trim Before</button>
+      <button class="tool-btn" data-tool="trimAfter"   data-orbit-icon="after"  title="Trim after playhead">Trim After</button>
+      <button class="tool-btn" id="btnFxLock"          data-orbit-icon="lock"   title="FX Lock">FX Lock</button>
+      <button class="tool-btn danger" id="btnFxRemove" data-orbit-icon="remove" title="Remove all effects">FX Remove</button>
+    </div>
+    <div class="tool-grid tool-grid-2">
+      <button class="tool-btn primary" data-orbit-icon="bounce" title="Apply Bounce expression">Bounce</button>
+      <button class="tool-btn primary" data-orbit-icon="tint"   title="Apply Liquid Glass">Liquid Glass <span class="cx-new-badge">NEW</span></button>
+    </div>
+  </div>
 
-</div><!-- /tools-primary-row -->
+  <!-- grid-area: transform — ALIGN & ANCHOR -->
+  <div class="tool-section matrix-transform">
+    <div class="tool-section-head">
+      <div class="tool-section-title">ALIGN &amp; ANCHOR</div>
+      <span class="tool-help" title="Align selected layers to comp or selection bounding box">?</span>
+    </div>
+    <div class="matrix-transform-body">
+      <div class="matrix-align-block">
+        <div class="matrix-mini-title">ALIGN</div>
+        <div class="tool-grid tool-grid-3 icon-only">
+          <button class="tool-btn" data-arg="left"    data-tool="align" data-orbit-icon="left"    title="Align Left">Left</button>
+          <button class="tool-btn" data-arg="hcenter" data-tool="align" data-orbit-icon="hcenter" title="H Center">H Center</button>
+          <button class="tool-btn" data-arg="right"   data-tool="align" data-orbit-icon="right"   title="Align Right">Right</button>
+          <button class="tool-btn" data-arg="top"     data-tool="align" data-orbit-icon="top"     title="Align Top">Top</button>
+          <button class="tool-btn" data-arg="vcenter" data-tool="align" data-orbit-icon="vcenter" title="V Center">V Center</button>
+          <button class="tool-btn" data-arg="bottom"  data-tool="align" data-orbit-icon="bottom"  title="Align Bottom">Bottom</button>
+        </div>
+      </div>
+      <div class="matrix-anchor-block">
+        <div class="matrix-mini-title">ANCHOR POINT</div>
+        <div class="tool-grid tool-grid-3 cx-anchor-grid icon-only">
+          <button class="tool-btn anchor-dot-btn" data-arg="tl" title="Top Left"><span class="anchor-dot"></span></button>
+          <button class="tool-btn anchor-dot-btn" data-arg="t"  title="Top"><span class="anchor-dot"></span></button>
+          <button class="tool-btn anchor-dot-btn" data-arg="tr" title="Top Right"><span class="anchor-dot"></span></button>
+          <button class="tool-btn anchor-dot-btn" data-arg="l"  title="Left"><span class="anchor-dot"></span></button>
+          <button class="tool-btn anchor-dot-btn active" data-arg="c" title="Center"><span class="anchor-dot center-dot"></span></button>
+          <button class="tool-btn anchor-dot-btn" data-arg="r"  title="Right"><span class="anchor-dot"></span></button>
+          <button class="tool-btn anchor-dot-btn" data-arg="bl" title="Bottom Left"><span class="anchor-dot"></span></button>
+          <button class="tool-btn anchor-dot-btn" data-arg="b"  title="Bottom"><span class="anchor-dot"></span></button>
+          <button class="tool-btn anchor-dot-btn" data-arg="br" title="Bottom Right"><span class="anchor-dot"></span></button>
+        </div>
+      </div>
+    </div>
+    <div class="matrix-flip-block">
+      <div class="matrix-mini-title"><span>FLIP</span><label class="qa-switch"><input id="pastaToShapes" type="checkbox"/><span class="qa-switch-track"><span class="qa-switch-dot"></span></span><span class="qa-switch-label">SVG Shape</span></label></div>
+      <div class="tool-grid tool-grid-3">
+        <button class="tool-btn" data-tool="flip" data-arg="horizontal" data-orbit-icon="flip-h" title="Flip Horizontal">H Flip</button>
+        <button class="tool-btn" data-tool="flip" data-arg="vertical"   data-orbit-icon="flip-v" title="Flip Vertical">V Flip</button>
+        <button class="tool-btn primary" data-orbit-icon="clipboard" title="Paste from clipboard">Pasta</button>
+      </div>
+    </div>
+  </div>
 
-<!-- QUICK MODIFY -->
-<div class="tool-dash-row tool-dash-row-2 tools-workflow-row">
-<div class="tool-section matrix-trim">
-<div class="tool-section-head"><div class="tool-section-title">QUICK MODIFY</div></div>
-<div class="tool-grid tool-grid-4" style="margin-top:4px">
-<button class="tool-btn" data-orbit-icon="before" title="Trim before playhead">Trim Before</button>
-<button class="tool-btn" data-orbit-icon="after" title="Trim after playhead">Trim After</button>
-<button class="tool-btn" data-orbit-icon="lock" title="FX Lock current settings">FX Lock</button>
-<button class="tool-btn danger" data-orbit-icon="remove" title="Remove all effects">FX Remove</button>
-</div>
-<div class="tool-grid tool-grid-2" style="margin-top:4px">
-<button class="tool-btn primary" data-orbit-icon="bounce" title="Apply bounce expression">Bounce</button>
-<button class="tool-btn primary" data-orbit-icon="tint" title="Apply Liquid Glass effect">Liquid Glass <span class="cx-new-badge">NEW</span></button>
-</div>
-</div>
+</div><!-- /tools-workflow-row tools-primary-row -->
 
-<!-- NATIVE EFFECTS -->
-<div class="tool-section tools-native-section">
-<div class="tool-section-head">
-<div class="tool-section-title">NATIVE EFFECTS</div>
-<span class="tool-help" title="Apply bundled native plugins">?</span>
-</div>
-<div class="tool-grid tool-grid-2">
-<button class="tool-btn primary" data-orbit-icon="glow" title="Apply Deep Glow">Deep Glow</button>
-<button class="tool-btn primary" data-orbit-icon="glow" title="Apply Deep Glow 2">Deep Glow 2</button>
-<button class="tool-btn primary" data-orbit-icon="shadow" title="Apply Shadow Studio 2">Shadow Studio 2</button>
-<button class="tool-btn primary" data-orbit-icon="shadow" title="Apply Shadow Studio 3">Shadow Studio 3</button>
-</div>
-</div>
-</div>
+<!-- Second display:contents wrapper -->
+<div class="creation-tools-section">
 
-<!-- CREATE & QUICK TOOLS -->
-<div class="tool-section creation-tools-section">
-<div class="tool-section-head">
-<div class="tool-section-title">CREATE &amp; QUICK TOOLS</div>
-<span class="tool-help" title="Quick layer, effect, and shape creation">?</span>
-</div>
+  <!-- grid-area: effects — EFFECTS BROWSER (list style) -->
+  <div class="tool-subgroup subgroup-effects">
+    <div class="tool-subgroup-title">EFFECTS BROWSER</div>
+    <div class="tool-grid tool-grid-5">
+      <button class="tool-btn" data-arg="ADBE Ramp"            data-tool="effect" data-orbit-icon="gradient" title="Gradient Ramp">Gradient</button>
+      <button class="tool-btn" data-arg="ADBE Glo2"            data-tool="effect" data-orbit-icon="glow"     title="Glow">Glow</button>
+      <button class="tool-btn" data-arg="ADBE Fill"            data-tool="effect" data-orbit-icon="fill"     title="Fill">Fill</button>
+      <button class="tool-btn" data-arg="ADBE Tint"            data-tool="effect" data-orbit-icon="tint"     title="Tint">Tint</button>
+      <button class="tool-btn" data-arg="ADBE Gaussian Blur 2" data-tool="effect" data-orbit-icon="blur"     title="Blur">Blur</button>
+    </div>
+  </div>
 
-<!-- QUICK ACTIONS -->
-<div class="tool-subgroup subgroup-layers">
-<div class="tool-subgroup-title"><span>QUICK ACTIONS</span></div>
-<div class="tool-grid tool-grid-6">
-<button class="tool-btn" data-orbit-icon="solid" title="Create solid layer">Solid</button>
-<button class="tool-btn" data-orbit-icon="null" title="Create null layer">Null</button>
-<button class="tool-btn" data-orbit-icon="camera" title="Create camera">Camera</button>
-<button class="tool-btn" data-orbit-icon="text" title="Create text layer">Text</button>
-<button class="tool-btn" data-orbit-icon="adjustment" title="Create adjustment layer">Adjust</button>
-<button class="tool-btn" data-orbit-icon="shape" title="Create shape layer">Shape</button>
-</div>
-</div>
+  <!-- grid-area: project — PROJECT UTILITIES -->
+  <div class="tool-section tools-project-row tools-project-section">
+    <div class="tool-section-head">
+      <div class="tool-section-title">PROJECT UTILITIES</div>
+      <span class="tool-help" title="Precomp, unprecomp and organize">?</span>
+    </div>
+    <div class="tool-grid tool-grid-2">
+      <button class="tool-btn" data-arg="true" data-tool="precompose"    data-orbit-icon="precomp"   title="Precompose selection">Precomp</button>
+      <button class="tool-btn" data-tool="precomposeSeparate"             data-orbit-icon="layers"    title="Precompose each separately">Precomp Separate</button>
+      <button class="tool-btn" data-tool="unprecompose"                   data-orbit-icon="unprecomp" title="Pull layers back out">Unprecomp</button>
+      <button class="tool-btn primary" id="btnOrganizeApply"              data-orbit-icon="folder"    title="Auto-organize project panel">Organize</button>
+    </div>
+  </div>
 
-<!-- EFFECTS BROWSER -->
-<div class="tool-subgroup subgroup-effects">
-<div class="tool-subgroup-title">EFFECTS BROWSER</div>
-<div class="tool-grid tool-grid-5">
-<button class="tool-btn" data-orbit-icon="gradient" title="Apply Gradient Ramp">Gradient</button>
-<button class="tool-btn" data-orbit-icon="glow" title="Apply Glow">Glow</button>
-<button class="tool-btn" data-orbit-icon="fill" title="Apply Fill">Fill</button>
-<button class="tool-btn" data-orbit-icon="tint" title="Apply Tint">Tint</button>
-<button class="tool-btn" data-orbit-icon="blur" title="Apply Blur">Blur</button>
-</div>
-</div>
+  <!-- grid-area: actions — QUICK ACTIONS -->
+  <div class="tool-subgroup subgroup-layers">
+    <div class="tool-subgroup-title">
+      <span>QUICK ACTIONS</span>
+      <label class="qa-switch" title="Match new layer duration to selected layer">
+        <input type="checkbox" id="chkMatchLayerDuration"/>
+        <span class="qa-switch-track"><span class="qa-switch-dot"></span></span>
+        <span class="qa-switch-label">Match Duration</span>
+      </label>
+    </div>
+    <div class="tool-grid tool-grid-6">
+      <button class="tool-btn" data-arg="solid"      data-tool="createLayer" data-orbit-icon="solid"      title="Create solid layer">Solid</button>
+      <button class="tool-btn" data-arg="null"       data-tool="createLayer" data-orbit-icon="null"       title="Create null layer">Null</button>
+      <button class="tool-btn" data-arg="camera"     data-tool="createLayer" data-orbit-icon="camera"     title="Create camera">Camera</button>
+      <button class="tool-btn" data-arg="text"       data-tool="createLayer" data-orbit-icon="text"       title="Create text layer">Text</button>
+      <button class="tool-btn" data-arg="adjustment" data-tool="createLayer" data-orbit-icon="adjustment" title="Create adjustment layer">Adjust</button>
+      <button class="tool-btn" data-tool="createShape"                       data-orbit-icon="shape"      title="Create shape layer">Shape</button>
+    </div>
+  </div>
 
-<!-- TIMELINE UTILITIES -->
-<div class="tool-subgroup subgroup-timeline">
-<div class="tool-subgroup-title">TIMELINE UTILITIES</div>
-<div class="tool-grid tool-grid-4">
-<button class="tool-btn" data-orbit-icon="precomp" title="Pasta Comp">Pasta Comp</button>
-<button class="tool-btn" data-orbit-icon="trim" title="Trim Out at playhead">Trim Out</button>
-<button class="tool-btn" data-orbit-icon="split" title="Split at playhead">Split at Playhead</button>
-<button class="tool-btn" data-orbit-icon="duplicate" title="True Duplicate">True Duplicate</button>
-<button class="tool-btn" title="Number Counter">123 Counter</button>
-<button class="tool-btn" data-orbit-icon="crop" title="Xact Crop">Xact Crop</button>
-<button class="tool-btn" data-orbit-icon="xpert" title="Xpert Crop">Xpert Crop</button>
-<button class="tool-btn" data-orbit-icon="xcrop" title="X Crop">X Crop</button>
-</div>
-</div>
+  <!-- grid-area: timeline — TIMELINE UTILITIES -->
+  <div class="tool-subgroup subgroup-timeline">
+    <div class="tool-subgroup-title">TIMELINE UTILITIES</div>
+    <div class="tool-grid tool-grid-4">
+      <button class="tool-btn" data-tool="trimOut"         data-orbit-icon="trim"      title="Trim out at playhead">Trim Out</button>
+      <button class="tool-btn" data-tool="splitAtPlayhead" data-orbit-icon="split"     title="Split at playhead">Split at Playhead</button>
+      <button class="tool-btn" data-tool="splitMasks"      data-orbit-icon="masks"     title="Split multi-mask layers">Split Masks</button>
+      <button class="tool-btn" data-tool="trueDuplicate"   data-orbit-icon="duplicate" title="True Duplicate">True Duplicate</button>
+      <button class="tool-btn"                             data-orbit-icon="counter"   title="Number Counter">123 Counter</button>
+      <button class="tool-btn" data-tool="xactCrop"        data-orbit-icon="crop"      title="Xact Crop">Xact Crop</button>
+      <button class="tool-btn" data-tool="xpertCrop"       data-orbit-icon="xpert"     title="Xpert Crop">Xpert Crop</button>
+      <button class="tool-btn" data-tool="xCrop"           data-orbit-icon="xcrop"     title="X Crop">X Crop</button>
+    </div>
+  </div>
 
-<!-- TEXT / MASK TOOLS -->
-<div class="tool-subgroup subgroup-textmask">
-<div class="tool-subgroup-title">TEXT / MASK TOOLS</div>
-<div class="tool-grid tool-grid-2">
-<button class="tool-btn" data-orbit-icon="uppercase" title="Uppercase text layer">Uppercase</button>
-<button class="tool-btn wide" data-orbit-icon="explode" title="Explode text per character">Explode</button>
-<button class="tool-btn" data-orbit-icon="masks" title="Split multi-mask layers">Split Masks</button>
-<button class="tool-btn" data-orbit-icon="trackpath" title="Track path">Track Path</button>
-</div>
-</div>
+  <!-- grid-area: text — TEXT / MASK TOOLS (full width) -->
+  <div class="tool-subgroup subgroup-textmask">
+    <div class="tool-subgroup-title">TEXT / MASK TOOLS</div>
+    <div class="tool-grid tool-grid-2">
+      <button class="tool-btn" data-tool="capitalize"     data-orbit-icon="uppercase" title="Uppercase text layer">Uppercase</button>
+      <button class="tool-btn wide" id="btnExplodeTextPro" data-orbit-icon="explode"  title="Explode text per character">Text Exploder</button>
+    </div>
+  </div>
 
 </div><!-- /creation-tools-section -->
 </div><!-- /tools-scroll -->
 </div><!-- /panel-tools -->
 
-<!-- ═══════════════════════════════════════════════════════
-     PANEL: STUDIO (Caption Studio)
-════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════
+     PANEL: STUDIO
+══════════════════════════════════════════════ -->
 <div class="app-panel" id="panel-studio">
 <div class="tools-scroll">
-
-<!-- Caption Studio header -->
 <div class="tool-section cx-caption-studio-card">
 <div class="cx-cap-header cx-cap-header-studio">
   <div class="cx-cap-header-icon">CC</div>
   <div class="cx-cap-header-copy">
     <div class="cx-cap-title">Caption Studio <span class="cx-new-badge">v2.4</span></div>
-    <div class="cx-cap-sub">Create • Style • Animate</div>
+    <div class="cx-cap-sub">Create · Style · Animate</div>
   </div>
   <span class="cx-cap-ready"><i></i>SIMPLE</span>
 </div>
-
-<!-- Step bar -->
 <div class="cx-cap-stepbar">
-<button class="cx-cap-stepbar-step active" type="button"><span>01</span><b>SOURCE</b><small>Choose or transcribe</small></button>
-<i class="cx-cap-stepbar-arrow">›</i>
-<button class="cx-cap-stepbar-step" type="button"><span>02</span><b>ANIMATION</b><small>Select style, then create</small></button>
+  <button class="cx-cap-stepbar-step active" type="button"><span>01</span><b>SOURCE</b><small>Choose or transcribe</small></button>
+  <i class="cx-cap-stepbar-arrow">›</i>
+  <button class="cx-cap-stepbar-step" type="button"><span>02</span><b>ANIMATION</b><small>Select style, then create</small></button>
 </div>
-
-<!-- Source panel -->
 <div class="cx-cap-sources">
-<div class="cx-cap-source-card transcribe active">
-  <div class="cx-cap-source-icon">▶</div>
-  <strong>Transcribe Media</strong>
-  <span>Video or Audio</span>
-  <button class="tool-btn" type="button">SELECT MEDIA</button>
-  <div class="cx-simple-srt-file">No media selected</div>
+  <div class="cx-cap-source-card transcribe active">
+    <div class="cx-cap-source-icon">▶</div>
+    <strong>Transcribe Media</strong><span>Video or Audio</span>
+    <button class="tool-btn" type="button">SELECT MEDIA</button>
+    <div class="cx-simple-srt-file">No media selected</div>
+  </div>
+  <div class="cx-cap-source-or">OR</div>
+  <div class="cx-cap-source-card">
+    <div class="cx-cap-source-icon">📄</div>
+    <strong>Import SRT File</strong><span>Drop .srt file here</span>
+    <button class="tool-btn" type="button">BROWSE FILE</button>
+    <div class="cx-simple-srt-file">No SRT selected</div>
+  </div>
 </div>
-<div class="cx-cap-source-or">OR</div>
-<div class="cx-cap-source-card">
-  <div class="cx-cap-source-icon">📄</div>
-  <strong>Import SRT File</strong>
-  <span>Drop .srt file here</span>
-  <button class="tool-btn" type="button">BROWSE FILE</button>
-  <div class="cx-simple-srt-file">No SRT selected</div>
-</div>
-</div>
-
-<!-- Model + Language -->
 <div class="cx-simple-srt-grid">
-<label class="cx-cap-field"><span>Model</span>
-<select class="counter-select">
-  <option>Whisper Base</option>
-  <option>Whisper Small</option>
-  <option>Fast - Large V3 Turbo</option>
-  <option>Accurate - Large V3 Q5</option>
-</select></label>
-<label class="cx-cap-field"><span>Language</span>
-<select class="counter-select">
-  <option>Auto Language</option>
-  <option>English</option>
-  <option selected>Bangla</option>
-  <option>Hindi</option>
-</select></label>
+  <label class="cx-cap-field"><span>Model</span><select class="counter-select"><option>Whisper Base</option><option>Whisper Small</option><option>Fast — Large V3 Turbo</option><option>Accurate — Large V3 Q5</option></select></label>
+  <label class="cx-cap-field"><span>Language</span><select class="counter-select"><option>Auto</option><option>English</option><option selected>Bangla</option><option>Hindi</option></select></label>
 </div>
 <button class="tool-btn wide primary" type="button">✨ TRANSCRIBE MEDIA</button>
-</div><!-- /caption studio card -->
-
-<!-- Caption presets grid preview -->
-<div class="tool-section" style="margin-top:8px">
-<div class="tool-section-head">
-  <div class="tool-section-title">PREMIUM CAPTION STYLES</div>
-  <span class="cx-new-badge">15 STYLES</span>
 </div>
+
+<div class="tool-section" style="margin-top:8px">
+<div class="tool-section-head"><div class="tool-section-title">CAPTION STYLES <span class="cx-new-badge">15 STYLES</span></div></div>
 <div class="cx-caption-preset-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px">
 <button class="cx-caption-preset active"><span class="cx-cap-preset-glyph">Aa</span><span class="cx-cap-preset-name">Clean</span><span class="cx-cap-preset-dot" style="background:#7b61ff"></span></button>
 <button class="cx-caption-preset"><span class="cx-cap-preset-glyph">Aa</span><span class="cx-cap-preset-name">CapCut Pop</span><span class="cx-cap-preset-dot" style="background:#ffe600"></span></button>
@@ -373,512 +383,306 @@
 <button class="cx-caption-preset"><span class="cx-cap-preset-glyph">Aa</span><span class="cx-cap-preset-name">Hormozi</span><span class="cx-cap-preset-dot" style="background:#ffe600"></span></button>
 <button class="cx-caption-preset"><span class="cx-cap-preset-glyph">Aa</span><span class="cx-cap-preset-name">Neon</span><span class="cx-cap-preset-dot" style="background:#5fffa6"></span></button>
 <button class="cx-caption-preset"><span class="cx-cap-preset-glyph">অ</span><span class="cx-cap-preset-name">Bangla Viral</span><span class="cx-cap-preset-dot" style="background:#ffe600"></span></button>
-<button class="cx-caption-preset"><span class="cx-cap-preset-glyph">Aa</span><span class="cx-cap-preset-name">Big Word</span><span class="cx-cap-preset-dot" style="background:#ff4d8d"></span></button>
-<button class="cx-caption-preset"><span class="cx-cap-preset-glyph">Aa</span><span class="cx-cap-preset-name">News Style</span><span class="cx-cap-preset-dot" style="background:#ffd166"></span></button>
-<button class="cx-caption-preset"><span class="cx-cap-preset-glyph">Aa</span><span class="cx-cap-preset-name">Podcast</span><span class="cx-cap-preset-dot" style="background:#7b61ff"></span></button>
+</div>
+<div class="cx-cap-demo-preview" id="captionPreview"><span>YOUR </span><span class="hl">CAPTION</span><span> HERE</span></div>
 </div>
 
-<!-- Live caption preview -->
-<div class="cx-cap-demo-preview" style="margin-top:10px">
-  <span>YOUR </span><span class="hl">CAPTION</span><span> HERE</span>
-</div>
-</div>
-
-<!-- AI BG Remover preview -->
 <div class="tool-section" style="margin-top:8px">
-<div class="tool-section-head">
-  <div class="tool-section-title">AI BACKGROUND REMOVER <span class="cx-new-badge">LOCAL AI</span></div>
-  <span class="tool-help" title="Removes background from still images locally using U2-Net">?</span>
-</div>
-<div class="cx-ai-bg-hero" style="display:flex;align-items:center;gap:10px;padding:8px;border:1px solid rgba(77,163,255,.2);border-radius:8px;background:rgba(77,163,255,.06)">
-  <div class="cx-ai-bg-icon" aria-hidden="true" style="background:linear-gradient(135deg,#4da3ff,#7b61ff);border-radius:8px;padding:8px;font-size:10px;font-weight:800;color:#fff">AI</div>
-  <div><strong style="font-size:10px;display:block">STILL IMAGE → TRANSPARENT PNG</strong><span style="font-size:9px;color:var(--hint-text,#888)">Offline · unlimited · original preserved</span></div>
+<div class="tool-section-head"><div class="tool-section-title">AI BACKGROUND REMOVER <span class="cx-new-badge">LOCAL AI</span></div></div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px;border:1px solid rgba(77,163,255,.2);border-radius:8px;background:rgba(77,163,255,.06);margin-top:6px">
+  <div style="background:linear-gradient(135deg,#4da3ff,#7b61ff);border-radius:8px;padding:8px 10px;font-size:10px;font-weight:800;color:#fff;flex:none">AI</div>
+  <div><strong style="font-size:10px;display:block">STILL IMAGE → TRANSPARENT PNG</strong><span style="font-size:9px;color:#888">Offline · unlimited · original preserved</span></div>
 </div>
 <div style="display:flex;gap:6px;margin-top:8px">
 <button class="tool-btn wide primary">REMOVE BACKGROUND</button>
 <button class="tool-btn wide">RESTORE ORIGINAL</button>
 </div>
 </div>
-
-</div><!-- /tools-scroll -->
+</div>
 </div><!-- /panel-studio -->
 
-<!-- ═══════════════════════════════════════════════════════
-     PANEL: TOOLKIT (Motion Lab / Text FX)
-════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════
+     PANEL: TOOLKIT
+══════════════════════════════════════════════ -->
 <div class="app-panel" id="panel-toolkit">
 <div class="tools-scroll">
-<div class="tool-section">
-<div class="tool-section-head">
-  <div class="tool-section-title">TEXT ANIMATIONS</div>
-  <span class="tool-help" title="Text animation presets and expression rigs">?</span>
-</div>
+<div class="tool-section"><div class="tool-section-head"><div class="tool-section-title">TEXT ANIMATIONS</div></div>
 <div class="tool-grid tool-grid-3" style="margin-top:6px">
-<button class="tool-btn">Word Rise</button>
-<button class="tool-btn">Letter Drop</button>
-<button class="tool-btn">Typewriter</button>
-<button class="tool-btn">Blur In</button>
-<button class="tool-btn">Slide Up</button>
-<button class="tool-btn">Scale Pop</button>
-</div>
-</div>
-
-<div class="tool-section">
-<div class="tool-section-head">
-  <div class="tool-section-title">MOTION PRESETS</div>
-</div>
+<button class="tool-btn">Word Rise</button><button class="tool-btn">Letter Drop</button><button class="tool-btn">Typewriter</button>
+<button class="tool-btn">Blur In</button><button class="tool-btn">Slide Up</button><button class="tool-btn">Scale Pop</button>
+</div></div>
+<div class="tool-section"><div class="tool-section-head"><div class="tool-section-title">MOTION PRESETS</div></div>
 <div class="tool-grid tool-grid-2">
-<button class="tool-btn primary">Super Morph</button>
-<button class="tool-btn primary">Curve Lab</button>
-<button class="tool-btn">Kinetic Text</button>
-<button class="tool-btn">Elastic Bounce</button>
-</div>
-</div>
-
-<div class="tool-section">
-<div class="tool-section-head">
-  <div class="tool-section-title">SHAPE OPERATORS</div>
-</div>
+<button class="tool-btn primary">Super Morph</button><button class="tool-btn primary">Curve Lab</button>
+<button class="tool-btn">Kinetic Text</button><button class="tool-btn">Elastic Bounce</button>
+</div></div>
+<div class="tool-section"><div class="tool-section-head"><div class="tool-section-title">SHAPE OPERATORS</div></div>
 <div class="tool-grid tool-grid-3">
-<button class="tool-btn">Merge</button>
-<button class="tool-btn">Subtract</button>
-<button class="tool-btn">Intersect</button>
-<button class="tool-btn">Stroke</button>
-<button class="tool-btn">Fill</button>
-<button class="tool-btn">Gradient</button>
+<button class="tool-btn">Merge</button><button class="tool-btn">Subtract</button><button class="tool-btn">Intersect</button>
+<button class="tool-btn">Stroke</button><button class="tool-btn">Fill</button><button class="tool-btn">Gradient</button>
+</div></div>
 </div>
 </div>
-</div>
-</div><!-- /panel-toolkit -->
 
-<!-- ═══════════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════════
      PANEL: ORBIT 3D
-════════════════════════════════════════════════════════ -->
+══════════════════════════════════════════════ -->
 <div class="app-panel" id="panel-advanced">
 <div class="tools-scroll">
-<div class="tool-section">
-<div class="tool-section-head">
-  <div class="tool-section-title">3D CAMERA RIGS</div>
-  <span class="tool-help">?</span>
-</div>
+<div class="tool-section"><div class="tool-section-head"><div class="tool-section-title">3D CAMERA RIGS</div></div>
 <div class="tool-grid tool-grid-2">
-<button class="tool-btn primary">Auto Dolly</button>
-<button class="tool-btn primary">Orbit Rig</button>
-<button class="tool-btn">Crane</button>
-<button class="tool-btn">Handheld</button>
+<button class="tool-btn primary">Auto Dolly</button><button class="tool-btn primary">Orbit Rig</button>
+<button class="tool-btn">Crane</button><button class="tool-btn">Handheld</button>
+</div></div>
+<div class="tool-section"><div class="tool-section-head"><div class="tool-section-title">3D LIGHT TOOLS</div></div>
+<div class="tool-grid tool-grid-3"><button class="tool-btn">Ambient</button><button class="tool-btn">Point</button><button class="tool-btn">Spot</button></div>
+</div></div>
 </div>
-</div>
-<div class="tool-section">
-<div class="tool-section-head">
-  <div class="tool-section-title">3D LIGHT TOOLS</div>
-</div>
-<div class="tool-grid tool-grid-3">
-<button class="tool-btn">Ambient</button>
-<button class="tool-btn">Point</button>
-<button class="tool-btn">Spot</button>
-</div>
-</div>
-</div>
-</div><!-- /panel-advanced -->
 
-<!-- ═══════════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════════
      PANEL: MOTION LAB
-════════════════════════════════════════════════════════ -->
+══════════════════════════════════════════════ -->
 <div class="app-panel" id="panel-pro">
 <div class="tools-scroll">
-<div class="tool-section">
-<div class="tool-section-head">
-  <div class="tool-section-title">MOTION GRAPH EDITOR</div>
-</div>
-<div style="background:rgba(77,163,255,.06);border:1px solid rgba(77,163,255,.2);border-radius:8px;padding:14px;margin-top:8px;text-align:center">
-  <span style="font-size:9px;color:#888;letter-spacing:.1em">CURVE LAB PREVIEW</span>
-  <svg viewBox="0 0 200 60" width="100%" style="margin-top:6px;display:block">
-    <path d="M0 50 C40 50, 60 10, 100 10 S160 50, 200 10" fill="none" stroke="#4da3ff" stroke-width="2"/>
-    <path d="M0 50 C50 50, 100 50, 200 5" fill="none" stroke="#7b61ff" stroke-width="1.5" stroke-dasharray="4,3"/>
+<div class="tool-section"><div class="tool-section-head"><div class="tool-section-title">CURVE LAB</div></div>
+<div style="background:rgba(77,163,255,.06);border:1px solid rgba(77,163,255,.18);border-radius:8px;padding:12px;margin-top:8px;text-align:center">
+  <span style="font-size:9px;color:#888;letter-spacing:.1em">MOTION GRAPH</span>
+  <svg viewBox="0 0 200 56" width="100%" style="margin-top:6px;display:block">
+    <path d="M0 48 C40 48,60 8,100 8 S160 48,200 8" fill="none" stroke="#4da3ff" stroke-width="2"/>
+    <path d="M0 48 C60 48,140 8,200 8" fill="none" stroke="#7b61ff" stroke-width="1.5" stroke-dasharray="4,3" opacity=".7"/>
   </svg>
 </div>
 <div class="tool-grid tool-grid-3" style="margin-top:10px">
-<button class="tool-btn">Ease In</button>
-<button class="tool-btn">Ease Out</button>
-<button class="tool-btn primary">Custom</button>
-</div>
-</div>
-<div class="tool-section">
-<div class="tool-section-head">
-  <div class="tool-section-title">SHOWCASE RIGS</div>
-</div>
+<button class="tool-btn">Ease In</button><button class="tool-btn">Ease Out</button><button class="tool-btn primary">Custom</button>
+</div></div>
+<div class="tool-section"><div class="tool-section-head"><div class="tool-section-title">SHOWCASE RIGS</div></div>
 <div class="tool-grid tool-grid-2">
-<button class="tool-btn primary">Product Reveal</button>
-<button class="tool-btn primary">Logo Sting</button>
-<button class="tool-btn">Lower Third</button>
-<button class="tool-btn">Title Sequence</button>
+<button class="tool-btn primary">Product Reveal</button><button class="tool-btn primary">Logo Sting</button>
+<button class="tool-btn">Lower Third</button><button class="tool-btn">Title Sequence</button>
+</div></div>
 </div>
 </div>
-</div>
-</div><!-- /panel-pro -->
 
-<!-- ═══════════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════════
      PANEL: COLORS
-════════════════════════════════════════════════════════ -->
+══════════════════════════════════════════════ -->
 <div class="app-panel" id="panel-colors">
 <div class="tools-scroll">
-<div class="tool-section">
-<div class="tool-section-head">
-  <div class="tool-section-title">COLOR PLATES</div>
-  <span class="cx-new-badge">160+</span>
-</div>
-<div style="display:grid;grid-template-columns:repeat(8,1fr);gap:5px;margin-top:8px">
-<div style="height:28px;border-radius:5px;background:#ff6b6b;cursor:pointer" title="Red"></div>
-<div style="height:28px;border-radius:5px;background:#ffa07a;cursor:pointer" title="Salmon"></div>
-<div style="height:28px;border-radius:5px;background:#ffd700;cursor:pointer" title="Gold"></div>
-<div style="height:28px;border-radius:5px;background:#90ee90;cursor:pointer" title="Light Green"></div>
-<div style="height:28px;border-radius:5px;background:#4da3ff;cursor:pointer" title="Blue"></div>
-<div style="height:28px;border-radius:5px;background:#7b61ff;cursor:pointer" title="Violet"></div>
-<div style="height:28px;border-radius:5px;background:#ff69b4;cursor:pointer" title="Pink"></div>
-<div style="height:28px;border-radius:5px;background:#20b2aa;cursor:pointer" title="Teal"></div>
-<div style="height:28px;border-radius:5px;background:#1a1a2e;cursor:pointer" title="Midnight"></div>
-<div style="height:28px;border-radius:5px;background:#16213e;cursor:pointer" title="Deep Blue"></div>
-<div style="height:28px;border-radius:5px;background:#0f3460;cursor:pointer" title="Navy"></div>
-<div style="height:28px;border-radius:5px;background:#533483;cursor:pointer" title="Purple"></div>
-<div style="height:28px;border-radius:5px;background:#e94560;cursor:pointer" title="Rose"></div>
-<div style="height:28px;border-radius:5px;background:#f5a623;cursor:pointer" title="Orange"></div>
-<div style="height:28px;border-radius:5px;background:#27ae60;cursor:pointer" title="Green"></div>
-<div style="height:28px;border-radius:5px;background:#2c3e50;cursor:pointer" title="Dark"></div>
-</div>
-</div>
-<div class="tool-section">
-<div class="tool-section-head">
-  <div class="tool-section-title">GRADIENTS &amp; FUSIONS</div>
-  <span class="cx-new-badge">220+</span>
-</div>
-<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px">
-<div style="height:36px;border-radius:7px;background:linear-gradient(135deg,#667eea,#764ba2);cursor:pointer"></div>
-<div style="height:36px;border-radius:7px;background:linear-gradient(135deg,#f093fb,#f5576c);cursor:pointer"></div>
-<div style="height:36px;border-radius:7px;background:linear-gradient(135deg,#4facfe,#00f2fe);cursor:pointer"></div>
-<div style="height:36px;border-radius:7px;background:linear-gradient(135deg,#43e97b,#38f9d7);cursor:pointer"></div>
-<div style="height:36px;border-radius:7px;background:linear-gradient(135deg,#fa709a,#fee140);cursor:pointer"></div>
-<div style="height:36px;border-radius:7px;background:linear-gradient(135deg,#a18cd1,#fbc2eb);cursor:pointer"></div>
-<div style="height:36px;border-radius:7px;background:linear-gradient(135deg,#fccb90,#d57eeb);cursor:pointer"></div>
-<div style="height:36px;border-radius:7px;background:linear-gradient(135deg,#e0c3fc,#8ec5fc);cursor:pointer"></div>
+<div class="tool-section"><div class="tool-section-head"><div class="tool-section-title">COLOR PLATES <span class="cx-new-badge">160+</span></div></div>
+<div class="cx-color-grid">
+<div class="cx-color-swatch" style="background:#ff6b6b"></div><div class="cx-color-swatch" style="background:#ffa07a"></div>
+<div class="cx-color-swatch" style="background:#ffd700"></div><div class="cx-color-swatch" style="background:#90ee90"></div>
+<div class="cx-color-swatch" style="background:#4da3ff"></div><div class="cx-color-swatch" style="background:#7b61ff"></div>
+<div class="cx-color-swatch" style="background:#ff69b4"></div><div class="cx-color-swatch" style="background:#20b2aa"></div>
+<div class="cx-color-swatch" style="background:#1a1a2e"></div><div class="cx-color-swatch" style="background:#16213e"></div>
+<div class="cx-color-swatch" style="background:#0f3460"></div><div class="cx-color-swatch" style="background:#533483"></div>
+<div class="cx-color-swatch" style="background:#e94560"></div><div class="cx-color-swatch" style="background:#f5a623"></div>
+<div class="cx-color-swatch" style="background:#27ae60"></div><div class="cx-color-swatch" style="background:#2c3e50"></div>
+</div></div>
+<div class="tool-section"><div class="tool-section-head"><div class="tool-section-title">GRADIENTS <span class="cx-new-badge">220+</span></div></div>
+<div class="cx-grad-grid">
+<div class="cx-grad-swatch" style="background:linear-gradient(135deg,#667eea,#764ba2)"></div>
+<div class="cx-grad-swatch" style="background:linear-gradient(135deg,#f093fb,#f5576c)"></div>
+<div class="cx-grad-swatch" style="background:linear-gradient(135deg,#4facfe,#00f2fe)"></div>
+<div class="cx-grad-swatch" style="background:linear-gradient(135deg,#43e97b,#38f9d7)"></div>
+<div class="cx-grad-swatch" style="background:linear-gradient(135deg,#fa709a,#fee140)"></div>
+<div class="cx-grad-swatch" style="background:linear-gradient(135deg,#a18cd1,#fbc2eb)"></div>
+<div class="cx-grad-swatch" style="background:linear-gradient(135deg,#fccb90,#d57eeb)"></div>
+<div class="cx-grad-swatch" style="background:linear-gradient(135deg,#e0c3fc,#8ec5fc)"></div>
+</div></div>
 </div>
 </div>
-</div>
-</div><!-- /panel-colors -->
 
-<!-- ═══════════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════════
      PANEL: TRACKER
-════════════════════════════════════════════════════════ -->
+══════════════════════════════════════════════ -->
 <div class="app-panel" id="panel-tracker">
 <div class="tools-scroll">
 <div class="tool-section">
-<div class="tool-section-head">
-  <div class="tool-section-title">PROJECT TIMER</div>
-</div>
-<div style="text-align:center;padding:16px 0">
-  <div style="font-size:32px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--acc,#4da3ff);letter-spacing:.04em" id="cx-timer-display">02:14:36</div>
-  <div style="font-size:9px;color:#888;margin-top:4px;letter-spacing:.1em">TODAY's SESSION</div>
-  <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
-    <button class="tool-btn primary" id="btnTimerToggle">⏸ PAUSE</button>
-    <button class="tool-btn danger">■ STOP</button>
-  </div>
+<div class="tool-section-head"><div class="tool-section-title">PROJECT TIMER</div></div>
+<div class="cx-timer-big" id="cx-timer">02:14:36</div>
+<div class="cx-timer-lbl">TODAY'S SESSION</div>
+<div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
+<button class="tool-btn primary" id="btnTimerToggle">⏸ PAUSE</button>
+<button class="tool-btn danger">■ STOP</button>
 </div>
 </div>
 <div class="tool-section">
-<div class="tool-section-head">
-  <div class="tool-section-title">THIS WEEK</div>
-</div>
-<div style="display:flex;flex-direction:column;gap:5px;margin-top:8px">
-<div style="display:flex;justify-content:space-between;font-size:10px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06)"><span>Mon</span><b style="color:var(--acc,#4da3ff)">3h 22m</b></div>
-<div style="display:flex;justify-content:space-between;font-size:10px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06)"><span>Tue</span><b style="color:var(--acc,#4da3ff)">5h 10m</b></div>
-<div style="display:flex;justify-content:space-between;font-size:10px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06)"><span>Wed</span><b style="color:var(--acc,#4da3ff)">2h 48m</b></div>
-<div style="display:flex;justify-content:space-between;font-size:10px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06)"><span>Thu</span><b>Today: 2h 14m</b></div>
-</div>
+<div class="tool-section-head"><div class="tool-section-title">THIS WEEK</div></div>
+<div class="cx-week-row"><span>Mon</span><b style="color:#4da3ff">3h 22m</b></div>
+<div class="cx-week-row"><span>Tue</span><b style="color:#4da3ff">5h 10m</b></div>
+<div class="cx-week-row"><span>Wed</span><b style="color:#4da3ff">2h 48m</b></div>
+<div class="cx-week-row"><span>Thu (today)</span><b>2h 14m</b></div>
 </div>
 <div class="tool-section">
 <div class="tool-section-head"><div class="tool-section-title">BREAK REMINDERS</div></div>
-<div class="tool-grid tool-grid-3" style="margin-top:8px">
-<button class="tool-btn active">30m</button>
-<button class="tool-btn">45m</button>
-<button class="tool-btn">60m</button>
+<div class="tool-grid tool-grid-3" style="margin-top:6px">
+<button class="tool-btn active">30m</button><button class="tool-btn">45m</button><button class="tool-btn">60m</button>
 </div>
 </div>
 </div>
-</div><!-- /panel-tracker -->
+</div>
 
-<!-- ═══════════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════════
      PANEL: COMP SAVER
-════════════════════════════════════════════════════════ -->
+══════════════════════════════════════════════ -->
 <div class="app-panel" id="panel-comps">
 <div class="tools-scroll">
 <div class="tool-section">
-<div class="tool-section-head">
-  <div class="tool-section-title">COMP SNAPSHOTS</div>
-  <span class="tool-help" title="Snapshot and restore active compositions">?</span>
-</div>
-<div style="display:flex;flex-direction:column;gap:5px;margin-top:8px">
-<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px">
-  <div><b style="font-size:10px;display:block">Main_Campaign_v04</b><span style="font-size:8px;color:#888">1920×1080 · 24fps · 0:32 — Saved 14:22</span></div>
-  <button class="tool-btn" style="height:24px;font-size:9px">RESTORE</button>
-</div>
-<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px">
-  <div><b style="font-size:10px;display:block">Hero_Intro_v02</b><span style="font-size:8px;color:#888">3840×2160 · 60fps · 0:15 — Saved 12:05</span></div>
-  <button class="tool-btn" style="height:24px;font-size:9px">RESTORE</button>
-</div>
-<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px">
-  <div><b style="font-size:10px;display:block">Outro_Loop</b><span style="font-size:8px;color:#888">1080×1080 · 30fps · 0:08 — Saved 10:44</span></div>
-  <button class="tool-btn" style="height:24px;font-size:9px">RESTORE</button>
-</div>
+<div class="tool-section-head"><div class="tool-section-title">COMP SNAPSHOTS</div><span class="tool-help">?</span></div>
+<div style="margin-top:8px">
+<div class="cx-comp-row"><div><span class="cx-comp-name">Main_Campaign_v04</span><span class="cx-comp-meta">1920×1080 · 24fps · 0:32</span></div><button class="cx-comp-btn">RESTORE</button></div>
+<div class="cx-comp-row"><div><span class="cx-comp-name">Hero_Intro_v02</span><span class="cx-comp-meta">3840×2160 · 60fps · 0:15</span></div><button class="cx-comp-btn">RESTORE</button></div>
+<div class="cx-comp-row"><div><span class="cx-comp-name">Outro_Loop</span><span class="cx-comp-meta">1080×1080 · 30fps · 0:08</span></div><button class="cx-comp-btn">RESTORE</button></div>
 </div>
 <button class="tool-btn primary wide" style="margin-top:10px">📸 SNAPSHOT CURRENT COMP</button>
 </div>
 <div class="tool-section">
 <div class="tool-section-head"><div class="tool-section-title">AUTO ORGANIZE</div></div>
 <div class="tool-grid tool-grid-2">
-<button class="tool-btn primary">SMART FOLDERS</button>
-<button class="tool-btn">STANDARD</button>
+<button class="tool-btn primary">SMART FOLDERS</button><button class="tool-btn">STANDARD</button>
 </div>
 </div>
 </div>
-</div><!-- /panel-comps -->
+</div>
 
-<!-- ═══════════════════════════════════════════════════════
-     PANEL: LIBRARY (SFX + MOGRT + FFX)
-════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════
+     PANEL: LIBRARY
+══════════════════════════════════════════════ -->
 <div class="app-panel" id="panel-sfx">
-<div class="tools-scroll">
-
-<!-- Library nav -->
-<div style="display:flex;gap:6px;padding:8px 8px 0">
-<button class="tool-btn active" id="lib-tab-sfx" style="flex:1;height:26px;font-size:9px">🔊 SFX</button>
-<button class="tool-btn" id="lib-tab-mogrt" style="flex:1;height:26px;font-size:9px">🎬 MOGRT</button>
-<button class="tool-btn" id="lib-tab-ffx" style="flex:1;height:26px;font-size:9px">✨ FFX</button>
+<div class="cx-lib-subtabs">
+<button class="cx-lib-subtab active" data-lib="sfx">🔊 SFX</button>
+<button class="cx-lib-subtab"        data-lib="mogrt">🎬 MOGRT</button>
+<button class="cx-lib-subtab"        data-lib="ffx">✨ FFX</button>
 </div>
 
-<!-- SFX section -->
-<div class="tool-section" id="lib-content-sfx">
-<div class="tool-section-head">
-  <div class="tool-section-title">SOUND EFFECTS <span class="cx-new-badge">128</span></div>
-</div>
+<div class="tools-scroll" id="lib-sfx">
+<div class="tool-section"><div class="tool-section-head"><div class="tool-section-title">SOUND EFFECTS <span class="cx-new-badge">128</span></div></div>
 <div style="display:flex;gap:4px;margin-top:6px">
-  <input type="text" placeholder="Search SFX…" style="flex:1;height:28px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:0 8px;color:#fff;font-size:10px">
-  <button class="tool-btn" style="height:28px;font-size:9px">🎲 RND</button>
+<input type="text" placeholder="Search SFX…" style="flex:1;height:28px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:0 8px;color:#fff;font-size:10px">
+<button class="tool-btn" style="height:28px;font-size:9px">🎲 RND</button>
 </div>
-<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px">
-
-<!-- SFX Card 1 -->
-<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:7px;display:flex;flex-direction:column;gap:3px">
-  <div style="height:32px;border-radius:5px;background:rgba(77,163,255,.1);border:1px solid rgba(77,163,255,.18);display:flex;align-items:center;justify-content:center">
-    <div class="cx-sfx-bar-row" id="sfx-bars-1"></div>
-  </div>
-  <b style="font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Riser Sweep</b>
-  <span style="font-size:7.5px;color:#888">0:03 · SFX</span>
-  <button class="tool-btn" style="height:20px;font-size:8px;margin-top:2px">USE</button>
-</div>
-
-<!-- SFX Card 2 -->
-<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:7px;display:flex;flex-direction:column;gap:3px">
-  <div style="height:32px;border-radius:5px;background:rgba(123,97,255,.1);border:1px solid rgba(123,97,255,.18);display:flex;align-items:center;justify-content:center">
-    <div class="cx-sfx-bar-row" id="sfx-bars-2"></div>
-  </div>
-  <b style="font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Deep Whoosh</b>
-  <span style="font-size:7.5px;color:#888">0:02 · SFX</span>
-  <button class="tool-btn" style="height:20px;font-size:8px;margin-top:2px">USE</button>
-</div>
-
-<!-- SFX Card 3 -->
-<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:7px;display:flex;flex-direction:column;gap:3px">
-  <div style="height:32px;border-radius:5px;background:rgba(95,255,166,.08);border:1px solid rgba(95,255,166,.15);display:flex;align-items:center;justify-content:center">
-    <div class="cx-sfx-bar-row" id="sfx-bars-3"></div>
-  </div>
-  <b style="font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Soft Pop</b>
-  <span style="font-size:7.5px;color:#888">0:01 · SFX</span>
-  <button class="tool-btn" style="height:20px;font-size:8px;margin-top:2px">USE</button>
-</div>
-
-<!-- SFX Card 4 -->
-<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:7px;display:flex;flex-direction:column;gap:3px">
-  <div style="height:32px;border-radius:5px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.15);display:flex;align-items:center;justify-content:center">
-    <div class="cx-sfx-bar-row" id="sfx-bars-4"></div>
-  </div>
-  <b style="font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Impact Boom</b>
-  <span style="font-size:7.5px;color:#888">0:04 · SFX</span>
-  <button class="tool-btn" style="height:20px;font-size:8px;margin-top:2px">USE</button>
-</div>
-
-<!-- SFX Card 5 -->
-<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:7px;display:flex;flex-direction:column;gap:3px">
-  <div style="height:32px;border-radius:5px;background:rgba(255,160,122,.08);border:1px solid rgba(255,160,122,.15);display:flex;align-items:center;justify-content:center">
-    <div class="cx-sfx-bar-row" id="sfx-bars-5"></div>
-  </div>
-  <b style="font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Glitch Click</b>
-  <span style="font-size:7.5px;color:#888">0:01 · SFX</span>
-  <button class="tool-btn" style="height:20px;font-size:8px;margin-top:2px">USE</button>
-</div>
-
-<!-- SFX Card 6 -->
-<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:7px;display:flex;flex-direction:column;gap:3px">
-  <div style="height:32px;border-radius:5px;background:rgba(169,120,255,.08);border:1px solid rgba(169,120,255,.15);display:flex;align-items:center;justify-content:center">
-    <div class="cx-sfx-bar-row" id="sfx-bars-6"></div>
-  </div>
-  <b style="font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Transition Swipe</b>
-  <span style="font-size:7.5px;color:#888">0:02 · SFX</span>
-  <button class="tool-btn" style="height:20px;font-size:8px;margin-top:2px">USE</button>
-</div>
-
-</div><!-- /sfx grid -->
-</div>
-
-<!-- MOGRT section (hidden by default) -->
-<div class="tool-section" id="lib-content-mogrt" style="display:none">
-<div class="tool-section-head">
-  <div class="tool-section-title">MOTION GRAPHICS TEMPLATES</div>
-</div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px">
-<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px">
-  <div style="height:50px;border-radius:6px;background:linear-gradient(135deg,rgba(77,163,255,.2),rgba(123,97,255,.2));margin-bottom:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#4da3ff">TITLE</div>
-  <b style="font-size:9px;display:block">Clean Title</b>
-  <span style="font-size:8px;color:#888">Social · 16:9</span>
-  <button class="tool-btn" style="width:100%;height:22px;font-size:8px;margin-top:5px">INSERT</button>
-</div>
-<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px">
-  <div style="height:50px;border-radius:6px;background:linear-gradient(135deg,rgba(255,107,107,.2),rgba(255,160,122,.2));margin-bottom:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#ff6b6b">L/3</div>
-  <b style="font-size:9px;display:block">Lower Third</b>
-  <span style="font-size:8px;color:#888">Broadcast · 1080p</span>
-  <button class="tool-btn" style="width:100%;height:22px;font-size:8px;margin-top:5px">INSERT</button>
-</div>
-<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px">
-  <div style="height:50px;border-radius:6px;background:linear-gradient(135deg,rgba(95,255,166,.15),rgba(77,163,255,.15));margin-bottom:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#5fffa6">LOGO</div>
-  <b style="font-size:9px;display:block">Logo Reveal</b>
-  <span style="font-size:8px;color:#888">Intro · 0:05</span>
-  <button class="tool-btn" style="width:100%;height:22px;font-size:8px;margin-top:5px">INSERT</button>
-</div>
-<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px">
-  <div style="height:50px;border-radius:6px;background:linear-gradient(135deg,rgba(255,211,102,.15),rgba(255,107,107,.15));margin-bottom:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#ffd166">END</div>
-  <b style="font-size:9px;display:block">Outro Card</b>
-  <span style="font-size:8px;color:#888">YouTube · 0:10</span>
-  <button class="tool-btn" style="width:100%;height:22px;font-size:8px;margin-top:5px">INSERT</button>
+<div class="cx-lib-grid">
+<div class="cx-lib-card"><div class="cx-lib-wave-box"><div class="cx-wave-row" id="sfx1"></div></div><span class="cx-lib-label">Riser Sweep</span><span class="cx-lib-meta">0:03 · SFX</span><button class="cx-lib-use">USE</button></div>
+<div class="cx-lib-card"><div class="cx-lib-wave-box" style="background:rgba(123,97,255,.1);border-color:rgba(123,97,255,.16)"><div class="cx-wave-row" id="sfx2"></div></div><span class="cx-lib-label">Deep Whoosh</span><span class="cx-lib-meta">0:02 · SFX</span><button class="cx-lib-use">USE</button></div>
+<div class="cx-lib-card"><div class="cx-lib-wave-box" style="background:rgba(95,255,166,.07);border-color:rgba(95,255,166,.14)"><div class="cx-wave-row" id="sfx3"></div></div><span class="cx-lib-label">Soft Pop</span><span class="cx-lib-meta">0:01 · SFX</span><button class="cx-lib-use">USE</button></div>
+<div class="cx-lib-card"><div class="cx-lib-wave-box" style="background:rgba(255,107,107,.07);border-color:rgba(255,107,107,.14)"><div class="cx-wave-row" id="sfx4"></div></div><span class="cx-lib-label">Impact Boom</span><span class="cx-lib-meta">0:04 · SFX</span><button class="cx-lib-use">USE</button></div>
+<div class="cx-lib-card"><div class="cx-lib-wave-box" style="background:rgba(255,160,122,.07);border-color:rgba(255,160,122,.14)"><div class="cx-wave-row" id="sfx5"></div></div><span class="cx-lib-label">Glitch Click</span><span class="cx-lib-meta">0:01 · SFX</span><button class="cx-lib-use">USE</button></div>
+<div class="cx-lib-card"><div class="cx-lib-wave-box" style="background:rgba(169,120,255,.07);border-color:rgba(169,120,255,.14)"><div class="cx-wave-row" id="sfx6"></div></div><span class="cx-lib-label">Swipe Trans.</span><span class="cx-lib-meta">0:02 · SFX</span><button class="cx-lib-use">USE</button></div>
 </div>
 </div>
 </div>
 
-<!-- FFX section (hidden by default) -->
-<div class="tool-section" id="lib-content-ffx" style="display:none">
-<div class="tool-section-head">
-  <div class="tool-section-title">EFFECT PRESETS (FFX)</div>
-</div>
-<div style="display:flex;flex-direction:column;gap:5px;margin-top:8px">
-<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px">
-  <div><b style="font-size:10px;display:block">Glass Blur</b><span style="font-size:8px;color:#888">Glow + Blur + Tint combo</span></div>
-  <button class="tool-btn" style="height:24px;font-size:9px">APPLY</button>
-</div>
-<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px">
-  <div><b style="font-size:10px;display:block">Film Grain</b><span style="font-size:8px;color:#888">Cinematic texture overlay</span></div>
-  <button class="tool-btn" style="height:24px;font-size:9px">APPLY</button>
-</div>
-<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px">
-  <div><b style="font-size:10px;display:block">Neon Glow</b><span style="font-size:8px;color:#888">Neon edge light effect</span></div>
-  <button class="tool-btn" style="height:24px;font-size:9px">APPLY</button>
-</div>
-<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px">
-  <div><b style="font-size:10px;display:block">VHS Glitch</b><span style="font-size:8px;color:#888">Retro distortion preset</span></div>
-  <button class="tool-btn" style="height:24px;font-size:9px">APPLY</button>
+<div class="tools-scroll" id="lib-mogrt" style="display:none">
+<div class="tool-section"><div class="tool-section-head"><div class="tool-section-title">MOGRT TEMPLATES</div></div>
+<div class="cx-mogrt-grid">
+<div class="cx-mogrt-card"><div class="cx-mogrt-thumb" style="background:linear-gradient(135deg,rgba(77,163,255,.2),rgba(123,97,255,.2));color:#4da3ff">TITLE</div><span class="cx-mogrt-name">Clean Title</span><span class="cx-mogrt-sub">Social · 16:9</span><button class="cx-mogrt-btn">INSERT</button></div>
+<div class="cx-mogrt-card"><div class="cx-mogrt-thumb" style="background:linear-gradient(135deg,rgba(255,107,107,.2),rgba(255,160,122,.2));color:#ff6b6b">L/3</div><span class="cx-mogrt-name">Lower Third</span><span class="cx-mogrt-sub">Broadcast · 1080p</span><button class="cx-mogrt-btn">INSERT</button></div>
+<div class="cx-mogrt-card"><div class="cx-mogrt-thumb" style="background:linear-gradient(135deg,rgba(95,255,166,.15),rgba(77,163,255,.15));color:#5fffa6">LOGO</div><span class="cx-mogrt-name">Logo Reveal</span><span class="cx-mogrt-sub">Intro · 0:05</span><button class="cx-mogrt-btn">INSERT</button></div>
+<div class="cx-mogrt-card"><div class="cx-mogrt-thumb" style="background:linear-gradient(135deg,rgba(255,211,102,.15),rgba(255,107,107,.15));color:#ffd166">END</div><span class="cx-mogrt-name">Outro Card</span><span class="cx-mogrt-sub">YouTube · 0:10</span><button class="cx-mogrt-btn">INSERT</button></div>
 </div>
 </div>
 </div>
 
-</div><!-- /tools-scroll -->
+<div class="tools-scroll" id="lib-ffx" style="display:none">
+<div class="tool-section"><div class="tool-section-head"><div class="tool-section-title">EFFECT PRESETS (FFX)</div></div>
+<div class="cx-ffx-list">
+<div class="cx-ffx-row"><div><span class="cx-ffx-name">Glass Blur</span><span class="cx-ffx-sub">Glow + Blur + Tint combo</span></div><button class="cx-ffx-btn">APPLY</button></div>
+<div class="cx-ffx-row"><div><span class="cx-ffx-name">Film Grain</span><span class="cx-ffx-sub">Cinematic texture overlay</span></div><button class="cx-ffx-btn">APPLY</button></div>
+<div class="cx-ffx-row"><div><span class="cx-ffx-name">Neon Glow</span><span class="cx-ffx-sub">Neon edge light effect</span></div><button class="cx-ffx-btn">APPLY</button></div>
+<div class="cx-ffx-row"><div><span class="cx-ffx-name">VHS Glitch</span><span class="cx-ffx-sub">Retro distortion preset</span></div><button class="cx-ffx-btn">APPLY</button></div>
+</div>
+</div>
+</div>
+
 </div><!-- /panel-sfx -->
 
-<!-- ═══════════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════════
      PANEL: PURGE
-════════════════════════════════════════════════════════ -->
+══════════════════════════════════════════════ -->
 <div class="app-panel" id="panel-purge">
 <div class="tools-scroll">
 <div class="tool-section" style="text-align:center;padding:24px 16px">
-  <div style="font-size:32px;margin-bottom:8px">🧹</div>
+  <div style="font-size:30px;margin-bottom:8px">🧹</div>
   <b style="font-size:13px;display:block;margin-bottom:6px">RAM Purge</b>
-  <span style="font-size:10px;color:#888;display:block;margin-bottom:16px">Clears all After Effects memory caches and frees up RAM instantly.</span>
+  <span style="font-size:10px;color:#888;display:block;margin-bottom:16px">Clears all After Effects memory caches instantly.</span>
   <button class="tool-btn danger wide" style="height:40px;font-size:11px">⚡ PURGE ALL CACHES NOW</button>
 </div>
 </div>
-</div><!-- /panel-purge -->
+</div>
 
 </div><!-- /cx-app-main -->
 </div><!-- /app -->
 
 <script>
 (function () {
+
   // ── Tab switching ──
-  var tabs = document.querySelectorAll('.app-tab');
+  var tabs   = document.querySelectorAll('.app-tab[data-apptab]');
   var panels = document.querySelectorAll('.app-panel');
 
   tabs.forEach(function (tab) {
     tab.addEventListener('click', function () {
-      var target = tab.getAttribute('data-apptab');
-      if (!target) return;
-
+      var id = tab.getAttribute('data-apptab');
+      if (!id) return;
       tabs.forEach(function (t) { t.classList.remove('active'); });
       tab.classList.add('active');
-
       panels.forEach(function (p) { p.classList.remove('active'); });
-      var targetPanel = document.getElementById('panel-' + target);
-      if (targetPanel) targetPanel.classList.add('active');
-
-      // Button flash feedback
+      var panel = document.getElementById('panel-' + id);
+      if (panel) panel.classList.add('active');
       tab.classList.add('cx-btn-flash');
       setTimeout(function () { tab.classList.remove('cx-btn-flash'); }, 300);
     });
   });
 
-  // ── Tool button feedback ──
-  document.querySelectorAll('.tool-btn').forEach(function (btn) {
+  // ── Button flash ──
+  document.querySelectorAll('.tool-btn, .cx-lib-use, .cx-mogrt-btn, .cx-ffx-btn, .cx-comp-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
       btn.classList.add('cx-btn-flash');
       setTimeout(function () { btn.classList.remove('cx-btn-flash'); }, 300);
     });
   });
 
-  // ── SFX waveform bars ──
-  function buildBars(el, count, lo, hi, color) {
-    var html = '';
-    for (var i = 0; i < count; i++) {
-      var h = lo + Math.floor(Math.random() * (hi - lo));
-      html += '<i style="height:' + h + 'px;background:' + color + '"></i>';
-    }
-    el.innerHTML = html;
-  }
-  var colors = ['linear-gradient(180deg,#4da3ff,#7b61ff)', 'linear-gradient(180deg,#7b61ff,#a978ff)',
-    'linear-gradient(180deg,#5fffa6,#4da3ff)', 'linear-gradient(180deg,#ff6b6b,#ff4d8d)',
-    'linear-gradient(180deg,#ffa07a,#ffe600)', 'linear-gradient(180deg,#a978ff,#f093fb)'];
-  for (var i = 1; i <= 6; i++) {
-    var el = document.getElementById('sfx-bars-' + i);
-    if (el) buildBars(el, 12, 4, 22, colors[i - 1]);
-  }
-
-  // ── Library tab switching ──
-  var libTabs = ['sfx', 'mogrt', 'ffx'];
-  libTabs.forEach(function (key) {
-    var btn = document.getElementById('lib-tab-' + key);
-    if (!btn) return;
+  // ── Library sub-tabs ──
+  var libMap = { sfx: 'lib-sfx', mogrt: 'lib-mogrt', ffx: 'lib-ffx' };
+  document.querySelectorAll('.cx-lib-subtab').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      libTabs.forEach(function (k) {
-        var b = document.getElementById('lib-tab-' + k);
-        var c = document.getElementById('lib-content-' + k);
-        if (b) b.classList.remove('active');
-        if (c) c.style.display = 'none';
-      });
+      var key = btn.getAttribute('data-lib');
+      document.querySelectorAll('.cx-lib-subtab').forEach(function (b) { b.classList.remove('active'); });
       btn.classList.add('active');
-      var content = document.getElementById('lib-content-' + key);
-      if (content) content.style.display = '';
+      Object.keys(libMap).forEach(function (k) {
+        var el = document.getElementById(libMap[k]);
+        if (el) el.style.display = (k === key) ? '' : 'none';
+      });
     });
   });
 
-  // ── Timer animation ──
-  var timerEl = document.getElementById('cx-timer-display');
+  // ── SFX waveform bars ──
+  var sfxColors = [
+    'linear-gradient(180deg,#4da3ff,#7b61ff)',
+    'linear-gradient(180deg,#7b61ff,#a978ff)',
+    'linear-gradient(180deg,#5fffa6,#4da3ff)',
+    'linear-gradient(180deg,#ff6b6b,#ff4d8d)',
+    'linear-gradient(180deg,#ffa07a,#ffe600)',
+    'linear-gradient(180deg,#a978ff,#f093fb)'
+  ];
+  for (var i = 1; i <= 6; i++) {
+    var el = document.getElementById('sfx' + i);
+    if (!el) continue;
+    var html = '';
+    for (var b = 0; b < 12; b++) {
+      var h = 3 + Math.floor(Math.random() * 17);
+      html += '<i style="height:' + h + 'px;background:' + sfxColors[i - 1] + '"></i>';
+    }
+    el.innerHTML = html;
+  }
+
+  // ── Live timer ──
+  var timerEl = document.getElementById('cx-timer');
+  var secs = 2 * 3600 + 14 * 60 + 36;
+  var running = true;
   if (timerEl) {
-    var secs = 2 * 3600 + 14 * 60 + 36;
-    var running = true;
-    var interval = setInterval(function () {
+    setInterval(function () {
       if (!running) return;
       secs++;
       var h = String(Math.floor(secs / 3600)).padStart(2, '0');
@@ -886,32 +690,28 @@
       var s = String(secs % 60).padStart(2, '0');
       timerEl.textContent = h + ':' + m + ':' + s;
     }, 1000);
-
-    var toggleBtn = document.getElementById('btnTimerToggle');
-    if (toggleBtn) {
-      toggleBtn.addEventListener('click', function () {
-        running = !running;
-        toggleBtn.textContent = running ? '⏸ PAUSE' : '▶ RESUME';
-      });
-    }
+    var toggle = document.getElementById('btnTimerToggle');
+    if (toggle) toggle.addEventListener('click', function () {
+      running = !running;
+      toggle.textContent = running ? '⏸ PAUSE' : '▶ RESUME';
+    });
   }
 
-  // ── Caption style preview cycle ──
-  var capPreviewWords = [
-    [{ text: 'YOUR ', hl: false }, { text: 'CAPTION', hl: true }, { text: ' HERE', hl: false }],
-    [{ text: 'CREATE ', hl: false }, { text: 'IN', hl: true }, { text: ' ORBIT', hl: false }],
-    [{ text: 'ORBIT ', hl: false }, { text: 'STUDIO', hl: true }, { text: ' v2.4', hl: false }],
+  // ── Caption preview cycle ──
+  var previews = [
+    ['YOUR ', 'CAPTION', ' HERE'],
+    ['CREATE ', 'IN', ' ORBIT'],
+    ['ORBIT ', 'STUDIO', ' v2.4'],
+    ['BANGLA ', 'VIRAL', ' STYLE'],
   ];
   var capIdx = 0;
-  var capEl = document.querySelector('.cx-cap-demo-preview');
+  var capEl = document.getElementById('captionPreview');
   if (capEl) {
     setInterval(function () {
-      capIdx = (capIdx + 1) % capPreviewWords.length;
-      var words = capPreviewWords[capIdx];
-      capEl.innerHTML = words.map(function (w) {
-        return w.hl ? '<span class="hl">' + w.text + '</span>' : '<span>' + w.text + '</span>';
-      }).join('');
-    }, 2400);
+      capIdx = (capIdx + 1) % previews.length;
+      var w = previews[capIdx];
+      capEl.innerHTML = '<span>' + w[0] + '</span><span class="hl">' + w[1] + '</span><span>' + w[2] + '</span>';
+    }, 2500);
   }
 
   // ── Caption preset click ──
