@@ -36,7 +36,7 @@ export default function TutorialsPage() {
             <div className="aspect-video relative w-full">
               <iframe
                 className="absolute top-0 left-0 w-full h-full"
-                src="https://www.youtube.com/embed/pLOLRfngcWI"
+                src="https://www.youtube.com/embed/9fnTG_5MDBQ"
                 title="Orbit Studio Complete Tutorial"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -61,28 +61,56 @@ export default function TutorialsPage() {
             More Tutorials
           </h3>
 
-          {/* Old Tutorial */}
-          <div className="relative">
-            <div className="absolute -inset-0.5 bg-gradient-to-b from-[#45c66d]/20 to-transparent blur-xl opacity-40 rounded-2xl"></div>
-            <div className="relative bg-[#0b110d] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
-              <div className="aspect-video relative w-full">
-                <iframe
-                  className="absolute top-0 left-0 w-full h-full"
-                  src="https://www.youtube.com/embed/xalYhDRnOh8?si=BGENMoA0ULD-wv0n"
-                  title="Orbit Studio Complete Tutorial | Master Every Feature in After Effects"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  referrerPolicy="strict-origin-when-cross-origin"
-                  allowFullScreen
-                ></iframe>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Previous Tutorial */}
+            <div className="relative">
+              <div className="absolute -inset-0.5 bg-gradient-to-b from-[#45c66d]/20 to-transparent blur-xl opacity-40 rounded-2xl"></div>
+              <div className="relative bg-[#0b110d] border border-white/10 rounded-2xl overflow-hidden shadow-2xl h-full flex flex-col">
+                <div className="aspect-video relative w-full">
+                  <iframe
+                    className="absolute top-0 left-0 w-full h-full"
+                    src="https://www.youtube.com/embed/9fnTG_5MDBQ"
+                    title="Orbit Studio Complete Tutorial | After Effects Workflow Faster | Deep Glow, Shadow & More"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                  ></iframe>
+                </div>
+                <div className="p-6 flex-1">
+                  <h4 className="text-lg font-bold mb-2">
+                    Orbit Studio Full Tutorial
+                  </h4>
+                  <p className="text-[#8da096] text-sm">
+                    In-depth video walkthrough of Orbit Studio tools including Deep Glow, Shadow, and workflow optimization.
+                  </p>
+                </div>
               </div>
-              <div className="p-6 md:p-8">
-                <h2 className="text-xl font-bold mb-2">
-                  Orbit Studio Complete Tutorial | Master Every Feature in After Effects
-                </h2>
-                <p className="text-[#8da096]">
-                  In this comprehensive guide, we walk through every feature of Orbit Studio so you can speed up your creative workflow in After Effects.
-                </p>
+            </div>
+
+            {/* Classic Tutorial */}
+            <div className="relative">
+              <div className="absolute -inset-0.5 bg-gradient-to-b from-[#45c66d]/20 to-transparent blur-xl opacity-40 rounded-2xl"></div>
+              <div className="relative bg-[#0b110d] border border-white/10 rounded-2xl overflow-hidden shadow-2xl h-full flex flex-col">
+                <div className="aspect-video relative w-full">
+                  <iframe
+                    className="absolute top-0 left-0 w-full h-full"
+                    src="https://www.youtube.com/embed/xalYhDRnOh8?si=BGENMoA0ULD-wv0n"
+                    title="Orbit Studio Complete Tutorial | Master Every Feature in After Effects"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                  ></iframe>
+                </div>
+                <div className="p-6 flex-1">
+                  <h4 className="text-lg font-bold mb-2">
+                    Master Every Feature Guide
+                  </h4>
+                  <p className="text-[#8da096] text-sm">
+                    Comprehensive overview of every core feature to speed up your creative workflow in After Effects.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
