@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     const admin = createAdminClient();
     const { data: license } = await admin
       .from("licenses")
-      .select("status, profiles!inner(is_banned)")
+      .select("status, profiles(is_banned)")
       .eq("id", payload.sub as string)
       .maybeSingle();
       
