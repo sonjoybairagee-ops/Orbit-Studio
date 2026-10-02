@@ -33,9 +33,9 @@ const DEFAULT_LATEST: Record<
   }
 > = {
   "orbit-studio": {
-    version: "2.4.36",
-    r2Key: "CompX-Orbit-Studio-v2.4.36.zxp",
-    publicUrl: "https://assets.compxorbit.com/CompX-Orbit-Studio-v2.4.36.zxp",
+    version: "2.6.1",
+    r2Key: "CompX-Orbit-Studio-v2.6.1.zxp",
+    publicUrl: "https://assets.compxorbit.com/CompX-Orbit-Studio-v2.6.1.zxp",
     releaseNotes: [
       "High-speed Cloudflare R2 asset streaming and downloads.",
       "Optimized Color Plates and Motion Lab layer engine.",
