@@ -18,12 +18,8 @@ export const r2Client = new S3Client({
 });
 
 export async function getR2DownloadUrl(fileKey: string, expiresInSeconds = 300) {
-  const filename = fileKey.split("/").pop() || fileKey;
-  const command = new GetObjectCommand({
-    Bucket: bucketName,
-    Key: fileKey,
-    ResponseContentDisposition: `attachment; filename="${filename}"`,
-    ResponseContentType: "application/octet-stream",
-  });
-  return await getSignedUrl(r2Client, command, { expiresIn: expiresInSeconds });
+  const customDomain = process.env.R2_PUBLIC_DOMAIN || "https://assets.compxorbit.com";
+  const cleanDomain = customDomain.replace(/\/$/, "");
+  const cleanKey = fileKey.replace(/^\//, "");
+  return `${cleanDomain}/${cleanKey}`;
 }
