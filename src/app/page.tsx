@@ -265,8 +265,8 @@ export default async function Home() {
                 <div className="install-dl-card install-dl-card--new">
                   <div className="install-dl-card__badge">Lifetime License · From $2</div>
                   <b>CompX Orbit Studio</b>
-                  <small>v2.4.15 · After Effects + Premiere Pro</small>
-                  <code>CompX-Orbit-Studio-v2.4.15.zxp</code>
+                  <small>v2.6.1 · After Effects + Premiere Pro</small>
+                  <code>CompX-Orbit-Studio-v2.6.1.zxp</code>
                 </div>
                 <div className="install-dl-card install-dl-card--legacy">
                   <div className="install-dl-card__badge">Legacy · Free Redeem</div>

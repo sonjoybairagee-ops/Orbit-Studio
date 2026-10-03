@@ -27,6 +27,12 @@ export default async function CheckoutPage({
 
   if (!rawPlan || !rawPlan.is_active || !rawPlan.is_public) notFound();
 
+  // Individual Studio and Premiere plans are no longer sold separately.
+  // Redirect to pricing page to guide users to Combo Pack or Team License.
+  if (rawPlan.slug === "orbit-studio" || rawPlan.slug === "orbit-premiere") {
+    redirect("/pricing");
+  }
+
   let plan = rawPlan;
   {
     // Normalize plan display:

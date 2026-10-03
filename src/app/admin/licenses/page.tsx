@@ -23,7 +23,11 @@ export default async function LicensesPage({
   const q = searchParams.q?.trim() ?? "";
   const statusFilter = searchParams.status ?? "";
 
-  const { data: plans } = await s.from("plans").select("id, name, price").order("price", { ascending: true });
+  const { data: plans } = await s
+    .from("plans")
+    .select("id, name, price, slug")
+    .not("slug", "in", "(orbit-studio,orbit-premiere)")
+    .order("price", { ascending: true });
 
   let query = s
     .from("licenses")

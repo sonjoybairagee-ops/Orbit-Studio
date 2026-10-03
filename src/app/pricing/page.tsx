@@ -84,86 +84,8 @@ export default async function PricingPage() {
       </section>
 
       <section className="shell max-w-[1440px] mx-auto px-4 py-8" aria-label="Orbit plans">
-        {/* ── 4 Products Side-by-Side Premium Compact Grid ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3.5 items-end">
-
-          {/* Card 1: Orbit Studio (After Effects) */}
-          <article className="flex flex-col justify-between rounded-2xl border border-white/10 bg-[#0e0e12] p-4 sm:p-5 h-full relative hover:border-purple-500/40 hover:-translate-y-1 transition-all duration-300">
-            <div>
-              <div className="flex justify-center mb-3">
-                <span className="text-[9px] font-bold tracking-[0.15em] text-purple-300/80 bg-purple-500/10 border border-purple-500/20 px-2.5 py-0.5 rounded-full uppercase">
-                  After Effects Extension
-                </span>
-              </div>
-
-              <div className="text-center">
-                <h2 className="text-lg font-black text-white tracking-tight">Orbit Studio</h2>
-                <p className="text-[10px] text-purple-400/70 font-mono">AE PANEL</p>
-              </div>
-
-              <div className="flex items-end justify-center gap-0.5 mt-3 mb-0.5">
-                <span className="text-lg font-bold text-white/40 mb-0.5">$</span>
-                <b className="text-4xl sm:text-5xl font-black text-white leading-none">3</b>
-              </div>
-              <p className="text-center text-[10px] text-white/30 font-medium">ONE-TIME PAYMENT</p>
-              <p className="text-center text-[10px] text-purple-300/70 mb-3 font-semibold">৳360 / lifetime</p>
-
-              <ul className="space-y-1.5 text-[11px] text-white/60 border-t border-white/[0.08] pt-3">
-                <li className="flex items-center gap-1.5"><span className="text-purple-400 text-xs">✓</span> After Effects Extension Panel</li>
-                <li className="flex items-center gap-1.5"><span className="text-purple-400 text-xs">✓</span> 60+ workflow actions &amp; tools</li>
-                <li className="flex items-center gap-1.5"><span className="text-purple-400 text-xs">✓</span> 600+ color plates &amp; presets</li>
-                <li className="flex items-center gap-1.5"><span className="text-purple-400 text-xs">✓</span> Universal asset library</li>
-                <li className="flex items-center gap-1.5"><span className="text-purple-400 text-xs">✓</span> Lifetime updates &amp; support</li>
-                <li className="flex items-center gap-1.5"><span className="text-purple-400 text-xs">✓</span> 1 device activation</li>
-              </ul>
-            </div>
-
-            <div className="mt-4 pt-2 border-t border-white/5">
-              <Link href="/checkout/orbit-studio" className="block w-full text-center py-2.5 rounded-xl text-xs font-bold border border-white/15 text-white/70 hover:border-purple-400/50 hover:text-white hover:bg-purple-500/10 transition-all">
-                Get Studio — $3 →
-              </Link>
-              <p className="text-center text-[9px] text-white/20 mt-1.5">Key delivered to dashboard</p>
-            </div>
-          </article>
-
-          {/* Card 2: Orbit Premiere - FEATURED / ELEVATED */}
-          <article className="flex flex-col justify-between rounded-2xl border-2 border-[#3ddc6e] bg-[#0e0e12] p-4 sm:p-5 h-full relative shadow-[0_0_40px_rgba(61,220,110,0.15)] -translate-y-2 scale-[1.01]">
-            <div>
-              <div className="flex justify-center mb-3">
-                <span className="text-[9px] font-black tracking-[0.15em] text-black bg-[#3ddc6e] px-3 py-0.5 rounded-full uppercase shadow">
-                  NEWLY LAUNCHED
-                </span>
-              </div>
-
-              <div className="text-center">
-                <h2 className="text-lg font-black text-white tracking-tight">Orbit Premiere</h2>
-                <p className="text-[10px] text-[#3ddc6e]/80 font-mono">PREMIERE PRO EXTENSION</p>
-              </div>
-
-              <div className="flex items-end justify-center gap-0.5 mt-3 mb-0.5">
-                <span className="text-lg font-bold text-white/40 mb-0.5">$</span>
-                <b className="text-4xl sm:text-5xl font-black text-white leading-none">2</b>
-              </div>
-              <p className="text-center text-[10px] text-white/30 font-medium">ONE-TIME PAYMENT</p>
-              <p className="text-center text-[10px] text-[#3ddc6e]/80 mb-3 font-semibold">৳240 / lifetime</p>
-
-              <ul className="space-y-1.5 text-[11px] text-white/70 border-t border-white/10 pt-3">
-                <li className="flex items-center gap-1.5"><span className="text-[#3ddc6e] text-xs">✓</span> Premiere Pro Extension Panel</li>
-                <li className="flex items-center gap-1.5"><span className="text-[#3ddc6e] text-xs">✓</span> Silence Cutter &amp; Auto Cut</li>
-                <li className="flex items-center gap-1.5"><span className="text-[#3ddc6e] text-xs">✓</span> Audio &amp; Video workflow suite</li>
-                <li className="flex items-center gap-1.5"><span className="text-[#3ddc6e] text-xs">✓</span> Universal asset library</li>
-                <li className="flex items-center gap-1.5"><span className="text-[#3ddc6e] text-xs">✓</span> Lifetime updates &amp; support</li>
-                <li className="flex items-center gap-1.5"><span className="text-[#3ddc6e] text-xs">✓</span> 1 device activation</li>
-              </ul>
-            </div>
-
-            <div className="mt-4 pt-2 border-t border-white/5">
-              <Link href="/checkout/orbit-premiere" className="block w-full text-center py-2.5 rounded-xl text-xs font-black bg-[#3ddc6e] text-black hover:bg-[#35cc62] shadow-[0_4px_16px_rgba(61,220,110,0.25)] transition-all">
-                Get Premiere — $2 →
-              </Link>
-              <p className="text-center text-[9px] text-white/25 mt-1.5">Instant download · Lifetime access</p>
-            </div>
-          </article>
+        {/* ── 3 Products Grid (Combo + Team only; individual plans no longer sold separately) ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5 items-end">
 
           {/* Card 3: Orbit Combo Pack - BEST VALUE */}
           <article className="flex flex-col justify-between rounded-2xl border-2 border-amber-400/80 bg-[#0e0e12] p-4 sm:p-5 h-full relative shadow-[0_0_40px_rgba(251,191,36,0.12)] hover:-translate-y-1 transition-all duration-300">
@@ -238,7 +160,7 @@ export default async function PricingPage() {
         <div className="pricing-faq__list">
           {[
             ["Is this a subscription?", "No. The displayed price is a one-time payment for lifetime access to the purchased version and its included updates."],
-            ["Do I buy AE and Premiere separately?", "You can get Orbit Studio ($3) or Orbit Premiere ($2) individually, or choose the Orbit Combo Pack ($4) to unlock BOTH extensions together for maximum savings!"],
+            ["Do I buy AE and Premiere separately?", "No. Orbit Studio and Orbit Premiere are no longer sold as individual plans. The Orbit Combo Pack ($4) gives you BOTH extensions together — it's the best value and the only single-user option available."],
             ["Can I move to another computer?", "Yes. Release the current device from your dashboard. A 24-hour cooldown protects the licence from sharing abuse."],
             ["Does my old CompX demo key unlock Orbit?", "No. LG legacy keys are only for CompX v1.1.1. Orbit is a new paid product."],
             ["What is the Studio Team License?", "A single license key that unlocks multiple workstations simultaneously. Perfect for studios and teams sharing one subscription."],

@@ -51,6 +51,21 @@ export async function POST(req: Request) {
     finalPlanId = legacyPlan?.id;
   }
 
+  // Orbit Studio and Orbit Premiere are no longer sold separately.
+  // Only Orbit Combo Pack and Studio Team License can be issued.
+  const { data: selectedPlan } = await supabaseAdminClient
+    .from("plans")
+    .select("slug")
+    .eq("id", finalPlanId)
+    .maybeSingle();
+
+  if (selectedPlan?.slug === "orbit-studio" || selectedPlan?.slug === "orbit-premiere") {
+    return NextResponse.json(
+      { error: "Orbit Studio and Orbit Premiere cannot be issued as separate licenses. Please use the Orbit Combo Pack or Studio Team License instead." },
+      { status: 400 }
+    );
+  }
+
   const { data: license, error } = await supabaseAdminClient
     .from("licenses")
     .insert({

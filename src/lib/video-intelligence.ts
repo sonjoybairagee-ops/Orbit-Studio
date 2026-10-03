@@ -98,32 +98,118 @@ export function analysisInput(meta: { title: string; channelName: string; durati
 }
 
 export async function runOpenAIJson(name: string, schema: object, instructions: string, input: string) {
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) return { ok: false as const, status: 503, error: "This Compx Creator AI feature is not configured on the server yet." };
-  const model = process.env.OPENAI_ANALYSIS_MODEL || "gpt-4.1-mini";
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
-    body: JSON.stringify({
-      model,
-      instructions,
-      input,
-      text: { format: { type: "json_schema", name, strict: true, schema } },
-    }),
-  });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) {
+  const openrouterKey = process.env.OPENROUTER_API_KEY;
+  const geminiKey = process.env.GEMINI_API_KEY;
+  const groqKey = process.env.GROQ_API_KEY;
+  const openaiKey = process.env.OPENAI_API_KEY;
+
+  if (openrouterKey) {
+    const model = process.env.OPENROUTER_ANALYSIS_MODEL || "google/gemini-2.0-flash-exp:free";
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${openrouterKey}`,
+        "content-type": "application/json",
+        "HTTP-Referer": "https://compxorbit.com",
+        "X-Title": "Compx Creator",
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: `${instructions}\n\nYou MUST respond in valid JSON format matching this schema:\n${JSON.stringify(schema)}` },
+          { role: "user", content: input },
+        ],
+        response_format: { type: "json_object" },
+      }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (res.ok) {
+      try {
+        const text = extractOutputText(body);
+        return { ok: true as const, model: `openrouter/${model}`, json: JSON.parse(text) as unknown };
+      } catch {
+        // Fall back to Gemini / Groq / OpenAI
+      }
+    }
+  }
+
+  if (geminiKey) {
+    const model = process.env.GEMINI_ANALYSIS_MODEL || "gemini-2.0-flash";
+    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { authorization: `Bearer ${geminiKey}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: `${instructions}\n\nYou MUST respond in valid JSON format matching this schema:\n${JSON.stringify(schema)}` },
+          { role: "user", content: input },
+        ],
+        response_format: { type: "json_object" },
+      }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (res.ok) {
+      try {
+        const text = extractOutputText(body);
+        return { ok: true as const, model: `gemini/${model}`, json: JSON.parse(text) as unknown };
+      } catch {
+        // Fall back to next available provider if parsing fails
+      }
+    }
+  }
+
+  if (groqKey) {
+    const model = process.env.GROQ_ANALYSIS_MODEL || "llama-3.3-70b-versatile";
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { authorization: `Bearer ${groqKey}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: `${instructions}\n\nYou MUST respond in valid JSON format matching this schema:\n${JSON.stringify(schema)}` },
+          { role: "user", content: input },
+        ],
+        response_format: { type: "json_object" },
+      }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (res.ok) {
+      try {
+        const text = extractOutputText(body);
+        return { ok: true as const, model: `groq/${model}`, json: JSON.parse(text) as unknown };
+      } catch {
+        // Fall back to OpenAI
+      }
+    }
+  }
+
+  if (openaiKey) {
+    const model = process.env.OPENAI_ANALYSIS_MODEL || "gpt-4.1-mini";
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: { authorization: `Bearer ${openaiKey}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        model,
+        instructions,
+        input,
+        text: { format: { type: "json_schema", name, strict: true, schema } },
+      }),
+    });
+    const body = await response.json().catch(() => ({}));
+    if (response.ok) {
+      try {
+        return { ok: true as const, model, json: JSON.parse(extractOutputText(body)) as unknown };
+      } catch {
+        return { ok: false as const, status: 502, error: "The model returned an unusable result. Retry." };
+      }
+    }
     const quota = JSON.stringify(body);
     if (response.status === 429 || /insufficient_quota|rate_limit/i.test(quota)) {
       return { ok: false as const, status: 429, error: "AI quota is exhausted. Try again later." };
     }
-    return { ok: false as const, status: 502, error: "The analysis service is unavailable. Try again shortly." };
   }
-  try {
-    return { ok: true as const, model, json: JSON.parse(extractOutputText(body)) as unknown };
-  } catch {
-    return { ok: false as const, status: 502, error: "The model returned an unusable result. Retry." };
-  }
+
+  return { ok: false as const, status: 503, error: "This Compx Creator AI feature is not configured on the server yet." };
 }
 
 export async function runOpenAI(input: string, hasTranscript: boolean) {
