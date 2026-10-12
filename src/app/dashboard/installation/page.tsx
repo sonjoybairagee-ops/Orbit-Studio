@@ -40,8 +40,22 @@ export default function InstallationGuidePage() {
             <div>
               <h3 className="text-base font-bold text-white">Get your Extension File</h3>
               <p className="muted mt-2 text-sm leading-6">
-                If you haven't already, go to the <Link href="/dashboard" className="text-[#45c66d] hover:underline font-bold">Overview</Link> tab and click the download button for your Orbit Studio extension. It will save as a <code>.zxp</code> file on your computer.
+                If you haven't already, go to the <Link href="/dashboard" className="text-[#45c66d] hover:underline font-bold">My licenses</Link> tab or click below to download your extension (.zxp):
               </p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <a
+                  href="/api/download?slug=orbit-studio"
+                  className="inline-flex items-center gap-2 rounded-lg bg-[#45c66d]/15 hover:bg-[#45c66d]/25 border border-[#45c66d]/30 px-3 py-1.5 text-xs font-bold text-[#45c66d] transition-all"
+                >
+                  ⬇ Orbit Studio v2.6.1 (.zxp)
+                </a>
+                <a
+                  href="/api/download?slug=orbit-premiere"
+                  className="inline-flex items-center gap-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 px-3 py-1.5 text-xs font-bold text-white transition-all"
+                >
+                  ⬇ Orbit Premiere v2.5.0 (.zxp)
+                </a>
+              </div>
             </div>
           </div>
         </div>

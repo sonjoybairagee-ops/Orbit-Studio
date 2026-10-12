@@ -36,8 +36,8 @@ export default function TutorialsPage() {
             <div className="aspect-video relative w-full">
               <iframe
                 className="absolute top-0 left-0 w-full h-full"
-                src="https://www.youtube.com/embed/9fnTG_5MDBQ"
-                title="Orbit Studio Complete Tutorial"
+                src="https://www.youtube.com/embed/Ia66YvWO6JI"
+                title="COMPX ORBIT STUDIO v2.6.1 — EXTENSION TUTORIAL IS HERE!"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 referrerPolicy="strict-origin-when-cross-origin"
@@ -46,10 +46,10 @@ export default function TutorialsPage() {
             </div>
             <div className="p-6 md:p-8">
               <h2 className="text-2xl font-bold mb-2">
-                Orbit Studio Complete Tutorial
+                COMPX ORBIT STUDIO v2.6.1 — EXTENSION TUTORIAL IS HERE!
               </h2>
               <p className="text-[#8da096]">
-                The ultimate complete guide to Orbit Studio for After Effects — covering every feature, workflow, and tip to supercharge your creative process.
+                The complete walkthrough of CompX Orbit Studio v2.6.1 extension — learn how to master all the new features and speed up your After Effects workflow.
               </p>
             </div>
           </div>

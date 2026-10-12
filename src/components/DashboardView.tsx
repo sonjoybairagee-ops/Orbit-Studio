@@ -232,8 +232,24 @@ export function DashboardView({ user, licenses, verified }: DashboardViewProps) 
                   </span>
                   <h4 className="mt-2 text-xs font-bold text-white">Download Extension (.zxp)</h4>
                   <p className="mt-1 text-[11px] text-[#717b8c]">
-                    Open My licenses, then download Orbit Studio (.zxp) or Orbit Premiere (.zxp).
+                    Download directly from your active license in My licenses or click below:
                   </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <a
+                      href="/api/download?slug=orbit-studio"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#45c66d]/15 hover:bg-[#45c66d]/25 border border-[#45c66d]/30 px-3 py-1.5 text-[11px] font-bold text-[#45c66d] transition-all"
+                      title="Download Orbit Studio v2.6.1 (.zxp)"
+                    >
+                      ⬇ Orbit Studio v2.6.1 (.zxp)
+                    </a>
+                    <a
+                      href="/api/download?slug=orbit-premiere"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 px-3 py-1.5 text-[11px] font-bold text-white transition-all"
+                      title="Download Orbit Premiere v2.5.0 (.zxp)"
+                    >
+                      ⬇ Orbit Premiere v2.5.0 (.zxp)
+                    </a>
+                  </div>
                 </div>
 
                 <div className="rounded-xl border border-white/[0.05] bg-black/40 p-4">

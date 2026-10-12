@@ -26,3 +26,8 @@ tsconfig.tsbuildinfo
 
 # Zip files
 *.zip
+
+# Cloudflare Wrangler local state
+.wrangler/
+
+.git_new/

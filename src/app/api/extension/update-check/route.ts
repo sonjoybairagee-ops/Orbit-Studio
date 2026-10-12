@@ -46,12 +46,13 @@ const DEFAULT_LATEST: Record<
     minHostVersion: "2021",
   },
   "orbit-premiere": {
-    version: "2.4.46",
-    r2Key: "CompX-Orbit-Premiere-v2.4.46.zxp",
-    publicUrl: "https://assets.compxorbit.com/CompX-Orbit-Premiere-v2.4.46.zxp",
+    version: "2.5.0",
+    r2Key: "CompX-Orbit-Premiere-v2.5.0.zxp",
+    publicUrl: "https://assets.compxorbit.com/CompX-Orbit-Premiere-v2.5.0.zxp",
     releaseNotes: [
       "Premiere Pro essential cut tools & workflow actions.",
       "Fast caption & typography presets integration.",
+      "Motion Lab & Loop support with diagnostic tools.",
       "Multi-host device seat synchronization.",
     ],
     isMandatory: false,

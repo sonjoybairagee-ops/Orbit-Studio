@@ -107,8 +107,16 @@ export function LicenseCard({ license }: { license: LicenseView }) {
     try {
       const res = await fetch(`/api/download?slug=${encodeURIComponent(slug)}`);
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) setNote({ kind: "err", text: data.error ?? "Download failed." });
-      else window.location.href = data.url;
+      if (!res.ok) {
+        setNote({ kind: "err", text: data.error ?? "Download failed." });
+      } else if (data.url) {
+        const link = document.createElement("a");
+        link.href = data.url;
+        link.setAttribute("download", data.url.split("/").pop() || `${slug}.zxp`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
     } catch {
       setNote({ kind: "err", text: "Network error. Please try again." });
     } finally {
@@ -182,6 +190,7 @@ export function LicenseCard({ license }: { license: LicenseView }) {
                           : "bg-[#45c66d] text-black shadow-[0_0_20px_rgba(69,198,109,0.3)] hover:bg-[#38b55e]"
                       }`}
                       disabled={busy !== null}
+                      title={isPr ? "Download CompX Orbit Premiere v2.5.0 (.zxp)" : isChrome ? "Download Compx Creator (.zip)" : "Download CompX Orbit Studio v2.6.1 (.zxp)"}
                       onClick={() => download(p.slug)}
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
