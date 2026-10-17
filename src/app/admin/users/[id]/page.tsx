@@ -150,7 +150,7 @@ export default async function UserProfilePage({ params }: { params: { id: string
                           {hasAe ? <span className="text-purple-400 font-bold">✓ ENABLED</span> : <span>✕ NOT IN PLAN</span>}
                         </div>
                         <p className="text-[10px] text-[#aab0bd] mt-1 font-mono">
-                          {hasAe ? "CompX-Orbit-Studio-v2.6.1.zxp" : "Download button hidden"}
+                          {hasAe ? "CompX-Orbit-Studio-v2.9.0.zxp" : "Download button hidden"}
                         </p>
                       </div>
 
