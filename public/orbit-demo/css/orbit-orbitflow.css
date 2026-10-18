@@ -1,0 +1,464 @@
+/* ============================================================
+   ORBITFLOW — HTML video drop + AE build (CodeFlow-style layout)
+   ============================================================ */
+
+#app #panel-orbitflow {
+  --flow-accent: #35e979;
+  --flow-accent-soft: rgba(53, 233, 121, 0.14);
+  --flow-line: rgba(255, 255, 255, 0.1);
+  --flow-line-strong: rgba(255, 255, 255, 0.2);
+  --flow-bg: #0e1014;
+  --flow-bg2: #14161c;
+  --flow-text: #f3f4f6;
+  --flow-dim: #848a98;
+  --flow-faint: #505664;
+}
+
+#app #panel-orbitflow .hidden {
+  display: none !important;
+}
+
+/* ---- Panel layout: give the stacked tool-sections real breathing room ----
+   Without this, .tool-section elements butt up against each other and the
+   long "An HTML video is converted…" tip overlaps the ADVANCED heading
+   below. */
+#app #panel-orbitflow > .tools-scroll {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  padding: 10px !important;
+}
+
+/* The scroll container above is a flex column, and flex items shrink by
+   default — which squashed each card below its own content height and
+   clipped the drop tip and the capture controls. Same guard panel-pro
+   already uses: never shrink, always size to content. */
+#app #panel-orbitflow .tool-section {
+  margin: 0 !important;
+  padding: 10px !important;
+  flex: 0 0 auto !important;
+  min-height: auto !important;
+  overflow: visible !important;
+}
+
+/* Nothing inside a card may be clipped either — the drop zone's tip wraps to
+   three lines on a narrow panel and has to stay inside its dashed box. */
+#app #panel-orbitflow .flow-card,
+#app #panel-orbitflow .flow-drop,
+#app #panel-orbitflow .flow-browser-section,
+#app #panel-orbitflow .flow-capture-controls {
+  min-height: auto !important;
+  overflow: visible !important;
+}
+
+/* Keep the empty / loaded drop card from running into the ADVANCED heading. */
+#app #panel-orbitflow .flow-card {
+  margin-bottom: 8px !important;
+}
+#app #panel-orbitflow .flow-card:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* The in-drop tip wraps over three lines on narrow panels — give it a bit
+   more bottom room so the dashed box fully encloses it. */
+#app #panel-orbitflow .flow-drop {
+  padding-bottom: 14px !important;
+}
+#app #panel-orbitflow .flow-tip {
+  margin-bottom: 2px !important;
+}
+
+#app #panel-orbitflow .flow-card {
+  background: var(--flow-bg2) !important;
+  border: 1px solid var(--flow-line) !important;
+  border-radius: 12px !important;
+  padding: 12px !important;
+}
+
+#app #panel-orbitflow .flow-drop {
+  border: 1.5px dashed rgba(255, 255, 255, 0.16) !important;
+  border-radius: 10px !important;
+  padding: 18px 12px !important;
+  text-align: center !important;
+  color: var(--flow-dim) !important;
+  cursor: pointer !important;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease !important;
+  outline: none !important;
+}
+
+#app #panel-orbitflow .flow-drop:hover,
+#app #panel-orbitflow .flow-drop.hot,
+#app #panel-orbitflow .flow-drop:focus {
+  border-color: var(--flow-accent) !important;
+  background: var(--flow-accent-soft) !important;
+  color: var(--flow-text) !important;
+}
+
+#app #panel-orbitflow .flow-drop-title {
+  font: 600 12px/1.3 "Segoe UI", sans-serif !important;
+  color: var(--flow-text) !important;
+}
+
+#app #panel-orbitflow .flow-drop-sub {
+  margin-top: 4px !important;
+  font: 500 10px/1.4 "Segoe UI", sans-serif !important;
+  color: var(--flow-dim) !important;
+}
+
+#app #panel-orbitflow .flow-open-wrap {
+  margin-top: 12px !important;
+}
+
+#app #panel-orbitflow .flow-open-wrap .tool-btn {
+  min-width: 88px !important;
+  padding: 8px 18px !important;
+}
+
+#app #panel-orbitflow .flow-tip {
+  margin-top: 10px !important;
+  font: 500 10px/1.45 "Segoe UI", sans-serif !important;
+  color: var(--flow-faint) !important;
+}
+
+#app #panel-orbitflow .flow-file-row {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+}
+
+#app #panel-orbitflow .flow-fname {
+  color: var(--flow-text) !important;
+  font: 600 12px/1.3 "Segoe UI", sans-serif !important;
+  word-break: break-word !important;
+}
+
+#app #panel-orbitflow .flow-where {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  max-width: 100% !important;
+  margin-top: 3px !important;
+  color: var(--flow-dim) !important;
+  font: 500 10px/1.3 "Segoe UI", sans-serif !important;
+  cursor: pointer !important;
+}
+
+#app #panel-orbitflow .flow-where span {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+#app #panel-orbitflow .flow-where:hover {
+  color: var(--flow-accent) !important;
+}
+
+#app #panel-orbitflow .flow-where svg {
+  flex: none !important;
+}
+
+#app #panel-orbitflow .flow-stats {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 6px !important;
+  margin-top: 10px !important;
+}
+
+#app #panel-orbitflow .flow-stat {
+  background: var(--flow-bg) !important;
+  border-radius: 8px !important;
+  padding: 6px 8px !important;
+  color: var(--flow-dim) !important;
+  font: 500 9px/1.2 "Segoe UI", sans-serif !important;
+}
+
+#app #panel-orbitflow .flow-stat b {
+  display: block !important;
+  font: 700 15px/1.2 "Segoe UI", sans-serif !important;
+  color: var(--flow-text) !important;
+}
+
+#app #panel-orbitflow .flow-fonts {
+  margin-top: 10px !important;
+  padding-top: 9px !important;
+  border-top: 1px solid var(--flow-line) !important;
+  color: var(--flow-dim) !important;
+  font: 500 10px/1.4 "Segoe UI", sans-serif !important;
+  display: flex !important;
+  gap: 7px !important;
+  align-items: flex-start !important;
+}
+
+#app #panel-orbitflow .flow-fonts .ic {
+  flex: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 4px !important;
+  background: var(--flow-bg) !important;
+  color: var(--flow-text) !important;
+  font: 600 10px/16px "Segoe UI", sans-serif !important;
+  text-align: center !important;
+}
+
+#app #panel-orbitflow .flow-fonts b {
+  color: var(--flow-text) !important;
+  font-weight: 500 !important;
+}
+
+#app #panel-orbitflow .flow-label {
+  color: var(--flow-dim) !important;
+  margin: 12px 0 6px !important;
+  font: 600 8px/1 "Segoe UI", sans-serif !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+}
+
+#app #panel-orbitflow .flow-seg {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  background: var(--flow-bg2) !important;
+  border: 1px solid var(--flow-line) !important;
+  border-radius: 9px !important;
+  padding: 3px !important;
+  gap: 3px !important;
+}
+
+#app #panel-orbitflow .flow-seg button {
+  background: transparent !important;
+  color: var(--flow-dim) !important;
+  padding: 7px 6px !important;
+  border: 0 !important;
+  border-radius: 7px !important;
+  cursor: pointer !important;
+  font: 600 9px/1 "Segoe UI", sans-serif !important;
+}
+
+#app #panel-orbitflow .flow-seg button.sel {
+  background: rgba(53, 233, 121, 0.12) !important;
+  color: var(--flow-text) !important;
+}
+
+#app #panel-orbitflow .flow-hint {
+  color: var(--flow-dim) !important;
+  font: 500 10px/1.4 "Segoe UI", sans-serif !important;
+  margin-top: 6px !important;
+  min-height: 15px !important;
+}
+
+#app #panel-orbitflow .flow-clear-btn {
+  display: block !important;
+  width: 100% !important;
+  margin-top: 6px !important;
+  padding: 7px !important;
+  background: transparent !important;
+  border: 0 !important;
+  color: var(--flow-dim) !important;
+  font: 500 11px/1 "Segoe UI", sans-serif !important;
+  cursor: pointer !important;
+}
+
+#app #panel-orbitflow .flow-clear-btn:hover {
+  color: var(--flow-text) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+#app #panel-orbitflow .tool-btn.wide {
+  width: 100% !important;
+  min-height: 36px !important;
+  margin-top: 8px !important;
+  font-size: 10px !important;
+  letter-spacing: 0.05em !important;
+}
+
+#app #panel-orbitflow .flow-log {
+  white-space: pre-wrap !important;
+  font: 11px/1.5 Consolas, Monaco, monospace !important;
+  max-height: 180px !important;
+  overflow: auto !important;
+  color: var(--flow-dim) !important;
+}
+
+#app #panel-orbitflow .flow-log .ok { color: #67e8f9 !important; }
+#app #panel-orbitflow .flow-log .bad { color: #fca5a5 !important; }
+#app #panel-orbitflow .flow-log .warn { color: #f5b041 !important; }
+
+#app #panel-orbitflow .flow-status {
+  margin-top: 10px !important;
+  padding: 10px 12px !important;
+  border: 1px solid var(--flow-line) !important;
+  border-radius: 8px !important;
+  background: var(--flow-bg2) !important;
+  font: 500 8px/1.4 "Segoe UI", sans-serif !important;
+  color: var(--flow-dim) !important;
+  text-align: center !important;
+}
+
+#app #panel-orbitflow .flow-status.is-error {
+  border-color: #ef4444 !important;
+  color: #fca5a5 !important;
+}
+
+#app #panel-orbitflow .flow-status.is-success {
+  border-color: var(--flow-accent) !important;
+  color: #9fffc0 !important;
+}
+
+#app #panel-orbitflow .flow-adv-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  margin-bottom: 10px !important;
+}
+
+#app #panel-orbitflow .flow-option-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+#app #panel-orbitflow .flow-option-label,
+#app #panel-orbitflow .flow-capture-label,
+#app #panel-orbitflow .flow-browser-label {
+  font: 600 8px/1 "Segoe UI", sans-serif !important;
+  letter-spacing: 0.05em !important;
+  color: var(--flow-dim) !important;
+  text-transform: uppercase !important;
+  flex: 0 0 auto !important;
+}
+
+#app #panel-orbitflow .flow-option-row .counter-input,
+#app #panel-orbitflow .flow-capture-row .counter-input {
+  flex: 1 1 auto !important;
+  height: 26px !important;
+}
+
+#app #panel-orbitflow .flow-option-unit,
+#app #panel-orbitflow .flow-capture-unit {
+  font: 500 8px/1 "Segoe UI", sans-serif !important;
+  color: var(--flow-faint) !important;
+}
+
+#app #panel-orbitflow .flow-check {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  cursor: pointer !important;
+  font: 500 9px/1.2 "Segoe UI", sans-serif !important;
+  color: var(--flow-dim) !important;
+}
+
+#app #panel-orbitflow .flow-check input {
+  width: 14px !important;
+  height: 14px !important;
+  accent-color: var(--flow-accent) !important;
+}
+
+#app #panel-orbitflow .flow-browser-section {
+  margin-top: 8px !important;
+  padding: 12px !important;
+  border: 1px solid var(--flow-line) !important;
+  border-radius: 8px !important;
+  background: var(--flow-bg2) !important;
+}
+
+#app #panel-orbitflow .flow-browser-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  margin-bottom: 10px !important;
+}
+
+#app #panel-orbitflow .flow-browser-status {
+  padding: 8px 10px !important;
+  border: 1px solid var(--flow-line) !important;
+  border-radius: 6px !important;
+  background: var(--flow-bg) !important;
+  font: 500 8px/1.4 "Segoe UI", sans-serif !important;
+  color: var(--flow-faint) !important;
+  text-align: center !important;
+  margin-bottom: 10px !important;
+}
+
+#app #panel-orbitflow .flow-browser-status.active {
+  border-color: var(--flow-accent) !important;
+  color: var(--flow-accent) !important;
+}
+
+#app #panel-orbitflow .flow-capture-controls {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+#app #panel-orbitflow .flow-capture-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+#app #panel-orbitflow .flow-progress-section {
+  margin-top: 10px !important;
+}
+
+#app #panel-orbitflow .flow-progress-bar {
+  height: 6px !important;
+  background: var(--flow-bg) !important;
+  border-radius: 3px !important;
+  overflow: hidden !important;
+  margin-bottom: 6px !important;
+}
+
+#app #panel-orbitflow .flow-progress-fill {
+  height: 100% !important;
+  background: var(--flow-accent) !important;
+  transition: width 0.2s ease !important;
+}
+
+#app #panel-orbitflow .flow-progress-text {
+  font: 500 8px/1.4 "Segoe UI", sans-serif !important;
+  color: var(--flow-dim) !important;
+  text-align: center !important;
+}
+
+#app #panel-orbitflow .flow-history-list {
+  max-height: 200px !important;
+  overflow-y: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+
+#app #panel-orbitflow .flow-history-empty {
+  padding: 20px !important;
+  text-align: center !important;
+  font: 500 9px/1.4 "Segoe UI", sans-serif !important;
+  color: var(--flow-faint) !important;
+}
+
+#app #panel-orbitflow .flow-history-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 8px 10px !important;
+  border: 1px solid var(--flow-line) !important;
+  border-radius: 6px !important;
+  background: var(--flow-bg2) !important;
+}
+
+#app #panel-orbitflow .flow-history-name {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  font: 600 9px/1.2 "Segoe UI", sans-serif !important;
+  color: var(--flow-text) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+#app #panel-orbitflow .flow-history-time {
+  flex: 0 0 auto !important;
+  font: 500 8px/1 "Segoe UI", sans-serif !important;
+  color: var(--flow-faint) !important;
+}

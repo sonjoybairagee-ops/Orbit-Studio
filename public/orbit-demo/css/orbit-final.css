@@ -520,72 +520,35 @@
   font-size: 9.5px;
   color: var(--orbit-faint);
 }
-/* ── Match Cut (BETA) ── */
-
-
-
-.mc-matches-wrap {
-  margin-top: 8px;
+.lg-native-pack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.mc-count {
-  color: var(--orbit-accent, #22ff6f);
-  font-size: 9px;
-  margin-left: 6px;
-}
-
-.mc-match-row {
-  position: relative;
-  padding: 7px 8px;
-  margin-bottom: 6px;
+.lg-native-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
   border: 1px solid var(--orbit-line);
-  border-radius: var(--orbit-radius, 6px);
-  cursor: pointer;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.02);
 }
 
-.mc-match-row:hover {
-  border-color: var(--orbit-line-strong);
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.mc-match-row.mc-previewing {
-  border-color: var(--orbit-accent, #22ff6f);
-}
-
-.mc-match-label {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--orbit-text, #fff);
-}
-
-.mc-match-bar {
-  position: relative;
-  height: 6px;
-  margin: 5px 0 3px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.08);
-  overflow: hidden;
-}
-
-.mc-match-bar i {
-  position: absolute;
-  inset: 0 auto 0 0;
-  border-radius: 3px;
-  background: linear-gradient(90deg, rgba(34, 255, 111, 0.55), var(--orbit-accent, #22ff6f));
-}
-
-.mc-match-score {
-  position: absolute;
-  top: 7px;
-  right: 8px;
-  font-size: 10px;
+.lg-native-row b {
+  flex: 1 1 110px;
+  font-size: 11px;
   font-weight: 700;
-  color: var(--orbit-accent, #22ff6f);
+  color: var(--orbit-text);
 }
 
-.mc-match-meta {
-  font-size: 8.5px;
-  color: var(--orbit-faint);
-  letter-spacing: 0.3px;
+.lg-native-row .lg-status {
+  flex: 0 0 auto;
+}
+
+.lg-native-row .lg-action-btn {
+  width: auto;
+  min-width: 84px;
 }

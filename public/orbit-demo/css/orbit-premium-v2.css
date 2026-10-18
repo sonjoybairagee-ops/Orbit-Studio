@@ -2,44 +2,10 @@
 /* =====================================================
    CompX Orbit Studio — PREMIUM POLISH v2
    Loaded LAST so the cascade wins for the refined
-   additions below (Match Cut, Studio SRT, Screenshot->
-   Motion, Style Director). Core .tool-section/.tool-btn
+   additions below (Studio SRT, Screenshot Animator,
+   Style Director). Core .tool-section/.tool-btn
    premium values live in orbit-redesign.css.
    ===================================================== */
-/* ---- Match Cut (BETA) ---- */
-
-
-
-.mc-match-row {
-  border-radius: 9px;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
-  transition: border-color 0.14s, box-shadow 0.14s, transform 0.14s;
-}
-
-.mc-match-row:hover {
-  border-color: rgba(168, 85, 247, 0.4);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  transform: translateX(2px);
-}
-
-.mc-match-row.mc-previewing {
-  border-color: #a855f7;
-  box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.25), 0 0 16px rgba(168, 85, 247, 0.18);
-}
-
-.mc-match-bar { height: 7px; border-radius: 4px; }
-
-.mc-match-bar i {
-  background: linear-gradient(90deg, rgba(168, 85, 247, 0.4), #a855f7, #5cffa2);
-  box-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
-}
-
-.mc-match-score {
-  font-weight: 800;
-  text-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
-}
-
 /* ---- Studio SRT Captions ---- */
 .cx-simple-srt { gap: 11px; }
 
@@ -520,9 +486,10 @@
 .cx-quickstyle-advanced.active { color: #a855f7 !important; border-color: rgba(168, 85, 247, 0.5) !important; }
 .cx-quickstyle-grid {
   display: grid !important;
-  grid-template-columns: 1fr 1.2fr 0.7fr 1fr 0.6fr !important;
-  gap: 6px !important;
-  margin-bottom: 6px !important;
+  grid-template-columns: minmax(0,1fr) minmax(0,1.5fr) 86px !important;
+  gap: 8px !important;
+  align-items: end !important;
+  margin-bottom: 8px !important;
 }
 .cx-quickstyle-grid .cx-cap-field { min-width: 0 !important; }
 .cx-quickstyle-color input[type="color"] {
@@ -653,10 +620,10 @@
 #panel-advanced #btnBuildCinematicLook,
 #panel-advanced [data-showcase-action="build"],
 #panel-advanced #btnCreate3DExtrusion,
-#panel-pro #btnSsToAeBuild,
-#panel-pro #btnProEditMonkeyGenerate,
-#panel-pro #btnMcAnalyze,
-#panel-pro #fx20-apply{
+#panel-studio #btnSsToAeBuild,
+#panel-pro #fx20-apply,
+#panel-pro #fxbApply,
+#panel-pro #btnSuperMorph{
   position:relative;min-height:32px;border:1px solid #63ff9c;border-radius:7px;
   background:linear-gradient(135deg,#28ff76 0%,#08dc82 58%,#00b968 100%);
   color:#03130a;font-weight:900;letter-spacing:.055em;
@@ -671,10 +638,10 @@
 #panel-advanced #btnBuildCinematicLook:not(:disabled):hover,
 #panel-advanced [data-showcase-action="build"]:not(:disabled):hover,
 #panel-advanced #btnCreate3DExtrusion:not(:disabled):hover,
-#panel-pro #btnSsToAeBuild:not(:disabled):hover,
-#panel-pro #btnProEditMonkeyGenerate:not(:disabled):hover,
-#panel-pro #btnMcAnalyze:not(:disabled):hover,
-#panel-pro #fx20-apply:not(:disabled):hover{
+#panel-studio #btnSsToAeBuild:not(:disabled):hover,
+#panel-pro #fx20-apply:not(:disabled):hover,
+#panel-pro #fxbApply:not(:disabled):hover,
+#panel-pro #btnSuperMorph:not(:disabled):hover{
   filter:brightness(1.08);transform:translateY(-1px);
   box-shadow:0 7px 20px rgba(20,255,112,.28),inset 0 1px rgba(255,255,255,.32);
 }
@@ -685,14 +652,14 @@
 #panel-advanced #btnCameraApplyAnim:active,
 #panel-advanced [data-showcase-action="build"]:active,
 #panel-advanced #btnCreate3DExtrusion:active,
-#panel-pro #btnSsToAeBuild:active,
-#panel-pro #btnProEditMonkeyGenerate:active,
-#panel-pro #btnMcAnalyze:active,
-#panel-pro #fx20-apply:active{transform:translateY(0) scale(.992)}
+#panel-studio #btnSsToAeBuild:active,
+#panel-pro #fx20-apply:active,
+#panel-pro #fxbApply:active,
+#panel-pro #btnSuperMorph:active{transform:translateY(0) scale(.992)}
 #panel-studio #btnSimpleTranscribe:disabled,
 #panel-studio #btnSimpleSrtGenerate:disabled,
 #panel-advanced [data-showcase-action="build"]:disabled,
-#panel-pro #btnSsToAeBuild:disabled{
+#panel-studio #btnSsToAeBuild:disabled{
   background:linear-gradient(135deg,rgba(28,64,44,.7),rgba(11,39,29,.72));
   color:#66776d;border-color:rgba(77,131,99,.38);box-shadow:none;
 }
@@ -714,20 +681,20 @@
 #layerFactoryModal .modal-footer,
 #panel-advanced .tool-grid.tool-grid-2,
 #panel-advanced .cx-extrusion-actions,
-#panel-pro .cx-ssae-actions{
+#panel-studio .cx-ssae-actions{
   display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;align-items:stretch;
 }
 .cx-dual-actions>.tool-btn,
 #layerFactoryModal .modal-footer>.btn,
 #panel-advanced .tool-grid.tool-grid-2>.tool-btn,
 #panel-advanced .cx-extrusion-actions>.tool-btn,
-#panel-pro .cx-ssae-actions>button{width:100%;min-width:0;margin:0}
+#panel-studio .cx-ssae-actions>button{width:100%;min-width:0;margin:0}
 .cx-ai-bg-actions{margin-top:7px}
 #panel-studio #btnAiBgRestore,
 #layerFactoryModal #btnLayerFactoryCancel,
 #panel-advanced #btnRemoveCinematicLook,
 #panel-advanced #btnRestore3DExtrusion,
-#panel-pro #btnSsToAeAnalyze{
+#panel-studio #btnSsToAeAnalyze{
   min-height:32px;border:1px solid rgba(72,216,142,.38);border-radius:7px;
   background:linear-gradient(160deg,rgba(20,38,31,.94),rgba(8,18,14,.96));
   color:#d4e8dc;font-weight:850;letter-spacing:.035em;
@@ -737,7 +704,7 @@
 #panel-studio #btnAiBgRestore:hover,
 #layerFactoryModal #btnLayerFactoryCancel:hover,
 #panel-advanced #btnRestore3DExtrusion:hover,
-#panel-pro #btnSsToAeAnalyze:hover{
+#panel-studio #btnSsToAeAnalyze:hover{
   transform:translateY(-1px);border-color:rgba(44,255,125,.7);
   background:linear-gradient(160deg,rgba(25,55,41,.96),rgba(10,27,19,.98));
   box-shadow:0 5px 14px rgba(0,0,0,.24),0 0 12px rgba(168, 85, 247,.1);
@@ -764,10 +731,8 @@
 #panel-advanced .cx-showcase-actions-secondary button:not(:disabled):hover{border-color:#a978ff;box-shadow:0 0 14px rgba(169,120,255,.16)}
 #panel-advanced .cx-extrusion-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
 
-/* Screenshot, Auto Sequence, Match Cut and Motion Curve action alignment. */
-#panel-pro .cx-ssae-actions{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:8px}
-#panel-pro #btnProEditMonkeyGenerate,
-#panel-pro #btnMcAnalyze{margin-top:8px}
+/* Screenshot and Motion Lab action alignment. */
+#panel-studio .cx-ssae-actions{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:8px}
 #panel-pro>.tools-scroll{display:flex;flex-direction:column;gap:8px}
 #panel-pro #cxGraphCardWrap{order:-100;margin:0 0 2px}
 
@@ -789,7 +754,7 @@
   .cx-dual-actions,
   #layerFactoryModal .modal-footer,
   #panel-advanced .cx-extrusion-actions,
-  #panel-pro .cx-ssae-actions{grid-template-columns:1fr}
+  #panel-studio .cx-ssae-actions{grid-template-columns:1fr}
 }
 /* Live 3D Card Showcase preview */
 .cx-showcase-preview{margin:0 0 8px;padding:6px;border:1px solid rgba(169,120,255,.2);border-radius:9px;background:linear-gradient(145deg,rgba(10,16,30,.96),rgba(4,8,16,.98));overflow:hidden}

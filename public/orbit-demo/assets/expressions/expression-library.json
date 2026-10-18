@@ -1,0 +1,439 @@
+{
+  "v": 1,
+  "categories": [
+    {
+      "id": "looping",
+      "name": "Looping",
+      "icon": "repeat",
+      "expressions": [
+        {
+          "id": "loop-cycle",
+          "name": "Loop Cycle",
+          "desc": "Repeats keyframes in a continuous forward cycle.",
+          "tags": "loop repeat cycle forward",
+          "code": "loopOut(\"cycle\");"
+        },
+        {
+          "id": "loop-pingpong",
+          "name": "Loop Ping-Pong",
+          "desc": "Repeats keyframes forward then backward, endlessly.",
+          "tags": "loop pingpong bounce mirror",
+          "code": "loopOut(\"pingpong\");"
+        },
+        {
+          "id": "loop-offset",
+          "name": "Loop Offset",
+          "desc": "Repeats keyframes, each cycle offset by the last value.",
+          "tags": "loop offset continue accumulate",
+          "code": "loopOut(\"offset\");"
+        },
+        {
+          "id": "loop-in-cycle",
+          "name": "Loop In (Cycle)",
+          "desc": "Loops keyframes before the first keyframe.",
+          "tags": "loop in before start cycle",
+          "code": "loopIn(\"cycle\");"
+        },
+        {
+          "id": "loop-in-pingpong",
+          "name": "Loop In (Ping-Pong)",
+          "desc": "Ping-pong loop before the first keyframe.",
+          "tags": "loop in before start pingpong",
+          "code": "loopIn(\"pingpong\");"
+        },
+        {
+          "id": "loop-limited",
+          "name": "Loop N Times",
+          "desc": "Loops keyframes a set number of times then stops.",
+          "tags": "loop limited count times",
+          "code": "var n = 3; // number of loops\nif (numKeys > 1 && time > key(numKeys).time) {\n  var dur = key(numKeys).time - key(1).time;\n  var t = (time - key(1).time) % dur;\n  var loops = Math.floor((time - key(1).time) / dur);\n  if (loops < n) valueAtTime(key(1).time + t);\n  else value;\n} else value;"
+        }
+      ]
+    },
+    {
+      "id": "wiggle",
+      "name": "Wiggle & Random",
+      "icon": "activity",
+      "expressions": [
+        {
+          "id": "wiggle-basic",
+          "name": "Wiggle",
+          "desc": "Random organic motion — the classic camera shake / jitter.",
+          "tags": "wiggle random shake jitter handheld",
+          "code": "wiggle(5, 25);"
+        },
+        {
+          "id": "wiggle-smooth",
+          "name": "Smooth Wiggle",
+          "desc": "Wiggle with a low frequency for slow, drifting motion.",
+          "tags": "wiggle smooth slow drift float organic",
+          "code": "wiggle(0.5, 50);"
+        },
+        {
+          "id": "wiggle-one-axis",
+          "name": "Wiggle X Only",
+          "desc": "Wiggles only horizontally — good for a side-to-side shake.",
+          "tags": "wiggle horizontal x axis one shake",
+          "code": "var w = wiggle(5, 30);\n[w[0], value[1]];"
+        },
+        {
+          "id": "wiggle-y-only",
+          "name": "Wiggle Y Only",
+          "desc": "Wiggles only vertically.",
+          "tags": "wiggle vertical y axis shake",
+          "code": "var w = wiggle(5, 30);\n[value[0], w[1]];"
+        },
+        {
+          "id": "wiggle-fade",
+          "name": "Wiggle Fade Out",
+          "desc": "Wiggle that fades to zero over time — a shake that settles.",
+          "tags": "wiggle fade out decay settle dampen",
+          "code": "var freq = 8;\nvar amp = 40;\nvar fadeTime = 1; // seconds to settle\nvar t = Math.max(0, time - inPoint);\nvar fade = Math.max(0, 1 - t / fadeTime);\nwiggle(freq, amp * fade);"
+        },
+        {
+          "id": "wiggle-posterize",
+          "name": "Posterized Wiggle",
+          "desc": "Stepped random values — jumps to a new position N times per second.",
+          "tags": "wiggle posterize step jump snap random hold",
+          "code": "var fps = 4; // steps per second\nposterizeTime(fps);\nwiggle(fps, 30);"
+        },
+        {
+          "id": "random-number",
+          "name": "Random Number",
+          "desc": "A random value between min and max, changing every frame.",
+          "tags": "random number value range min max",
+          "code": "var min = 0;\nvar max = 100;\nvar seed = 42;\nseedRandom(seed, true);\nrandom(min, max);"
+        }
+      ]
+    },
+    {
+      "id": "time",
+      "name": "Time-Based",
+      "icon": "clock",
+      "expressions": [
+        {
+          "id": "time-rotation",
+          "name": "Continuous Rotation",
+          "desc": "Spins at a steady speed forever — no keyframes needed.",
+          "tags": "rotate spin continuous clock perpetual",
+          "code": "time * 90; // degrees per second"
+        },
+        {
+          "id": "time-counter",
+          "name": "Time Counter",
+          "desc": "Displays elapsed seconds as text.",
+          "tags": "time counter text seconds elapsed stopwatch",
+          "code": "var t = time - inPoint;\nMath.floor(t).toString();"
+        },
+        {
+          "id": "time-countdown",
+          "name": "Countdown Timer",
+          "desc": "Counts down from a start value.",
+          "tags": "countdown timer seconds decrement",
+          "code": "var startVal = 10;\nvar t = time - inPoint;\nvar remaining = Math.max(0, startVal - Math.floor(t));\nremaining.toString();"
+        },
+        {
+          "id": "time-sine-wave",
+          "name": "Sine Wave",
+          "desc": "Smooth oscillation — useful for breathing, floating, pulsing.",
+          "tags": "sine wave oscillate pulse breathe float bob",
+          "code": "var amp = 30;   // amplitude\nvar freq = 1;   // cycles per second\nvalue + Math.sin(time * freq * Math.PI * 2) * amp;"
+        },
+        {
+          "id": "time-cosine-wave",
+          "name": "Cosine Wave",
+          "desc": "Like sine but starts at the peak — pair with sine for circular motion.",
+          "tags": "cosine wave oscillate circle orbit",
+          "code": "var amp = 30;\nvar freq = 1;\nvalue + Math.cos(time * freq * Math.PI * 2) * amp;"
+        },
+        {
+          "id": "time-blink",
+          "name": "Blink / Flash",
+          "desc": "Toggles opacity on and off — a blinking cursor, an indicator light.",
+          "tags": "blink flash toggle opacity strobe cursor",
+          "code": "var rate = 2; // blinks per second\nif (Math.sin(time * rate * Math.PI * 2) > 0) 100; else 0;"
+        },
+        {
+          "id": "time-sawtooth",
+          "name": "Sawtooth Wave",
+          "desc": "Ramps linearly then snaps back — progress bars, loading rings.",
+          "tags": "sawtooth ramp linear reset progress",
+          "code": "var dur = 2; // seconds per cycle\nvar t = (time % dur) / dur;\nvalue + t * 100;"
+        }
+      ]
+    },
+    {
+      "id": "spring",
+      "name": "Spring & Bounce",
+      "icon": "zap",
+      "expressions": [
+        {
+          "id": "spring-overshoot",
+          "name": "Overshoot",
+          "desc": "A spring that overshoots the target and settles — the classic bounce-in.",
+          "tags": "spring overshoot bounce settle elastic inertia",
+          "code": "var amp = 0.06;\nvar freq = 3;\nvar decay = 5;\nvar n = 0;\nif (numKeys > 0) {\n  n = nearestKey(time).index;\n  if (key(n).time > time) n--;\n}\nif (n > 0) {\n  var t = time - key(n).time;\n  var v = velocityAtTime(key(n).time - 0.001);\n  value + v * amp * Math.sin(freq * t * Math.PI * 2) / Math.exp(decay * t);\n} else value;"
+        },
+        {
+          "id": "spring-rubber",
+          "name": "Rubber Band",
+          "desc": "An exaggerated spring — objects stretch past their target and snap back hard.",
+          "tags": "rubber band snap elastic stretch exaggerate",
+          "code": "var amp = 0.08;\nvar freq = 4;\nvar decay = 3;\nvar n = 0;\nif (numKeys > 0) {\n  n = nearestKey(time).index;\n  if (key(n).time > time) n--;\n}\nif (n > 0) {\n  var t = time - key(n).time;\n  var v = velocityAtTime(key(n).time - 0.001);\n  value + v * amp * Math.sin(freq * t * Math.PI * 2) / Math.exp(decay * t);\n} else value;"
+        },
+        {
+          "id": "bounce-drop",
+          "name": "Bounce (Drop)",
+          "desc": "A ball dropping and bouncing — each bounce shorter than the last.",
+          "tags": "bounce drop ball gravity physics",
+          "code": "var e = 0.7;   // elasticity 0-1\nvar g = 4000;  // gravity\nvar nMax = 9;\nvar t = time - inPoint;\nvar v0 = Math.sqrt(2 * g * value);\nvar tCur = t;\nfor (var i = 0; i < nMax; i++) {\n  var tBounce = v0 / g;\n  if (tCur < tBounce) break;\n  tCur -= tBounce;\n  v0 *= e;\n}\nvar y = v0 * tCur - 0.5 * g * tCur * tCur;\nvalue - Math.abs(y);"
+        },
+        {
+          "id": "spring-scale-pop",
+          "name": "Scale Pop",
+          "desc": "Pops in with a springy overshoot on Scale — great for UI elements.",
+          "tags": "scale pop spring appear entrance ui",
+          "code": "var t = time - inPoint;\nvar dur = 0.4;\nvar overshoot = 1.2;\nvar settle = 1;\nif (t < 0) [0,0];\nelse if (t < dur) {\n  var p = t / dur;\n  var s = overshoot - (overshoot - settle) * (1 - Math.cos(p * Math.PI * 3)) * Math.exp(-p * 4);\n  [s * 100, s * 100];\n} else [100, 100];"
+        }
+      ]
+    },
+    {
+      "id": "link",
+      "name": "Linking & Rigging",
+      "icon": "link",
+      "expressions": [
+        {
+          "id": "link-slider",
+          "name": "Link to Slider",
+          "desc": "Drives this property from a Slider Control on the same layer.",
+          "tags": "link slider control effect rig drive",
+          "code": "effect(\"Slider Control\")(\"Slider\");"
+        },
+        {
+          "id": "link-checkbox",
+          "name": "Link to Checkbox",
+          "desc": "Toggle value based on a Checkbox Control.",
+          "tags": "link checkbox toggle on off control",
+          "code": "var on = effect(\"Checkbox Control\")(\"Checkbox\");\nif (on) 100; else 0;"
+        },
+        {
+          "id": "link-color",
+          "name": "Link to Color",
+          "desc": "Reads colour from a Color Control effect.",
+          "tags": "link color colour control effect pick",
+          "code": "effect(\"Color Control\")(\"Color\");"
+        },
+        {
+          "id": "link-other-layer",
+          "name": "Follow Another Layer",
+          "desc": "Copies position from a named layer — use as a simple follow / parenting alternative.",
+          "tags": "link follow layer copy position parent",
+          "code": "thisComp.layer(\"Controller\").transform.position;"
+        },
+        {
+          "id": "link-remap",
+          "name": "Linear Remap",
+          "desc": "Maps a slider's 0–100 to any output range — e.g. 0–360 for rotation.",
+          "tags": "remap linear map range slider convert scale",
+          "code": "var input = effect(\"Slider Control\")(\"Slider\");\nvar inLow = 0, inHigh = 100;\nvar outLow = 0, outHigh = 360;\nlinear(input, inLow, inHigh, outLow, outHigh);"
+        },
+        {
+          "id": "link-clamp",
+          "name": "Clamp Value",
+          "desc": "Keeps the property between a minimum and maximum.",
+          "tags": "clamp limit cap min max restrict",
+          "code": "var minVal = 0;\nvar maxVal = 100;\nclamp(value, minVal, maxVal);"
+        }
+      ]
+    },
+    {
+      "id": "text",
+      "name": "Text & Numbers",
+      "icon": "type",
+      "expressions": [
+        {
+          "id": "text-typewriter",
+          "name": "Typewriter",
+          "desc": "Reveals text one character at a time — the classic typing effect.",
+          "tags": "typewriter type reveal text character letter",
+          "code": "var speed = 5; // characters per second\nvar t = time - inPoint;\nvar chars = Math.floor(t * speed);\ntext.sourceText.substr(0, chars);"
+        },
+        {
+          "id": "text-number-format",
+          "name": "Format with Commas",
+          "desc": "Adds thousand-separator commas to a number — 1234567 becomes 1,234,567.",
+          "tags": "number format comma thousand separator",
+          "code": "var num = Math.round(effect(\"Slider Control\")(\"Slider\"));\nvar s = num.toString();\nvar result = \"\";\nfor (var i = s.length - 1, c = 0; i >= 0; i--, c++) {\n  if (c > 0 && c % 3 === 0 && s[i] !== \"-\") result = \",\" + result;\n  result = s[i] + result;\n}\nresult;"
+        },
+        {
+          "id": "text-date",
+          "name": "Current Date",
+          "desc": "Shows the current date in YYYY-MM-DD format.",
+          "tags": "date today current year month day",
+          "code": "var d = new Date();\nvar y = d.getFullYear();\nvar m = (\"0\" + (d.getMonth() + 1)).slice(-2);\nvar day = (\"0\" + d.getDate()).slice(-2);\ny + \"-\" + m + \"-\" + day;"
+        },
+        {
+          "id": "text-random-char",
+          "name": "Random Characters",
+          "desc": "Scrambles text with random characters — a decryption / hacker reveal.",
+          "tags": "random characters scramble decode hack matrix",
+          "code": "var src = text.sourceText;\nvar speed = 10; // chars revealed per second\nvar t = time - inPoint;\nvar revealed = Math.floor(t * speed);\nvar chars = \"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\";\nvar result = \"\";\nfor (var i = 0; i < src.length; i++) {\n  if (i < revealed) result += src[i];\n  else {\n    seedRandom(i + Math.floor(t * 20), true);\n    result += chars[Math.floor(random() * chars.length)];\n  }\n}\nresult;"
+        }
+      ]
+    },
+    {
+      "id": "motion",
+      "name": "Motion Path",
+      "icon": "navigation",
+      "expressions": [
+        {
+          "id": "motion-auto-orient",
+          "name": "Auto-Orient to Path",
+          "desc": "Rotates the layer to face its direction of travel.",
+          "tags": "auto orient rotation path direction travel face",
+          "code": "var delta = 0.01;\nvar p1 = position.valueAtTime(time - delta);\nvar p2 = position.valueAtTime(time + delta);\nvar angle = radiansToDegrees(Math.atan2(p2[1]-p1[1], p2[0]-p1[0]));\nangle;"
+        },
+        {
+          "id": "motion-orbit",
+          "name": "Orbit / Circular Motion",
+          "desc": "Moves in a circle around a center point.",
+          "tags": "orbit circle circular motion rotate around path",
+          "code": "var center = [thisComp.width/2, thisComp.height/2];\nvar radius = 200;\nvar speed = 1; // revolutions per second\nvar angle = time * speed * Math.PI * 2;\n[center[0] + Math.cos(angle) * radius,\n center[1] + Math.sin(angle) * radius];"
+        },
+        {
+          "id": "motion-parallax",
+          "name": "Parallax Scroll",
+          "desc": "Moves slower or faster than a reference layer — depth through speed.",
+          "tags": "parallax scroll depth speed layer follow slow fast",
+          "code": "var ref = thisComp.layer(\"Background\");\nvar factor = 0.5; // 0=fixed, 1=same speed\nref.transform.position * factor;"
+        },
+        {
+          "id": "motion-snap-grid",
+          "name": "Snap to Grid",
+          "desc": "Rounds position to the nearest grid point — pixel-perfect placement.",
+          "tags": "snap grid round pixel perfect align quantize",
+          "code": "var grid = 50; // grid size in px\n[Math.round(value[0]/grid)*grid, Math.round(value[1]/grid)*grid];"
+        }
+      ]
+    },
+    {
+      "id": "layer",
+      "name": "Layer Properties",
+      "icon": "layers",
+      "expressions": [
+        {
+          "id": "layer-fade-in",
+          "name": "Auto Fade In",
+          "desc": "Fades the layer in over a set duration from its in-point.",
+          "tags": "fade in opacity appear enter entrance",
+          "code": "var dur = 0.5; // seconds\nlinear(time, inPoint, inPoint + dur, 0, 100);"
+        },
+        {
+          "id": "layer-fade-out",
+          "name": "Auto Fade Out",
+          "desc": "Fades the layer out before its out-point.",
+          "tags": "fade out opacity disappear exit leave",
+          "code": "var dur = 0.5; // seconds\nlinear(time, outPoint - dur, outPoint, 100, 0);"
+        },
+        {
+          "id": "layer-fade-both",
+          "name": "Fade In + Out",
+          "desc": "Fades in at the start and out at the end — one expression, no keyframes.",
+          "tags": "fade in out both opacity auto duration",
+          "code": "var fadeIn = 0.5;\nvar fadeOut = 0.5;\nvar opIn = linear(time, inPoint, inPoint + fadeIn, 0, 100);\nvar opOut = linear(time, outPoint - fadeOut, outPoint, 100, 0);\nMath.min(opIn, opOut);"
+        },
+        {
+          "id": "layer-maintain-scale",
+          "name": "Maintain Scale in Precomp",
+          "desc": "Keeps the layer's on-screen size constant even when the parent comp is scaled.",
+          "tags": "maintain scale precomp parent constant size",
+          "code": "var s = [];\nvar layer = thisLayer;\nwhile (layer.hasParent) {\n  layer = layer.parent;\n  s.push(layer.transform.scale / 100);\n}\nvar comp = thisComp;\nvar result = value;\nfor (var i = 0; i < s.length; i++) {\n  result = [result[0]/s[i][0], result[1]/s[i][1]];\n}\nresult;"
+        },
+        {
+          "id": "layer-flicker",
+          "name": "Flicker",
+          "desc": "Random opacity flicker — a candle, a broken neon, an old film.",
+          "tags": "flicker random opacity neon candle light old film",
+          "code": "var min = 40;\nvar max = 100;\nvar speed = 8;\nposterizeTime(speed);\nrandom(min, max);"
+        }
+      ]
+    },
+    {
+      "id": "3d",
+      "name": "3D & Camera",
+      "icon": "box",
+      "expressions": [
+        {
+          "id": "3d-look-at",
+          "name": "Look At",
+          "desc": "Points a layer or camera at another layer — a spotlight tracking a subject.",
+          "tags": "look at aim point target camera track follow 3d",
+          "code": "lookAt(thisLayer.position, thisComp.layer(\"Target\").position);"
+        },
+        {
+          "id": "3d-z-depth-scale",
+          "name": "Scale by Z Depth",
+          "desc": "Scales a 2D layer based on a slider to fake depth — no camera needed.",
+          "tags": "z depth scale fake 3d perspective parallax",
+          "code": "var depth = effect(\"Slider Control\")(\"Slider\"); // 0=near, 100=far\nvar near = 150;\nvar far = 50;\nvar s = linear(depth, 0, 100, near, far);\n[s, s];"
+        },
+        {
+          "id": "3d-camera-shake",
+          "name": "Camera Shake (3D)",
+          "desc": "Adds organic 3D camera shake on X Y and Z.",
+          "tags": "camera shake 3d handheld wobble earthquake",
+          "code": "var amp = 15;\nvar freq = 4;\nvar w = wiggle(freq, amp);\n[w[0], w[1], w[2] !== undefined ? w[2] : value[2]];"
+        }
+      ]
+    },
+    {
+      "id": "utility",
+      "name": "Utilities",
+      "icon": "tool",
+      "expressions": [
+        {
+          "id": "util-delay",
+          "name": "Value Delay",
+          "desc": "Reads this property's value from N frames ago — a simple follow / stagger.",
+          "tags": "delay follow stagger offset frames time trail",
+          "code": "var frames = 5;\nvar delay = framesToTime(frames);\nvalueAtTime(time - delay);"
+        },
+        {
+          "id": "util-index-offset",
+          "name": "Index Offset",
+          "desc": "Each layer's value shifts by its index — instant stagger across a stack.",
+          "tags": "index offset stagger stack layer order cascade",
+          "code": "var offset = 20;\nvalue + (index - 1) * offset;"
+        },
+        {
+          "id": "util-marker-trigger",
+          "name": "Marker Trigger",
+          "desc": "Changes value when a marker is hit — useful for triggering events.",
+          "tags": "marker trigger event cue change at time",
+          "code": "var before = 0;\nvar after = 100;\nif (marker.numKeys > 0 && marker.nearestKey(time).time <= time) after;\nelse before;"
+        },
+        {
+          "id": "util-normalize",
+          "name": "Normalize (0–1)",
+          "desc": "Converts any value range to 0–1 — useful before passing to other expressions.",
+          "tags": "normalize range 0 1 scale convert map",
+          "code": "var inMin = 0;\nvar inMax = 1920;\n(value - inMin) / (inMax - inMin);"
+        },
+        {
+          "id": "util-if-layer-active",
+          "name": "If Layer Active",
+          "desc": "Returns different values depending on whether the layer is visible.",
+          "tags": "if active visible show hide conditional layer",
+          "code": "if (thisLayer.active) 100; else 0;"
+        },
+        {
+          "id": "util-comp-fps",
+          "name": "Comp FPS",
+          "desc": "Returns the composition's frame rate as a number.",
+          "tags": "fps frame rate comp info",
+          "code": "1 / thisComp.frameDuration;"
+        }
+      ]
+    }
+  ]
+}

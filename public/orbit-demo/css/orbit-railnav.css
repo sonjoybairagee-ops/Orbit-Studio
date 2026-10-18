@@ -1,0 +1,62 @@
+/* ============================================================
+   ORBIT RAIL NAV — room between the tab icons
+
+   The nav tabs sit in their own scroller (#railNav) so they can be
+   spaced out without pushing Purge, Settings and Sign Out off the
+   bottom: those three stay pinned under the scroller and the tabs
+   scroll if a short panel cannot show them all. The faded bottom edge
+   is the hint that there is more below.
+
+   Loaded after orbit-polish.css, which squeezed the tabs to 1px gaps
+   precisely so the account buttons would fit — this keeps that goal
+   and gives the spacing back.
+   ============================================================ */
+
+#app #appTabsRow {
+  overflow: hidden !important;
+}
+
+#app #appTabsRow > .rail-nav {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  padding: 2px 0 12px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 14px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 14px), transparent);
+}
+
+#app #appTabsRow > .rail-nav::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+}
+
+#app #appTabsRow > .rail-nav > .app-tab {
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+}
+
+/* The nav now fills the column, so Purge no longer needs margin-top:auto
+   to reach the bottom — only a little air above it. */
+#app #appTabsRow > .app-tab.rail-purge {
+  margin-top: 6px !important;
+}
+
+/* Short panels: icon only. The label was being squeezed to a 2px sliver
+   under each icon because orbit-dashboard.css forces it back on with a
+   heavier selector; this one matches that weight and loads later. */
+@media (max-height: 640px) {
+  #app #appTabsRow .app-tab .orbit-tab-label,
+  #app #appTabsRow .rail-account .rail-account-label {
+    display: none !important;
+  }
+  #app #appTabsRow .app-tab {
+    justify-content: center !important;
+  }
+}

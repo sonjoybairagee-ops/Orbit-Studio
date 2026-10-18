@@ -1,0 +1,251 @@
+/* ============================================================
+   ORBIT ANIMATION TEMPLATES — Animation tab card
+   ============================================================ */
+
+#app .oat-shell {
+  --oat-accent: #22ff6f;
+  --oat-line: rgba(255, 255, 255, 0.1);
+  --oat-bg2: #14161c;
+  --oat-dim: #848a98;
+  margin: 10px !important;
+}
+
+#app .oat-shell.is-busy { opacity: 0.6 !important; pointer-events: none !important; }
+
+#app .oat-sub {
+  font: 500 8.5px/1.3 "Segoe UI", sans-serif !important;
+  color: var(--oat-dim) !important;
+  margin-top: 2px !important;
+}
+
+#app .oat-bar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin: 8px 0 !important;
+}
+
+#app .oat-bar-2 { flex-wrap: wrap !important; }
+
+#app .oat-path,
+#app .oat-search,
+#app .oat-text {
+  flex: 1 1 auto !important;
+  min-width: 90px !important;
+  height: 26px !important;
+  font-size: 9px !important;
+}
+
+#app .oat-path { color: #aeb5c2 !important; cursor: default !important; }
+
+#app .oat-mini {
+  height: 26px !important;
+  min-width: 28px !important;
+  padding: 0 9px !important;
+  border: 1px solid var(--oat-line) !important;
+  border-radius: 6px !important;
+  background: var(--oat-bg2) !important;
+  color: #e7e9ee !important;
+  font: 700 8.5px/1 "Segoe UI", sans-serif !important;
+  letter-spacing: 0.06em !important;
+  cursor: pointer !important;
+}
+
+#app .oat-mini:hover {
+  border-color: var(--oat-accent) !important;
+  color: var(--oat-accent) !important;
+}
+
+#app .oat-count {
+  min-width: 26px !important;
+  padding: 0 7px !important;
+  height: 26px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px solid var(--oat-line) !important;
+  border-radius: 6px !important;
+  background: var(--oat-bg2) !important;
+  font: 800 9px/1 "Segoe UI", sans-serif !important;
+  color: var(--oat-accent) !important;
+}
+
+#app .oat-modes {
+  display: flex !important;
+  gap: 3px !important;
+  padding: 3px !important;
+  border: 1px solid var(--oat-line) !important;
+  border-radius: 7px !important;
+  background: var(--oat-bg2) !important;
+}
+
+#app .oat-modes button {
+  padding: 5px 9px !important;
+  border: 0 !important;
+  border-radius: 5px !important;
+  background: transparent !important;
+  color: var(--oat-dim) !important;
+  font: 700 7.5px/1 "Segoe UI", sans-serif !important;
+  letter-spacing: 0.06em !important;
+  cursor: pointer !important;
+}
+
+#app .oat-modes button.is-on {
+  background: rgba(34, 255, 111, 0.16) !important;
+  color: var(--oat-accent) !important;
+}
+
+#app .oat-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)) !important;
+  gap: 8px !important;
+}
+
+#app .oat-card {
+  display: flex !important;
+  flex-direction: column !important;
+  border: 1px solid var(--oat-line) !important;
+  border-radius: 8px !important;
+  background: linear-gradient(180deg, #1b1f27, #11131a) !important;
+  overflow: hidden !important;
+}
+
+#app .oat-card:hover { border-color: rgba(34, 255, 111, 0.5) !important; }
+
+#app .oat-card.is-active {
+  border-color: var(--oat-accent) !important;
+  box-shadow: 0 0 0 1px rgba(34, 255, 111, 0.3) inset !important;
+}
+
+#app .oat-card.is-blank .oat-thumb { opacity: 0.6 !important; }
+
+/* Flat black behind the preview: these templates are drawn in white and
+   light colours on transparent, so a plain dark field is what the artwork
+   was designed to sit on. A checkerboard just fought with the motion. */
+#app .oat-thumb {
+  position: relative !important;
+  height: 76px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  background: #000 !important;
+}
+
+#app .oat-thumb img {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+
+#app .oat-nothumb {
+  font: 700 7px/1 "Segoe UI", sans-serif !important;
+  letter-spacing: 0.1em !important;
+  color: #4d5564 !important;
+}
+
+#app .oat-badge {
+  position: absolute !important;
+  top: 4px !important;
+  right: 4px !important;
+  padding: 1px 4px !important;
+  border-radius: 3px !important;
+  background: rgba(0, 0, 0, 0.62) !important;
+  font: 700 7px/1.4 "Segoe UI", sans-serif !important;
+  color: var(--oat-accent) !important;
+}
+
+#app .oat-name {
+  padding: 5px 6px 4px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.07) !important;
+  font: 700 7.5px/1.2 "Segoe UI", sans-serif !important;
+  color: #c6cbd6 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+#app .oat-row {
+  display: flex !important;
+  gap: 4px !important;
+  padding: 0 5px 6px !important;
+}
+
+#app .oat-use {
+  flex: 1 1 auto !important;
+  height: 22px !important;
+  border: 0 !important;
+  border-radius: 5px !important;
+  background: linear-gradient(135deg, #22ff6f, #00e8b8) !important;
+  color: #06120d !important;
+  font: 800 7.5px/1 "Segoe UI", sans-serif !important;
+  letter-spacing: 0.08em !important;
+  cursor: pointer !important;
+}
+
+#app .oat-rebuild {
+  width: 22px !important;
+  height: 22px !important;
+  border: 1px solid var(--oat-line) !important;
+  border-radius: 5px !important;
+  background: var(--oat-bg2) !important;
+  color: #c6cbd6 !important;
+  font: 700 11px/1 "Segoe UI", sans-serif !important;
+  cursor: pointer !important;
+}
+
+#app .oat-rebuild:hover {
+  border-color: var(--oat-accent) !important;
+  color: var(--oat-accent) !important;
+}
+
+#app .oat-card.is-blank .oat-rebuild {
+  border-color: #f59e0b !important;
+  color: #fcd34d !important;
+}
+
+#app .oat-empty {
+  grid-column: 1 / -1 !important;
+  padding: 16px 10px !important;
+  text-align: center !important;
+  border: 1px dashed var(--oat-line) !important;
+  border-radius: 8px !important;
+  font: 500 8.5px/1.5 "Segoe UI", sans-serif !important;
+  color: var(--oat-dim) !important;
+}
+
+#app .oat-status {
+  margin-top: 9px !important;
+  padding: 7px 10px !important;
+  border: 1px solid var(--oat-line) !important;
+  border-radius: 6px !important;
+  background: var(--oat-bg2) !important;
+  font: 500 8px/1.4 "Segoe UI", sans-serif !important;
+  color: var(--oat-dim) !important;
+  text-align: center !important;
+}
+
+#app .oat-status.is-error { border-color: #ef4444 !important; color: #fca5a5 !important; }
+#app .oat-status.is-warn { border-color: #f59e0b !important; color: #fcd34d !important; }
+#app .oat-status.is-ok { border-color: var(--oat-accent) !important; color: #bbf7d0 !important; }
+
+@media (max-width: 360px) {
+  #app .oat-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  #app .oat-thumb { height: 66px !important; }
+}
+
+/* Bulk preview rebuild */
+#app .oat-rebuild-all {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+}
+
+#app .oat-rebuild-all:hover {
+  border-color: #f59e0b !important;
+  color: #fcd34d !important;
+}
+
+/* Two browsers live in two sub-tabs, so each card is the whole panel. */
+#app [data-text-library-panel="texttpl"] .oat-shell,
+#app [data-text-library-panel="motiontpl"] .oat-shell { margin: 10px !important; }

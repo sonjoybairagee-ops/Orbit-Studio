@@ -1,0 +1,171 @@
+/* ============================================================
+   ORBIT SaaS TAB
+
+   A home for the product-UI tools that used to be scattered through
+   the Tools tab: UI Kit, UI Stagger, Wipe Reveal and Figma Bridge.
+   Someone cutting a SaaS demo now has one tab with only the things
+   that apply to that work, instead of hunting past crop and trim
+   utilities to find them.
+
+   The buttons themselves are the same elements with the same ids, so
+   every modal and every handler already wired to them keeps working —
+   only where they live on screen has changed.
+   ============================================================ */
+
+#app #panel-saas {
+  --saas-accent: #22ff6f;
+  --saas-line: rgba(255, 255, 255, 0.09);
+  --saas-dim: #7f9488;
+}
+
+#app #panel-saas .tools-scroll {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  padding: 10px !important;
+  /* Cards must keep their natural height: flex children shrink by default
+     and that is what clipped the OrbitFlow cards before. */
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+}
+
+#app #panel-saas .saas-section {
+  flex: 0 0 auto !important;
+  min-height: auto !important;
+  margin: 0 !important;
+  padding: 11px !important;
+  overflow: visible !important;
+}
+
+#app #panel-saas .saas-sub {
+  margin-top: 3px !important;
+  font: 500 8.5px/1.35 "Segoe UI", sans-serif !important;
+  color: var(--saas-dim) !important;
+}
+
+/* The tiles are the headline of this tab, not a dense utility grid —
+   give them room to read. */
+#app #panel-saas .tool-btn {
+  min-height: 46px !important;
+  font-size: 10px !important;
+  letter-spacing: 0.04em !important;
+}
+
+#app #panel-saas .tool-grid {
+  gap: 8px !important;
+}
+
+#app #panel-saas .tools-scroll::-webkit-scrollbar { width: 7px !important; }
+#app #panel-saas .tools-scroll::-webkit-scrollbar-track { background: #070a08 !important; }
+#app #panel-saas .tools-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid #070a08 !important;
+  border-radius: 8px !important;
+  background: #29352d !important;
+}
+#app #panel-saas .tools-scroll::-webkit-scrollbar-thumb:hover { background: #22a750 !important; }
+
+@media (max-width: 320px) {
+  #app #panel-saas .tool-grid { grid-template-columns: minmax(0, 1fr) !important; }
+}
+
+/* ---- the tab's own tools ------------------------------------------- */
+
+#app #panel-saas .saas-fields,
+#app #panel-saas .saas-swatches {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)) !important;
+  gap: 6px !important;
+  margin: 8px 0 !important;
+}
+
+#app #panel-saas .saas-field {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+
+#app #panel-saas .saas-field > span {
+  font: 700 7.5px/1 "Segoe UI", sans-serif !important;
+  letter-spacing: 0.07em !important;
+  color: var(--saas-dim) !important;
+}
+
+#app #panel-saas .saas-field input {
+  width: 100% !important;
+  height: 26px !important;
+  text-align: center !important;
+}
+
+#app #panel-saas .saas-field-wide { grid-column: span 2 !important; }
+
+#app #panel-saas .saas-swatch {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  height: 30px !important;
+  padding: 0 7px !important;
+  border: 1px solid var(--saas-line) !important;
+  border-radius: 6px !important;
+  background: #14161c !important;
+  cursor: pointer !important;
+}
+
+#app #panel-saas .saas-swatch > span {
+  font: 800 8px/1 "Segoe UI", sans-serif !important;
+  color: var(--saas-dim) !important;
+}
+
+#app #panel-saas .saas-swatch input[type="color"] {
+  width: 30px !important;
+  height: 20px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 4px !important;
+  background: transparent !important;
+  cursor: pointer !important;
+}
+
+#app #panel-saas .tool-btn.primary {
+  background: linear-gradient(135deg, #22ff6f, #00e8b8) !important;
+  color: #06120d !important;
+  border: none !important;
+  font-weight: 800 !important;
+}
+
+#app #panel-saas .saas-status {
+  margin: 0 !important;
+  padding: 8px 10px !important;
+  border: 1px solid var(--saas-line) !important;
+  border-radius: 6px !important;
+  background: #14161c !important;
+  font: 500 8px/1.4 "Segoe UI", sans-serif !important;
+  color: var(--saas-dim) !important;
+  text-align: center !important;
+  flex: 0 0 auto !important;
+}
+
+#app #panel-saas .saas-status.is-error { border-color: #ef4444 !important; color: #fca5a5 !important; }
+#app #panel-saas .saas-status.is-ok { border-color: var(--saas-accent) !important; color: #bbf7d0 !important; }
+
+/* A quiet divider label inside a card, for a section that holds two
+   related rows (typing above, reveal below) without needing two cards. */
+#app #panel-saas .saas-row-label {
+  margin: 10px 0 5px !important;
+  padding-top: 8px !important;
+  border-top: 1px solid var(--saas-line) !important;
+  font: 800 7.5px/1 "Segoe UI", sans-serif !important;
+  letter-spacing: 0.12em !important;
+  color: #5f6f64 !important;
+}
+
+#app #panel-saas .saas-row-label:first-of-type {
+  margin-top: 8px !important;
+}
+
+/* The colour swatch sitting in a field grid needs the label on the left,
+   not stacked above it like the number fields. */
+#app #panel-saas .saas-fields .saas-swatch {
+  height: 100% !important;
+  min-height: 46px !important;
+}

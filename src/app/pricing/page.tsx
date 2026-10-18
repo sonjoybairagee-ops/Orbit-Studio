@@ -83,9 +83,9 @@ export default async function PricingPage() {
         </div>
       </section>
 
-      <section className="shell max-w-[1440px] mx-auto px-4 py-8" aria-label="Orbit plans">
-        {/* ── 3 Products Grid (Combo + Team only; individual plans no longer sold separately) ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5 items-end">
+      <section className="shell max-w-5xl mx-auto px-4 py-8" aria-label="Orbit plans">
+        {/* ── Plans Grid (Centered 2-card layout) ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch justify-center max-w-md md:max-w-4xl mx-auto">
 
           {/* Card 3: Orbit Combo Pack - BEST VALUE */}
           <article className="flex flex-col justify-between rounded-2xl border-2 border-amber-400/80 bg-[#0e0e12] p-4 sm:p-5 h-full relative shadow-[0_0_40px_rgba(251,191,36,0.12)] hover:-translate-y-1 transition-all duration-300">

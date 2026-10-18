@@ -53,7 +53,7 @@
 @media(max-width:255px){#shakeList.motion-card-grid,#expressionList.motion-card-grid{grid-template-columns:1fr!important}.fxlib-card{min-height:166px!important}}
 
 /* v2.2.5 — wheel-scroll shelf views */
-#panel-sfx{overflow:hidden!important;}
+:is(#panel-sfx,#panel-mogrt){overflow:hidden!important;}
 #panel-sfx>#textAnimView{flex:1 1 0!important;min-height:0!important;height:auto!important;overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important;padding-bottom:18px!important;box-sizing:border-box!important;}
 #textAnimView .tanim-mogrt-shell,#textAnimView .preview-library-shell,#ffxPresetView .preview-library-shell{overflow:visible!important;min-height:max-content!important;}
 #shakeList,#expressionList{overflow:visible!important;max-height:none!important;}

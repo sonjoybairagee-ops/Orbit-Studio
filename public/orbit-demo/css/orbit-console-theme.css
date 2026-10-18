@@ -286,7 +286,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 #app .cx-studio-quicknav button.active span { color: #0a5a25; }
-#flexAutoCaptions, #studioAiBgRemover { scroll-margin-top: 40px; }
+#flexAutoCaptions, #studioAiBgRemover, #ssToAeCard { scroll-margin-top: 40px; }
 
 /* Studio hero workflow: local background removal */
 #studioAiBgRemover {
@@ -310,6 +310,30 @@ input:focus, select:focus, textarea:focus {
 }
 
 #studioAiBgRemover .tool-section-title { color: var(--cx-console-green) !important; }
+
+/* Studio hero workflow: local depth and parallax.
+   .cx-ai-bg-card::before is a decorative glow sitting at right:-54px, and
+   the card's own overflow:hidden is overridden later, so the glow would push
+   54px of horizontal scroll into the panel. The background-removal card
+   solves this by redefining ::before as its edge stripe; this does the same. */
+#studioAiDepth {
+  position: relative;
+  overflow: hidden;
+  padding-left: 12px !important;
+  background: #090d0a !important;
+  border-color: #36423a !important;
+}
+#studioAiDepth::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: var(--cx-console-green) !important;
+  pointer-events: none;
+}
+#studioAiDepth .tool-section-title { color: var(--cx-console-green) !important; }
+#studioAiDepth .tool-section-title::before { display: none !important; }
+
 #studioAiBgRemover .tool-section-title::before { display: none !important; }
 
 .cx-ai-bg-hero {
@@ -338,43 +362,6 @@ input:focus, select:focus, textarea:focus {
 #btnAiRemoveBackground { min-height: 34px !important; letter-spacing: .09em !important; }
 .cx-runtime-consent { border-radius: 3px !important; background: #0d120e !important; border-color: #334039 !important; }
 .cx-ai-bg-status { margin-top: 5px !important; padding-left: 7px; border-left: 2px solid #334039; }
-
-/* Product Demo workflow */
-#panel-pro .cx-pro-workflow-nav {
-  margin: 0 0 6px !important;
-  padding: 7px !important;
-  background: #171919 !important;
-  border: 1px solid var(--cx-console-line) !important;
-  border-radius: 4px !important;
-  box-shadow: none !important;
-}
-
-#panel-pro .cx-pro-workflow-nav b { color: #dce5de !important; font: 800 9px/1 var(--mono) !important; letter-spacing: .08em; }
-#panel-pro .cx-pro-workflow-subtitle, #panel-pro .cx-pro-workflow-nav > div > span { color: #606b63 !important; }
-#panel-pro .cx-pro-workflow-steps { gap: 4px !important; }
-#panel-pro .cx-pro-workflow-steps button { border-radius: 2px !important; }
-#panel-pro .cx-pro-workflow-steps button.active { color: #071009 !important; background: var(--cx-console-green) !important; border-color: var(--cx-console-green) !important; }
-#panel-pro .cx-pro-workflow-card { margin-bottom: 5px !important; border-left: 2px solid #2b342e !important; }
-#panel-pro .cx-pro-workflow-card.is-active { border-left-color: var(--cx-console-green) !important; }
-#panel-pro .cx-pro-workflow-card.is-collapsed {
-  min-height: 0 !important;
-  height: auto !important;
-  flex: 0 0 auto !important;
-  padding-top: 5px !important;
-  padding-bottom: 5px !important;
-}
-#panel-pro .cx-pro-workflow-card.is-collapsed .cx-pro-step-head {
-  min-height: 30px !important;
-  margin-bottom: 0 !important;
-  padding-bottom: 0 !important;
-  border-bottom: 0 !important;
-}
-#panel-pro .cx-pro-workflow-card.is-active { height: auto !important; flex: 0 0 auto !important; }
-#panel-pro .cx-pro-step-heading > i { color: #071009 !important; background: #5d6961 !important; border-radius: 2px !important; }
-#panel-pro .cx-pro-workflow-card.is-active .cx-pro-step-heading > i { background: var(--cx-console-green) !important; }
-#panel-pro .cx-pro-step-heading small { color: #667069 !important; font-size: 7px !important; }
-#panel-pro .cx-pro-step-toggle { color: #899096 !important; }
-#panel-pro .cx-pro-extras-head { border-radius: 3px !important; background: #171919 !important; border-color: #2a2c2c !important; }
 
 @media (max-width: 440px) {
   #app { padding: 44px 0 54px !important; }

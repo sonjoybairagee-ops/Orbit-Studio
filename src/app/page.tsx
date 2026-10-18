@@ -10,50 +10,50 @@ const WORKSPACES = [
     no: "01",
     code: "TL",
     title: "Tools",
-    copy: "Align, anchor, precomp, copy properties, create layers and clean timelines from one production surface.",
-    items: ["9-point align + anchor", "Property clipboard", "Quick creation", "Timeline utilities"],
+    copy: "Align, anchor, flip, reverse keyframes, trim timelines and auto-organize project assets from one docked production command bar.",
+    items: ["9-point align & anchor", "Reverse keyframes", "Trim before & after", "Project auto-organize"],
   },
   {
     no: "02",
     code: "ST",
     title: "Studio",
-    copy: "Turn text into timed captions, import SRT files and construct shape animation systems without repetitive setup.",
-    items: ["Word-by-word captions", "SRT timing", "Shape operators", "Line presets"],
+    copy: "Turn transcripts into word-by-word animated captions, import SRT subtitle timing, explode text into layers, and link dynamic number counters.",
+    items: ["Word-by-word captions", "SRT subtitle import", "Text Exploder", "Number counters"],
   },
   {
     no: "03",
     code: "MO",
-    title: "Motion",
-    copy: "Go beyond utilities with Super Morph, visual curve controls, 3D camera rigs and showcase animation systems.",
-    items: ["Super Morph", "Curve Lab", "Native 3D camera", "Showcase rigs"],
+    title: "Motion Lab",
+    copy: "Fine-tune easing with mouse-draggable cubic Bezier handles, speed curve graphs, path Super Morph, and native 3D camera rigs.",
+    items: ["Visual Curve Lab", "Super Morph", "Interactive Bezier handles", "Easing templates"],
   },
   {
     no: "04",
     code: "CL",
     title: "Colors",
-    copy: "Apply curated solids, product palettes, two-color gradients and four-color fusions directly to selected layers.",
-    items: ["160+ solids", "SaaS palettes", "220 blends", "160 fusions"],
+    copy: "Build multi-stop linear gradients, sample colors with live eyedroppers, generate harmonies, and access 31+ SaaS brand palettes.",
+    items: ["2/3/4-Stop Gradient Builder", "31 SaaS brand palettes", "Eyedropper tool", "Color harmony engine"],
   },
   {
     no: "05",
-    code: "TR",
-    title: "Tracker",
-    copy: "Keep project time, tasks and eye-break reminders inside the same panel as the work itself.",
-    items: ["Automatic timer", "Weekly history", "Project to-do", "Break reminders"],
+    code: "SFX",
+    title: "Sound Designer",
+    copy: "Browse, audition on hover, and insert indexed SFX with live dual-channel waveform spectrum visualization, reverse playback, and pitch controls.",
+    items: ["Waveform spectrum preview", "Hover-to-audition", "Format & metadata", "One-click timeline insert"],
   },
   {
     no: "06",
-    code: "CS",
-    title: "Comp Saver",
-    copy: "Snapshot active compositions, restore them instantly and organize your entire project panel with one click.",
-    items: ["Comp snapshots", "Auto organize", "Quick restore", "Smart folders"],
+    code: "MG",
+    title: "MOGRT Library",
+    copy: "Search, filter, and inspect motion graphics templates with instant video previews on hover, viral typography styles, and bundled FFX presets.",
+    items: ["Video hover preview", "Torsten MOGRT collection", "Viral text presets", "After Effects FFX library"],
   },
   {
     no: "07",
-    code: "LB",
-    title: "Library",
-    copy: "Search, preview and insert MOGRTs, SFX, text animation and FFX presets without leaving Adobe.",
-    items: ["MOGRT shelf", "SFX audition", "Text styles", "FFX library"],
+    code: "CS",
+    title: "Comp Saver",
+    copy: "Snapshot active composition versions, build procedural animated arrows, generate 3D/2D carousel ribbons, and purge RAM caches.",
+    items: ["Comp version snapshots", "Procedural arrow creator", "3D carousel ribbons", "RAM cache purge"],
   },
 ];
 
@@ -77,7 +77,7 @@ export default async function Home() {
         <div className="shell home-hero__inner">
           <div className="home-hero__copy">
             <div className="home-hero__kicker">
-              <span><i /> Orbit Studio 2.4.36</span>
+              <span><i /> Orbit Studio 2.9.0</span>
               <span>After Effects + Premiere Pro</span>
             </div>
             <h1>

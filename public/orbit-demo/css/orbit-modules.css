@@ -16,7 +16,7 @@
  --accent:#3cff5f;--accent-color:#3cff5f;--panel-bg:#080e0b;--card-bg:#101813;
  background:var(--od-bg)!important;color:#e0e9e2;
 }
-#app .app-panel:not(#panel-tools) :is(.tool-section,.tool-subgroup,.tracker-status-card,.tracker-ring-card,.cx3d-panel,.compx-comp-toolbar,.compx-comp-filter,.compx-comp-bulk,.library-filter-strip,.lib-toolbar,.cx-cap-source-card,.cx-cap-source-icon,.cx-cap-source-or){
+#app .app-panel:not(#panel-tools) :is(.tool-section,.tool-subgroup,.tracker-status-card,.tracker-ring-card,.compx-comp-toolbar,.compx-comp-filter,.compx-comp-bulk,.library-filter-strip,.lib-toolbar,.cx-cap-source-card,.cx-cap-source-icon,.cx-cap-source-or){
  background:linear-gradient(130deg,#101813,#080e0b 70%)!important;
  border:1px solid #29392f!important;border-radius:8px!important;
  box-shadow:none!important;min-width:0;
@@ -30,13 +30,13 @@
  color:#edf3ee!important;font:600 11px/1.25 "Segoe UI",sans-serif!important;letter-spacing:.04em;
 }
 #app .app-panel:not(#panel-tools) .tool-section-title::before{display:none!important}
-#app .app-panel:not(#panel-tools) :is(.tool-btn,.btn,.shelf,.compx-comp-toolbar button,.compx-comp-bulk button,.lib-status-btn,.cx3d-btn,.cx3d-feature){
+#app .app-panel:not(#panel-tools) :is(.tool-btn,.btn,.shelf,.compx-comp-toolbar button,.compx-comp-bulk button,.lib-status-btn){
  background:linear-gradient(135deg,#141d17,#0a100c)!important;
  border:1px solid #2a382f!important;border-radius:6px!important;
  color:#e0e9e2!important;box-shadow:none!important;
  font-family:"Segoe UI",sans-serif;font-size:11px;letter-spacing:0;
 }
-#app .app-panel:not(#panel-tools) :is(.tool-btn,.btn,.shelf,.cx3d-feature):hover{border-color:#43844f!important;background:#122017!important}
+#app .app-panel:not(#panel-tools) :is(.tool-btn,.btn,.shelf):hover{border-color:#43844f!important;background:#122017!important}
 #app .app-panel:not(#panel-tools) :is(button.primary,button.active,button.is-selected,.cx-bg-pipeline-step.is-active,.cx-cap-source-card.active){
  background:#142d19!important;border-color:#35c64b!important;color:#d5ffdb!important;box-shadow:none!important;
 }
@@ -46,7 +46,25 @@
 #app .app-panel:not(#panel-tools) :is(.hint,.tool-help){color:#9bac9f!important;line-height:1.5}
 #app #panel-toolkit>.tools-scroll{display:block!important;min-height:0;overflow-y:auto;overscroll-behavior:contain}
 #app #panel-toolkit .tools-project-row{display:block!important;height:auto;min-height:0}
-#app #panel-toolkit #toolkitShapeSourceSection{padding:10px;margin:0;flex:none}
+#app #panel-toolkit #toolkitShapeSourceSection,#app #panel-toolkit #toolkitFlexGridSection{padding:10px;margin:0;flex:none}
+#app #panel-toolkit #toolkitShapeSourceSection,#app #panel-toolkit #toolkitFlexGridSection{margin-top:8px}
+#app #panel-toolkit .cx-flexgrid-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 8px}
+#app #panel-toolkit .cx-flexgrid-field{display:flex;flex-direction:column;gap:3px;min-width:0}
+#app #panel-toolkit .cx-flexgrid-field span{font:600 8px/1.2 "Segoe UI",sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#8da195}
+#app #panel-studio #ssToAeCard{margin:8px 0 0;padding:10px}
+#app #panel-toolkit .cx-flexgrid-field .counter-input,#app #panel-toolkit .cx-flexgrid-field .counter-select{width:100%;min-width:0;height:26px;box-sizing:border-box}
+#app #panel-toolkit #btnFlexGridApply,#app #panel-toolkit #btnLayoutGridCreate{width:100%}
+#app #panel-toolkit #layoutGridModeRow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:0 0 8px}
+#app #panel-toolkit .cx-layout-grid-toolbar{display:grid;grid-template-columns:minmax(0,1fr) 34px 34px 34px;gap:5px;margin:8px 0 6px}
+#app #panel-toolkit .cx-layout-grid-toolbar .tool-btn,#app #panel-toolkit .cx-layout-grid-change .tool-btn{min-height:32px!important}
+#app #panel-toolkit .cx-layout-grid-change{display:grid;grid-template-columns:minmax(0,1fr) 72px;gap:5px;margin:0 0 8px}
+#app #panel-toolkit .cx-layout-grid-layers{list-style:none;margin:0 0 8px;padding:0;max-height:140px;overflow:auto;border:1px solid #29392f;border-radius:6px;background:#0a110d}
+#app #panel-toolkit .cx-layout-grid-layers li{display:flex;align-items:center;gap:6px;min-height:28px;padding:4px 8px;border-bottom:1px solid #1d2a22;color:#d5e0d8;font-size:11px;cursor:pointer}
+#app #panel-toolkit .cx-layout-grid-layers li:last-child{border-bottom:0}
+#app #panel-toolkit .cx-layout-grid-layers li.is-selected{background:#122017;color:#b9ffcf}
+#app #panel-toolkit .cx-layout-grid-layers b{flex:0 0 18px;color:#6f8a78;font-size:9px}
+#app #panel-toolkit .cx-layout-grid-layers span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#app #panel-toolkit .cx-flexgrid-help{margin-top:8px}
 #app #panel-toolkit #shapeToolkit{display:flex;flex-direction:column;gap:8px}
 #app #panel-toolkit .shape-subgroup{padding:8px;margin:0;flex:none}
 #app #panel-toolkit .tool-grid{gap:5px}
@@ -56,4 +74,175 @@
 #app #panel-toolkit .counter-row>*{width:100%;min-width:0;box-sizing:border-box}
 #app #panel-toolkit .hint{font-size:10px;margin:7px 0 0}
 #app .app-panel:not(#panel-tools) button:focus-visible{outline:2px solid #3cff5f;outline-offset:1px}
+#app #panel-pro #cxSuperMorphCard{padding:10px;margin:0 0 10px}
+#app #panel-pro #cxSuperMorphCard .cx-smorph-modes .tool-btn{min-height:34px}
 @media(max-width:380px){#app #panel-toolkit .counter-row{grid-template-columns:minmax(0,1fr) 48px}#app #panel-toolkit #shapeEaseMode{grid-column:1/-1}}
+/* ---- UI Stagger rig (Tools tab) ---- */
+#app :is(.subgroup-uistagger,.subgroup-uikit,.subgroup-figma,.subgroup-wipe) .uis-note{margin:0 0 7px;font-size:9.5px;line-height:1.45;color:#8c9b92}
+#app :is(.subgroup-uistagger,.subgroup-uikit,.subgroup-figma,.subgroup-wipe) .uis-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:min-content;gap:5px;margin-bottom:6px}
+#app :is(.subgroup-uistagger,.subgroup-uikit,.subgroup-figma,.subgroup-wipe) .uis-field{display:flex;flex-direction:column;gap:2px;min-width:0}
+#app :is(.subgroup-uistagger,.subgroup-uikit,.subgroup-figma,.subgroup-wipe) .uis-field>span{font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:#7f8e85}
+#app :is(.subgroup-uistagger,.subgroup-uikit,.subgroup-figma,.subgroup-wipe) .uis-field .counter-input{width:100%;min-width:0;height:26px;box-sizing:border-box;font-size:10px;padding:2px 5px;flex:none}
+#app :is(.subgroup-uistagger,.subgroup-uikit,.subgroup-figma,.subgroup-wipe) .uis-check{display:flex;align-items:center;gap:6px;margin:0 0 7px;font-size:9.5px;color:#8c9b92;cursor:pointer;user-select:none}
+#app :is(.subgroup-uistagger,.subgroup-uikit,.subgroup-figma,.subgroup-wipe) .uis-check input{width:13px;height:13px;margin:0;flex:0 0 auto;accent-color:#3ba266;cursor:pointer}
+@media(max-width:380px){#app :is(.subgroup-uistagger,.subgroup-uikit,.subgroup-figma,.subgroup-wipe) .uis-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+#app .subgroup-uikit .cur-colours{display:flex;gap:4px}
+#app .subgroup-uikit .cur-colours input[type="color"]{flex:1 1 0;min-width:0;width:100%;height:26px;padding:1px;border:1px solid #2b3a31;border-radius:4px;background:#0d120f;cursor:pointer}
+
+/* ---- AI depth card (Studio tab) ---- */
+#studioAiDepth .cx-depth-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:min-content;gap:6px;margin-bottom:6px}
+#studioAiDepth .cx-depth-field{display:flex;flex-direction:column;gap:2px;min-width:0}
+#studioAiDepth .cx-depth-field>span{font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:#7f8e85}
+#studioAiDepth .cx-depth-field>:is(input,select){width:100%;min-width:0;height:27px;box-sizing:border-box;font-size:10px;padding:2px 5px;flex:none}
+#studioAiDepth .cx-ai-bg-preview{min-height:96px}
+@media(max-width:300px){#studioAiDepth .cx-depth-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* ---- Figma bridge (Tools tab) ---- */
+#app .subgroup-figma .figma-state{display:flex;align-items:center;gap:7px;margin:0 0 7px;font-size:9.5px;color:#8c9b92;min-width:0}
+#app .subgroup-figma .figma-state>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#app .figma-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;background:#44514a}
+#app .figma-dot.is-wait{background:#d2b23c;box-shadow:0 0 6px rgba(210,178,60,.5)}
+#app .figma-dot.is-on{background:#3cff5f;box-shadow:0 0 7px rgba(60,255,95,.55)}
+#app .figma-dot.is-busy{background:#52e2ec;box-shadow:0 0 7px rgba(82,226,236,.5)}
+#app .figma-dot.is-error{background:#ff5f5f;box-shadow:0 0 7px rgba(255,95,95,.5)}
+
+/* ---- AI provider keys (Tracker tab settings) ---- */
+#aiKeySettings .ai-key-summary{margin:0 0 8px;font-size:9.5px;line-height:1.45;color:#8c9b92}
+#aiKeySettings .ai-key-footnote{margin:8px 0 0;font-size:9px;line-height:1.45;color:#6f7d74}
+#aiKeySettings .ai-key-list{display:grid;grid-auto-rows:min-content;gap:7px}
+#aiKeySettings .ai-key-row{display:grid;grid-auto-rows:min-content;gap:5px;padding:8px;min-width:0;border:1px solid #223029;border-radius:7px;background:#0a0f0c}
+#aiKeySettings .ai-key-row.is-saved{border-color:#2f4a38}
+#aiKeySettings .ai-key-row.is-active{border-color:#3ba266;box-shadow:inset 2px 0 0 #3cff5f}
+#aiKeySettings .ai-key-head{display:flex;align-items:center;flex-wrap:wrap;gap:4px 6px;min-width:0}
+#aiKeySettings .ai-key-head input[type="radio"]{width:13px;height:13px;margin:0;flex:0 0 auto;accent-color:#3ba266;cursor:pointer}
+#aiKeySettings .ai-key-name{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:#d6e2da;cursor:pointer}
+#aiKeySettings .ai-key-badge{flex:0 0 auto;padding:1px 6px;border-radius:8px;border:1px solid #2b3a31;font-size:8px;letter-spacing:.05em;text-transform:uppercase;color:#7f8e85}
+#aiKeySettings .ai-key-badge.is-saved{border-color:#3a5a46;color:#9fd7b4}
+#aiKeySettings .ai-key-badge.is-active{border-color:#3ba266;color:#b9ffd2}
+#aiKeySettings .ai-key-link{flex:0 1 auto;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:1px 6px;border:0;border-radius:8px;background:transparent;color:#6f8f7c;font-size:8.5px;text-decoration:underline;cursor:pointer}
+#aiKeySettings .ai-key-link:hover{color:#b9ffd2}
+#aiKeySettings .ai-key-input{width:100%;min-width:0;box-sizing:border-box;height:27px;font-size:10px;padding:2px 6px}
+#aiKeySettings .ai-key-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(62px,1fr));gap:5px}
+#aiKeySettings .ai-key-actions .tool-btn{min-height:26px;font-size:9.5px;padding:2px 4px}
+#aiKeySettings .ai-key-model{display:flex;align-items:center;gap:6px;min-width:0}
+#aiKeySettings .ai-key-model>span{flex:0 0 auto;font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:#7f8e85}
+#aiKeySettings .ai-key-model select{flex:1 1 auto;min-width:0;height:25px;font-size:9.5px}
+#aiKeySettings .ai-key-note{margin:0;font-size:9px;line-height:1.4;color:#7f8e85;overflow-wrap:anywhere}
+#aiKeySettings .ai-key-note.is-ok{color:#8dffb0}
+#aiKeySettings .ai-key-note.is-warn{color:#e8cf7a}
+#aiKeySettings .ai-key-note.is-error{color:#ff9a9a}
+#aiKeySettings .ai-key-note.is-busy{color:#d2b23c}
+
+/* ---- AI voiceover (Studio tab) ---- */
+#studioTts{position:relative;overflow:hidden;padding-left:12px!important;background:#090d0a!important;border-color:#36423a!important}
+#studioTts::before{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:var(--cx-console-green)!important;pointer-events:none}
+#studioTts .tool-section-title{color:var(--cx-console-green)!important}
+#studioTts .tool-section-title::before{display:none!important}
+#studioTts .tts-script{width:100%;box-sizing:border-box;min-height:88px;resize:vertical;padding:8px;border:1px solid #2b3a31;border-radius:6px;background:#0a0f0c;color:#d6e2da;font:inherit;font-size:11px;line-height:1.5}
+#studioTts .tts-count{margin:3px 0 7px;text-align:right;font-size:8.5px;color:#6f7d74}
+#studioTts .tts-count.is-over{color:#ff9a9a}
+#studioTts .cx-depth-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:min-content;gap:6px;margin-bottom:6px}
+#studioTts .cx-depth-field{display:flex;flex-direction:column;gap:2px;min-width:0;margin-bottom:6px}
+#studioTts .cx-depth-field[hidden]{display:none}
+#studioTts .cx-depth-field>span{font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:#7f8e85}
+#studioTts .cx-depth-field>:is(input,select){width:100%;min-width:0;height:27px;box-sizing:border-box;font-size:10px;padding:2px 5px;flex:none}
+#studioTts .tts-place{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px;align-items:center;margin-bottom:7px}
+#studioTts .tts-place .uis-check{display:flex;align-items:center;gap:6px;margin:0;font-size:9.5px;color:#8c9b92;cursor:pointer}
+#studioTts .tts-place .uis-check input{width:13px;height:13px;margin:0;flex:0 0 auto;accent-color:#3ba266;cursor:pointer}
+#studioTts .tts-place select{min-width:0;height:27px;font-size:10px}
+#studioTts .tts-note{margin:7px 0 0;font-size:9px;line-height:1.45;color:#7f8e85;overflow-wrap:anywhere}
+#studioTts .tts-note.is-ok{color:#8dffb0}
+#studioTts .tts-note.is-error{color:#ff9a9a}
+#studioTts .tts-note.is-busy{color:#d2b23c}
+@media(max-width:300px){#studioTts .cx-depth-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* ---- UI & Motion Kit popups: UI Kit, UI Stagger, Wipe Reveal, Figma Bridge ----
+   The four Tools-tab sections now live behind one button row; each opens its own
+   dialog. The .subgroup-* class travels with the markup, so every .uis-* rule
+   above still applies — these rules only size the box and lift the controls to
+   popup scale. */
+#app :is(#uiKitModal,#uiStaggerModal,#wipeRevealModal,#figmaBridgeModal){padding:12px;box-sizing:border-box}
+#app :is(#uiKitModal,#uiStaggerModal,#wipeRevealModal,#figmaBridgeModal) .orbit-kit-box{max-width:380px;max-height:calc(100vh - 24px);background:linear-gradient(145deg,#17201b,#0b100d)!important;border:1px solid #34443a!important;border-radius:12px}
+#app :is(#uiKitModal,#uiStaggerModal,#wipeRevealModal,#figmaBridgeModal) .modal-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;flex:0 0 auto;font-size:11px;letter-spacing:.07em}
+#app :is(#uiKitModal,#uiStaggerModal,#wipeRevealModal,#figmaBridgeModal) .modal-header>button{width:28px;height:28px;padding:0;border-radius:6px;font-size:19px;line-height:1;background:none;border:1px solid #2b3a31;color:#9db3a5;cursor:pointer}
+#app :is(#uiKitModal,#uiStaggerModal,#wipeRevealModal,#figmaBridgeModal) .modal-header>button:hover{border-color:#3ba266;color:#d6ffe6}
+#app .orbit-kit-body{min-height:0;overflow-y:auto;padding:0 14px 14px}
+#app .orbit-kit-body .uis-note{font-size:10px;margin:0 0 10px}
+#app .orbit-kit-body .uis-note+.uis-grid{margin-bottom:10px}
+#app .orbit-kit-body .uis-field>span{font-size:9px}
+#app .orbit-kit-body .uis-field :is(.counter-input,.counter-select){width:100%;min-width:0;height:30px;box-sizing:border-box;font-size:11px;padding:2px 6px;flex:none}
+#app .orbit-kit-body .uis-check{font-size:10px;margin:0 0 10px}
+#app .orbit-kit-body .figma-state{font-size:10px;margin:0 0 10px}
+#app .orbit-kit-body .cur-colours input[type="color"]{height:30px}
+#app .orbit-kit-body .tool-grid{margin-top:2px}
+/* a global `.tool-btn,.btn{min-height:24px!important}` sits later in the cascade, so the popup buttons need the same weight to stay tappable. */
+#app .orbit-kit-body .tool-btn{min-height:32px!important;font-size:10px}
+
+/* Depth Reveal joins the depth card: three actions in a two-column row, so
+   the map-only fallback takes the whole second line. */
+#studioAiDepth #btnAiDepthMapOnly{grid-column:1/-1}
+
+/* ---- Icon Library (Tools tab → ASSETS → Icons) ------------------------------
+   A browse-and-click grid of the bundled Lucide icons. Same dialog shell as
+   the UI & Motion Kit popups, with a scrolling icon grid. */
+#app #iconLibraryModal{padding:12px;box-sizing:border-box}
+#app #iconLibraryModal .icon-lib-box{max-width:460px;width:100%;max-height:calc(100vh - 24px);background:linear-gradient(145deg,#17201b,#0b100d)!important;border:1px solid #34443a!important;border-radius:12px}
+#app #iconLibraryModal .modal-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;flex:0 0 auto;font-size:11px;letter-spacing:.07em}
+#app #iconLibraryModal .modal-header>button{width:28px;height:28px;padding:0;border-radius:6px;font-size:19px;line-height:1;background:none;border:1px solid #2b3a31;color:#9db3a5;cursor:pointer}
+#app #iconLibraryModal .modal-header>button:hover{border-color:#3ba266;color:#d6ffe6}
+#app .icon-lib-body{min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:0 14px 14px}
+#app .icon-lib-note{margin:0 0 10px;font-size:10px;line-height:1.5;color:#8c9b92}
+#app .icon-lib-controls{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:10px}
+#app .icon-lib-field{display:flex;flex-direction:column;gap:3px;min-width:0}
+#app .icon-lib-field>span{font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:#7f8e85}
+#app .icon-lib-search{flex:1 1 150px}
+#app .icon-lib-field .counter-input{width:100%;min-width:0;height:30px;box-sizing:border-box;font-size:11px;padding:2px 8px}
+#app .icon-lib-field .counter-input.small{width:62px;flex:none}
+#app .icon-lib-field input[type="color"]{width:40px;height:30px;padding:1px;border:1px solid #2b3a31;border-radius:6px;background:#0d120f;cursor:pointer}
+#app .icon-lib-grid{flex:1 1 auto;min-height:150px;max-height:50vh;overflow-y:auto;overflow-x:hidden;display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:6px;padding:4px;background:radial-gradient(ellipse at 50% 0%,#0b180e,#060b08);border:1px solid #223129;border-radius:8px}
+#app .icon-lib-item{display:flex;align-items:center;justify-content:center;aspect-ratio:1/1;min-height:44px;padding:7px;border:1px solid #243a2d;border-radius:7px;background:#0e1712;color:#cfeeda;cursor:pointer;transition:border-color .12s ease,background .12s ease,transform .08s ease}
+#app .icon-lib-item:hover{border-color:#3ba266;background:#12241a;transform:translateY(-1px)}
+#app .icon-lib-item:active{transform:translateY(0)}
+#app .icon-lib-item svg{width:100%;height:100%;max-width:26px;max-height:26px;display:block}
+#app .icon-lib-status{flex:0 0 auto;margin-top:8px;font-size:10px;color:#8c9b92}
+#app .icon-lib-status.is-error{color:#ff8f8f}
+#app .icon-lib-status.is-ok{color:#7fe6a2}
+#app #iconLibraryModal.is-busy .icon-lib-grid{opacity:.5;pointer-events:none}
+@media(max-width:380px){#app .icon-lib-grid{grid-template-columns:repeat(auto-fill,minmax(40px,1fr))}}
+
+/* ---- Expression Library (Tools tab → ASSETS → Expressions) ------------------
+   Two-pane browser: categories on the left, expression list + code preview
+   on the right. Updated to use Orbit theme (purple/neon). */
+#app #expressionLibraryModal{padding:12px;box-sizing:border-box}
+#app #expressionLibraryModal .expr-lib-box{max-width:540px;width:100%;max-height:calc(100vh - 24px);background:linear-gradient(145deg,var(--oc-bg3),var(--oc-bg))!important;border:1px solid var(--oc-line2)!important;border-radius:12px;display:flex;flex-direction:column;overflow:hidden}
+#app #expressionLibraryModal .modal-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;flex:0 0 auto;font-size:11px;letter-spacing:.07em;color:var(--oc-text)}
+#app #expressionLibraryModal .modal-header>button{width:28px;height:28px;padding:0;border-radius:6px;font-size:19px;line-height:1;background:none;border:1px solid var(--oc-line);color:var(--oc-dim);cursor:pointer}
+#app #expressionLibraryModal .modal-header>button:hover{border-color:var(--oc-violet);color:var(--oc-text)}
+#app .expr-lib-body{min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:0 14px 14px;gap:10px}
+#app .expr-search-row{display:flex;gap:8px;flex:0 0 auto}
+#app .expr-search-row .counter-input{flex:1;height:30px;font-size:11px;padding:2px 8px}
+#app .expr-cat-list{display:flex;flex-wrap:wrap;gap:5px;flex:0 0 auto}
+#app .expr-cat-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid var(--oc-line);border-radius:16px;background:var(--oc-bg2);color:var(--oc-dim);font-size:9.5px;letter-spacing:.04em;cursor:pointer;transition:border-color .12s,background .12s,color .12s}
+#app .expr-cat-btn:hover{border-color:var(--oc-violet);color:var(--oc-text)}
+#app .expr-cat-btn.is-active{border-color:var(--oc-violet);background:var(--oc-violet-soft);color:var(--oc-violet)}
+#app .expr-cat-icon{width:13px;height:13px;flex:none}
+#app .expr-list-area{display:flex;gap:10px;min-height:0;flex:1 1 auto;overflow:hidden}
+#app .expr-list{flex:1 1 50%;min-height:120px;max-height:45vh;overflow-y:auto;display:flex;flex-direction:column;gap:4px;padding:4px;background:radial-gradient(ellipse at 50% 0%,var(--oc-bg3),var(--oc-bg));border:1px solid var(--oc-line);border-radius:8px}
+#app .expr-item{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border:1px solid var(--oc-line);border-radius:6px;background:var(--oc-bg2);color:var(--oc-text);cursor:pointer;text-align:left;transition:border-color .12s,background .12s}
+#app .expr-item:hover{border-color:var(--oc-line-strong);background:var(--oc-hover)}
+#app .expr-item.is-active{border-color:var(--oc-violet);background:var(--oc-violet-soft)}
+#app .expr-item-name{font-size:11px;font-weight:600;color:var(--oc-text)}
+#app .expr-item-cat{font-size:9px;color:var(--oc-faint);letter-spacing:.03em}
+#app .expr-preview-area{flex:1 1 50%;display:flex;flex-direction:column;gap:6px;min-height:0;overflow:hidden}
+#app .expr-detail-header{flex:0 0 auto}
+#app .expr-detail-title{font-size:12px;font-weight:600;color:var(--oc-text);margin:0 0 3px}
+#app .expr-detail-desc{font-size:10px;color:var(--oc-dim);margin:0;line-height:1.5}
+#app .expr-code-preview{flex:1 1 auto;min-height:80px;max-height:35vh;overflow:auto;padding:10px;background:var(--oc-bg);border:1px solid var(--oc-line);border-radius:8px;font-family:"Consolas","Monaco","Courier New",monospace;font-size:10.5px;line-height:1.6;color:var(--oc-text);white-space:pre;tab-size:2;word-break:break-all}
+#app .expr-actions{display:flex;gap:8px;flex:0 0 auto;margin-top:4px}
+#app .expr-actions .tool-btn{flex:1;min-height:30px!important;font-size:10px}
+#app .expr-actions .tool-btn:disabled{opacity:.4;cursor:default}
+#app .expr-status{flex:0 0 auto;font-size:10px;color:var(--oc-dim)}
+#app .expr-status.is-error{color:var(--oc-danger)}
+#app .expr-status.is-ok{color:var(--oc-success)}
+#app #expressionLibraryModal.is-busy .expr-list{opacity:.5;pointer-events:none}
+@media(max-width:400px){#app .expr-list-area{flex-direction:column}#app .expr-list,#app .expr-preview-area{flex:none;max-height:30vh}}

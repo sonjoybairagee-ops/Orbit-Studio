@@ -1,1 +1,904 @@
-html,body{margin:0!important;width:680px!important;height:800px!important;overflow:hidden!important}#app{padding:0!important;width:100%!important;height:100%!important;max-width:none!important;display:flex!important;flex-direction:column!important}#app .cx-app-main{display:flex!important;flex:1!important;overflow:hidden!important}#app #appTabsRow{position:static!important;height:auto!important;flex-direction:column!important;overflow-y:auto!important}#app .app-panel{display:none!important;flex:1!important;min-width:0!important;height:100%!important;overflow:auto!important}#app .app-panel.active{display:block!important}#app #appTabsRow .app-tab{min-height:47px!important;height:47px!important}#app .cx-title-bar{min-height:48px!important;height:48px!important}#app .tool-btn:focus-visible,#app .app-tab:focus-visible{outline:2px solid #52e2ec!important;outline-offset:-2px}#demo-feedback{position:fixed;bottom:12px;left:75px;right:12px;background:#102619;color:#d9f5e1;border:1px solid #3cff5f;border-radius:6px;padding:12px;font:12px/1.5 'Segoe UI',sans-serif;z-index:99999;box-shadow:0 8px 30px #0009}#demo-feedback[hidden]{display:none}#app #panel-tools .tools-scroll{grid-template-rows:1fr 1fr 1fr auto!important}#app #panel-tools .tool-grid{flex:1}#app #panel-tools .subgroup-textmask .tool-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 680px !important;
+  height: 800px !important;
+  overflow: hidden !important;
+  background: #080d0a !important;
+  color: #d0ded5;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+#app {
+  position: fixed !important;
+  inset: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background: #080d0a !important;
+  overflow: hidden !important;
+}
+
+#app .cx-title-bar {
+  display: flex !important;
+  flex: 0 0 44px !important;
+  min-height: 44px !important;
+  position: relative !important;
+  z-index: 25 !important;
+}
+
+#app .cx-app-main {
+  display: flex !important;
+  flex-direction: row !important;
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+#app #appTabsRow {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 0 0 52px !important;
+  width: 52px !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+#app #appTabsRow > .rail-nav {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-width: none;
+}
+
+#app #appTabsRow > .rail-nav::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+}
+
+#app .cx-work-col {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+#app .cx-global-dock {
+  flex: 0 0 auto !important;
+  min-height: 42px !important;
+  z-index: 10 !important;
+}
+
+#app .app-panel {
+  display: none !important;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+#app .app-panel.active {
+  display: block !important;
+}
+
+/* Specific flex container panels */
+#app #panel-sfx.active {
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+#app #panel-sfx #assetTypeRow {
+  display: flex !important;
+  flex: 0 0 auto !important;
+}
+
+#app #panel-sfx #textAnimView {
+  flex-direction: column !important;
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+#app #panel-sfx #textLibraryTabs {
+  display: flex !important;
+  flex: 0 0 auto !important;
+}
+
+#app #panel-sfx [data-text-library-panel] {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+#app #panel-sfx [data-text-library-panel][hidden] {
+  display: none !important;
+}
+
+#app #panel-sfx #motionPresetView,
+#app #panel-sfx #ffxPresetView {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* Arrow creator live preview stage */
+#app #panel-arrow .arrow-preview-stage {
+  min-height: 120px !important;
+}
+
+#app #panel-arrow .arrow-preview-stage svg {
+  width: 100% !important;
+  height: 120px !important;
+}
+
+/* Motion Lab canvas */
+#app #panel-pro .curve-canvas-wrapper {
+  position: relative !important;
+  width: 100% !important;
+  min-height: 180px !important;
+}
+
+#app #panel-pro canvas {
+  width: 100% !important;
+  height: 180px !important;
+}
+
+/* Hide license gate and grace overlays in the demo */
+#cx-gate, #cx-grace {
+  display: none !important;
+}
+
+#app .tool-btn:focus-visible,
+#app .app-tab:focus-visible {
+  outline: 2px solid #3cff5f !important;
+  outline-offset: -2px;
+}
+
+#demo-feedback {
+  position: fixed;
+  bottom: 14px;
+  left: 64px;
+  right: 14px;
+  background: rgba(13, 24, 18, 0.95);
+  color: #eafff0;
+  border: 1px solid #3cff5f;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font: 500 12px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  z-index: 999999;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+  transition: opacity 0.2s ease;
+}
+
+#demo-feedback[hidden] {
+  display: none !important;
+}
+/* ==================== MOGRT LIBRARY TAB ==================== */
+#app #panel-mogrt.active {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+#app #panel-mogrt #mainLayout {
+  display: flex !important;
+  flex-direction: row !important;
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+#app #panel-mogrt #sidebar {
+  width: 140px !important;
+  flex: 0 0 140px !important;
+  border-right: 1px solid #22322a !important;
+  background: #090e0b !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow-y: auto !important;
+}
+
+#app #panel-mogrt .folder-tree {
+  padding: 6px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
+#app #panel-mogrt .tree-folder {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 6px 8px !important;
+  font-size: 11px !important;
+  color: #8fa195 !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+#app #panel-mogrt .tree-folder:hover,
+#app #panel-mogrt .tree-folder.active {
+  background: rgba(60, 255, 95, 0.08) !important;
+  color: #3cff5f !important;
+}
+
+#app #panel-mogrt .content-view {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  background: #0d120f !important;
+}
+
+#app #panel-mogrt #library.grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)) !important;
+  gap: 12px !important;
+  padding: 12px !important;
+  overflow-y: auto !important;
+  flex: 1 1 0 !important;
+}
+
+.mogrt-card {
+  display: flex !important;
+  flex-direction: column !important;
+  background: #111814 !important;
+  border: 1px solid #22322a !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.mogrt-card:hover {
+  transform: translateY(-2px) !important;
+  border-color: #3cff5f !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 12px rgba(60, 255, 95, 0.2) !important;
+}
+
+.mogrt-thumb-wrap {
+  position: relative !important;
+  width: 100% !important;
+  aspect-ratio: 16 / 9 !important;
+  background: #060907 !important;
+  overflow: hidden !important;
+}
+
+.mogrt-thumb {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+  transition: opacity 0.2s ease !important;
+}
+
+.mogrt-video {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: none !important;
+}
+
+.mogrt-card:hover .mogrt-video {
+  display: block !important;
+}
+
+.mogrt-card:hover .mogrt-thumb {
+  opacity: 0 !important;
+}
+
+.mogrt-badge {
+  position: absolute !important;
+  top: 6px !important;
+  left: 6px !important;
+  background: rgba(13, 24, 18, 0.85) !important;
+  border: 1px solid rgba(60, 255, 95, 0.4) !important;
+  color: #3cff5f !important;
+  font-size: 8px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.05em !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  pointer-events: none !important;
+  text-transform: uppercase !important;
+}
+
+.mogrt-hover-hint {
+  position: absolute !important;
+  bottom: 6px !important;
+  right: 6px !important;
+  background: rgba(0, 0, 0, 0.75) !important;
+  color: #8fa195 !important;
+  font-size: 8px !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  pointer-events: none !important;
+  transition: opacity 0.2s ease !important;
+}
+
+.mogrt-card:hover .mogrt-hover-hint {
+  opacity: 0 !important;
+}
+
+.mogrt-meta {
+  padding: 8px 10px !important;
+  flex: 1 1 auto !important;
+}
+
+.mogrt-title {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #eafff0 !important;
+  margin-bottom: 2px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.mogrt-sub {
+  font-size: 9px !important;
+  color: #8fa195 !important;
+}
+
+.mogrt-actions {
+  padding: 0 10px 8px !important;
+}
+
+.mogrt-btn {
+  width: 100% !important;
+  min-height: 24px !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  background: rgba(60, 255, 95, 0.08) !important;
+  border: 1px solid rgba(60, 255, 95, 0.25) !important;
+  color: #3cff5f !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.mogrt-btn:hover {
+  background: #3cff5f !important;
+  color: #060907 !important;
+  box-shadow: 0 0 10px rgba(60, 255, 95, 0.4) !important;
+}
+
+/* ==================== SFX SOUND DESIGNER ==================== */
+/* Ensure the left tab navigation rail is always visible in the demo */
+#app #appTabsRow {
+  display: flex !important;
+}
+
+/* Hide Global Dock when Sound Designer is active so anchor dots don't poke through header */
+#app:has(#panel-sfxdesign.active) #orbitGlobalDock {
+  display: none !important;
+}
+
+#app #panel-sfxdesign.active {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  --sfxd-lib-w: 168px !important;
+}
+
+#app #panel-sfxdesign .sfxd-shell {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+#app #panel-sfxdesign .sfxd-body {
+  display: grid !important;
+  grid-template-columns: var(--sfxd-lib-w, 168px) 6px minmax(0, 1fr) !important;
+  gap: 0 !important;
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+#app #panel-sfxdesign #sfxdLib {
+  width: auto !important;
+  flex: none !important;
+  border-right: 1px solid #1c2b20 !important;
+  background: #090e0b !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  padding: 6px !important;
+}
+
+#app #panel-sfxdesign #sfxdFolders {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+  padding: 4px 0 !important;
+}
+
+#app #panel-sfxdesign .sfxd-main {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  background: #0c120e !important;
+}
+
+#app #panel-sfxdesign #sfxdResults {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  padding: 6px 8px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+
+/* Sound row in demo */
+#app #panel-sfxdesign .sfxd-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 5px 8px !important;
+  background: #111814 !important;
+  border: 1px solid #1c2b20 !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  transition: all 0.12s ease !important;
+}
+
+#app #panel-sfxdesign .sfxd-row:hover,
+#app #panel-sfxdesign .sfxd-row.is-on {
+  background: rgba(60, 255, 95, 0.08) !important;
+  border-color: rgba(60, 255, 95, 0.5) !important;
+}
+
+#app #panel-sfxdesign .sfxd-row.is-playing {
+  border-color: #3cff5f !important;
+  box-shadow: 0 0 12px rgba(60, 255, 95, 0.18) !important;
+}
+
+#app #panel-sfxdesign .sfxd-rowplay {
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 50% !important;
+  background: rgba(60, 255, 95, 0.1) !important;
+  border: 1px solid rgba(60, 255, 95, 0.25) !important;
+  color: #3cff5f !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 22px !important;
+  cursor: pointer !important;
+  transition: all 0.12s ease !important;
+}
+
+#app #panel-sfxdesign .sfxd-row:hover .sfxd-rowplay,
+#app #panel-sfxdesign .sfxd-row.is-playing .sfxd-rowplay {
+  background: #3cff5f !important;
+  color: #060907 !important;
+}
+
+#app #panel-sfxdesign .sfxd-rowmid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+}
+
+#app #panel-sfxdesign .sfxd-rowname {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+}
+
+#app #panel-sfxdesign .sfxd-rowname b {
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  color: #eafff0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+#app #panel-sfxdesign .sfxd-sound-badge {
+  font-size: 7.5px !important;
+  font-weight: 600 !important;
+  color: #35c8ff !important;
+  background: rgba(53, 200, 255, 0.1) !important;
+  border: 1px solid rgba(53, 200, 255, 0.2) !important;
+  padding: 1px 4px !important;
+  border-radius: 3px !important;
+}
+
+#app #panel-sfxdesign .sfxd-rowwave {
+  width: 100% !important;
+  height: 12px !important;
+  display: block !important;
+}
+
+#app #panel-sfxdesign .sfxd-rowinfo {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  gap: 1px !important;
+  flex: 0 0 auto !important;
+}
+
+#app #panel-sfxdesign .sfxd-rowdur {
+  font-size: 9.5px !important;
+  font-weight: 600 !important;
+  color: #8fa195 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+#app #panel-sfxdesign .sfxd-rowmeta {
+  font-size: 8px !important;
+  color: #5d6f64 !important;
+}
+
+#app #panel-sfxdesign .sfxd-rowend {
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  flex: 0 0 auto !important;
+}
+
+#app #panel-sfxdesign .sfxd-fav {
+  background: transparent !important;
+  border: 0 !important;
+  color: #43544a !important;
+  cursor: pointer !important;
+  padding: 3px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+#app #panel-sfxdesign .sfxd-fav svg {
+  width: 13px !important;
+  height: 13px !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 1.6 !important;
+}
+
+#app #panel-sfxdesign .sfxd-fav:hover,
+#app #panel-sfxdesign .sfxd-fav.is-on {
+  color: #ff4d6a !important;
+}
+
+#app #panel-sfxdesign .sfxd-fav.is-on svg {
+  fill: currentColor !important;
+}
+
+#app #panel-sfxdesign .sfxd-insert-btn {
+  font-size: 9.5px !important;
+  padding: 2px 7px !important;
+  background: transparent !important;
+  border: 1px solid #2a3d31 !important;
+  color: #8fa195 !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  transition: all 0.12s ease !important;
+}
+
+#app #panel-sfxdesign .sfxd-insert-btn:hover {
+  border-color: #3cff5f !important;
+  color: #3cff5f !important;
+}
+
+/* Spectrum preview & wave styling */
+#app #panel-sfxdesign #sfxdWrap {
+  position: relative !important;
+  width: 100% !important;
+  height: 64px !important;
+  background: #060a08 !important;
+  border: 1px solid #1c2b20 !important;
+  border-radius: 6px !important;
+  overflow: hidden !important;
+}
+
+#app #panel-sfxdesign #sfxdWave {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+#app #panel-sfxdesign #sfxdPlayhead {
+  position: absolute !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 0% !important;
+  width: 2px !important;
+  background: #3cff5f !important;
+  box-shadow: 0 0 8px #3cff5f !important;
+  pointer-events: none !important;
+  z-index: 5 !important;
+  transition: none !important;
+}
+
+#app #panel-sfxdesign .sfxd-handle {
+  position: absolute !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 4px !important;
+  background: rgba(60, 255, 95, 0.45) !important;
+  cursor: ew-resize !important;
+  z-index: 4 !important;
+}
+
+#app #panel-sfxdesign #sfxdHandleA { left: 0%; }
+#app #panel-sfxdesign #sfxdHandleB { left: 100%; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   13. COLORS WORKSPACE ENHANCEMENTS
+   ══════════════════════════════════════════════════════════════════════ */
+#panel-colors .swatch-grid {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  padding: 4px 0 !important;
+}
+
+#panel-colors .swatch-chip {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 5px !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  cursor: pointer !important;
+  position: relative !important;
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.15s ease, box-shadow 0.15s ease !important;
+  flex-shrink: 0 !important;
+  display: inline-block !important;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3) !important;
+}
+
+#panel-colors .swatch-chip:hover {
+  transform: scale(1.18) translateY(-2px) !important;
+  border-color: #3cff5f !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 12px rgba(60, 255, 95, 0.4) !important;
+  z-index: 10 !important;
+}
+
+#panel-colors .swatch-chip .swatch-remove {
+  position: absolute !important;
+  top: -5px !important;
+  right: -5px !important;
+  width: 14px !important;
+  height: 14px !important;
+  border-radius: 50% !important;
+  background: #ff3b30 !important;
+  color: #fff !important;
+  font-size: 10px !important;
+  line-height: 13px !important;
+  text-align: center !important;
+  display: none !important;
+  cursor: pointer !important;
+  z-index: 12 !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4) !important;
+}
+
+#panel-colors .swatch-chip:hover .swatch-remove {
+  display: block !important;
+}
+
+#panel-colors .swatch-chip .swatch-hex-tip {
+  display: none !important;
+}
+
+/* Palette rows */
+#panel-colors .cx-palette-row {
+  background: #0d1410 !important;
+  border: 1px solid #1c2b20 !important;
+  border-radius: 6px !important;
+  padding: 8px 10px !important;
+  margin-bottom: 8px !important;
+  transition: border-color 0.15s ease !important;
+}
+
+#panel-colors .cx-palette-row:hover {
+  border-color: rgba(60, 255, 95, 0.35) !important;
+}
+
+#panel-colors .cx-palette-row-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 6px !important;
+}
+
+#panel-colors .cx-palette-row-head strong {
+  color: #eafff0 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.03em !important;
+}
+
+#panel-colors .cx-palette-row-head .cx-btn-mini {
+  padding: 2px 7px !important;
+  font-size: 8px !important;
+  min-height: 20px !important;
+  border-radius: 4px !important;
+}
+
+/* Gradient Builder preview */
+#panel-colors .cx-gradient-preview {
+  position: relative !important;
+  height: 76px !important;
+  margin: 0 0 8px !important;
+  border: 1px solid rgba(60, 255, 95, 0.35) !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), 0 6px 18px rgba(0,0,0,0.35) !important;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+
+#panel-colors .cx-gradient-preview:hover {
+  border-color: #3cff5f !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1), 0 8px 24px rgba(60,255,95,0.18) !important;
+}
+
+#panel-colors .cx-gradient-preview span {
+  position: absolute !important;
+  right: 6px !important;
+  bottom: 5px !important;
+  padding: 2px 7px !important;
+  border-radius: 9px !important;
+  background: rgba(0, 0, 0, 0.65) !important;
+  backdrop-filter: blur(4px) !important;
+  color: #fff !important;
+  font: 700 8.5px/1.4 'Inter', -apple-system, sans-serif !important;
+  letter-spacing: 0.04em !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+/* Saved gradients */
+#panel-colors .cx-gradient-saved {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+  margin-top: 6px !important;
+}
+
+#panel-colors .cx-saved-gradient {
+  position: relative !important;
+  height: 40px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 6px !important;
+  overflow: hidden !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+#panel-colors .cx-saved-gradient:hover {
+  border-color: #3cff5f !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(60, 255, 95, 0.25) !important;
+  z-index: 2 !important;
+}
+
+#panel-colors .cx-saved-gradient span {
+  position: absolute !important;
+  left: 4px !important;
+  bottom: 4px !important;
+  padding: 1px 5px !important;
+  border-radius: 6px !important;
+  background: rgba(0, 0, 0, 0.65) !important;
+  color: #fff !important;
+  font-size: 7.5px !important;
+  font-weight: 700 !important;
+}
+
+#panel-colors .cx-saved-gradient i {
+  position: absolute !important;
+  right: 3px !important;
+  top: 3px !important;
+  width: 14px !important;
+  height: 14px !important;
+  border-radius: 50% !important;
+  background: rgba(0, 0, 0, 0.75) !important;
+  color: #ff4d4d !important;
+  font-style: normal !important;
+  font-size: 11px !important;
+  line-height: 13px !important;
+  text-align: center !important;
+  opacity: 0 !important;
+  transition: opacity 0.15s ease !important;
+}
+
+#panel-colors .cx-saved-gradient:hover i {
+  opacity: 1 !important;
+}
+
+#panel-colors .cx-stop-eyedropper {
+  display: flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  padding: 0 4px !important;
+  height: 24px !important;
+  background: rgba(255,255,255,0.05) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  border-radius: 4px !important;
+  color: #94a3b8 !important;
+  cursor: pointer !important;
+  font-size: 7px !important;
+  font-weight: 700 !important;
+}
+
+#panel-colors .cx-stop-eyedropper svg {
+  width: 9px !important;
+  height: 9px !important;
+  fill: currentColor !important;
+}
+
+#panel-colors .cx-stop-eyedropper:hover {
+  color: #3cff5f !important;
+  border-color: #3cff5f !important;
+}
+
+/* Color plate polish in demo */
+#cxColorPlate {
+  --cp: #3cff5f !important;
+  --cp2: #38bdf8 !important;
+  padding: 4px 0 16px !important;
+}
+
+#cxColorPlate .cp-pcolor {
+  height: 30px !important;
+}
+
+#cxColorPlate .cp-sw {
+  height: 26px !important;
+  border-radius: 4px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+#cxColorPlate .cp-sw:hover {
+  transform: scale(1.15) !important;
+  outline: 2px solid #3cff5f !important;
+}

@@ -16,7 +16,7 @@ export function FullExtensionDemo() {
     <div className="full-extension-demo" ref={container}>
       <div className="full-extension-demo__chrome"><span>CompX Orbit Studio</span><span aria-hidden="true">≡</span></div>
       <div className="full-extension-demo__viewport" style={{ height: 800 * scale }}>
-        <iframe title="Full Orbit Studio extension panel demo" src="/orbit-demo/index.html" sandbox="allow-scripts" style={{ width: 680, height: 800, transform: `scale(${scale})`, transformOrigin: "top left" }} />
+        <iframe title="Full Orbit Studio extension panel demo" src="/orbit-demo/index.html" sandbox="allow-scripts allow-same-origin" style={{ width: 680, height: 800, transform: `scale(${scale})`, transformOrigin: "top left" }} />
       </div>
       <p className="full-extension-demo__note">Interactive UI preview · Adobe actions run inside the extension.</p>
     </div>

@@ -1,0 +1,198 @@
+/* ============================================================
+   AUDIO VISUALIZER — Waveform/Spectrum animation
+   Orbit theme styling
+   ============================================================ */
+
+#app #panel-audioviz {
+  --viz-accent: #06b6d4;
+  --viz-accent-soft: rgba(6, 182, 212, 0.15);
+  --viz-line: rgba(255, 255, 255, 0.1);
+  --viz-line-strong: rgba(255, 255, 255, 0.2);
+  --viz-bg: #0e1014;
+  --viz-bg2: #14161c;
+  --viz-text: #f3f4f6;
+  --viz-dim: #848a98;
+  --viz-faint: #505664;
+}
+
+/* ---- Type Toggle ---- */
+#app #panel-audioviz .viz-type-toggle {
+  display: flex !important;
+  gap: 4px !important;
+  margin-bottom: 12px !important;
+  background: var(--viz-bg2) !important;
+  border: 1px solid var(--viz-line) !important;
+  border-radius: 6px !important;
+  padding: 3px !important;
+}
+
+#app #panel-audioviz .viz-type-option {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  padding: 8px 10px !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  transition: all 0.14s ease !important;
+}
+
+#app #panel-audioviz .viz-type-option input {
+  width: 14px !important;
+  height: 14px !important;
+  accent-color: var(--viz-accent) !important;
+}
+
+#app #panel-audioviz .viz-type-option span {
+  font: 600 8px/1 "Segoe UI", sans-serif !important;
+  color: var(--viz-dim) !important;
+}
+
+#app #panel-audioviz .viz-type-option:hover {
+  color: var(--viz-text) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+#app #panel-audioviz .viz-type-option input:checked + span {
+  color: var(--viz-accent) !important;
+}
+
+/* ---- Options ---- */
+#app #panel-audioviz .viz-options {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  margin-bottom: 12px !important;
+  padding: 10px !important;
+  border: 1px solid var(--viz-line) !important;
+  border-radius: 8px !important;
+  background: var(--viz-bg2) !important;
+}
+
+#app #panel-audioviz .viz-option-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+#app #panel-audioviz .viz-option-label {
+  font: 600 8px/1 "Segoe UI", sans-serif !important;
+  letter-spacing: 0.05em !important;
+  color: var(--viz-dim) !important;
+  text-transform: uppercase !important;
+  flex: 0 0 auto !important;
+}
+
+#app #panel-audioviz .viz-option-row .counter-input {
+  flex: 1 1 auto !important;
+  height: 26px !important;
+}
+
+#app #panel-audioviz .viz-option-unit {
+  font: 500 8px/1 "Segoe UI", sans-serif !important;
+  color: var(--viz-faint) !important;
+  flex: 0 0 auto !important;
+}
+
+#app #panel-audioviz .color-input {
+  width: 40px !important;
+  height: 26px !important;
+  border: 1px solid var(--viz-line) !important;
+  border-radius: 4px !important;
+  background: var(--viz-bg) !important;
+  cursor: pointer !important;
+}
+
+#app #panel-audioviz .viz-check {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  cursor: pointer !important;
+}
+
+#app #panel-audioviz .viz-check input {
+  width: 14px !important;
+  height: 14px !important;
+  accent-color: var(--viz-accent) !important;
+}
+
+#app #panel-audioviz .viz-check span {
+  font: 500 9px/1 "Segoe UI", sans-serif !important;
+  color: var(--viz-dim) !important;
+}
+
+/* ---- Status ---- */
+#app #panel-audioviz .viz-status {
+  margin-top: 10px !important;
+  padding: 10px 12px !important;
+  border: 1px solid var(--viz-line) !important;
+  border-radius: 8px !important;
+  background: var(--viz-bg2) !important;
+  font: 500 8px/1.4 "Segoe UI", sans-serif !important;
+  color: var(--viz-dim) !important;
+  text-align: center !important;
+}
+
+#app #panel-audioviz .viz-status.is-error {
+  border-color: #ef4444 !important;
+  color: #fca5a5 !important;
+}
+
+#app #panel-audioviz .viz-status.is-success {
+  border-color: var(--viz-accent) !important;
+  color: #67e8f9 !important;
+}
+
+/* ---- Preview Section ---- */
+#app #panel-audioviz .viz-preview-section {
+  margin-top: 16px !important;
+}
+
+#app #panel-audioviz .viz-preview-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  margin-bottom: 10px !important;
+}
+
+#app #panel-audioviz .viz-preview-label {
+  font: 600 8px/1 "Segoe UI", sans-serif !important;
+  letter-spacing: 0.05em !important;
+  color: var(--viz-dim) !important;
+  text-transform: uppercase !important;
+}
+
+#app #panel-audioviz .viz-preview-canvas {
+  aspect-ratio: 16/9 !important;
+  border: 1px solid var(--viz-line) !important;
+  border-radius: 8px !important;
+  background: var(--viz-bg) !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+#app #panel-audioviz .viz-preview-canvas canvas {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+#app #panel-audioviz .viz-preview-empty {
+  position: absolute !important;
+  left: 8px !important;
+  right: 8px !important;
+  bottom: 8px !important;
+  font: 500 8px/1.4 "Segoe UI", sans-serif !important;
+  color: var(--viz-faint) !important;
+  text-align: center !important;
+  pointer-events: none !important;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 400px) {
+  #app #panel-audioviz .viz-options {
+    gap: 6px !important;
+  }
+}

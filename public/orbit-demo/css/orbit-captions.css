@@ -232,7 +232,7 @@
 .cx-cap-engine-field small { color: #788494; font: 500 9px/1.45 Arial, sans-serif; }
 
 /* ---------- Step 4: CAPTION EDITOR ---------- */
-#flexAutoCaptions .cx-caption-editor { min-height: 90px !important; width: 100%; box-sizing: border-box; border-radius: 8px; font-size: 10px; resize: vertical; }
+#flexAutoCaptions .cx-caption-editor:not(.cx-simple-srt-editor) { min-height: 90px !important; width: 100%; box-sizing: border-box; border-radius: 8px; font-size: 10px; resize: vertical; }
 .cx-cap-editor-count { text-align: right; font: 700 9px/1 var(--mono, Consolas, monospace); letter-spacing: .06em; color: #7d8898; margin-top: 4px; }
 .cx-cap-editor-count.has-issues { color: #ffb347; }
 .cx-cap-editor-toolbar { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
@@ -592,22 +592,42 @@
 .cx-simple-template-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 2px; }
 .cx-simple-template-head > span { color: #c8d2cc; font: 800 9px/1 Arial,sans-serif; letter-spacing: .11em; }
 .cx-simple-template-head > small { color: #5d7165; font: 700 8px/1 Arial,sans-serif; letter-spacing: .07em; }
+/* Capped: the grid scrolls inside itself so the controls under it, and the
+   CREATE button, stay reachable no matter how many styles are installed. */
+#flexAutoCaptions .cx-simple-template-grid { max-height: 232px; overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
+
+/* CREATE CAPTIONS rides the bottom of the card while the styles scroll past. */
+#flexAutoCaptions .cx-srt-commit {
+  position: sticky; bottom: 0; z-index: 2;
+  margin: 0 -2px -2px; padding: 8px 2px 2px;
+  background: linear-gradient(180deg, rgba(10,14,11,0), rgba(10,14,11,.92) 38%, rgba(10,14,11,.98));
+}
+
 .cx-simple-template-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill,minmax(150px,1fr));
+  grid-template-columns: repeat(auto-fill,minmax(148px,1fr));
   grid-auto-rows: max-content;
   align-content: start;
   min-height: 0;
-  gap: 7px;
-  max-height: 320px;
+  gap: 8px;
+  max-height: 360px;
   padding: 2px 3px 3px 1px;
   overflow-y: auto;
   scrollbar-color: rgba(34,255,111,.34) rgba(5,12,8,.7);
 }
+#simpleCaptionTemplateGrid.tanim-card-grid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  grid-auto-rows: max-content;
+}
+#simpleCaptionTemplateGrid .tanim-card { cursor: pointer; }
+#simpleCaptionTemplateGrid .tanim-card.active { outline: 1px solid #22ff6f; box-shadow: 0 0 0 1px rgba(34,255,111,.18),0 0 14px rgba(34,255,111,.13); }
+#simpleCaptionTemplateGrid .tanim-card-actions { display: none; }
 .cx-simple-template-card {
   position: relative;
   min-width: 0;
-  min-height: 128px;
+  min-height: 150px;
   overflow: hidden;
   padding: 0;
   border: 1px solid rgba(91,121,102,.28);
@@ -620,8 +640,8 @@
 }
 .cx-simple-template-card:hover { border-color: rgba(34,255,111,.58); transform: translateY(-1px); }
 .cx-simple-template-card.active { border-color: #22ff6f; box-shadow: 0 0 0 1px rgba(34,255,111,.18),0 0 14px rgba(34,255,111,.13); }
-.cx-simple-template-preview { position: relative; display: grid; place-items: center; height: 96px; overflow: hidden; background: #101211; }
-.cx-caption-ffx-preview { display: block; width: 100%; height: 96px; object-fit: contain; }
+.cx-simple-template-preview { position: relative; display: grid; place-items: center; height: 118px; overflow: hidden; background: #101211; }
+.cx-caption-ffx-preview { display: block; width: 100%; height: 118px; object-fit: contain; }
 .cx-caption-ffx-preview[hidden] { display: none; }
 .cx-caption-preview-error { color: #a3aba6; font: 10px/1.4 Arial,sans-serif; }
 .cx-simple-template-meta { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 5px; padding: 6px 7px 7px; }
@@ -646,13 +666,50 @@
 .cx-simple-srt-drop span,.cx-simple-srt-file,.cx-simple-srt-count { color: var(--text-dim,#829087); font-size: 10px; }
 .cx-simple-srt-drop.dragover { border-color: #34ff78; background: rgba(30,255,105,.08); }
 .cx-simple-srt-file { padding: 7px 9px; border: 1px solid rgba(100,130,110,.22); border-radius: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cx-simple-srt-editor { display: block !important; min-height: 190px; max-height: 330px; resize: vertical; }
+/* min-height keeps its !important — orbit-console-theme.css pins every
+   textarea to 27px with one of its own. display must NOT have it: that is what
+   made the toggle button dead. */
+#flexAutoCaptions .cx-simple-srt-editor { display: block; min-height: 200px !important; max-height: 340px !important; resize: vertical; font: 11px/1.5 Consolas,"Segoe UI",monospace; }
+#flexAutoCaptions .cx-simple-srt-editor.has-cues { min-height: 240px !important; }
+#flexAutoCaptions .cx-simple-srt-editor[hidden] { display: none !important; }
+
+/* ---- Cue summary strip ----
+   What the editor used to say in 260px, on one line: how many cues, how long
+   they run, and the way back into the raw text. */
+#flexAutoCaptions .cx-srt-summary {
+  display: flex; align-items: center; gap: 8px; min-width: 0;
+  padding: 7px 9px; border: 1px solid rgba(34,255,111,.2); border-radius: 8px;
+  background: rgba(34,255,111,.035);
+}
+#flexAutoCaptions .cx-srt-summary > i {
+  flex: 0 0 auto; width: 7px; height: 7px; border-radius: 50%;
+  background: #42ff82; box-shadow: 0 0 7px rgba(66,255,130,.7);
+}
+#flexAutoCaptions .cx-srt-summary .cx-simple-srt-count {
+  flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: #c8d2cc; font: 700 9px/1.3 Arial,sans-serif;
+}
+#flexAutoCaptions .cx-srt-range {
+  flex: 0 0 auto; color: #5d7165; font: 600 8.5px/1.3 Arial,sans-serif;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+#flexAutoCaptions .cx-srt-summary .cx-quickstyle-advanced { flex: 0 0 auto; }
+#flexAutoCaptions .cx-srt-summary:has(.has-error) { border-color: rgba(255,123,123,.45); background: rgba(255,123,123,.05); }
+#flexAutoCaptions .cx-srt-summary:has(.has-error) > i { background: #ff7b7b; box-shadow: 0 0 7px rgba(255,123,123,.6); }
 .cx-simple-srt-count.has-error { color: #ff7b7b; }
 .cx-simple-srt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .cx-simple-srt-grid .cx-cap-field { min-width: 0; }
 .cx-simple-srt-options { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; padding: 8px; border: 1px solid rgba(100,130,110,.2); border-radius: 8px; }
 .cx-simple-srt-options > span { flex: 1 1 220px; color: var(--text-dim,#829087); font-size: 9px; }
 .cx-simple-srt-generate { min-height: 36px; }
+.cx-simple-font-combo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) 28px;gap:4px;align-items:stretch;height:28px}
+.cx-simple-font-combo .counter-input,
+.cx-simple-font-combo .counter-select,
+.cx-simple-font-combo button{width:100%;height:28px;min-height:28px;margin:0;box-sizing:border-box}
+.cx-quickstyle-grid .cx-cap-field .counter-select,
+.cx-quickstyle-grid .cx-cap-field .counter-input{height:28px;min-height:28px}
+.cx-simple-font-field datalist,
+.cx-simple-font-field small{display:none}
 .cx-simple-transcribe-progress[hidden] { display: none !important; }
 .cx-simple-transcribe-progress {
   display: grid;
@@ -687,11 +744,36 @@
 .cx-simple-srt.is-transcribing #btnSimpleTranscribe { color: #d8ffe5; border-color: rgba(34,255,111,.6); background: rgba(14,76,38,.55); }
 @keyframes cx-caption-transcribe-spin { to { transform: rotate(360deg); } }
 @keyframes cx-caption-transcribe-scan { 0% { transform: translateX(-115%); } 50% { transform: translateX(100%); } 100% { transform: translateX(285%); } }
-/* Caption Studio system-font control */
-.cx-simple-font-control{display:grid;grid-template-columns:minmax(0,1fr) 26px;gap:4px;align-items:center}
-.cx-simple-font-control input{min-width:0}
-#btnSimpleLoadSystemFonts{height:26px;min-width:0;padding:0 5px;border:1px solid rgba(34,255,111,.22);border-radius:6px;background:rgba(6,14,10,.82);color:#a9b9ae;font:800 7px/1 inherit;letter-spacing:.04em;cursor:pointer}
-#btnSimpleLoadSystemFonts{font-size:14px;color:#22ff6f}
-#btnSimpleLoadSystemFonts:hover{border-color:rgba(34,255,111,.72);color:#22ff6f;background:rgba(34,255,111,.08)}
+#btnSimpleLoadSystemFonts{height:28px;min-width:0;padding:0;border:1px solid rgba(34,255,111,.22);border-radius:6px;background:rgba(6,14,10,.82);color:#22ff6f;font:800 14px/1 inherit;cursor:pointer}
+#btnSimpleLoadSystemFonts:hover{border-color:rgba(34,255,111,.72);background:rgba(34,255,111,.08)}
 #btnSimpleLoadSystemFonts:disabled{opacity:.5;cursor:wait}
-.cx-simple-font-field small{display:block;min-height:9px;margin-top:2px;color:#66756c;font-size:6px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- Transcription engine: local whisper.cpp or cloud Gemini ----------
+   The picker reuses the segmented-button skin from the words row; the key
+   box only exists while the cloud engine is selected. */
+.cx-cap-engine-seg button { font-size: 9px; letter-spacing: .04em; }
+.cx-cap-engine-seg button:disabled { opacity: .4; cursor: not-allowed; }
+.cx-cap-gemini-row,
+.cx-cap-cloud-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+  margin-top: 7px;
+  padding: 8px;
+  border: 1px solid rgba(34, 255, 111, .16);
+  border-radius: 7px;
+  background: rgba(7, 15, 11, .55);
+}
+.cx-cap-gemini-row[hidden],
+.cx-cap-cloud-row[hidden] { display: none; }
+.cx-cap-gemini-key,
+.cx-cap-cloud-provider { min-width: 0; }
+.cx-cap-gemini-test,
+.cx-cap-cloud-keys { min-height: 26px; padding: 0 12px; font-size: 9px; }
+.cx-cap-gemini-note,
+.cx-cap-cloud-note {
+  grid-column: 1 / -1;
+  color: #788494;
+  font: 500 9px/1.45 Arial, sans-serif;
+}

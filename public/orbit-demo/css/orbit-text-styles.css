@@ -1,0 +1,176 @@
+/* ============================================================
+   ORBIT TEXT STYLE PRESETS — Animation tab card
+   ============================================================ */
+
+#app .ots-shell {
+  --ots-accent: #22ff6f;
+  --ots-line: rgba(255, 255, 255, 0.1);
+  --ots-bg2: #14161c;
+  --ots-dim: #848a98;
+  margin: 10px !important;
+}
+
+#app .ots-shell.is-busy { opacity: 0.6 !important; pointer-events: none !important; }
+
+#app .ots-sub {
+  font: 500 8.5px/1.3 "Segoe UI", sans-serif !important;
+  color: var(--ots-dim) !important;
+  margin-top: 2px !important;
+}
+
+#app .ots-bar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin: 8px 0 !important;
+}
+
+#app .ots-bar-2 { justify-content: space-between !important; }
+
+#app .ots-swatch {
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 3px 6px 3px 7px !important;
+  border: 1px solid var(--ots-line) !important;
+  border-radius: 6px !important;
+  background: var(--ots-bg2) !important;
+  cursor: pointer !important;
+}
+
+#app .ots-swatch span {
+  font: 700 7.5px/1 "Segoe UI", sans-serif !important;
+  letter-spacing: 0.07em !important;
+  color: var(--ots-dim) !important;
+}
+
+#app .ots-swatch input[type="color"] {
+  width: 26px !important;
+  height: 20px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 4px !important;
+  background: transparent !important;
+  cursor: pointer !important;
+}
+
+#app .ots-mini {
+  height: 26px !important;
+  min-width: 28px !important;
+  padding: 0 8px !important;
+  border: 1px solid var(--ots-line) !important;
+  border-radius: 6px !important;
+  background: var(--ots-bg2) !important;
+  color: #e7e9ee !important;
+  font: 700 8.5px/1 "Segoe UI", sans-serif !important;
+  letter-spacing: 0.06em !important;
+  cursor: pointer !important;
+}
+
+#app .ots-mini:hover {
+  border-color: var(--ots-accent) !important;
+  color: var(--ots-accent) !important;
+}
+
+#app .ots-clear:hover {
+  border-color: #ef4444 !important;
+  color: #fca5a5 !important;
+}
+
+#app .ots-text {
+  flex: 1 1 auto !important;
+  min-width: 70px !important;
+  height: 26px !important;
+}
+
+#app .ots-check {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  cursor: pointer !important;
+}
+
+#app .ots-check span {
+  font: 600 8px/1 "Segoe UI", sans-serif !important;
+  color: var(--ots-dim) !important;
+}
+
+#app .ots-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)) !important;
+  gap: 7px !important;
+}
+
+#app .ots-item {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  border: 1px solid var(--ots-line) !important;
+  border-radius: 8px !important;
+  background: linear-gradient(180deg, #1b1f27, #11131a) !important;
+  overflow: hidden !important;
+  cursor: pointer !important;
+  text-align: center !important;
+}
+
+#app .ots-item:hover { border-color: rgba(34, 255, 111, 0.55) !important; }
+
+#app .ots-item.is-active {
+  border-color: var(--ots-accent) !important;
+  box-shadow: 0 0 0 1px rgba(34, 255, 111, 0.35) inset !important;
+}
+
+/* The thumbnail. A generous line-height keeps long shadows and glows
+   inside the tile instead of bleeding into the next card. */
+#app .ots-sample {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 62px !important;
+  padding: 2px 6px !important;
+  font: 900 22px/1 "Segoe UI", "Arial Black", sans-serif !important;
+  letter-spacing: 0.01em !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: clip !important;
+  background-repeat: no-repeat !important;
+  background-size: 100% 100% !important;
+  -webkit-text-fill-color: currentColor;
+}
+
+#app .ots-label {
+  padding: 5px 4px 6px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.07) !important;
+  background: rgba(0, 0, 0, 0.3) !important;
+  font: 700 7.5px/1.1 "Segoe UI", sans-serif !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  color: #c6cbd6 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+#app .ots-item:hover .ots-label,
+#app .ots-item.is-active .ots-label { color: var(--ots-accent) !important; }
+
+#app .ots-status {
+  margin-top: 9px !important;
+  padding: 7px 10px !important;
+  border: 1px solid var(--ots-line) !important;
+  border-radius: 6px !important;
+  background: var(--ots-bg2) !important;
+  font: 500 8px/1.4 "Segoe UI", sans-serif !important;
+  color: var(--ots-dim) !important;
+  text-align: center !important;
+}
+
+#app .ots-status.is-error { border-color: #ef4444 !important; color: #fca5a5 !important; }
+#app .ots-status.is-ok { border-color: var(--ots-accent) !important; color: #bbf7d0 !important; }
+
+@media (max-width: 360px) {
+  #app .ots-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  #app .ots-sample { height: 54px !important; font-size: 19px !important; }
+}
