@@ -25,7 +25,3 @@ on conflict (extension_id, version, channel) do update set
   is_latest = true,
   published_at = excluded.published_at;
 
--- Update extensions table latest_version if applicable
-update public.extensions
-set latest_version = '3.0.0'
-where slug = 'orbit-studio';

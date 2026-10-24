@@ -69,18 +69,6 @@ async function run() {
   }
 
   console.log("Successfully published Orbit Studio 3.0.0 release:", insData);
-
-  // Update extension latest_version
-  const { error: extUpdErr } = await supabase
-    .from("extensions")
-    .update({ latest_version: "3.0.0" })
-    .eq("id", ext.id);
-
-  if (extUpdErr) {
-    console.warn("Could not update extension latest_version column (might not exist or failed):", extUpdErr);
-  } else {
-    console.log("Updated extensions table latest_version to 3.0.0");
-  }
 }
 
 run();
