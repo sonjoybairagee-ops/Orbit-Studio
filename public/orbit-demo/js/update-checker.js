@@ -6,7 +6,7 @@
   "use strict";
 
   const CONFIG = {
-    currentVersion: window.CompXVersion || "2.9.0",
+    currentVersion: window.CompXVersion || "3.0.0",
     slug: "orbit-studio",
     apiEndpoint: "https://compxorbit.com/api/extension/update-check",
     checkIntervalMs: 6 * 60 * 60 * 1000, // Check every 6 hours

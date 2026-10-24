@@ -9,7 +9,7 @@
    the manifest is the only place a release number is ever typed.
 
    Exposes:
-     window.CompXVersion         "2.9.0"  (bare, no "v")
+     window.CompXVersion         "3.0.0"  (bare, no "v")
      window.CompXVersionReady    a Promise-free callback list
 
    Loads before main.js and the update checker, both of which fall
@@ -19,7 +19,7 @@
 (function (window) {
   "use strict";
 
-  var FALLBACK = "2.9.0";
+  var FALLBACK = "3.0.0";
 
   function nodeRequire() {
     if (typeof require === "function") return require;

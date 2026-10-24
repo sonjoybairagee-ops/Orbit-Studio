@@ -190,7 +190,7 @@ export function LicenseCard({ license }: { license: LicenseView }) {
                           : "bg-[#45c66d] text-black shadow-[0_0_20px_rgba(69,198,109,0.3)] hover:bg-[#38b55e]"
                       }`}
                       disabled={busy !== null}
-                      title={isPr ? "Download CompX Orbit Premiere v2.5.0 (.zxp)" : isChrome ? "Download Compx Creator (.zip)" : "Download CompX Orbit Studio v2.9.0 (.zxp)"}
+                      title={isPr ? "Download CompX Orbit Premiere v2.5.0 (.zxp)" : isChrome ? "Download Compx Creator (.zip)" : "Download CompX Orbit Studio v3.0.0 (.zxp)"}
                       onClick={() => download(p.slug)}
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

@@ -238,9 +238,9 @@ export function DashboardView({ user, licenses, verified }: DashboardViewProps) 
                     <a
                       href="/api/download?slug=orbit-studio"
                       className="inline-flex items-center gap-1.5 rounded-lg bg-[#45c66d]/15 hover:bg-[#45c66d]/25 border border-[#45c66d]/30 px-3 py-1.5 text-[11px] font-bold text-[#45c66d] transition-all"
-                      title="Download Orbit Studio v2.9.0 (.zxp)"
+                      title="Download Orbit Studio v3.0.0 (.zxp)"
                     >
-                      ⬇ Orbit Studio v2.9.0 (.zxp)
+                      ⬇ Orbit Studio v3.0.0 (.zxp)
                     </a>
                     <a
                       href="/api/download?slug=orbit-premiere"

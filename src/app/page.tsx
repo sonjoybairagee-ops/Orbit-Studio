@@ -77,7 +77,7 @@ export default async function Home() {
         <div className="shell home-hero__inner">
           <div className="home-hero__copy">
             <div className="home-hero__kicker">
-              <span><i /> Orbit Studio 2.9.0</span>
+              <span><i /> Orbit Studio 3.0.0</span>
               <span>After Effects + Premiere Pro</span>
             </div>
             <h1>
@@ -265,8 +265,8 @@ export default async function Home() {
                 <div className="install-dl-card install-dl-card--new">
                   <div className="install-dl-card__badge">Lifetime License · From $2</div>
                   <b>CompX Orbit Studio</b>
-                  <small>v2.9.0 · After Effects + Premiere Pro</small>
-                  <code>CompX-Orbit-Studio-v2.9.0.zxp</code>
+                  <small>v3.0.0 · After Effects + Premiere Pro</small>
+                  <code>CompX-Orbit-Studio-v3.0.0.zxp</code>
                 </div>
                 <div className="install-dl-card install-dl-card--legacy">
                   <div className="install-dl-card__badge">Legacy · Free Redeem</div>

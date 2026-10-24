@@ -47,7 +47,7 @@ export default function InstallationGuidePage() {
                   href="/api/download?slug=orbit-studio"
                   className="inline-flex items-center gap-2 rounded-lg bg-[#45c66d]/15 hover:bg-[#45c66d]/25 border border-[#45c66d]/30 px-3 py-1.5 text-xs font-bold text-[#45c66d] transition-all"
                 >
-                  ⬇ Orbit Studio v2.9.0 (.zxp)
+                  ⬇ Orbit Studio v3.0.0 (.zxp)
                 </a>
                 <a
                   href="/api/download?slug=orbit-premiere"

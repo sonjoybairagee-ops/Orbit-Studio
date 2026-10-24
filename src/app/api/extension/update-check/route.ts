@@ -33,11 +33,11 @@ const DEFAULT_LATEST: Record<
   }
 > = {
   "orbit-studio": {
-    version: "2.9.0",
-    r2Key: "CompX-Orbit-Studio-v2.9.0.zxp",
-    publicUrl: "https://assets.compxorbit.com/CompX-Orbit-Studio-v2.9.0.zxp",
+    version: "3.0.0",
+    r2Key: "CompX-Orbit-Studio-v3.0.0.zxp",
+    publicUrl: "https://assets.compxorbit.com/CompX-Orbit-Studio-v3.0.0.zxp",
     releaseNotes: [
-      "Orbit Studio v2.9.0 update with performance optimizations and new features.",
+      "Orbit Studio v3.0.0 major update with performance optimizations and new features.",
       "High-speed Cloudflare R2 asset streaming and downloads.",
       "Optimized Color Plates and Motion Lab layer engine.",
       "Enhanced compatibility with After Effects 2024 & 2025.",

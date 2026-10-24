@@ -262,7 +262,7 @@
     return {
       format: "compx-library-backup",
       version: 1,
-      extensionVersion: window.CompXVersion || "2.9.0",
+      extensionVersion: window.CompXVersion || "3.0.0",
       exportedAt: new Date().toISOString(),
       assetCount: library.length,
       library: prepareLibraryForPersistence(library).map((item) => {
