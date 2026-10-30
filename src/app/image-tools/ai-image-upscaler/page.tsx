@@ -15,6 +15,9 @@ export const metadata: Metadata = {
   title: "Free 4K AI Image Upscaler & Neural Enhancer (Real-ESRGAN & Waifu2x) — CompX Orbit",
   description:
     "Upscale images, photos, and anime art to 4K and 8K with Real-ESRGAN True Neural AI super-resolution. 100% free, WebGL GPU accelerated with interactive split-screen comparison.",
+  alternates: {
+    canonical: "/image-tools/ai-image-upscaler",
+  },
   keywords: [
     "real-esrgan online free",
     "waifu2x online upscaler",
@@ -31,6 +34,7 @@ export const metadata: Metadata = {
     title: "Free 4K AI Image Upscaler & Neural Enhancer (Real-ESRGAN) | CompX Orbit",
     description:
       "Upscale blurry images, photos, and artwork to 4K Ultra HD using Real-ESRGAN Deep Neural AI. 100% free with interactive before/after split slider.",
+    url: "https://compxorbit.com/image-tools/ai-image-upscaler",
     type: "website",
   },
 };
@@ -196,6 +200,65 @@ export default function ImageUpscalerPage() {
             ))}
           </div>
         </div>
+
+        {/* Structured Data for Google Search */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "WebApplication",
+                  name: "Free 4K AI Image Upscaler & Neural Enhancer",
+                  applicationCategory: "MultimediaApplication",
+                  operatingSystem: "All",
+                  offers: {
+                    "@type": "Offer",
+                    price: "0",
+                    priceCurrency: "USD",
+                  },
+                  description:
+                    "Upscale images, photos, and anime art to 4K and 8K with Real-ESRGAN True Neural AI super-resolution directly in browser.",
+                },
+                {
+                  "@type": "BreadcrumbList",
+                  itemListElement: [
+                    {
+                      "@type": "ListItem",
+                      position: 1,
+                      name: "Home",
+                      item: "https://compxorbit.com",
+                    },
+                    {
+                      "@type": "ListItem",
+                      position: 2,
+                      name: "Image Tools",
+                      item: "https://compxorbit.com/image-tools",
+                    },
+                    {
+                      "@type": "ListItem",
+                      position: 3,
+                      name: "AI Image Upscaler",
+                      item: "https://compxorbit.com/image-tools/ai-image-upscaler",
+                    },
+                  ],
+                },
+                {
+                  "@type": "FAQPage",
+                  mainEntity: FAQS.map((faq) => ({
+                    "@type": "Question",
+                    name: faq.q,
+                    acceptedAnswer: {
+                      "@type": "Answer",
+                      text: faq.a,
+                    },
+                  })),
+                },
+              ],
+            }),
+          }}
+        />
       </div>
     </div>
   );

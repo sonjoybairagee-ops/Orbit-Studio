@@ -1,12 +1,30 @@
+import type { Metadata } from "next";
 import { TOOLS_DATA } from "@/lib/tools-data";
 import ToolCard from "@/components/ToolCard";
 import Link from "next/link";
 import { FolderArchive, ChevronRight } from "lucide-react";
 
-export const metadata = {
-  title: "File & Video Tools — Free Online File Converters & Utilities | ToolHub",
+export const metadata: Metadata = {
+  title: "Free Online File Converters & Archive Utilities — CompX Orbit",
   description:
     "Free online file and video tools: Video to GIF Converter, Video Frame Extractor, ZIP File Creator, and CSV to JSON Converter. 100% private in-browser processing.",
+  alternates: {
+    canonical: "/file-tools",
+  },
+  keywords: [
+    "free file tools",
+    "video to gif converter",
+    "video frame extractor",
+    "create zip file online",
+    "csv to json converter",
+    "compx orbit files",
+  ],
+  openGraph: {
+    title: "Free Online File Converters & Archive Utilities — CompX Orbit",
+    description: "Fast in-browser file compression, extraction and conversion utilities.",
+    url: "https://compxorbit.com/file-tools",
+    type: "website",
+  },
 };
 
 export default function FileToolsPage() {

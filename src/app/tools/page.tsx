@@ -4,9 +4,30 @@ import { AdBanner } from "@/components/ads/AdBanner";
 import { TOOLS_DATA, CATEGORIES } from "@/lib/tools-data";
 
 export const metadata: Metadata = {
-  title: "Free Online Tools for Creators & Marketers — CompX Orbit",
+  title: "100+ Free Online Creator & Multimedia Tools — CompX Orbit",
   description:
-    "100+ fast, private browser-based utilities for video downloading, PDF editing, image conversion, marketing campaigns, subtitles, and developer workflows.",
+    "Explore 100+ fast, private browser-based tools: 4K video downloaders, AI auto captions generator, Real-ESRGAN neural upscaler, PDF editors, audio converters, and developer utilities.",
+  alternates: {
+    canonical: "/tools",
+  },
+  keywords: [
+    "free online tools",
+    "creator tools directory",
+    "video downloaders",
+    "ai caption generator",
+    "ai image upscaler",
+    "pdf tools online",
+    "free audio tools",
+    "developer utilities",
+    "compx orbit tools",
+  ],
+  openGraph: {
+    title: "100+ Free Online Creator & Multimedia Tools — CompX Orbit",
+    description:
+      "Fast, private browser-based utilities for creators, video editors, and developers with zero registration required.",
+    url: "https://compxorbit.com/tools",
+    type: "website",
+  },
 };
 
 export default function ToolsHubPage() {
@@ -27,6 +48,36 @@ export default function ToolsHubPage() {
       <div className="mx-auto max-w-5xl px-4 pb-12 sm:px-6">
         <AdBanner slot="tools-hub-bottom" format="auto" />
       </div>
+
+      {/* Structured Data for Google Search */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              {
+                "@type": "CollectionPage",
+                name: "100+ Free Online Creator & Multimedia Tools",
+                url: "https://compxorbit.com/tools",
+                description:
+                  "100+ fast, private browser-based utilities for video downloading, PDF editing, image conversion, marketing campaigns, subtitles, and developer workflows.",
+              },
+              {
+                "@type": "ItemList",
+                name: "Free Online Creator Tools Catalog",
+                itemListElement: TOOLS_DATA.slice(0, 30).map((tool, idx) => ({
+                  "@type": "ListItem",
+                  position: idx + 1,
+                  name: tool.name,
+                  url: `https://compxorbit.com${tool.href}`,
+                  description: tool.shortDesc,
+                })),
+              },
+            ],
+          }),
+        }}
+      />
     </div>
   );
 }

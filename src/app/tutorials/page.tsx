@@ -2,8 +2,17 @@ import { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Tutorials | CompX Orbit",
-  description: "Learn how to master every feature in After Effects with Orbit Studio.",
+  title: "Tutorials & Video Guides — Master CompX Orbit Studio",
+  description:
+    "Step-by-step video tutorials and documentation to master motion design, keyframe easing, subtitle styling, and asset organization in Adobe After Effects.",
+  alternates: {
+    canonical: "/tutorials",
+  },
+  openGraph: {
+    title: "Video Guides & Tutorials — CompX Orbit Studio",
+    description: "Learn how to master motion graphics and video editing workflows.",
+    url: "https://compxorbit.com/tutorials",
+  },
 };
 
 export default function TutorialsPage() {

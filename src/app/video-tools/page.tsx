@@ -1,12 +1,31 @@
+import type { Metadata } from "next";
 import { TOOLS_DATA } from "@/lib/tools-data";
 import ToolCard from "@/components/ToolCard";
 import Link from "next/link";
 import { Film, ChevronRight } from "lucide-react";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Free Video Editing & Creator Tools — CompX Orbit",
   description:
-    "Free professional video workflow tools for creators, editors, and motion designers. Timecode calculator, social media safe zones, YouTube thumbnail grabber, and post-production planners.",
+    "Free professional video workflow tools for creators, editors, and motion designers. AI Auto-Captions generator, Timecode calculator, social media safe zones, and YouTube thumbnail grabber.",
+  alternates: {
+    canonical: "/video-tools",
+  },
+  keywords: [
+    "video tools",
+    "ai auto captions generator",
+    "video timecode calculator",
+    "social media safe zones",
+    "youtube thumbnail grabber",
+    "video editing utilities",
+    "compx orbit video",
+  ],
+  openGraph: {
+    title: "Free Video Editing & Creator Tools — CompX Orbit",
+    description: "Professional video workflow utilities for motion designers and video creators.",
+    url: "https://compxorbit.com/video-tools",
+    type: "website",
+  },
 };
 
 export default function VideoToolsPage() {
@@ -54,6 +73,42 @@ export default function VideoToolsPage() {
           ))}
         </div>
       </section>
+
+      {/* Structured Data for Google Search */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              {
+                "@type": "CollectionPage",
+                name: "Free Video Editing & Creator Tools",
+                url: "https://compxorbit.com/video-tools",
+                description:
+                  "Free professional video workflow tools for creators, editors, and motion designers. AI Auto-Captions generator, Timecode calculator, social media safe zones, and YouTube thumbnail grabber.",
+              },
+              {
+                "@type": "BreadcrumbList",
+                itemListElement: [
+                  {
+                    "@type": "ListItem",
+                    position: 1,
+                    name: "Home",
+                    item: "https://compxorbit.com",
+                  },
+                  {
+                    "@type": "ListItem",
+                    position: 2,
+                    name: "Video Tools",
+                    item: "https://compxorbit.com/video-tools",
+                  },
+                ],
+              },
+            ],
+          }),
+        }}
+      />
     </main>
   );
 }

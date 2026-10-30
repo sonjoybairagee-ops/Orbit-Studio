@@ -1,12 +1,32 @@
+import type { Metadata } from "next";
 import { TOOLS_DATA } from "@/lib/tools-data";
 import ToolCard from "@/components/ToolCard";
 import Link from "next/link";
 import { Search, ChevronRight } from "lucide-react";
 
-export const metadata = {
-  title: "Free SEO & Website Tools — SERP Preview, Meta Tags, Robots.txt & Sitemap | ToolHub",
+export const metadata: Metadata = {
+  title: "Free Online SEO & Webmaster Tools — SERP Preview, Meta & Sitemap | CompX Orbit",
   description:
-    "Free online SEO & webmaster tools: SERP Snippet Preview, Meta Tag Generator, Open Graph Preview, Robots.txt Generator, XML Sitemap Generator, and UTM Link Builder. 100% client-side.",
+    "Free online SEO & webmaster tools: Google SERP Snippet Preview, Meta Tag Generator, Open Graph Preview, Robots.txt Generator, XML Sitemap Generator, and UTM Link Builder. 100% client-side.",
+  alternates: {
+    canonical: "/seo-tools",
+  },
+  keywords: [
+    "free seo tools",
+    "serp preview tool",
+    "meta tag generator",
+    "open graph preview",
+    "robots.txt generator",
+    "xml sitemap generator",
+    "google search optimization tools",
+    "compx orbit seo",
+  ],
+  openGraph: {
+    title: "Free Online SEO & Webmaster Tools — CompX Orbit",
+    description: "Audit meta tags, preview Google SERP snippets, and generate robots.txt & sitemaps.",
+    url: "https://compxorbit.com/seo-tools",
+    type: "website",
+  },
 };
 
 export default function SeoToolsPage() {

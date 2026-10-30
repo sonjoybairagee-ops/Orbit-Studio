@@ -24,10 +24,14 @@ export const metadata: Metadata = {
     "CreatorLens AI",
     "Chrome Web Store YouTube extension",
   ],
+  alternates: {
+    canonical: "/creator",
+  },
   openGraph: {
     title: "CreatorLens AI — 1-Click YouTube Studio SEO & Thumbnail Suite",
     description:
       "Rank #1 on YouTube with instant tags, viral titles, and HD thumbnails directly inside YouTube Studio. 100% Free Core Tier.",
+    url: "https://compxorbit.com/creator",
     type: "website",
   },
   twitter: {

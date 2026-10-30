@@ -1,12 +1,31 @@
+import type { Metadata } from "next";
 import { TOOLS_DATA } from "@/lib/tools-data";
 import ToolCard from "@/components/ToolCard";
 import Link from "next/link";
 import { Code2, ChevronRight } from "lucide-react";
 
-export const metadata = {
-  title: "Developer & Data Tools — Free Online Dev & Encoding Utilities | ToolHub",
+export const metadata: Metadata = {
+  title: "Free Developer & Data Tools — Online Encoding & Utilities | CompX Orbit",
   description:
     "Free browser-based developer tools: CSV Viewer, YAML Formatter, Markdown Previewer, Unix Timestamp Converter, UUID Generator, URL Parser, JSON Formatter, Base64 Encoder, Regex Tester, and more.",
+  alternates: {
+    canonical: "/developer-tools",
+  },
+  keywords: [
+    "free developer tools",
+    "json formatter online",
+    "base64 encoder decoder",
+    "uuid generator",
+    "regex tester",
+    "markdown previewer",
+    "compx orbit dev",
+  ],
+  openGraph: {
+    title: "Free Developer & Data Tools — Online Utilities | CompX Orbit",
+    description: "Fast, client-side tools for engineers and web developers.",
+    url: "https://compxorbit.com/developer-tools",
+    type: "website",
+  },
 };
 
 export default function DevToolsPage() {

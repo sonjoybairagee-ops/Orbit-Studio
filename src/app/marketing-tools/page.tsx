@@ -1,12 +1,31 @@
+import type { Metadata } from "next";
 import { TOOLS_DATA } from "@/lib/tools-data";
 import ToolCard from "@/components/ToolCard";
 import Link from "next/link";
 import { Megaphone, ChevronRight } from "lucide-react";
 
-export const metadata = {
-  title: "Marketing Tools — Free Growth, Campaign & Social Media Tools | ToolHub",
+export const metadata: Metadata = {
+  title: "Free Marketing, Growth & Social Media Campaign Tools — CompX Orbit",
   description:
     "Free marketing tools: Campaign URL & UTM Builder, Email Subject Line Tester, HTML Email Signature Generator, Affiliate Link Builder, QR Business Card, Bio Formatter, and Marketing ROI Calculator.",
+  alternates: {
+    canonical: "/marketing-tools",
+  },
+  keywords: [
+    "free marketing tools",
+    "utm builder",
+    "email subject line tester",
+    "email signature generator",
+    "affiliate link builder",
+    "marketing roi calculator",
+    "compx orbit marketing",
+  ],
+  openGraph: {
+    title: "Free Marketing, Growth & Social Media Tools — CompX Orbit",
+    description: "Boost conversions, campaign tracking, and creator branding.",
+    url: "https://compxorbit.com/marketing-tools",
+    type: "website",
+  },
 };
 
 export default function MarketingToolsPage() {

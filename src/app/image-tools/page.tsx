@@ -4,8 +4,27 @@ import { TOOLS_DATA } from "@/lib/tools-data";
 import { Sparkles, Image as ImageIcon } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Free Online Image Tools & Converters",
-  description: "Compress, convert, resize, and crop images directly in your browser. 100% private, free, and secure.",
+  title: "Free Online Image Tools, 4K AI Upscaler & Converters — CompX Orbit",
+  description:
+    "Upscale images to 4K with Real-ESRGAN Neural AI, compress photos, convert JPG/PNG to WebP, resize and crop images directly in your browser. 100% private and free.",
+  alternates: {
+    canonical: "/image-tools",
+  },
+  keywords: [
+    "ai image upscaler free",
+    "real-esrgan online",
+    "image compressor",
+    "jpg to webp converter",
+    "png to jpg",
+    "image resizer online",
+    "compx orbit image tools",
+  ],
+  openGraph: {
+    title: "Free Online Image Tools & 4K AI Upscaler — CompX Orbit",
+    description: "Real-ESRGAN AI super-resolution, compressor, converter, and resizer.",
+    url: "https://compxorbit.com/image-tools",
+    type: "website",
+  },
 };
 
 export default function ImageToolsPage() {

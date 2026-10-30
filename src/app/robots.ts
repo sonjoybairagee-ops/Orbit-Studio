@@ -8,11 +8,35 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        // Private areas: nothing useful for search engines, and they
-        // should never be crawled.
-        disallow: ["/admin", "/dashboard", "/api", "/auth", "/checkout", "/reset-password"],
+        disallow: [
+          "/admin",
+          "/admin/*",
+          "/dashboard",
+          "/dashboard/*",
+          "/api/",
+          "/auth/",
+          "/checkout",
+          "/reset-password",
+          "/forgot-password",
+        ],
+      },
+      {
+        userAgent: "Googlebot",
+        allow: "/",
+        disallow: [
+          "/admin",
+          "/admin/*",
+          "/dashboard",
+          "/dashboard/*",
+          "/api/",
+          "/auth/",
+          "/checkout",
+          "/reset-password",
+          "/forgot-password",
+        ],
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,
+    host: SITE_URL,
   };
 }

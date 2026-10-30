@@ -4,9 +4,27 @@ import { TOOLS_DATA } from "@/lib/tools-data";
 import { FileText, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Free Online PDF Tools - Merge, Split, Compress & Organize PDFs",
-  description: "Complete client-side PDF tool suite: Merge PDF, Split PDF, Compress PDF, Images to PDF, and PDF Page Organizer without server uploads.",
-  keywords: ["pdf tools", "merge pdf", "split pdf", "compress pdf", "images to pdf", "pdf organizer", "free online pdf"],
+  title: "Free Online PDF Tools — Merge, Split, Compress & Organize PDFs | CompX Orbit",
+  description:
+    "Complete client-side PDF tool suite: Merge PDF, Split PDF, Compress PDF, Images to PDF, and PDF Page Organizer without server uploads.",
+  alternates: {
+    canonical: "/pdf-tools",
+  },
+  keywords: [
+    "pdf tools",
+    "merge pdf online",
+    "split pdf free",
+    "compress pdf client-side",
+    "images to pdf converter",
+    "pdf page organizer",
+    "compx orbit pdf",
+  ],
+  openGraph: {
+    title: "Free Online PDF Tools — CompX Orbit",
+    description: "Fast, private client-side PDF manipulation with zero file uploads.",
+    url: "https://compxorbit.com/pdf-tools",
+    type: "website",
+  },
 };
 
 export default function PdfToolsPage() {

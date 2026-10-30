@@ -4,9 +4,27 @@ import { TOOLS_DATA } from "@/lib/tools-data";
 import { Type } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Free Online Text Tools - Word Counter, Case Converter & Diff Checker",
-  description: "Free online text formatting suite: Word Counter, Character Counter, Case Converter, Remove Extra Spaces, and Text Diff Checker.",
-  keywords: ["text tools", "word counter", "character counter", "case converter", "remove extra spaces", "text diff checker"],
+  title: "Free Online Text Utilities — Word Counter & Case Converter | CompX Orbit",
+  description:
+    "Free online text formatting suite: Word Counter, Character Counter, Case Converter, Remove Extra Spaces, and Text Diff Checker.",
+  alternates: {
+    canonical: "/text-tools",
+  },
+  keywords: [
+    "text tools",
+    "word counter",
+    "character counter",
+    "case converter",
+    "remove extra spaces",
+    "text diff checker",
+    "compx orbit text tools",
+  ],
+  openGraph: {
+    title: "Free Online Text Utilities — CompX Orbit",
+    description: "Fast in-browser word counter, diff checker, and case converter.",
+    url: "https://compxorbit.com/text-tools",
+    type: "website",
+  },
 };
 
 export default function TextToolsPage() {

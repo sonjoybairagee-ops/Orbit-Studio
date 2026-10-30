@@ -5,9 +5,28 @@ import ToolCard from "@/components/ToolCard";
 import { Download, ChevronRight, Sparkles, ShieldCheck, Zap, Video, CheckCircle2 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Free Online Media & Video Downloaders — CompX Orbit",
+  title: "Free Online Media & Video Downloaders (4K & 1080p MP4) — CompX Orbit",
   description:
     "Download high quality 4K and 1080p MP4 videos, 320kbps MP3 audio, and Full HD thumbnails from YouTube, Facebook, Instagram, and Pinterest. 100% free and private.",
+  alternates: {
+    canonical: "/downloader-tools",
+  },
+  keywords: [
+    "free video downloader",
+    "youtube 4k downloader",
+    "facebook video downloader",
+    "instagram reel downloader",
+    "pinterest video downloader",
+    "tiktok video downloader",
+    "mp3 audio extractor",
+    "compx orbit downloader",
+  ],
+  openGraph: {
+    title: "Free Online Media & Video Downloaders — CompX Orbit",
+    description: "Download 4K & 1080p MP4 videos, MP3 audio, and thumbnails from YouTube, Facebook & Instagram.",
+    url: "https://compxorbit.com/downloader-tools",
+    type: "website",
+  },
 };
 
 export default function DownloaderToolsPage() {
@@ -122,6 +141,42 @@ export default function DownloaderToolsPage() {
             </div>
           </div>
         </div>
+
+        {/* Structured Data for Google Search */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "CollectionPage",
+                  name: "Free Online Media & Video Downloaders",
+                  url: "https://compxorbit.com/downloader-tools",
+                  description:
+                    "Download high quality 4K and 1080p MP4 videos, 320kbps MP3 audio, and Full HD thumbnails from YouTube, Facebook, Instagram, and Pinterest.",
+                },
+                {
+                  "@type": "BreadcrumbList",
+                  itemListElement: [
+                    {
+                      "@type": "ListItem",
+                      position: 1,
+                      name: "Home",
+                      item: "https://compxorbit.com",
+                    },
+                    {
+                      "@type": "ListItem",
+                      position: 2,
+                      name: "Downloader Tools",
+                      item: "https://compxorbit.com/downloader-tools",
+                    },
+                  ],
+                },
+              ],
+            }),
+          }}
+        />
       </section>
     </main>
   );

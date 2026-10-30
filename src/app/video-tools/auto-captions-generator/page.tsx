@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   title: "Free AI Auto-Captions & Subtitle Generator for Reels & Shorts — CompX Orbit",
   description:
     "Generate viral word-by-word animated subtitles for TikTok, Instagram Reels, and YouTube Shorts. 100% free Submagic & Captions app alternative with Hormozi styles, SRT, VTT, and ASS export.",
+  alternates: {
+    canonical: "/video-tools/auto-captions-generator",
+  },
   keywords: [
     "auto caption generator",
     "animated subtitles for reels",
@@ -32,6 +35,7 @@ export const metadata: Metadata = {
     title: "Free AI Auto-Captions & Subtitle Generator for Reels & Shorts",
     description:
       "Create viral animated word-by-word subtitles for TikTok, Reels, and Shorts. 100% free with zero watermarks.",
+    url: "https://compxorbit.com/video-tools/auto-captions-generator",
     type: "website",
   },
 };
@@ -197,6 +201,65 @@ export default function AutoCaptionsPage() {
             ))}
           </div>
         </div>
+
+        {/* Structured Data for Google Search */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "WebApplication",
+                  name: "Free AI Auto-Captions & Subtitle Generator",
+                  applicationCategory: "MultimediaApplication",
+                  operatingSystem: "All",
+                  offers: {
+                    "@type": "Offer",
+                    price: "0",
+                    priceCurrency: "USD",
+                  },
+                  description:
+                    "Generate viral word-by-word animated subtitles for TikTok, Instagram Reels, and YouTube Shorts with 36+ styles.",
+                },
+                {
+                  "@type": "BreadcrumbList",
+                  itemListElement: [
+                    {
+                      "@type": "ListItem",
+                      position: 1,
+                      name: "Home",
+                      item: "https://compxorbit.com",
+                    },
+                    {
+                      "@type": "ListItem",
+                      position: 2,
+                      name: "Video Tools",
+                      item: "https://compxorbit.com/video-tools",
+                    },
+                    {
+                      "@type": "ListItem",
+                      position: 3,
+                      name: "Auto-Captions Generator",
+                      item: "https://compxorbit.com/video-tools/auto-captions-generator",
+                    },
+                  ],
+                },
+                {
+                  "@type": "FAQPage",
+                  mainEntity: FAQS.map((faq) => ({
+                    "@type": "Question",
+                    name: faq.q,
+                    acceptedAnswer: {
+                      "@type": "Answer",
+                      text: faq.a,
+                    },
+                  })),
+                },
+              ],
+            }),
+          }}
+        />
       </div>
     </div>
   );

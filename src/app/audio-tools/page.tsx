@@ -1,12 +1,30 @@
+import type { Metadata } from "next";
 import { TOOLS_DATA } from "@/lib/tools-data";
 import ToolCard from "@/components/ToolCard";
 import Link from "next/link";
 import { Volume2, ChevronRight } from "lucide-react";
 
-export const metadata = {
-  title: "Audio Tools — Free Online Audio Processing Utilities | ToolHub",
+export const metadata: Metadata = {
+  title: "Free Online Audio Processing Tools & Converters — CompX Orbit",
   description:
     "Free browser-based audio tools: Volume Normalizer, Audio Trimmer, and WAV to MP3/WebM Converter. Fast, 100% private in-browser Web Audio API processing.",
+  alternates: {
+    canonical: "/audio-tools",
+  },
+  keywords: [
+    "free audio tools",
+    "volume normalizer online",
+    "audio trimmer free",
+    "wav to mp3 converter",
+    "browser audio tools",
+    "compx orbit audio",
+  ],
+  openGraph: {
+    title: "Free Online Audio Processing Tools & Converters — CompX Orbit",
+    description: "Fast, private browser-based audio utilities with zero uploads.",
+    url: "https://compxorbit.com/audio-tools",
+    type: "website",
+  },
 };
 
 export default function AudioToolsPage() {

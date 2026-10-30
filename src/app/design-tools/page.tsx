@@ -1,12 +1,31 @@
+import type { Metadata } from "next";
 import { TOOLS_DATA } from "@/lib/tools-data";
 import ToolCard from "@/components/ToolCard";
 import Link from "next/link";
 import { Paintbrush, ChevronRight } from "lucide-react";
 
-export const metadata = {
-  title: "Advanced Image & Design Tools — Free Online Design Utilities | ToolHub",
+export const metadata: Metadata = {
+  title: "Free Online Graphic Design & Creative Tools — CompX Orbit",
   description:
-    "Free online design tools: Background Color Changer, Pixel Art Converter, Favicon Generator, SVG Optimizer, Image Color Picker, and Image Watermark Tool. 100% private.",
+    "Free online design tools: Favicon Generator, SVG Optimizer, Color Palette Generator, Gradient Generator, Image Color Picker, and Watermark Tool. 100% private.",
+  alternates: {
+    canonical: "/design-tools",
+  },
+  keywords: [
+    "free design tools",
+    "favicon generator online",
+    "svg optimizer",
+    "color palette generator",
+    "gradient generator",
+    "image watermark tool",
+    "compx orbit design",
+  ],
+  openGraph: {
+    title: "Free Online Graphic Design & Creative Tools — CompX Orbit",
+    description: "Fast, in-browser creative utilities for designers and creators.",
+    url: "https://compxorbit.com/design-tools",
+    type: "website",
+  },
 };
 
 export default function DesignToolsPage() {

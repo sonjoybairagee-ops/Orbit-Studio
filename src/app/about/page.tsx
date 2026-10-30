@@ -5,8 +5,14 @@ import { Sparkles, Video, Cpu, ShieldCheck, Zap, Globe, Heart, ArrowRight, Messa
 export const metadata: Metadata = {
   title: "About Us — CompX Orbit Studio & Free Creator Tools",
   description:
-    "Learn about CompX Orbit Studio, our mission to build high-performance creative plugins for Adobe After Effects and Premiere Pro, and our 82+ free browser utilities for video editors and digital creators.",
+    "Learn about CompX Orbit Studio, our mission to build high-performance creative plugins for Adobe After Effects and Premiere Pro, and our 100+ free browser utilities for video editors and digital creators.",
   alternates: { canonical: "/about" },
+  openGraph: {
+    title: "About CompX Orbit — Creative Control Center",
+    description:
+      "Empowering creators and editors with cutting-edge extensions and 100+ free online multimedia tools.",
+    url: "https://compxorbit.com/about",
+  },
 };
 
 export default function AboutPage() {

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
@@ -5,6 +6,20 @@ import { AgencyPricingCard } from "@/components/AgencyPricingCard";
 import { PaymentMethodsSection } from "@/components/PaymentMethodsSection";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Simple, Transparent Lifetime Pricing — CompX Orbit Studio",
+  description:
+    "Get lifetime access to CompX Orbit Studio for Adobe After Effects and Premiere Pro. No recurring subscriptions, one-time purchase with instant license key activation.",
+  alternates: {
+    canonical: "/pricing",
+  },
+  openGraph: {
+    title: "Simple Lifetime Pricing — CompX Orbit Studio",
+    description: "One-time purchase, lifetime updates, and zero subscriptions.",
+    url: "https://compxorbit.com/pricing",
+  },
+};
 
 const FALLBACK_SINGLE = {
   id: "orbit-bundle",

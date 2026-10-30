@@ -4,9 +4,27 @@ import { TOOLS_DATA } from "@/lib/tools-data";
 import { Subtitles } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Free Online Subtitle Tools - Shift Timestamps, Format SRT & VTT",
-  description: "Free subtitle utility suite: SRT Formatter, SRT Timestamp Shifter, Subtitle Line Break Fixer, SRT to VTT Converter, and Subtitle Character Counter.",
-  keywords: ["subtitle tools", "srt formatter", "srt timestamp shifter", "srt to vtt converter", "subtitle line break fixer", "subtitle character counter"],
+  title: "Free Online Subtitle Tools — Shift Timestamps, Format SRT & VTT | CompX Orbit",
+  description:
+    "Free subtitle utility suite: SRT Formatter, SRT Timestamp Shifter, Subtitle Line Break Fixer, SRT to VTT Converter, and Subtitle Character Counter.",
+  alternates: {
+    canonical: "/subtitle-tools",
+  },
+  keywords: [
+    "subtitle tools",
+    "srt formatter",
+    "srt timestamp shifter",
+    "srt to vtt converter",
+    "subtitle line break fixer",
+    "subtitle character counter",
+    "compx orbit subtitles",
+  ],
+  openGraph: {
+    title: "Free Online Subtitle Tools — CompX Orbit",
+    description: "Format, convert, and shift timestamps for SRT and VTT subtitles.",
+    url: "https://compxorbit.com/subtitle-tools",
+    type: "website",
+  },
 };
 
 export default function SubtitleToolsPage() {

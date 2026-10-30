@@ -1,12 +1,32 @@
+import type { Metadata } from "next";
 import { TOOLS_DATA } from "@/lib/tools-data";
 import ToolCard from "@/components/ToolCard";
 import Link from "next/link";
 import { Calculator, ChevronRight } from "lucide-react";
 
-export const metadata = {
-  title: "Calculators & Productivity Tools — Free Online Math, Finance & Utility Tools | ToolHub",
+export const metadata: Metadata = {
+  title: "Free Online Calculators & Productivity Tools — CompX Orbit",
   description:
-    "Free calculators: Unit Converter, Time Zone Converter, Work Hours & Timesheet, Loan EMI, Discount Calculator, Tip Calculator, Percentage, Date Difference, Time Duration, QR Generator, and more.",
+    "Free online calculators: Unit Converter, Time Zone Converter, Work Hours & Timesheet, Loan EMI, Discount Calculator, Tip Calculator, Percentage, Date Difference, QR Generator, and more.",
+  alternates: {
+    canonical: "/calculator-tools",
+  },
+  keywords: [
+    "free online calculator",
+    "unit converter online",
+    "loan emi calculator",
+    "work hours timesheet calculator",
+    "percentage calculator",
+    "qr code generator",
+    "productivity tools",
+    "compx orbit",
+  ],
+  openGraph: {
+    title: "Free Online Calculators & Productivity Tools — CompX Orbit",
+    description: "Fast, accurate browser-based calculators and utility tools.",
+    url: "https://compxorbit.com/calculator-tools",
+    type: "website",
+  },
 };
 
 export default function CalculatorToolsPage() {
