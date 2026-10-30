@@ -11,7 +11,6 @@ const LINKS = [
   ["/pricing", "Pricing"],
   ["/about", "About"],
   ["/contact", "Contact"],
-  ["/#install", "How it works"],
 ];
 
 export function MobileNav({

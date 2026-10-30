@@ -181,7 +181,7 @@ export default function ContactPage() {
             <div className="contact-info-icon">🔗</div>
             <h3>Quick links</h3>
             <div className="contact-quick-links">
-              <Link href="/#install">Installation guide</Link>
+              <Link href="/tutorials">Tutorials</Link>
               <Link href="/dashboard">My dashboard</Link>
               <Link href="/pricing">Pricing & plans</Link>
               <Link href="/dashboard/support">Live support chat</Link>
