@@ -354,7 +354,7 @@ export function CreatorInteractiveShowcase() {
                   display: "inline-block",
                 }}
               >
-                ⚡ 100% Client-Side Rendered (No Server Wait)
+                ⚡ 100% Free Rendered (No Server Wait)
               </span>
             </div>
 

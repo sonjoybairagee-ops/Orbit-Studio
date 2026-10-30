@@ -178,7 +178,7 @@ export default function ImageWatermarkTool() {
               </div>
               <div>
                 <h4 className="font-bold text-slate-900 text-sm truncate max-w-xs">{baseFile.name}</h4>
-                <p className="text-xs text-slate-400">Client-side lossless canvas watermark rendering</p>
+                <p className="text-xs text-slate-400">Lossless watermark rendering • 100% Free</p>
               </div>
             </div>
 

@@ -36,7 +36,7 @@ export default function ImageCompressorPage() {
         {/* Title & Introduction */}
         <div className="text-center mb-8">
           <span className="inline-block rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200/60 mb-2">
-            100% Client-Side Privacy
+            100% Free Privacy
           </span>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
             Image Compressor

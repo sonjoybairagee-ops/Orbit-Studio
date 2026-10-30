@@ -26,7 +26,7 @@ export default function VideoToGifPage() {
       <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
           <span className="inline-block rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700 border border-rose-200/60 mb-2">
-            100% Client-Side · No Upload
+            100% Free · No Upload
           </span>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
             Video to Animated GIF Converter

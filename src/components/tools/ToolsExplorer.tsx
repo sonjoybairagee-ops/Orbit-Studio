@@ -41,34 +41,33 @@ export default function ToolsExplorer({ tools, categories }: ToolsExplorerProps)
 
   return (
     <div className="w-full">
-      {/* Search & Filter Toolbar */}
-      <div className="mb-8 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-        {/* Search Input Bar */}
-        <div className="relative flex-1 max-w-xl">
+      {/* Search Bar - Top Middle Centered */}
+      <div className="mb-8 flex flex-col items-center justify-center space-y-3">
+        <div className="relative w-full max-w-2xl">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-[#3cff5f]">
-            <Search className="h-4 w-4" />
+            <Search className="h-5 w-5" />
           </div>
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search 80+ tools by name, format, or keyword (e.g. PNG, PDF, SRT, Diff)..."
-            className="w-full rounded-xl border border-[#26332d] bg-[#0c1510] py-3 pl-11 pr-10 text-sm text-[#e7eee9] placeholder-[#6f8276] transition-all focus:border-[#3cff5f] focus:bg-[#0f1b14] focus:outline-none focus:ring-1 focus:ring-[#3cff5f]"
+            placeholder="Search 100+ free tools (e.g. video downloader, PNG, PDF, SRT, Diff)..."
+            className="w-full rounded-2xl border border-[#26332d] bg-[#0c1510] py-3.5 sm:py-4 pl-12 pr-12 text-sm sm:text-base text-[#e7eee9] placeholder-[#6f8276] transition-all shadow-lg shadow-black/40 focus:border-[#3cff5f] focus:bg-[#0f1b14] focus:outline-none focus:ring-1 focus:ring-[#3cff5f]"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery("")}
-              className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-[#8da195] hover:text-white"
+              className="absolute inset-y-0 right-0 flex items-center pr-4 text-[#8da195] hover:text-white transition-colors"
               aria-label="Clear search"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" />
             </button>
           )}
         </div>
 
         {/* Counter Badge */}
-        <div className="flex items-center gap-2 text-xs font-mono text-[#8da195] self-end md:self-center">
+        <div className="flex items-center gap-2 text-xs font-mono text-[#8da195]">
           <SlidersHorizontal className="h-3.5 w-3.5 text-[#3cff5f]" />
           <span>
             Showing{" "}
@@ -101,7 +100,7 @@ export default function ToolsExplorer({ tools, categories }: ToolsExplorerProps)
                   isActive ? "text-[#3cff5f]" : "text-[#62776a]"
                 }`}
               >
-                ({cat.id === "all" ? tools.length : cat.count})
+                ({cat.id === "all" ? tools.length : (tools.filter((t) => t.category === cat.id).length || cat.count)})
               </span>
             </button>
           );

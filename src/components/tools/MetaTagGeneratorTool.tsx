@@ -20,9 +20,9 @@ export function MetaTagGeneratorTool() {
   const [charset, setCharset] = useState("UTF-8");
 
   // Social / Open Graph & Twitter
-  const [ogTitle, setOgTitle] = useState("ToolHub — 60+ Free Online Browser Tools");
+  const [ogTitle, setOgTitle] = useState("CompX Orbit — Free Online Creative Tools");
   const [ogDescription, setOgDescription] = useState(
-    "Fast, secure client-side browser utilities for developers, designers, and webmasters."
+    "Fast, secure online utilities for video creators, editors, and designers. 100% Free."
   );
   const [ogImage, setOgImage] = useState("https://iformat.io/og-cover.png");
   const [ogType, setOgType] = useState("website");

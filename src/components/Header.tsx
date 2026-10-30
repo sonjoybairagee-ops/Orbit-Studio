@@ -25,7 +25,7 @@ export async function Header() {
       <div className="shell orbit-header-inner">
         <Link href="/" className="orbit-logo" aria-label="CompX Orbit home">
           <span>
-            <Image src="/compx-mark.png" alt="" width={44} height={28} priority />
+            <Image src="/compx-mark.png" alt="CompX Orbit" width={38} height={38} priority className="rounded-lg object-contain" />
           </span>
           <div>
             <b>CompX Orbit</b>

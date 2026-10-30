@@ -122,13 +122,13 @@ main:has([class*="-tools"]) {
 }
 
 /* Secondary Buttons */
-.orbit-tool-page button:not(.bg-blue-600):not(.bg-emerald-600):not(.bg-amber-600):not(.bg-indigo-600) {
+.orbit-tool-page button:not(.bg-blue-600):not(.bg-emerald-600):not(.bg-amber-600):not(.bg-indigo-600):not(.swatch-btn):not([data-swatch]):not(.no-btn-override) {
   background: #101813 !important;
   border-color: #29392f !important;
   color: #d4e0d8 !important;
 }
 
-.orbit-tool-page button:not(.bg-blue-600):not(.bg-emerald-600):not(.bg-amber-600):not(.bg-indigo-600):hover {
+.orbit-tool-page button:not(.bg-blue-600):not(.bg-emerald-600):not(.bg-amber-600):not(.bg-indigo-600):not(.swatch-btn):not([data-swatch]):not(.no-btn-override):hover {
   border-color: #395a43 !important;
   background: #16221a !important;
 }

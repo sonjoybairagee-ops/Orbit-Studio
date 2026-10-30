@@ -10,6 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const staticRoutes: Array<[string, number, MetadataRoute.Sitemap[0]["changeFrequency"]]> = [
     ["", 1.0, "weekly"],
     ["/tools", 0.95, "daily"],
+    ["/downloader-tools", 0.9, "weekly"],
     ["/pricing", 0.9, "weekly"],
     ["/creator", 0.8, "weekly"],
     ["/tutorials", 0.7, "weekly"],

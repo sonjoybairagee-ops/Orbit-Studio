@@ -26,7 +26,7 @@ export default function WavToMp3Page() {
       <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
           <span className="inline-block rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 border border-indigo-200/60 mb-2">
-            100% Client-Side · High Efficiency
+            100% Free · High Efficiency
           </span>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
             WAV to MP3 / Compressed Audio Converter

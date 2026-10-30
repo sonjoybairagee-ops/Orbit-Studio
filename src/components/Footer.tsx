@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 export function Footer() {
@@ -13,9 +14,18 @@ export function Footer() {
     <footer className="mt-10 border-t border-white/[.06]">
       <div className="shell grid gap-8 py-10 sm:grid-cols-[1fr_auto_auto_auto]">
         <div>
-          <b>
-            CompX <span className="text-[#45c66d]">Orbit</span>
-          </b>
+          <div className="flex items-center gap-2.5">
+            <Image
+              src="/compx-mark.png"
+              alt="CompX Orbit"
+              width={26}
+              height={26}
+              className="rounded-md object-contain"
+            />
+            <b className="text-base text-white">
+              CompX <span className="text-[#45c66d]">Orbit</span>
+            </b>
+          </div>
           <p className="muted mt-2 max-w-sm text-sm">
             Extension panels for After Effects and Premiere Pro, with secure
             device licensing and lifetime access to your version.

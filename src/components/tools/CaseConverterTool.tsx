@@ -126,7 +126,7 @@ export default function CaseConverterTool() {
 
           <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-400">
             <span>{stats.words} Words • {stats.characters} Characters</span>
-            <span>Client-side instant conversion</span>
+            <span>Instant Conversion • 100% Free</span>
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ToolItem } from "@/lib/tools-data";
 import { 
+  Download,
   Minimize2, 
   FileImage, 
   Repeat, 
@@ -58,7 +59,13 @@ import {
   Mail,
   TrendingUp,
   Target,
-  Contact
+  Contact,
+  Smartphone,
+  Calculator,
+  Disc,
+  Video,
+  Mic,
+  FastForward,
 } from "lucide-react";
 
 interface ToolCardProps {
@@ -188,6 +195,16 @@ const CATEGORY_STYLES: Record<
     badgeBg: "bg-[#29170b]",
     badgeText: "text-[#fb923c]",
   },
+  downloader: {
+    glow: "from-[#3cff5f]/30",
+    iconBorder: "border-[#2a5234]",
+    iconBg: "bg-[#102a16]",
+    iconColor: "text-[#3cff5f]",
+    hoverBorder: "hover:border-[#3cff5f]/70",
+    badgeBorder: "border-[#2a5234]",
+    badgeBg: "bg-[#102a16]",
+    badgeText: "text-[#3cff5f]",
+  },
   video: {
     glow: "from-[#a855f7]/30",
     iconBorder: "border-[#4a2254]",
@@ -214,6 +231,8 @@ const DEFAULT_CATEGORY_STYLE = {
 export default function ToolCard({ tool }: ToolCardProps) {
   const renderIcon = () => {
     switch (tool.iconName) {
+      case "Download":
+        return <Download className="h-6 w-6" />;
       case "Mail":
         return <Mail className="h-6 w-6" />;
       case "TrendingUp":
@@ -286,10 +305,22 @@ export default function ToolCard({ tool }: ToolCardProps) {
         return <Scissors className="h-6 w-6" />;
       case "Music":
         return <Music className="h-6 w-6" />;
+      case "Mic":
+        return <Mic className="h-6 w-6" />;
       case "Film":
         return <Film className="h-6 w-6" />;
+      case "Video":
+        return <Video className="h-6 w-6" />;
+      case "FastForward":
+        return <FastForward className="h-6 w-6" />;
       case "Camera":
         return <Camera className="h-6 w-6" />;
+      case "Smartphone":
+        return <Smartphone className="h-6 w-6" />;
+      case "Calculator":
+        return <Calculator className="h-6 w-6" />;
+      case "Disc":
+        return <Disc className="h-6 w-6" />;
       case "Archive":
         return <Archive className="h-6 w-6" />;
       case "Table2":
@@ -388,7 +419,7 @@ export default function ToolCard({ tool }: ToolCardProps) {
       {/* Footer: Tech badge + Action */}
       <div className="mt-5 flex items-center justify-between border-t border-[#1f2d24] pt-3.5">
         <span className="font-mono text-[10px] tracking-wider text-[#62776a] uppercase transition-colors group-hover:text-[#8da195]">
-          100% Free · Client-Side
+          100% Free
         </span>
         <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#3cff5f] transition-all duration-200 group-hover:text-[#77ff90]">
           <span>Use Tool</span>

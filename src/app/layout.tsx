@@ -56,8 +56,14 @@ export const metadata: Metadata = {
     images: ["/screens/studio.png"],
   },
   icons: {
-    icon: "/compx-mark.png",
-    apple: "/compx-mark.png",
+    icon: [
+      { url: "/icon.png", sizes: "1024x1024", type: "image/png" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
   },
   robots: { index: true, follow: true },
 };

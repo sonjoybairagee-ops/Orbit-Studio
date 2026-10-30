@@ -44,7 +44,7 @@ export function Login3DStage() {
       {/* Top Header Bar */}
       <div className="stage-top-bar">
         <div className="top-title">
-          <Image src="/compx-mark.png" alt="" width={16} height={14} />
+          <Image src="/compx-mark.png" alt="CompX" width={16} height={16} className="rounded-xs object-contain" />
           <b>Orbit Studio — 3D Camera Module</b>
         </div>
         <div className="top-subtabs">

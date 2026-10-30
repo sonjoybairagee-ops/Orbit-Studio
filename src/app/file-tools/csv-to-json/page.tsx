@@ -26,7 +26,7 @@ export default function CsvToJsonPage() {
       <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
           <span className="inline-block rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700 border border-teal-200/60 mb-2">
-            100% Client-Side · Smart Type Parsing
+            100% Free · Smart Type Parsing
           </span>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
             CSV to JSON Converter

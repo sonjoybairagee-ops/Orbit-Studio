@@ -131,7 +131,7 @@ export function LayerExploder3D() {
                   )}
                   {layer.id === 3 && (
                     <div className="shape-layer-preview">
-                      <Image src="/compx-mark.png" alt="" width={40} height={32} />
+                      <Image src="/compx-mark.png" alt="CompX" width={36} height={36} className="rounded-xs object-contain" />
                     </div>
                   )}
                   {layer.id === 4 && (

@@ -90,7 +90,7 @@ export default function SplitPdfTool() {
             Select a PDF document to Split
           </h3>
           <p className="mt-1.5 text-xs text-slate-500">
-            Separate pages, extract intervals or custom sheets with 100% client-side privacy
+            Separate pages, extract intervals or custom sheets with 100% privacy
           </p>
           <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-orange-600 shadow-2xs border border-slate-200 group-hover:border-orange-300">
             <FileText className="h-3.5 w-3.5" />

@@ -5,11 +5,11 @@ import { Share2, Copy, Check, Upload, Globe, MessageSquare } from "lucide-react"
 
 export function OpenGraphPreviewTool() {
   const [platform, setPlatform] = useState<"facebook" | "twitter" | "linkedin" | "discord">("facebook");
-  const [title, setTitle] = useState("ToolHub — The Ultimate Suite of Free Browser Tools");
+  const [title, setTitle] = useState("CompX Orbit — The Ultimate Suite of Free Creative Tools");
   const [description, setDescription] = useState(
-    "Supercharge your workflow with over 60 client-side utilities. Zero server upload, ultra-fast WebAssembly processing, and total privacy."
+    "Supercharge your video and content workflow with 90+ free creative tools. 100% Free with zero registration and total privacy."
   );
-  const [url, setUrl] = useState("https://iformat.io/tools");
+  const [url, setUrl] = useState("https://compxorbit.com/tools");
   const [imageUrl, setImageUrl] = useState("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&h=630&fit=crop&q=80");
   const [siteName, setSiteName] = useState("ToolHub");
   const [copied, setCopied] = useState(false);

@@ -1464,7 +1464,7 @@ export function HeroShowcase() {
         {/* Header Bar */}
         <div className="orb-bar">
           <span className="orb-bar-left">
-            <Image src="/compx-mark.png" alt="" width={20} height={16} />
+            <Image src="/compx-mark.png" alt="CompX" width={18} height={18} className="rounded-xs object-contain" />
             <b>Orbit Studio</b>
             <small>v2.3.1</small>
           </span>

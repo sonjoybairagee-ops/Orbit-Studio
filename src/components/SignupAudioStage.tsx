@@ -59,7 +59,7 @@ export function SignupAudioStage() {
       {/* Stage Header Bar */}
       <div className="audio-stage-head">
         <div className="head-left">
-          <Image src="/compx-mark.png" alt="" width={16} height={14} />
+          <Image src="/compx-mark.png" alt="CompX" width={16} height={16} className="rounded-xs object-contain" />
           <b>ORBIT AUDIO ENGINE</b>
           <span className="sfx-badge">500+ CINEMA SFX FREE</span>
         </div>

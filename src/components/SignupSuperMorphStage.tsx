@@ -50,7 +50,7 @@ export function SignupSuperMorphStage() {
       {/* Stage Top Bar */}
       <div className="super-morph-head">
         <div className="head-left">
-          <Image src="/compx-mark.png" alt="" width={16} height={14} />
+          <Image src="/compx-mark.png" alt="CompX" width={16} height={16} className="rounded-xs object-contain" />
           <b>SUPER MORPH</b>
           <span className="live-badge">VECTOR & LIQUID ENGINE</span>
         </div>

@@ -27,7 +27,7 @@ import {
 
 const SAMPLE_MARKDOWN = `# 🚀 Project Overview & Documentation
 
-Welcome to **ToolHub**, the ultimate client-side productivity suite! All processing runs securely in your browser with **zero server uploads**.
+Welcome to **CompX Orbit**, the ultimate creative productivity suite! All processing runs securely on your device with **zero server uploads**.
 
 > [!NOTE]
 > This editor supports full **GitHub Flavored Markdown (GFM)**, including task lists, tables, callouts, and code blocks.
@@ -36,8 +36,8 @@ Welcome to **ToolHub**, the ultimate client-side productivity suite! All process
 
 ## ⚡ Key Features
 
-- **Fast & Private:** 100% in-browser processing with client-side Web APIs.
-- **Clean Interface:** Designed with curated pastel themes and dark-mode friendly tokens.
+- **Fast & Private:** Instant processing with zero cloud lag.
+- **Clean Interface:** Designed with curated dark-mode friendly tokens.
 - **Export Everywhere:** Download rendered HTML or standard Markdown files.
 
 ### 📋 Interactive Task Checklist
@@ -52,9 +52,9 @@ Welcome to **ToolHub**, the ultimate client-side productivity suite! All process
 
 ## 📊 Feature Comparison Matrix
 
-| Feature | ToolHub | Traditional Web Tools |
+| Feature | CompX Orbit | Traditional Web Tools |
 | :--- | :---: | :---: |
-| **Privacy** | 🔒 100% Client-Side | ⚠️ Uploads to server |
+| **Privacy** | 🔒 100% Private | ⚠️ Uploads to server |
 | **Offline Mode** | ✅ Fully Supported | ❌ Requires connection |
 | **File Limits** | ♾️ No file size limits | ⚠️ Strict 10MB limits |
 | **Pricing** | 💸 100% Free Forever | 💳 Monthly Subscriptions |
