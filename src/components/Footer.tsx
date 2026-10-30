@@ -23,9 +23,11 @@ export function Footer() {
         </div>
         <div className="text-sm">
           <b className="block text-xs uppercase tracking-wider text-[#8da096]">
-            Product
+            Product &amp; Tools
           </b>
           <div className="muted mt-3 grid gap-2">
+            <Link href="/tools">Free Tools Hub (82+)</Link>
+            <Link href="/about">About Us</Link>
             <Link href="/pricing">Pricing</Link>
             <Link href="/#features">Features</Link>
             <Link href="/contact">Contact Support</Link>
@@ -50,12 +52,13 @@ export function Footer() {
         </div>
         <div className="text-sm">
           <b className="block text-xs uppercase tracking-wider text-[#8da096]">
-            Legal
+            Company &amp; Legal
           </b>
           <div className="muted mt-3 grid gap-2">
-            <Link href="/terms">Terms</Link>
-            <Link href="/privacy">Privacy</Link>
-            <Link href="/refund">Refunds</Link>
+            <Link href="/about">About Us</Link>
+            <Link href="/terms">Terms of Service</Link>
+            <Link href="/privacy">Privacy Policy</Link>
+            <Link href="/refund">Refund Policy</Link>
           </div>
         </div>
       </div>

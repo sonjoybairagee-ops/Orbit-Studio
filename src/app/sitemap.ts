@@ -15,6 +15,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ["/tutorials", 0.7, "weekly"],
     ["/login", 0.4, "yearly"],
     ["/signup", 0.6, "yearly"],
+    ["/about", 0.75, "monthly"],
+    ["/contact", 0.6, "monthly"],
     ["/terms", 0.3, "yearly"],
     ["/privacy", 0.3, "yearly"],
     ["/refund", 0.3, "yearly"],

@@ -70,7 +70,7 @@ export default function PrivacyPage() {
           set, and generate original hooks, titles and outlines from that set.
         </li>
       </ul>
-      <p>We do not sell your data and we do not run advertising trackers.</p>
+      <p>We do not sell your personal identification data.</p>
 
       <h2>4. Who processes it</h2>
       <ul>
@@ -84,9 +84,7 @@ export default function PrivacyPage() {
           <b>Resend</b> — transactional email delivery.
         </li>
         <li>
-          <b>Google</b> — sign-in if you choose Google, and YouTube Data API v3
-          for public video metadata used by Compx Creator. The Chrome extension
-          never receives our YouTube API key.
+          <b>Google</b> — user sign-in, YouTube Data API v3 for public video metadata used by Compx Creator, and Google AdSense for serving contextual advertising on public free tools pages.
         </li>
         <li>
           <b>OpenAI</b> — structured analysis and drafting for Compx Creator.
@@ -113,10 +111,36 @@ export default function PrivacyPage() {
         will reply within 30 days.
       </p>
 
-      <h2>7. Cookies</h2>
+      <h2>7. Cookies and Advertising Partners</h2>
       <p>
-        We set one cookie group, used to keep you signed in. There are no
-        analytics or advertising cookies on this site.
+        <b>Essential Cookies:</b> We use cookies essential for authentication, session security, and keeping you signed in to your CompX account.
+      </p>
+      <p>
+        <b>Google AdSense &amp; Third-Party Cookies:</b> Third-party vendors, including Google, use cookies to serve ads based on a user&apos;s prior visits to this website or other websites on the Internet. Google&apos;s use of advertising cookies enables it and its partners to serve ads to our users based on their visit to our site and/or other sites on the Internet.
+      </p>
+      <p>
+        <b>Opt-Out of Personalized Advertising:</b> Users may opt out of personalized advertising by visiting{" "}
+        <a
+          href="https://www.google.com/settings/ads"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[#3cff5f] underline hover:text-[#4dff6e]"
+        >
+          Google Ads Settings
+        </a>{" "}
+        or by visiting{" "}
+        <a
+          href="https://www.aboutads.info"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[#3cff5f] underline hover:text-[#4dff6e]"
+        >
+          www.aboutads.info
+        </a>
+        . You can also configure your browser settings to decline all cookies or to alert you when a cookie is placed on your device.
+      </p>
+      <p>
+        <b>Free Web Tools:</b> For our browser-based creator tools (such as timecode calculators, subtitle formatters, image resizers, and PDF tools), all file processing is executed locally in your browser. Your local files are not sent to or stored on our servers.
       </p>
 
       <h2>8. Children</h2>

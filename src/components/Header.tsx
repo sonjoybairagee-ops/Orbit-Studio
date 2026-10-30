@@ -11,6 +11,7 @@ const NAV = [
   ["/tutorials", "Tutorials"],
   ["/tools", "Free Tools"],
   ["/pricing", "Pricing"],
+  ["/about", "About"],
   ["/#install", "How it works"],
   ["/contact", "Contact"],
 ];
