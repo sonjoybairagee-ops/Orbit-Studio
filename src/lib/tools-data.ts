@@ -1654,6 +1654,40 @@ export const TOOLS_DATA: ToolItem[] = [
     },
     iconName: "Download",
   },
+  {
+    id: "auto-captions-generator",
+    name: "AI Auto-Captions & Subtitle Styler (Reels & Shorts)",
+    shortDesc: "Generate viral animated word-by-word subtitles for TikTok, Reels, and Shorts.",
+    description: "Free Submagic & Captions app alternative. Automatic speech sync, Hormozi yellow glow, Beast energy pop-in styles, live 9:16 phone preview, and instant .ASS & .SRT export.",
+    category: "video",
+    href: "/video-tools/auto-captions-generator",
+    badge: "Viral Trending",
+    isPopular: true,
+    cardColor: {
+      bg: "bg-purple-50/50 hover:bg-purple-50",
+      border: "border-purple-200",
+      accent: "text-purple-700",
+      headerBg: "bg-purple-100/70 text-purple-800",
+    },
+    iconName: "Subtitles",
+  },
+  {
+    id: "ai-image-upscaler",
+    name: "4K AI Image Upscaler & Super-Resolution",
+    shortDesc: "Enlarge photos and thumbnails to 4K & 8K Ultra HD with detail sharpening.",
+    description: "Free Topaz & Upscayl alternative. Enlarge images up to 8x resolution, restore facial textures and micro-details, with interactive before/after split comparison slider.",
+    category: "image",
+    href: "/image-tools/ai-image-upscaler",
+    badge: "4K AI Engine",
+    isPopular: true,
+    cardColor: {
+      bg: "bg-emerald-50/50 hover:bg-emerald-50",
+      border: "border-emerald-200",
+      accent: "text-emerald-700",
+      headerBg: "bg-emerald-100/70 text-emerald-800",
+    },
+    iconName: "Maximize",
+  },
 ];
 
 export const CATEGORIES = [
