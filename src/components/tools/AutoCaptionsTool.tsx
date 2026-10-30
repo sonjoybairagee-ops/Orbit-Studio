@@ -32,6 +32,7 @@ import {
   Compass,
   AlignLeft,
   AlignCenter,
+  Timer,
 } from "lucide-react";
 
 export interface CaptionWord {
@@ -46,14 +47,6 @@ export interface CaptionCue {
   start: number; // in seconds
   end: number;   // in seconds
   text: string;
-  words: CaptionWord[];
-}
-
-export interface CaptionChunk {
-  id: string;
-  cueId: string;
-  start: number;
-  end: number;
   words: CaptionWord[];
 }
 
@@ -832,7 +825,9 @@ export function parseSRTToCues(srtContent: string): CaptionCue[] {
   const cues: CaptionCue[] = [];
 
   const parseTime = (t: string) => {
-    const parts = t.replace(",", ".").split(":");
+    // Strip trailing coords or attributes (e.g. X1:0 Y1:0)
+    const cleanT = t.trim().split(/\s+/)[0];
+    const parts = cleanT.replace(",", ".").split(":");
     if (parts.length === 3) {
       return parseFloat(parts[0]) * 3600 + parseFloat(parts[1]) * 60 + parseFloat(parts[2]);
     } else if (parts.length === 2) {
@@ -850,27 +845,34 @@ export function parseSRTToCues(srtContent: string): CaptionCue[] {
 
     const [startStr, endStr] = lines[timeIndex].split("-->").map((s) => s.trim());
     const textLines = lines.slice(timeIndex + 1);
-    const cleanText = textLines.join(" ").replace(/<[^>]+>/g, "").trim();
+    const cleanText = textLines
+      .join(" ")
+      .replace(/<[^>]+>/g, "")
+      .replace(/\{[^}]+\}/g, "")
+      .trim();
 
     const start = parseTime(startStr);
-    const end = parseTime(endStr);
+    let end = parseTime(endStr);
+    if (end <= start) {
+      end = start + 2.5;
+    }
 
-    if (end > start && cleanText) {
+    if (cleanText) {
       const words = cleanText.split(/\s+/).filter(Boolean);
-      const duration = end - start;
-      const wordDur = words.length > 0 ? duration / words.length : 0;
+      const duration = Math.max(0.1, end - start);
+      const wordDur = duration / Math.max(1, words.length);
 
       const wordsList: CaptionWord[] = words.map((w, wIdx) => ({
         id: `cue-${idx}-w${wIdx}`,
         word: w,
-        start: start + wIdx * wordDur,
-        end: start + (wIdx + 1) * wordDur,
+        start: Math.round((start + wIdx * wordDur) * 1000) / 1000,
+        end: Math.round((start + (wIdx + 1) * wordDur) * 1000) / 1000,
       }));
 
       cues.push({
         id: `cue-${idx}`,
-        start,
-        end,
+        start: Math.round(start * 1000) / 1000,
+        end: Math.round(end * 1000) / 1000,
         text: cleanText,
         words: wordsList,
       });
@@ -878,6 +880,85 @@ export function parseSRTToCues(srtContent: string): CaptionCue[] {
   }
 
   return cues;
+}
+
+// Core Synchronizer: Recomputes timed cues dynamically based on words-per-screen and lines-per-screen
+export function recomputeTimedCues(
+  sourceCues: CaptionCue[],
+  wordsSetting: WordsPerScreenOption,
+  linesSetting: MaxLinesOption
+): CaptionCue[] {
+  if (wordsSetting === "all") {
+    return sourceCues.map((c, idx) => {
+      let t = c.text;
+      if (linesSetting === "1") {
+        t = t.replace(/\n+/g, " ").trim();
+      } else if (linesSetting === "2" && !t.includes("\n")) {
+        const words = t.split(/\s+/).filter(Boolean);
+        if (words.length >= 4) {
+          const mid = Math.ceil(words.length / 2);
+          t = `${words.slice(0, mid).join(" ")}\n${words.slice(mid).join(" ")}`;
+        }
+      }
+      return {
+        ...c,
+        id: `c-all-${idx}`,
+        text: t,
+      };
+    });
+  }
+
+  const wCount = parseInt(wordsSetting, 10) || 3;
+  const newCues: CaptionCue[] = [];
+  let chunkIdx = 1;
+
+  for (let sIdx = 0; sIdx < sourceCues.length; sIdx++) {
+    const parent = sourceCues[sIdx];
+
+    // Ensure all words have accurate start/end timestamps
+    let parentWords = parent.words;
+    if (!parentWords || parentWords.length === 0) {
+      const tokens = parent.text.split(/\s+/).filter(Boolean);
+      const dur = Math.max(0.1, parent.end - parent.start);
+      const wDur = dur / Math.max(1, tokens.length);
+      parentWords = tokens.map((token, tIdx) => ({
+        id: `p-${sIdx}-w${tIdx}`,
+        word: token,
+        start: parent.start + tIdx * wDur,
+        end: parent.start + (tIdx + 1) * wDur,
+      }));
+    }
+
+    // Now slice words into groups of wCount
+    for (let i = 0; i < parentWords.length; i += wCount) {
+      const slice = parentWords.slice(i, i + wCount);
+      if (slice.length === 0) continue;
+
+      const chunkStart = slice[0].start;
+      const chunkEnd = slice[slice.length - 1].end;
+
+      let chunkText = slice.map((w) => w.word).join(" ");
+      if (linesSetting === "1") {
+        chunkText = chunkText.replace(/\n+/g, " ").trim();
+      } else if (linesSetting === "2" && slice.length >= 4) {
+        const mid = Math.ceil(slice.length / 2);
+        chunkText = `${slice.slice(0, mid).map((w) => w.word).join(" ")}\n${slice.slice(mid).map((w) => w.word).join(" ")}`;
+      }
+
+      newCues.push({
+        id: `cue-chunk-${chunkIdx++}`,
+        start: Math.round(chunkStart * 1000) / 1000,
+        end: Math.round(chunkEnd * 1000) / 1000,
+        text: chunkText,
+        words: slice.map((w, wIdx) => ({
+          ...w,
+          id: `w-${chunkIdx}-${wIdx}`,
+        })),
+      });
+    }
+  }
+
+  return newCues;
 }
 
 export default function AutoCaptionsTool() {
@@ -909,8 +990,14 @@ export default function AutoCaptionsTool() {
   const [textColor, setTextColor] = useState<string>("#FFFFFF");
   const [textTransform, setTextTransform] = useState<"uppercase" | "capitalize" | "none">("uppercase");
 
-  // Caption Cues State
-  const [cues, setCues] = useState<CaptionCue[]>(INITIAL_DEMO_CUES);
+  // Master source cues (holds full transcript baseline)
+  const rawSourceCuesRef = useRef<CaptionCue[]>(INITIAL_DEMO_CUES);
+
+  // Active Synchronized Cues state (holds the exact timed chunks currently visible & exportable)
+  const [cues, setCues] = useState<CaptionCue[]>(() =>
+    recomputeTimedCues(INITIAL_DEMO_CUES, "3", "2")
+  );
+
   const [isTranscribing, setIsTranscribing] = useState<boolean>(false);
   const [transcribeStatus, setTranscribeStatus] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"cues" | "raw">("cues");
@@ -918,6 +1005,20 @@ export default function AutoCaptionsTool() {
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const srtInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Synchronize when wordsPerScreen changes
+  const handleWordsPerScreenChange = (newOpt: WordsPerScreenOption) => {
+    setWordsPerScreen(newOpt);
+    const updated = recomputeTimedCues(rawSourceCuesRef.current, newOpt, maxLines);
+    setCues(updated);
+  };
+
+  // Synchronize when maxLines changes
+  const handleMaxLinesChange = (newOpt: MaxLinesOption) => {
+    setMaxLines(newOpt);
+    const updated = recomputeTimedCues(rawSourceCuesRef.current, wordsPerScreen, newOpt);
+    setCues(updated);
+  };
 
   // Sync preset changes with controls
   const handlePresetSelect = (presetId: string) => {
@@ -953,49 +1054,6 @@ export default function AutoCaptionsTool() {
     );
     return match ? match.id : activeCue.words[0]?.id;
   }, [activeCue, currentTime]);
-
-  // Chunking Logic: Slice cue words into chunk intervals based on wordsPerScreen
-  const activeChunk = useMemo<CaptionChunk | null>(() => {
-    if (!activeCue) return null;
-
-    if (wordsPerScreen === "all") {
-      return {
-        id: `${activeCue.id}-all`,
-        cueId: activeCue.id,
-        start: activeCue.start,
-        end: activeCue.end,
-        words: activeCue.words,
-      };
-    }
-
-    const wCount = parseInt(wordsPerScreen, 10) || 3;
-    const chunks: CaptionChunk[] = [];
-
-    for (let i = 0; i < activeCue.words.length; i += wCount) {
-      const chunkWords = activeCue.words.slice(i, i + wCount);
-      if (chunkWords.length > 0) {
-        chunks.push({
-          id: `${activeCue.id}-chk-${i}`,
-          cueId: activeCue.id,
-          start: chunkWords[0].start,
-          end: chunkWords[chunkWords.length - 1].end,
-          words: chunkWords,
-        });
-      }
-    }
-
-    // Return the chunk containing currentTime
-    const currentChunk = chunks.find(
-      (chk) => currentTime >= chk.start && currentTime <= chk.end
-    );
-    if (currentChunk) return currentChunk;
-
-    // Fallback: chunk containing activeWordId, or first chunk
-    const chunkWithActiveWord = chunks.find((chk) =>
-      chk.words.some((w) => w.id === activeWordId)
-    );
-    return chunkWithActiveWord || chunks[0] || null;
-  }, [activeCue, currentTime, wordsPerScreen, activeWordId]);
 
   // Filtered preset list based on category and search query
   const filteredPresets = useMemo(() => {
@@ -1041,8 +1099,10 @@ export default function AutoCaptionsTool() {
       if (content) {
         const parsed = parseSRTToCues(content);
         if (parsed.length > 0) {
-          setCues(parsed);
-          setTranscribeStatus(`Successfully loaded ${parsed.length} subtitle cues from ${file.name}`);
+          rawSourceCuesRef.current = parsed;
+          const chunked = recomputeTimedCues(parsed, wordsPerScreen, maxLines);
+          setCues(chunked);
+          setTranscribeStatus(`Loaded ${parsed.length} subtitles from ${file.name} (Split into ${chunked.length} timed chunks)`);
           setTimeout(() => setTranscribeStatus(null), 4000);
         } else {
           alert("Could not parse valid SRT/VTT timestamps from this file. Please verify the subtitle format.");
@@ -1076,7 +1136,6 @@ export default function AutoCaptionsTool() {
       const data = await res.json();
 
       if (res.ok && data.snippets && data.snippets.length > 0) {
-        // Convert API snippets into CaptionCue
         const newCues: CaptionCue[] = data.snippets.map(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (s: { start: number; duration: number; text: string }, idx: number) => {
@@ -1084,36 +1143,40 @@ export default function AutoCaptionsTool() {
             const end = s.start + (s.duration || 3);
             const cleanText = s.text.trim();
             const words = cleanText.split(/\s+/).filter(Boolean);
-            const dur = end - start;
-            const wordDur = words.length > 0 ? dur / words.length : 0;
+            const dur = Math.max(0.1, end - start);
+            const wordDur = dur / Math.max(1, words.length);
 
             const wordsList: CaptionWord[] = words.map((w: string, wIdx: number) => ({
               id: `api-cue-${idx}-w${wIdx}`,
               word: w,
-              start: start + wIdx * wordDur,
-              end: start + (wIdx + 1) * wordDur,
+              start: Math.round((start + wIdx * wordDur) * 1000) / 1000,
+              end: Math.round((start + (wIdx + 1) * wordDur) * 1000) / 1000,
             }));
 
             return {
               id: `api-cue-${idx}`,
-              start,
-              end,
+              start: Math.round(start * 1000) / 1000,
+              end: Math.round(end * 1000) / 1000,
               text: cleanText,
               words: wordsList,
             };
           }
         );
 
-        setCues(newCues);
-        setTranscribeStatus(`AI Speech-to-Text completed: ${newCues.length} lines ready!`);
+        rawSourceCuesRef.current = newCues;
+        const chunked = recomputeTimedCues(newCues, wordsPerScreen, maxLines);
+        setCues(chunked);
+        setTranscribeStatus(`AI Speech-to-Text completed: ${chunked.length} synchronized lines ready!`);
         setTimeout(() => setTranscribeStatus(null), 4000);
         setIsTranscribing(false);
         return;
       } else if (res.ok && data.srt) {
         const parsed = parseSRTToCues(data.srt);
         if (parsed.length > 0) {
-          setCues(parsed);
-          setTranscribeStatus(`AI Speech-to-Text completed: ${parsed.length} lines ready!`);
+          rawSourceCuesRef.current = parsed;
+          const chunked = recomputeTimedCues(parsed, wordsPerScreen, maxLines);
+          setCues(chunked);
+          setTranscribeStatus(`AI Speech-to-Text completed: ${chunked.length} synchronized lines ready!`);
           setTimeout(() => setTranscribeStatus(null), 4000);
           setIsTranscribing(false);
           return;
@@ -1184,11 +1247,12 @@ export default function AutoCaptionsTool() {
     }
   }, [videoSrc, isPlaying, duration, cues]);
 
-  // Export Formats
+  // Export Formats (Fully synchronized with current chunked cues)
   const generateSRT = useCallback(() => {
     const formatTime = (sec: number) => {
-      const ms = Math.floor((sec % 1) * 1000);
-      const totalSec = Math.floor(sec);
+      const safeSec = Math.max(0, sec);
+      const ms = Math.floor((safeSec % 1) * 1000);
+      const totalSec = Math.floor(safeSec);
       const s = totalSec % 60;
       const m = Math.floor(totalSec / 60) % 60;
       const h = Math.floor(totalSec / 3600);
@@ -1197,10 +1261,16 @@ export default function AutoCaptionsTool() {
 
     return cues
       .map((c, idx) => {
-        return `${idx + 1}\n${formatTime(c.start)} --> ${formatTime(c.end)}\n${c.text}\n`;
+        const textFormatted =
+          textTransform === "uppercase"
+            ? c.text.toUpperCase()
+            : textTransform === "capitalize"
+            ? c.text
+            : c.text;
+        return `${idx + 1}\n${formatTime(c.start)} --> ${formatTime(c.end)}\n${textFormatted}\n`;
       })
       .join("\n");
-  }, [cues]);
+  }, [cues, textTransform]);
 
   const generateVTT = useCallback(() => {
     const srt = generateSRT();
@@ -1210,6 +1280,33 @@ export default function AutoCaptionsTool() {
   // ASS format for Premiere Pro / After Effects / CapCut
   const generateASS = useCallback(() => {
     const cfg = PRESET_CONFIGS[preset] || PRESET_CONFIGS.hormozi;
+
+    // Convert hex color to ASS &HBBGGRR format (ASS uses BGR order)
+    const toAssColor = (hex: string, alphaHex = "00") => {
+      const clean = hex.replace("#", "");
+      if (clean.length !== 6) return "&H00FFFFFF";
+      const r = clean.substring(0, 2);
+      const g = clean.substring(2, 4);
+      const b = clean.substring(4, 6);
+      return `&H${alphaHex}${b}${g}${r}`.toUpperCase();
+    };
+
+    const primaryCol = toAssColor(textColor, "00");
+    const secondaryCol = toAssColor(highlightColor, "00");
+    const outlineCol = "&H00000000";
+    const backCol =
+      bgMode === "none"
+        ? "&H90000000"
+        : toAssColor(
+            boxBgColor,
+            Math.round((1 - boxBgOpacity / 100) * 255)
+              .toString(16)
+              .padStart(2, "0")
+          );
+
+    const fontName = cfg.fontFamily.split(",")[0].replace(/['"]/g, "").trim();
+    const borderStyle = bgMode === "none" ? 1 : 3;
+
     return `[Script Info]
 Title: CompX Orbit Auto Captions
 ScriptType: v4.00+
@@ -1219,7 +1316,7 @@ Timer: 100.0000
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,${cfg.fontFamily.split(",")[0].replace(/'/g, "")},${cfg.fontSize * 1.5},&H00FFFFFF,&H0000E6FF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,${bgMode === "none" ? "1" : "3"},3,2,2,10,10,60,1
+Style: Default,${fontName},${cfg.fontSize * 1.5},${primaryCol},${secondaryCol},${outlineCol},${backCol},-1,0,0,0,100,100,0,0,${borderStyle},3,2,${position === "top" ? 8 : position === "center" ? 5 : 2},10,10,${position === "bottom" ? 60 : 30},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -1233,11 +1330,20 @@ ${cues
       const h = Math.floor(totalSec / 3600);
       return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}.${String(cs).padStart(2, "0")}`;
     };
-    return `Dialogue: 0,${fmt(c.start)},${fmt(c.end)},Default,,0,0,0,,${c.text.toUpperCase()}`;
+
+    const textFormatted = (
+      textTransform === "uppercase"
+        ? c.text.toUpperCase()
+        : textTransform === "capitalize"
+        ? c.text
+        : c.text
+    ).replace(/\n/g, "\\N");
+
+    return `Dialogue: 0,${fmt(c.start)},${fmt(c.end)},Default,,0,0,0,,${textFormatted}`;
   })
   .join("\n")}
 `;
-  }, [cues, preset, bgMode]);
+  }, [cues, preset, bgMode, boxBgColor, boxBgOpacity, textColor, highlightColor, position, textTransform]);
 
   const downloadFile = (content: string, filename: string, mime: string) => {
     const blob = new Blob([content], { type: mime });
@@ -1262,7 +1368,6 @@ ${cues
   // Resolve background color with opacity
   const resolvedBoxBg = useMemo(() => {
     if (bgMode === "none") return "transparent";
-    // Convert hex to rgb
     const hex = boxBgColor.replace("#", "");
     const r = parseInt(hex.substring(0, 2), 16) || 0;
     const g = parseInt(hex.substring(2, 4), 16) || 0;
@@ -1474,7 +1579,7 @@ ${cues
               </div>
             )}
 
-            {/* Live Synchronized Caption Overlay with Chunking & MaxLines */}
+            {/* Live Synchronized Caption Overlay */}
             <div
               className={`absolute inset-x-4 z-10 flex flex-col items-center pointer-events-none transition-all duration-300 ${
                 position === "bottom"
@@ -1484,7 +1589,7 @@ ${cues
                   : "top-16"
               }`}
             >
-              {activeChunk ? (
+              {activeCue ? (
                 <div
                   className={`text-center transition-all ${
                     bgMode === "pill"
@@ -1501,7 +1606,7 @@ ${cues
                     backgroundColor: bgMode === "none" || bgMode === "highlight-only" ? "transparent" : resolvedBoxBg,
                   }}
                 >
-                  {activeChunk.words.map((word) => {
+                  {activeCue.words.map((word) => {
                     const isHighlighted = word.id === activeWordId;
                     const animClass = isHighlighted
                       ? `anim-${currentCfg.animation || "pop"}`
@@ -1689,10 +1794,16 @@ ${cues
 
           {/* 2. Pacing, Line Breaks & Background Customizer */}
           <div className="rounded-3xl border border-[#213026] bg-[#0c1510] p-6 space-y-5">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-[#9baaa1] flex items-center gap-2">
-              <Sliders className="h-4 w-4 text-[#3cff5f]" />
-              <span>2. Caption Pacing, Lines &amp; Background Box</span>
-            </h3>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-[#9baaa1] flex items-center gap-2">
+                <Sliders className="h-4 w-4 text-[#3cff5f]" />
+                <span>2. Caption Pacing, Lines &amp; Background Box</span>
+              </h3>
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-[#3cff5f] bg-[#102a16] px-2.5 py-0.5 rounded-full border border-[#2a5234]">
+                <Timer className="h-3 w-3" />
+                <span>Auto-Timed SRT: {cues.length} chunks</span>
+              </span>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {/* Words Per Screen (Pacing) */}
@@ -1708,10 +1819,10 @@ ${cues
                     <button
                       key={opt}
                       type="button"
-                      onClick={() => setWordsPerScreen(opt)}
+                      onClick={() => handleWordsPerScreenChange(opt)}
                       className={`rounded-xl border py-2 text-xs font-semibold transition-all cursor-pointer ${
                         wordsPerScreen === opt
-                          ? "border-[#3cff5f] bg-[#102a16] text-[#3cff5f]"
+                          ? "border-[#3cff5f] bg-[#102a16] text-[#3cff5f] shadow-md shadow-[#3cff5f]/15"
                           : "border-[#213026] bg-[#080e0b] text-[#9baaa1] hover:text-[#e7eee9]"
                       }`}
                     >
@@ -1720,7 +1831,7 @@ ${cues
                   ))}
                 </div>
                 <p className="text-[10px] text-[#62776a]">
-                  1W: 1-word pop (Hormozi), 3W: Viral Sweet Spot, All: Full sentence.
+                  Changes chunking and automatically recalculates accurate start/end timestamps for each chunk.
                 </p>
               </div>
 
@@ -1737,7 +1848,7 @@ ${cues
                     <button
                       key={opt}
                       type="button"
-                      onClick={() => setMaxLines(opt)}
+                      onClick={() => handleMaxLinesChange(opt)}
                       className={`rounded-xl border py-2 text-xs font-semibold transition-all cursor-pointer ${
                         maxLines === opt
                           ? "border-[#3cff5f] bg-[#102a16] text-[#3cff5f]"
@@ -1927,7 +2038,7 @@ ${cues
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold uppercase tracking-wider text-[#9baaa1] flex items-center gap-2">
                 <FileText className="h-4 w-4 text-[#3cff5f]" />
-                <span>4. Subtitle Cues &amp; Timestamps</span>
+                <span>4. Subtitle Cues &amp; Timestamps ({cues.length} Lines)</span>
               </h3>
 
               {/* View Tabs */}
@@ -1957,30 +2068,43 @@ ${cues
               </div>
             </div>
 
-            {/* Tab 1: Timeline Cue Cards with Click-to-Seek */}
+            {/* Tab 1: Timeline Cue Cards with Click-to-Seek & Timestamp Editor */}
             {activeTab === "cues" ? (
-              <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                {cues.map((cue) => {
+              <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+                {cues.map((cue, idx) => {
                   const isCurrent = activeCue?.id === cue.id;
+                  const dur = Math.max(0, cue.end - cue.start).toFixed(2);
                   return (
                     <div
                       key={cue.id}
-                      className={`flex items-center justify-between gap-3 rounded-2xl border p-3 transition-all ${
+                      className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border p-3.5 transition-all ${
                         isCurrent
-                          ? "border-[#3cff5f] bg-[#102a16]/90 shadow-sm"
+                          ? "border-[#3cff5f] bg-[#102a16]/95 shadow-lg shadow-[#3cff5f]/10"
                           : "border-[#213026] bg-[#080e0b] hover:border-[#3cff5f]/40"
                       }`}
                     >
-                      <button
-                        type="button"
-                        onClick={() => seekTo(cue.start)}
-                        className="flex items-center gap-1.5 rounded-lg bg-[#17221b] px-2 py-1 text-[11px] font-mono text-[#3cff5f] hover:bg-[#3cff5f] hover:text-[#050a08] transition-all cursor-pointer shrink-0"
-                        title="Seek video to this cue"
-                      >
-                        <Clock className="h-3 w-3" />
-                        <span>{cue.start.toFixed(1)}s - {cue.end.toFixed(1)}s</span>
-                      </button>
+                      {/* Left: Cue Number + Timestamp Seek Pill */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-[10px] font-mono text-[#62776a] w-5">
+                          #{idx + 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => seekTo(cue.start)}
+                          className="flex items-center gap-1.5 rounded-xl bg-[#17221b] border border-[#243729] px-2.5 py-1.5 text-xs font-mono text-[#3cff5f] hover:bg-[#3cff5f] hover:text-[#050a08] transition-all cursor-pointer"
+                          title="Seek video to this subtitle timestamp"
+                        >
+                          <Clock className="h-3.5 w-3.5" />
+                          <span>
+                            {cue.start.toFixed(2)}s → {cue.end.toFixed(2)}s
+                          </span>
+                        </button>
+                        <span className="text-[10px] font-mono text-[#9baaa1] bg-[#0c1510] px-1.5 py-0.5 rounded border border-[#213026]">
+                          {dur}s
+                        </span>
+                      </div>
 
+                      {/* Middle: Editable Subtitle Text */}
                       <input
                         type="text"
                         value={cue.text}
@@ -1990,31 +2114,32 @@ ${cues
                             prev.map((c) => {
                               if (c.id !== cue.id) return c;
                               const words = newText.split(/\s+/).filter(Boolean);
-                              const dur = c.end - c.start;
-                              const wDur = words.length > 0 ? dur / words.length : 0;
+                              const cDur = Math.max(0.1, c.end - c.start);
+                              const wDur = cDur / Math.max(1, words.length);
                               return {
                                 ...c,
                                 text: newText,
                                 words: words.map((w, wIdx) => ({
                                   id: `${c.id}-w${wIdx}`,
                                   word: w,
-                                  start: c.start + wIdx * wDur,
-                                  end: c.start + (wIdx + 1) * wDur,
+                                  start: Math.round((c.start + wIdx * wDur) * 1000) / 1000,
+                                  end: Math.round((c.start + (wIdx + 1) * wDur) * 1000) / 1000,
                                 })),
                               };
                             })
                           );
                         }}
-                        className="flex-1 bg-transparent text-xs text-[#e7eee9] focus:outline-none"
+                        className="flex-1 bg-transparent text-xs text-[#e7eee9] font-medium focus:outline-none focus:border-b focus:border-[#3cff5f] px-1 py-1"
                       />
 
+                      {/* Right: Delete button */}
                       <button
                         type="button"
                         onClick={() => {
                           setCues((prev) => prev.filter((c) => c.id !== cue.id));
                         }}
-                        className="p-1 text-[#62776a] hover:text-red-400"
-                        title="Delete cue"
+                        className="p-1.5 text-[#62776a] hover:text-red-400 transition-colors shrink-0"
+                        title="Delete this subtitle cue"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -2023,19 +2148,20 @@ ${cues
                 })}
               </div>
             ) : (
-              /* Tab 2: Raw SRT Editor */
+              /* Tab 2: Raw SRT Editor (Live Synchronized) */
               <div className="space-y-2">
                 <textarea
-                  rows={6}
+                  rows={8}
                   value={generateSRT()}
                   onChange={(e) => {
                     const parsed = parseSRTToCues(e.target.value);
                     if (parsed.length > 0) {
+                      rawSourceCuesRef.current = parsed;
                       setCues(parsed);
                     }
                   }}
                   placeholder="Paste standard SRT code with timecodes here..."
-                  className="w-full rounded-2xl border border-[#213026] bg-[#080e0b] p-4 font-mono text-xs text-[#e7eee9] focus:border-[#3cff5f] focus:outline-none"
+                  className="w-full rounded-2xl border border-[#213026] bg-[#080e0b] p-4 font-mono text-xs text-[#e7eee9] focus:border-[#3cff5f] focus:outline-none leading-relaxed"
                 />
               </div>
             )}
