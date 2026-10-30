@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import ToolsExplorer from "@/components/tools/ToolsExplorer";
+import { AdBanner } from "@/components/ads/AdBanner";
 import { TOOLS_DATA, CATEGORIES } from "@/lib/tools-data";
 import { Sparkles, ShieldCheck, Zap, Lock } from "lucide-react";
 
@@ -59,10 +60,20 @@ export default function ToolsHubPage() {
         </div>
       </section>
 
+      {/* Top Ad Slot (Active when AdSense ID is set) */}
+      <div className="mx-auto max-w-5xl px-4 pt-4 sm:px-6">
+        <AdBanner slot="tools-hub-top" format="horizontal" />
+      </div>
+
       {/* Main Tools Catalog Section */}
-      <section id="tools" className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 w-full scroll-mt-20">
+      <section id="tools" className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 w-full scroll-mt-20">
         <ToolsExplorer tools={TOOLS_DATA} categories={CATEGORIES} />
       </section>
+
+      {/* Bottom Ad Slot (Active when AdSense ID is set) */}
+      <div className="mx-auto max-w-5xl px-4 pb-8 sm:px-6">
+        <AdBanner slot="tools-hub-bottom" format="auto" />
+      </div>
 
       {/* Trust & Privacy Guarantee Section */}
       <section className="border-t border-[#26332d] bg-[#080e0b] py-16">
