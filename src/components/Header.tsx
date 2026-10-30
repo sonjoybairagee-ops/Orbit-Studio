@@ -11,8 +11,8 @@ const NAV = [
   ["/tutorials", "Tutorials"],
   ["/tools", "Free Tools"],
   ["/pricing", "Pricing"],
-  ["/about", "About"],
   ["/contact", "Contact"],
+  ["/about", "About"],
 ];
 
 export async function Header() {

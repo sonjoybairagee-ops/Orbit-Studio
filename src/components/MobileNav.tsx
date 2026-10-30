@@ -9,8 +9,8 @@ const LINKS = [
   ["/tutorials", "Tutorials"],
   ["/tools", "Free Tools"],
   ["/pricing", "Pricing"],
-  ["/about", "About"],
   ["/contact", "Contact"],
+  ["/about", "About"],
 ];
 
 export function MobileNav({
