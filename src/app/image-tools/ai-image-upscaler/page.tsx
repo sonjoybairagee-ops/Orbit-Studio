@@ -12,24 +12,25 @@ import {
 import ImageUpscalerTool from "@/components/tools/ImageUpscalerTool";
 
 export const metadata: Metadata = {
-  title: "Free 4K AI Image Upscaler & Detail Enhancer — CompX Orbit",
+  title: "Free 4K AI Image Upscaler & Neural Enhancer (Real-ESRGAN & Waifu2x) — CompX Orbit",
   description:
-    "Upscale images, photos, and thumbnails to 4K and 8K resolution with zero quality loss. 100% free AI super-resolution enhancer with instant before/after split comparison.",
+    "Upscale images, photos, and anime art to 4K and 8K with Real-ESRGAN True Neural AI super-resolution. 100% free, WebGL GPU accelerated with interactive split-screen comparison.",
   keywords: [
+    "real-esrgan online free",
+    "waifu2x online upscaler",
     "ai image upscaler free",
     "4k image upscaler",
     "upscale photo to 4k online",
     "topaz gigapixel alternative free",
-    "enhance blurry image",
-    "free super resolution tool",
+    "neural super resolution tool",
     "youtube thumbnail upscaler",
     "increase image resolution free",
     "photo detail enhancer",
   ],
   openGraph: {
-    title: "Free 4K AI Image Upscaler & Detail Enhancer | CompX Orbit",
+    title: "Free 4K AI Image Upscaler & Neural Enhancer (Real-ESRGAN) | CompX Orbit",
     description:
-      "Upscale blurry images, photos, and thumbnails to 4K Ultra HD. 100% free with interactive before/after split slider.",
+      "Upscale blurry images, photos, and artwork to 4K Ultra HD using Real-ESRGAN Deep Neural AI. 100% free with interactive before/after split slider.",
     type: "website",
   },
 };
@@ -37,8 +38,8 @@ export const metadata: Metadata = {
 const FEATURES = [
   {
     icon: Sparkles,
-    title: "Up to 8x Resolution Boost",
-    desc: "Enlarge low-resolution 480p and 720p photos into crisp 4K Ultra HD and 8K print-ready images.",
+    title: "True Neural AI (Real-ESRGAN)",
+    desc: "Deep convolutional neural networks synthesize genuine micro-textures, skin pores, and sharp line art.",
   },
   {
     icon: Eye,
@@ -47,32 +48,32 @@ const FEATURES = [
   },
   {
     icon: Zap,
-    title: "Adaptive Edge Sharpening",
-    desc: "Contrast-adaptive sharpening eliminates blur and compression blockiness without artificial halos.",
+    title: "Dual Engine: Neural & Fast HD",
+    desc: "Choose between deep learning Real-ESRGAN or sub-second contrast-adaptive sharpening for instant exports.",
   },
   {
     icon: ShieldCheck,
     title: "Zero Limits & 100% Private",
-    desc: "Runs directly in your browser. No file size restrictions, zero cloud storage queues, and no watermark.",
+    desc: "Runs directly in your browser via WebGL GPU. Zero cloud queues, zero server uploads, and no watermark.",
   },
 ];
 
 const FAQS = [
   {
-    q: "How does the 4K AI image upscaler work?",
-    a: "The tool resamples your image using high-precision bicubic convolution, then runs contrast-adaptive sharpening to recover micro-textures, edge boundaries, and clarity.",
+    q: "What makes True Neural AI (Real-ESRGAN) different from standard upscaling?",
+    a: "Standard resizing (bicubic or bilinear) only stretches existing pixels and blurs edges. Real-ESRGAN is a deep convolutional neural network trained on millions of high-definition images that genuinely hallucinates and reconstructs missing textures, fabric weaves, facial details, and crisp vector lines.",
+  },
+  {
+    q: "Does it support Anime and Digital Art (Waifu2x style)?",
+    a: "Yes! Select the 'Digital Art & Anime' style preset or ESRGAN Studio model to eliminate compression blockiness, remove color banding, and preserve ultra-sharp vector edges similar to Waifu2x.",
   },
   {
     q: "Will my images be uploaded to any remote server?",
-    a: "No! All image rendering and enhancement processing is executed directly inside your device's browser memory. Your images never touch our servers.",
+    a: "No! All neural inference and contrast-adaptive rendering execute directly inside your browser using WebGL hardware acceleration. Your images never leave your computer or phone.",
   },
   {
     q: "Are there any image size limits or paid credits?",
     a: "No. CompX Orbit is completely free forever. You can upscale as many images, thumbnails, and wallpapers as you want with zero credits or subscriptions.",
-  },
-  {
-    q: "What image formats are supported?",
-    a: "You can upload JPG, JPEG, PNG, and WebP images. Enhanced images can be downloaded in lossless PNG or optimized JPG format.",
   },
 ];
 
@@ -199,3 +200,4 @@ export default function ImageUpscalerPage() {
     </div>
   );
 }
+

@@ -20,6 +20,10 @@
     "@imgly/background-removal": "^1.7.0",
     "@supabase/ssr": "^0.5.1",
     "@supabase/supabase-js": "^2.45.4",
+    "@tensorflow/tfjs": "^4.11.0",
+    "@upscalerjs/default-model": "^1.0.0",
+    "@upscalerjs/esrgan-medium": "^1.0.0",
+    "@upscalerjs/esrgan-slim": "^1.0.0",
     "@vercel/functions": "^3.7.6",
     "btch-downloader": "^6.4.0",
     "canvas-confetti": "^1.9.4",
@@ -42,6 +46,7 @@
     "resend": "^6.18.0",
     "ruhend-scraper": "^10.0.3",
     "social-dl": "^1.4.1",
+    "upscaler": "^1.0.0",
     "youtube-transcript-api-js": "^4.0.0",
     "zod": "^3.23.8"
   },
