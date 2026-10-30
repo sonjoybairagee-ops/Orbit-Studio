@@ -6,7 +6,8 @@ import { CreatorInteractiveShowcase } from "./CreatorInteractiveShowcase";
 // 🚀 CHROME WEB STORE & DOWNLOAD CONFIGURATION
 // 💡 Replace "#" with your actual Chrome Web Store URL once approved!
 // =========================================================================
-const CHROME_STORE_URL = "#"; // <-- Put your Chrome Web Store link here!
+const CHROME_STORE_URL =
+  "https://chromewebstore.google.com/detail/creatorlens/mcekklndppgfpagokgdoogmghefjkhcl?utm_source=ext_app_menu";
 const DIRECT_ZIP_DOWNLOAD_URL = "#"; // <-- Optional direct .zip download link!
 
 export const metadata: Metadata = {
