@@ -33,3 +33,4 @@ tsconfig.tsbuildinfo
 
 .git_new/
 .git_orbit/
+fix-git.bat
