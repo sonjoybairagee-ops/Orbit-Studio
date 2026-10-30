@@ -1,0 +1,151 @@
+/* ==========================================================================
+   CompX Orbit Studio Dark Theme for Free Tools Suite
+   Matches the landing page theme: #050a08, #101813, #26332d, #3cff5f, #e7eee9
+   ========================================================================== */
+
+/* Universal Tool Page Container */
+.orbit-tool-page,
+main:has([class*="Tool"]),
+main:has([class*="-tools"]) {
+  --canvas: #050a08;
+  --surface: #0c1510;
+  --surface-2: #101813;
+  --raised: #16221a;
+  --line: #26332d;
+  --muted: #9baaa1;
+  --ink: #e7eee9;
+  --green: #3cff5f;
+  background-color: #050a08;
+  color: #e7eee9;
+}
+
+/* Headings and Titles on tool pages */
+.orbit-tool-page h1,
+.orbit-tool-page h2,
+.orbit-tool-page h3,
+.orbit-tool-page h4,
+.orbit-tool-page .text-slate-900,
+.orbit-tool-page .text-slate-800 {
+  color: #e7eee9 !important;
+}
+
+/* Descriptions and muted text */
+.orbit-tool-page p,
+.orbit-tool-page .text-slate-600,
+.orbit-tool-page .text-slate-500,
+.orbit-tool-page .text-slate-400 {
+  color: #9baaa1 !important;
+}
+
+/* Tool Main Containers & Cards (was bg-white) */
+.orbit-tool-page .bg-white {
+  background: linear-gradient(135deg, rgba(16, 24, 19, 0.95) 0%, rgba(10, 16, 12, 0.98) 100%) !important;
+  border-color: #26332d !important;
+  box-shadow: 0 16px 40px -15px rgba(0, 0, 0, 0.6) !important;
+  color: #e7eee9;
+}
+
+/* Tool Inner Steps / Subcards (was bg-slate-50, bg-slate-100) */
+.orbit-tool-page .bg-slate-50,
+.orbit-tool-page .bg-slate-100,
+.orbit-tool-page .bg-slate-50\/50,
+.orbit-tool-page .bg-gray-50 {
+  background: #0d1510 !important;
+  border-color: #25332b !important;
+  color: #afbeb4 !important;
+}
+
+/* Borders */
+.orbit-tool-page .border-slate-200,
+.orbit-tool-page .border-slate-100,
+.orbit-tool-page .border-slate-300,
+.orbit-tool-page .border-gray-200 {
+  border-color: #26332d !important;
+}
+
+/* Kicker Badges (e.g. Format Transformation) */
+.orbit-tool-page .bg-amber-50,
+.orbit-tool-page .bg-emerald-50,
+.orbit-tool-page .bg-sky-50,
+.orbit-tool-page .bg-blue-50,
+.orbit-tool-page .bg-purple-50,
+.orbit-tool-page .bg-indigo-50 {
+  background: #102a16 !important;
+  border-color: #29392f !important;
+  color: #3cff5f !important;
+}
+
+/* Form Controls: Inputs, Textareas, Selects */
+.orbit-tool-page input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.orbit-tool-page textarea,
+.orbit-tool-page select {
+  background-color: #080e0b !important;
+  border: 1px solid #26332d !important;
+  color: #e7eee9 !important;
+  border-radius: 8px !important;
+}
+
+.orbit-tool-page input:focus,
+.orbit-tool-page textarea:focus,
+.orbit-tool-page select:focus {
+  border-color: #3cff5f !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(60, 255, 95, 0.2) !important;
+}
+
+/* Range sliders */
+.orbit-tool-page input[type="range"] {
+  accent-color: #3cff5f !important;
+  background-color: #16241a !important;
+}
+
+/* Primary Action Buttons */
+.orbit-tool-page button.bg-blue-600,
+.orbit-tool-page button.bg-emerald-600,
+.orbit-tool-page button.bg-amber-600,
+.orbit-tool-page button.bg-indigo-600,
+.orbit-tool-page a.bg-blue-600,
+.orbit-tool-page a.bg-emerald-600 {
+  background: #3cff5f !important;
+  color: #041007 !important;
+  border: 1px solid #3cff5f !important;
+  font-weight: 700 !important;
+}
+
+.orbit-tool-page button.bg-blue-600:hover,
+.orbit-tool-page button.bg-emerald-600:hover,
+.orbit-tool-page button.bg-amber-600:hover,
+.orbit-tool-page a.bg-blue-600:hover {
+  background: #77ff90 !important;
+  border-color: #77ff90 !important;
+  box-shadow: 0 4px 20px rgba(60, 255, 95, 0.25) !important;
+}
+
+/* Secondary Buttons */
+.orbit-tool-page button:not(.bg-blue-600):not(.bg-emerald-600):not(.bg-amber-600):not(.bg-indigo-600) {
+  background: #101813 !important;
+  border-color: #29392f !important;
+  color: #d4e0d8 !important;
+}
+
+.orbit-tool-page button:not(.bg-blue-600):not(.bg-emerald-600):not(.bg-amber-600):not(.bg-indigo-600):hover {
+  border-color: #395a43 !important;
+  background: #16221a !important;
+}
+
+/* Number Step Circles (1, 2, 3) */
+.orbit-tool-page span:is(.bg-amber-600, .bg-emerald-600, .bg-blue-600, .bg-indigo-600) {
+  background: #16361e !important;
+  color: #3cff5f !important;
+  border: 1px solid #2a5234 !important;
+}
+
+/* Guide Icons (CheckCircle2, HelpCircle) */
+.orbit-tool-page .text-amber-600,
+.orbit-tool-page .text-emerald-600,
+.orbit-tool-page .text-blue-600 {
+  color: #3cff5f !important;
+}
+.orbit-tool-page .text-slate-700 {
+  color: #8da195 !important;
+}

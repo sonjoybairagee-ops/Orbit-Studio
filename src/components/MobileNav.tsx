@@ -7,6 +7,7 @@ const LINKS = [
   ["/#product-tour", "Product tour"],
   ["/#features", "Features"],
   ["/tutorials", "Tutorials"],
+  ["/tools", "Free Tools"],
   ["/pricing", "Pricing"],
   ["/#install", "How it works"],
 ];

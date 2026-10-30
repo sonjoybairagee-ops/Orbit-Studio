@@ -1,12 +1,18 @@
 import type { MetadataRoute } from "next";
+import { TOOLS_DATA } from "@/lib/tools-data";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://compxorbit.com";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
-  const routes: Array<[string, number, MetadataRoute.Sitemap[0]["changeFrequency"]]> = [
-    ["", 1, "weekly"],
+
+  // Core website pages
+  const staticRoutes: Array<[string, number, MetadataRoute.Sitemap[0]["changeFrequency"]]> = [
+    ["", 1.0, "weekly"],
+    ["/tools", 0.95, "daily"],
     ["/pricing", 0.9, "weekly"],
+    ["/creator", 0.8, "weekly"],
+    ["/tutorials", 0.7, "weekly"],
     ["/login", 0.4, "yearly"],
     ["/signup", 0.6, "yearly"],
     ["/terms", 0.3, "yearly"],
@@ -14,10 +20,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ["/refund", 0.3, "yearly"],
   ];
 
-  return routes.map(([path, priority, changeFrequency]) => ({
-    url: `${SITE_URL}${path}`,
+  const staticEntries: MetadataRoute.Sitemap = staticRoutes.map(
+    ([path, priority, changeFrequency]) => ({
+      url: `${SITE_URL}${path}`,
+      lastModified: now,
+      changeFrequency,
+      priority,
+    })
+  );
+
+  // 82+ Dynamic Free Creator & Video Tools
+  const toolEntries: MetadataRoute.Sitemap = TOOLS_DATA.map((tool) => ({
+    url: `${SITE_URL}${tool.href}`,
     lastModified: now,
-    changeFrequency,
-    priority,
+    changeFrequency: "weekly",
+    priority: tool.isPopular ? 0.85 : 0.75,
   }));
+
+  return [...staticEntries, ...toolEntries];
 }
