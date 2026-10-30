@@ -1,9 +1,69 @@
 import { NextRequest, NextResponse } from "next/server";
+import { spawn } from "child_process";
+import fs from "fs";
+import os from "os";
+import path from "path";
 import {
   YouTubeTranscriptApi,
   SRTFormatter,
   WebVTTFormatter,
 } from "youtube-transcript-api-js";
+
+// Extract audio from video buffer using ffmpeg
+async function extractAudioFromBuffer(
+  videoBuffer: Buffer,
+  fallbackMime: string
+): Promise<{ audioBuffer: Buffer; mimeType: string }> {
+  try {
+    const isWindows = process.platform === "win32";
+    const binaryName = isWindows ? "ffmpeg.exe" : "ffmpeg";
+    const ffmpegPath = path.join(process.cwd(), "node_modules", "ffmpeg-static", binaryName);
+
+    if (!fs.existsSync(ffmpegPath)) {
+      return { audioBuffer: videoBuffer, mimeType: fallbackMime };
+    }
+
+    const tempIn = path.join(os.tmpdir(), `tx_in_${Date.now()}_${Math.random().toString(36).substring(2, 6)}.mp4`);
+    const tempOut = path.join(os.tmpdir(), `tx_out_${Date.now()}_${Math.random().toString(36).substring(2, 6)}.mp3`);
+
+    await fs.promises.writeFile(tempIn, videoBuffer);
+
+    return await new Promise((resolve) => {
+      const proc = spawn(ffmpegPath, [
+        "-y",
+        "-i", tempIn,
+        "-vn",
+        "-ac", "1",
+        "-ar", "16000",
+        "-b:a", "48k",
+        tempOut,
+      ]);
+
+      proc.on("close", async (code) => {
+        try {
+          if (code === 0 && fs.existsSync(tempOut)) {
+            const audioBuffer = await fs.promises.readFile(tempOut);
+            await fs.promises.unlink(tempIn).catch(() => {});
+            await fs.promises.unlink(tempOut).catch(() => {});
+            resolve({ audioBuffer, mimeType: "audio/mp3" });
+          } else {
+            await fs.promises.unlink(tempIn).catch(() => {});
+            resolve({ audioBuffer: videoBuffer, mimeType: fallbackMime });
+          }
+        } catch {
+          resolve({ audioBuffer: videoBuffer, mimeType: fallbackMime });
+        }
+      });
+
+      proc.on("error", async () => {
+        await fs.promises.unlink(tempIn).catch(() => {});
+        resolve({ audioBuffer: videoBuffer, mimeType: fallbackMime });
+      });
+    });
+  } catch {
+    return { audioBuffer: videoBuffer, mimeType: fallbackMime };
+  }
+}
 
 // Clean HTML entities from string
 function decodeHtmlEntities(str: string): string {
@@ -185,20 +245,8 @@ export async function POST(req: NextRequest) {
 
     // Read file buffer
     const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    let rawBuffer: Buffer = Buffer.from(arrayBuffer as ArrayBuffer);
 
-    // Limit check for inlineData: ~20MB max
-    if (buffer.length > 20 * 1024 * 1024) {
-      return NextResponse.json(
-        {
-          error:
-            "File size exceeds 20MB. Please use our Audio/Video Compressor to optimize it or select a smaller clip.",
-        },
-        { status: 400 }
-      );
-    }
-
-    const base64Data = buffer.toString("base64");
     let mimeType = file.type || "audio/wav";
     if (!mimeType || mimeType === "application/octet-stream") {
       const lower = filename.toLowerCase();
@@ -209,6 +257,27 @@ export async function POST(req: NextRequest) {
       else if (lower.endsWith(".webm")) mimeType = "video/webm";
       else mimeType = "audio/wav";
     }
+
+    // If file is video or large (> 10MB), extract lightweight audio track via FFmpeg
+    const isVideo = mimeType.startsWith("video/") || /\.(mp4|mov|webm|mkv)$/i.test(filename);
+    if (isVideo || rawBuffer.length > 10 * 1024 * 1024) {
+      const extracted = await extractAudioFromBuffer(rawBuffer, mimeType);
+      rawBuffer = extracted.audioBuffer;
+      mimeType = extracted.mimeType;
+    }
+
+    // Limit check for inlineData: ~20MB max after audio extraction
+    if (rawBuffer.length > 20 * 1024 * 1024) {
+      return NextResponse.json(
+        {
+          error:
+            "Extracted audio exceeds 20MB. Please use a shorter clip or compress the audio track.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const base64Data = rawBuffer.toString("base64");
 
     // Call Gemini 2.5 Flash
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;

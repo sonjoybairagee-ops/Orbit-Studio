@@ -20,7 +20,10 @@ import {
   CheckCircle2,
   AlertCircle,
   HelpCircle,
-  Maximize2,
+  FileCode,
+  Clock,
+  Plus,
+  Trash2,
 } from "lucide-react";
 
 export interface CaptionWord {
@@ -30,12 +33,12 @@ export interface CaptionWord {
   end: number;   // in seconds
 }
 
-export interface CaptionLine {
+export interface CaptionCue {
   id: string;
-  start: number;
-  end: number;
-  words: CaptionWord[];
+  start: number; // in seconds
+  end: number;   // in seconds
   text: string;
+  words: CaptionWord[];
 }
 
 export type CaptionPreset = "hormozi" | "beast" | "emerald" | "minimal" | "tiktok";
@@ -144,7 +147,108 @@ const PRESET_CONFIGS: Record<CaptionPreset, PresetConfig> = {
   },
 };
 
-const SAMPLE_DEMO_TEXT = `Welcome to the ultimate auto caption generator. This tool creates viral animated subtitles just like Submagic and Captions app, but completely free with zero watermarks. Export to SRT, VTT, or ASS with exact timestamps.`;
+// Initial Demo Cues
+const INITIAL_DEMO_CUES: CaptionCue[] = [
+  {
+    id: "cue-1",
+    start: 0.5,
+    end: 2.8,
+    text: "Welcome to the ultimate auto caption generator",
+    words: [
+      { id: "c1-w0", word: "Welcome", start: 0.5, end: 0.9 },
+      { id: "c1-w1", word: "to", start: 0.9, end: 1.1 },
+      { id: "c1-w2", word: "the", start: 1.1, end: 1.3 },
+      { id: "c1-w3", word: "ultimate", start: 1.3, end: 1.8 },
+      { id: "c1-w4", word: "auto", start: 1.8, end: 2.2 },
+      { id: "c1-w5", word: "caption", start: 2.2, end: 2.5 },
+      { id: "c1-w6", word: "generator", start: 2.5, end: 2.8 },
+    ],
+  },
+  {
+    id: "cue-2",
+    start: 3.2,
+    end: 5.8,
+    text: "Create viral animated subtitles in seconds",
+    words: [
+      { id: "c2-w0", word: "Create", start: 3.2, end: 3.6 },
+      { id: "c2-w1", word: "viral", start: 3.6, end: 4.1 },
+      { id: "c2-w2", word: "animated", start: 4.1, end: 4.7 },
+      { id: "c2-w3", word: "subtitles", start: 4.7, end: 5.3 },
+      { id: "c2-w4", word: "in", start: 5.3, end: 5.5 },
+      { id: "c2-w5", word: "seconds", start: 5.5, end: 5.8 },
+    ],
+  },
+  {
+    id: "cue-3",
+    start: 6.2,
+    end: 9.5,
+    text: "Upload your SRT file or auto-transcribe directly",
+    words: [
+      { id: "c3-w0", word: "Upload", start: 6.2, end: 6.7 },
+      { id: "c3-w1", word: "your", start: 6.7, end: 7.0 },
+      { id: "c3-w2", word: "SRT", start: 7.0, end: 7.6 },
+      { id: "c3-w3", word: "file", start: 7.6, end: 8.0 },
+      { id: "c3-w4", word: "or", start: 8.0, end: 8.2 },
+      { id: "c3-w5", word: "auto-transcribe", start: 8.2, end: 8.9 },
+      { id: "c3-w6", word: "directly", start: 8.9, end: 9.5 },
+    ],
+  },
+];
+
+// Helper: Parse raw SRT text into CaptionCue array
+export function parseSRTToCues(srtContent: string): CaptionCue[] {
+  const normalized = srtContent.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
+  const blocks = normalized.split(/\n\s*\n/);
+  const cues: CaptionCue[] = [];
+
+  const parseTime = (t: string) => {
+    const parts = t.replace(",", ".").split(":");
+    if (parts.length === 3) {
+      return parseFloat(parts[0]) * 3600 + parseFloat(parts[1]) * 60 + parseFloat(parts[2]);
+    } else if (parts.length === 2) {
+      return parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
+    }
+    return 0;
+  };
+
+  for (let idx = 0; idx < blocks.length; idx++) {
+    const lines = blocks[idx].split("\n").map((l) => l.trim()).filter(Boolean);
+    if (lines.length < 2) continue;
+
+    const timeIndex = lines.findIndex((l) => l.includes("-->"));
+    if (timeIndex === -1) continue;
+
+    const [startStr, endStr] = lines[timeIndex].split("-->").map((s) => s.trim());
+    const textLines = lines.slice(timeIndex + 1);
+    const cleanText = textLines.join(" ").replace(/<[^>]+>/g, "").trim();
+
+    const start = parseTime(startStr);
+    const end = parseTime(endStr);
+
+    if (end > start && cleanText) {
+      const words = cleanText.split(/\s+/).filter(Boolean);
+      const duration = end - start;
+      const wordDur = words.length > 0 ? duration / words.length : 0;
+
+      const wordsList: CaptionWord[] = words.map((w, wIdx) => ({
+        id: `cue-${idx}-w${wIdx}`,
+        word: w,
+        start: start + wIdx * wordDur,
+        end: start + (wIdx + 1) * wordDur,
+      }));
+
+      cues.push({
+        id: `cue-${idx}`,
+        start,
+        end,
+        text: cleanText,
+        words: wordsList,
+      });
+    }
+  }
+
+  return cues;
+}
 
 export default function AutoCaptionsTool() {
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -163,13 +267,15 @@ export default function AutoCaptionsTool() {
   const [textColor, setTextColor] = useState<string>("#FFFFFF");
   const [textTransform, setTextTransform] = useState<"uppercase" | "capitalize" | "none">("uppercase");
 
-  // Transcript state
-  const [rawText, setRawText] = useState<string>(SAMPLE_DEMO_TEXT);
+  // Caption Cues State
+  const [cues, setCues] = useState<CaptionCue[]>(INITIAL_DEMO_CUES);
   const [isTranscribing, setIsTranscribing] = useState<boolean>(false);
+  const [transcribeStatus, setTranscribeStatus] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"cues" | "raw">("cues");
   const [copiedFormat, setCopiedFormat] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
+  const srtInputRef = useRef<HTMLInputElement | null>(null);
 
   // Sync preset changes with controls
   const handlePresetSelect = (p: CaptionPreset) => {
@@ -181,56 +287,18 @@ export default function AutoCaptionsTool() {
     setTextTransform(cfg.textTransform);
   };
 
-  // Convert raw text into synchronized word list based on duration
-  const captionLines = useMemo<CaptionLine[]>(() => {
-    const clean = rawText.trim();
-    if (!clean) return [];
-
-    const words = clean.split(/\s+/).filter(Boolean);
-    if (words.length === 0) return [];
-
-    const effectiveDuration = duration > 0 ? duration : Math.max(12, words.length * 0.38);
-    const timePerWord = effectiveDuration / words.length;
-
-    const wordObjects: CaptionWord[] = words.map((w, idx) => ({
-      id: `w-${idx}`,
-      word: w,
-      start: idx * timePerWord,
-      end: (idx + 1) * timePerWord,
-    }));
-
-    // Group into lines based on wordsPerLine
-    const lines: CaptionLine[] = [];
-    for (let i = 0; i < wordObjects.length; i += wordsPerLine) {
-      const slice = wordObjects.slice(i, i + wordsPerLine);
-      const lineStart = slice[0].start;
-      const lineEnd = slice[slice.length - 1].end;
-      lines.push({
-        id: `line-${i}`,
-        start: lineStart,
-        end: lineEnd,
-        words: slice,
-        text: slice.map((sw) => sw.word).join(" "),
-      });
-    }
-
-    return lines;
-  }, [rawText, duration, wordsPerLine]);
-
-  // Find currently active line and active word
-  const activeLine = useMemo(() => {
-    return captionLines.find(
-      (line) => currentTime >= line.start && currentTime <= line.end
-    );
-  }, [captionLines, currentTime]);
+  // Find currently active cue and active word based on currentTime
+  const activeCue = useMemo(() => {
+    return cues.find((c) => currentTime >= c.start && currentTime <= c.end);
+  }, [cues, currentTime]);
 
   const activeWordId = useMemo(() => {
-    if (!activeLine) return null;
-    const match = activeLine.words.find(
+    if (!activeCue) return null;
+    const match = activeCue.words.find(
       (w) => currentTime >= w.start && currentTime <= w.end
     );
-    return match ? match.id : activeLine.words[0]?.id;
-  }, [activeLine, currentTime]);
+    return match ? match.id : activeCue.words[0]?.id;
+  }, [activeCue, currentTime]);
 
   // Handle Video Upload
   const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -247,64 +315,110 @@ export default function AutoCaptionsTool() {
     setIsPlaying(false);
     setCurrentTime(0);
 
-    // Auto-transcribe using local speech recognition or backend if available
-    attemptAutoTranscribe(file);
+    // Auto-transcribe media
+    triggerAutoTranscribe(file);
   };
 
-  // Automatic Speech-to-Text Fallback
-  const attemptAutoTranscribe = async (file: File) => {
+  // Handle SRT / VTT File Upload
+  const handleSRTUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      if (content) {
+        const parsed = parseSRTToCues(content);
+        if (parsed.length > 0) {
+          setCues(parsed);
+          setTranscribeStatus(`Successfully loaded ${parsed.length} subtitle cues from ${file.name}`);
+          setTimeout(() => setTranscribeStatus(null), 4000);
+        } else {
+          alert("Could not parse valid SRT/VTT timestamps from this file. Please verify the subtitle format.");
+        }
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  // Automatic Speech-to-Text via Server API
+  const triggerAutoTranscribe = async (targetFile?: File) => {
+    const fileToTranscribe = targetFile || videoFile;
+    if (!fileToTranscribe) {
+      alert("Please upload a video or audio file first.");
+      return;
+    }
+
     setIsTranscribing(true);
+    setTranscribeStatus("Extracting audio & transcribing speech with AI...");
+
     try {
-      // 1. Try sending to transcribe API
       const formData = new FormData();
-      formData.append("file", file);
-      formData.append("filename", file.name);
+      formData.append("file", fileToTranscribe);
+      formData.append("filename", fileToTranscribe.name);
 
       const res = await fetch("/api/tools/transcribe-file", {
         method: "POST",
         body: formData,
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.plainText && data.plainText.length > 10) {
-          setRawText(data.plainText);
+      const data = await res.json();
+
+      if (res.ok && data.snippets && data.snippets.length > 0) {
+        // Convert API snippets into CaptionCue
+        const newCues: CaptionCue[] = data.snippets.map(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (s: { start: number; duration: number; text: string }, idx: number) => {
+            const start = s.start;
+            const end = s.start + (s.duration || 3);
+            const cleanText = s.text.trim();
+            const words = cleanText.split(/\s+/).filter(Boolean);
+            const dur = end - start;
+            const wordDur = words.length > 0 ? dur / words.length : 0;
+
+            const wordsList: CaptionWord[] = words.map((w: string, wIdx: number) => ({
+              id: `api-cue-${idx}-w${wIdx}`,
+              word: w,
+              start: start + wIdx * wordDur,
+              end: start + (wIdx + 1) * wordDur,
+            }));
+
+            return {
+              id: `api-cue-${idx}`,
+              start,
+              end,
+              text: cleanText,
+              words: wordsList,
+            };
+          }
+        );
+
+        setCues(newCues);
+        setTranscribeStatus(`AI Speech-to-Text completed: ${newCues.length} lines ready!`);
+        setTimeout(() => setTranscribeStatus(null), 4000);
+        setIsTranscribing(false);
+        return;
+      } else if (res.ok && data.srt) {
+        const parsed = parseSRTToCues(data.srt);
+        if (parsed.length > 0) {
+          setCues(parsed);
+          setTranscribeStatus(`AI Speech-to-Text completed: ${parsed.length} lines ready!`);
+          setTimeout(() => setTranscribeStatus(null), 4000);
           setIsTranscribing(false);
           return;
         }
       }
-    } catch {
-      // ignore, fall back
-    }
 
-    // 2. Browser Web Speech Recognition fallback for audio
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      try {
-        const recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = false;
-        recognition.lang = "en-US";
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        recognition.onresult = (evt: any) => {
-          let str = "";
-          for (let i = 0; i < evt.results.length; ++i) {
-            str += evt.results[i][0].transcript + " ";
-          }
-          if (str.trim()) {
-            setRawText(str.trim());
-          }
-        };
-      } catch {
-        // keep existing demo text
-      }
+      setTranscribeStatus("Could not extract speech automatically. You can upload an .SRT file or edit dialogue below.");
+    } catch (err: unknown) {
+      console.warn("Transcribe error:", err);
+      setTranscribeStatus("Auto-transcribe service busy. Please upload an .SRT file or type your dialogue below.");
+    } finally {
+      setIsTranscribing(false);
     }
-
-    setIsTranscribing(false);
   };
 
-  // Track playback time
+  // Video Time Update
   const handleTimeUpdate = () => {
     if (videoRef.current) {
       setCurrentTime(videoRef.current.currentTime);
@@ -319,7 +433,6 @@ export default function AutoCaptionsTool() {
 
   const togglePlay = () => {
     if (!videoRef.current) {
-      // Simulate playback if no video uploaded
       setIsPlaying((prev) => !prev);
       return;
     }
@@ -332,12 +445,24 @@ export default function AutoCaptionsTool() {
     }
   };
 
-  // Virtual playback loop when no video uploaded (for previewing captions)
+  // Seek video to specific cue timestamp
+  const seekTo = (seconds: number) => {
+    setCurrentTime(seconds);
+    if (videoRef.current) {
+      videoRef.current.currentTime = seconds;
+      if (!isPlaying) {
+        videoRef.current.play();
+        setIsPlaying(true);
+      }
+    }
+  };
+
+  // Virtual playback loop when no video uploaded
   useEffect(() => {
     if (!videoSrc && isPlaying) {
       const interval = setInterval(() => {
         setCurrentTime((prev) => {
-          const max = duration > 0 ? duration : 15;
+          const max = duration > 0 ? duration : cues[cues.length - 1]?.end + 1 || 12;
           if (prev >= max) {
             return 0;
           }
@@ -346,31 +471,32 @@ export default function AutoCaptionsTool() {
       }, 100);
       return () => clearInterval(interval);
     }
-  }, [videoSrc, isPlaying, duration]);
+  }, [videoSrc, isPlaying, duration, cues]);
 
   // Export Formats
   const generateSRT = useCallback(() => {
-    return captionLines
-      .map((line, idx) => {
-        const formatTime = (sec: number) => {
-          const ms = Math.floor((sec % 1) * 1000);
-          const totalSec = Math.floor(sec);
-          const s = totalSec % 60;
-          const m = Math.floor(totalSec / 60) % 60;
-          const h = Math.floor(totalSec / 3600);
-          return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")},${String(ms).padStart(3, "0")}`;
-        };
-        return `${idx + 1}\n${formatTime(line.start)} --> ${formatTime(line.end)}\n${line.text}\n`;
+    const formatTime = (sec: number) => {
+      const ms = Math.floor((sec % 1) * 1000);
+      const totalSec = Math.floor(sec);
+      const s = totalSec % 60;
+      const m = Math.floor(totalSec / 60) % 60;
+      const h = Math.floor(totalSec / 3600);
+      return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")},${String(ms).padStart(3, "0")}`;
+    };
+
+    return cues
+      .map((c, idx) => {
+        return `${idx + 1}\n${formatTime(c.start)} --> ${formatTime(c.end)}\n${c.text}\n`;
       })
       .join("\n");
-  }, [captionLines]);
+  }, [cues]);
 
   const generateVTT = useCallback(() => {
     const srt = generateSRT();
     return `WEBVTT\n\n${srt.replace(/,/g, ".")}`;
   }, [generateSRT]);
 
-  // ASS format for Premiere Pro / After Effects / CapCut with exact styles!
+  // ASS format for Premiere Pro / After Effects / CapCut
   const generateASS = useCallback(() => {
     const cfg = PRESET_CONFIGS[preset];
     return `[Script Info]
@@ -386,8 +512,8 @@ Style: Default,${cfg.fontFamily.split(",")[0].replace(/'/g, "")},${cfg.fontSize 
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-${captionLines
-  .map((line) => {
+${cues
+  .map((c) => {
     const fmt = (sec: number) => {
       const cs = Math.floor((sec % 1) * 100);
       const totalSec = Math.floor(sec);
@@ -396,11 +522,11 @@ ${captionLines
       const h = Math.floor(totalSec / 3600);
       return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}.${String(cs).padStart(2, "0")}`;
     };
-    return `Dialogue: 0,${fmt(line.start)},${fmt(line.end)},Default,,0,0,0,,${line.text.toUpperCase()}`;
+    return `Dialogue: 0,${fmt(c.start)},${fmt(c.end)},Default,,0,0,0,,${c.text.toUpperCase()}`;
   })
   .join("\n")}
 `;
-  }, [captionLines, preset]);
+  }, [cues, preset]);
 
   const downloadFile = (content: string, filename: string, mime: string) => {
     const blob = new Blob([content], { type: mime });
@@ -424,7 +550,7 @@ ${captionLines
 
   return (
     <div className="w-full space-y-8">
-      {/* Top Banner & Quick Controls */}
+      {/* Top Banner & Upload Toolbar */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 rounded-3xl border border-[#213026] bg-[#0c1510] p-6 shadow-xl">
         <div className="space-y-1">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#102a16] border border-[#2a5234] px-3 py-0.5 text-xs font-semibold text-[#3cff5f]">
@@ -437,22 +563,61 @@ ${captionLines
             Reels &amp; Shorts Animated Captions
           </h2>
           <p className="text-xs text-[#9baaa1]">
-            Create eye-catching word-by-word animated subtitles for TikTok, Reels, and Shorts with zero watermarks.
+            Upload your video and auto-transcribe speech, or upload an existing .SRT subtitle file for instant animated styling.
           </p>
         </div>
 
-        {/* Upload Button */}
-        <label className="inline-flex items-center gap-2 rounded-2xl bg-[#3cff5f] px-6 py-3.5 text-sm font-bold text-[#050a08] hover:bg-[#52ff71] transition-all cursor-pointer shadow-lg shadow-[#3cff5f]/15 shrink-0">
-          <Upload className="h-4 w-4" />
-          <span>Upload Video / Audio</span>
-          <input
-            type="file"
-            accept="video/*,audio/*"
-            onChange={handleVideoUpload}
-            className="hidden"
-          />
-        </label>
+        {/* Dual Upload Buttons: Video + SRT */}
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
+          {/* Upload Video Button */}
+          <label className="inline-flex items-center gap-2 rounded-2xl bg-[#3cff5f] px-5 py-3 text-xs sm:text-sm font-bold text-[#050a08] hover:bg-[#52ff71] transition-all cursor-pointer shadow-lg shadow-[#3cff5f]/15">
+            <Upload className="h-4 w-4" />
+            <span>Upload Video / Audio</span>
+            <input
+              type="file"
+              accept="video/*,audio/*"
+              onChange={handleVideoUpload}
+              className="hidden"
+            />
+          </label>
+
+          {/* Upload SRT / VTT Button */}
+          <button
+            type="button"
+            onClick={() => srtInputRef.current?.click()}
+            className="inline-flex items-center gap-2 rounded-2xl border border-[#2a5234] bg-[#102a16] px-5 py-3 text-xs sm:text-sm font-bold text-[#3cff5f] hover:bg-[#16381e] transition-all cursor-pointer shadow-md"
+          >
+            <FileCode className="h-4 w-4" />
+            <span>Upload .SRT / .VTT</span>
+            <input
+              ref={srtInputRef}
+              type="file"
+              accept=".srt,.vtt,text/plain"
+              onChange={handleSRTUpload}
+              className="hidden"
+            />
+          </button>
+        </div>
       </div>
+
+      {/* Status Alert Banner if transcribing or loaded */}
+      {transcribeStatus && (
+        <div className="rounded-2xl border border-[#2a5234] bg-[#102a16] p-4 text-xs font-semibold text-[#3cff5f] flex items-center justify-between shadow-md">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 animate-spin" />
+            <span>{transcribeStatus}</span>
+          </div>
+          {videoFile && !isTranscribing && (
+            <button
+              type="button"
+              onClick={() => triggerAutoTranscribe()}
+              className="underline hover:text-white"
+            >
+              Re-run AI Transcribe
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Main Studio Workspace: 2 Column Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -479,7 +644,7 @@ ${captionLines
                   <Film className="h-10 w-10 text-[#3cff5f] mx-auto animate-pulse" />
                   <p className="text-xs text-[#9baaa1] leading-relaxed">
                     Demo Mode Active.<br />
-                    Upload any video file to preview live on your clip.
+                    Upload any video or .SRT file to preview live on your clip.
                   </p>
                 </div>
               </div>
@@ -495,7 +660,7 @@ ${captionLines
                   : "top-16"
               }`}
             >
-              {activeLine ? (
+              {activeCue ? (
                 <div
                   className="rounded-2xl px-4 py-2.5 text-center flex flex-wrap items-center justify-center gap-1.5 transition-all max-w-[92%]"
                   style={{
@@ -503,7 +668,7 @@ ${captionLines
                     backdropFilter: currentCfg.boxBg ? "blur(8px)" : "none",
                   }}
                 >
-                  {activeLine.words.map((word) => {
+                  {activeCue.words.map((word) => {
                     const isHighlighted = word.id === activeWordId;
                     return (
                       <span
@@ -556,7 +721,7 @@ ${captionLines
                 <span>{currentTime.toFixed(1)}s</span>
                 <span className="text-[#62776a]">/</span>
                 <span className="text-[#9baaa1]">
-                  {(duration > 0 ? duration : 15).toFixed(1)}s
+                  {(duration > 0 ? duration : cues[cues.length - 1]?.end || 12).toFixed(1)}s
                 </span>
               </div>
 
@@ -577,8 +742,20 @@ ${captionLines
             </div>
           </div>
 
-          <p className="text-[11px] text-[#62776a] font-mono mt-3">
-            Preview scaled for 9:16 TikTok / Instagram Reels
+          {videoFile && (
+            <button
+              type="button"
+              onClick={() => triggerAutoTranscribe()}
+              disabled={isTranscribing}
+              className="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-[#2a5234] bg-[#102a16] px-4 py-2 text-xs font-bold text-[#3cff5f] hover:bg-[#16381e] transition-all cursor-pointer shadow-md disabled:opacity-50"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>{isTranscribing ? "Transcribing Speech..." : "Re-Transcribe Video with AI"}</span>
+            </button>
+          )}
+
+          <p className="text-[11px] text-[#62776a] font-mono mt-2">
+            Scaled for 9:16 TikTok / Instagram Reels
           </p>
         </div>
 
@@ -632,7 +809,7 @@ ${captionLines
             </div>
           </div>
 
-          {/* Typography & Animation Customizer */}
+          {/* Typography & Position Customizer */}
           <div className="rounded-3xl border border-[#213026] bg-[#0c1510] p-6 space-y-5">
             <h3 className="text-sm font-bold uppercase tracking-wider text-[#9baaa1] flex items-center gap-2">
               <Sliders className="h-4 w-4 text-[#3cff5f]" />
@@ -652,24 +829,6 @@ ${captionLines
                   max="40"
                   value={fontSize}
                   onChange={(e) => setFontSize(Number(e.target.value))}
-                  className="w-full accent-[#3cff5f] cursor-pointer"
-                />
-              </div>
-
-              {/* Words Per Line */}
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs text-[#9baaa1]">
-                  <span>Words per Screen:</span>
-                  <strong className="text-[#3cff5f] font-mono">
-                    {wordsPerLine} {wordsPerLine === 1 ? "Word (Rapid)" : "Words"}
-                  </strong>
-                </div>
-                <input
-                  type="range"
-                  min="1"
-                  max="6"
-                  value={wordsPerLine}
-                  onChange={(e) => setWordsPerLine(Number(e.target.value))}
                   className="w-full accent-[#3cff5f] cursor-pointer"
                 />
               </div>
@@ -715,57 +874,150 @@ ${captionLines
                   ))}
                 </div>
               </div>
-            </div>
 
-            {/* Color Customizer */}
-            <div className="pt-2 flex flex-wrap items-center gap-4 text-xs text-[#9baaa1]">
-              <div className="flex items-center gap-2">
-                <span>Highlight Color:</span>
-                <input
-                  type="color"
-                  value={highlightColor}
-                  onChange={(e) => setHighlightColor(e.target.value)}
-                  className="h-8 w-10 rounded border border-[#213026] bg-transparent cursor-pointer"
-                />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span>Text Color:</span>
-                <input
-                  type="color"
-                  value={textColor}
-                  onChange={(e) => setTextColor(e.target.value)}
-                  className="h-8 w-10 rounded border border-[#213026] bg-transparent cursor-pointer"
-                />
+              {/* Color Customizer */}
+              <div className="space-y-2">
+                <label className="text-xs text-[#9baaa1]">Colors:</label>
+                <div className="flex items-center gap-4 text-xs text-[#9baaa1]">
+                  <div className="flex items-center gap-2">
+                    <span>Active:</span>
+                    <input
+                      type="color"
+                      value={highlightColor}
+                      onChange={(e) => setHighlightColor(e.target.value)}
+                      className="h-8 w-8 rounded border border-[#213026] bg-transparent cursor-pointer"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span>Base:</span>
+                    <input
+                      type="color"
+                      value={textColor}
+                      onChange={(e) => setTextColor(e.target.value)}
+                      className="h-8 w-8 rounded border border-[#213026] bg-transparent cursor-pointer"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Script / Dialogue Editor */}
-          <div className="rounded-3xl border border-[#213026] bg-[#0c1510] p-6 space-y-3">
+          {/* Subtitle Dialogue & Timeline Editor */}
+          <div className="rounded-3xl border border-[#213026] bg-[#0c1510] p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold uppercase tracking-wider text-[#9baaa1] flex items-center gap-2">
                 <FileText className="h-4 w-4 text-[#3cff5f]" />
-                <span>3. Dialogue &amp; Script Editor</span>
+                <span>3. Subtitle Cues &amp; Timestamps</span>
               </h3>
-              <span className="text-xs text-[#9baaa1] font-mono">
-                {captionLines.length} subtitle chunks
-              </span>
+
+              {/* View Tabs */}
+              <div className="flex items-center gap-1 rounded-xl bg-[#080e0b] p-1 border border-[#213026]">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("cues")}
+                  className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all ${
+                    activeTab === "cues"
+                      ? "bg-[#102a16] text-[#3cff5f] border border-[#2a5234]"
+                      : "text-[#9baaa1] hover:text-[#e7eee9]"
+                  }`}
+                >
+                  Timeline Cues ({cues.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("raw")}
+                  className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all ${
+                    activeTab === "raw"
+                      ? "bg-[#102a16] text-[#3cff5f] border border-[#2a5234]"
+                      : "text-[#9baaa1] hover:text-[#e7eee9]"
+                  }`}
+                >
+                  Raw SRT
+                </button>
+              </div>
             </div>
 
-            <textarea
-              rows={4}
-              value={rawText}
-              onChange={(e) => setRawText(e.target.value)}
-              placeholder="Paste or edit spoken dialogue here. Timestamps automatically synchronize with your audio/video..."
-              className="w-full rounded-2xl border border-[#213026] bg-[#080e0b] p-4 text-sm text-[#e7eee9] placeholder-[#62776a] focus:border-[#3cff5f] focus:outline-none transition-colors"
-            />
+            {/* Tab 1: Timeline Cue Cards with Click-to-Seek */}
+            {activeTab === "cues" ? (
+              <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                {cues.map((cue, idx) => {
+                  const isCurrent = activeCue?.id === cue.id;
+                  return (
+                    <div
+                      key={cue.id}
+                      className={`flex items-center justify-between gap-3 rounded-2xl border p-3 transition-all ${
+                        isCurrent
+                          ? "border-[#3cff5f] bg-[#102a16]/90 shadow-sm"
+                          : "border-[#213026] bg-[#080e0b] hover:border-[#3cff5f]/40"
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => seekTo(cue.start)}
+                        className="flex items-center gap-1.5 rounded-lg bg-[#17221b] px-2 py-1 text-[11px] font-mono text-[#3cff5f] hover:bg-[#3cff5f] hover:text-[#050a08] transition-all cursor-pointer shrink-0"
+                        title="Seek video to this cue"
+                      >
+                        <Clock className="h-3 w-3" />
+                        <span>{cue.start.toFixed(1)}s - {cue.end.toFixed(1)}s</span>
+                      </button>
 
-            {isTranscribing && (
-              <p className="text-xs text-[#3cff5f] flex items-center gap-2 animate-pulse">
-                <Sparkles className="h-3.5 w-3.5" />
-                <span>Transcribing speech from uploaded media...</span>
-              </p>
+                      <input
+                        type="text"
+                        value={cue.text}
+                        onChange={(e) => {
+                          const newText = e.target.value;
+                          setCues((prev) =>
+                            prev.map((c) => {
+                              if (c.id !== cue.id) return c;
+                              const words = newText.split(/\s+/).filter(Boolean);
+                              const dur = c.end - c.start;
+                              const wDur = words.length > 0 ? dur / words.length : 0;
+                              return {
+                                ...c,
+                                text: newText,
+                                words: words.map((w, wIdx) => ({
+                                  id: `${c.id}-w${wIdx}`,
+                                  word: w,
+                                  start: c.start + wIdx * wDur,
+                                  end: c.start + (wIdx + 1) * wDur,
+                                })),
+                              };
+                            })
+                          );
+                        }}
+                        className="flex-1 bg-transparent text-xs text-[#e7eee9] focus:outline-none"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCues((prev) => prev.filter((c) => c.id !== cue.id));
+                        }}
+                        className="p-1 text-[#62776a] hover:text-red-400"
+                        title="Delete cue"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              /* Tab 2: Raw SRT Editor */
+              <div className="space-y-2">
+                <textarea
+                  rows={6}
+                  value={generateSRT()}
+                  onChange={(e) => {
+                    const parsed = parseSRTToCues(e.target.value);
+                    if (parsed.length > 0) {
+                      setCues(parsed);
+                    }
+                  }}
+                  placeholder="Paste standard SRT code with timecodes here..."
+                  className="w-full rounded-2xl border border-[#213026] bg-[#080e0b] p-4 font-mono text-xs text-[#e7eee9] focus:border-[#3cff5f] focus:outline-none"
+                />
+              </div>
             )}
           </div>
 
@@ -825,7 +1077,7 @@ ${captionLines
               </button>
             </div>
 
-            {/* Copy Actions */}
+            {/* Quick Copy */}
             <div className="flex flex-wrap items-center gap-3 pt-2 text-xs text-[#9baaa1]">
               <span>Quick Copy:</span>
               <button
@@ -839,7 +1091,7 @@ ${captionLines
 
               <button
                 type="button"
-                onClick={() => copyToClipboard(rawText, "text")}
+                onClick={() => copyToClipboard(cues.map((c) => c.text).join(" "), "text")}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-[#213026] bg-[#080e0b] px-3 py-1.5 hover:text-[#e7eee9] hover:border-[#3cff5f] transition-all cursor-pointer"
               >
                 {copiedFormat === "text" ? <Check className="h-3.5 w-3.5 text-[#3cff5f]" /> : <Copy className="h-3.5 w-3.5" />}
