@@ -22,8 +22,16 @@ import {
   HelpCircle,
   FileCode,
   Clock,
-  Plus,
   Trash2,
+  Search,
+  Flame,
+  Zap,
+  Eye,
+  EyeOff,
+  Layers,
+  Compass,
+  AlignLeft,
+  AlignCenter,
 } from "lucide-react";
 
 export interface CaptionWord {
@@ -41,32 +49,49 @@ export interface CaptionCue {
   words: CaptionWord[];
 }
 
-export type CaptionPreset = "hormozi" | "beast" | "emerald" | "minimal" | "tiktok";
+export interface CaptionChunk {
+  id: string;
+  cueId: string;
+  start: number;
+  end: number;
+  words: CaptionWord[];
+}
 
-interface PresetConfig {
-  id: CaptionPreset;
+export type PresetCategory = "all" | "creators" | "social" | "cinematic" | "gaming";
+export type AnimationType = "pop" | "bounce" | "glow" | "glitch" | "float" | "shake" | "simple";
+export type BgMode = "none" | "pill" | "highlight-only" | "card";
+export type WordsPerScreenOption = "1" | "2" | "3" | "4" | "5" | "6" | "all";
+export type MaxLinesOption = "1" | "2" | "auto";
+
+export interface PresetConfig {
+  id: string;
   name: string;
+  category: "creators" | "social" | "cinematic" | "gaming";
   badge: string;
   desc: string;
   fontFamily: string;
   fontWeight: string;
-  fontSize: number; // in px for 1080x1920 reference
+  fontSize: number;
   textColor: string;
   highlightColor: string;
   highlightBg: string;
   textTransform: "uppercase" | "capitalize" | "none";
   textShadow: string;
   stroke: string;
-  boxBg?: string;
-  animation: "pop" | "bounce" | "glow" | "simple";
+  boxBg: string;
+  bgMode: BgMode;
+  animation: AnimationType;
 }
 
-const PRESET_CONFIGS: Record<CaptionPreset, PresetConfig> = {
+// 36 Comprehensive Viral Animation Presets
+export const PRESET_CONFIGS: Record<string, PresetConfig> = {
+  // 1. Creator Icons (10 Presets)
   hormozi: {
     id: "hormozi",
-    name: "Hormozi Viral",
-    badge: "Most Popular",
-    desc: "Heavy uppercase bold font with intense yellow active word highlight and black backdrop.",
+    name: "Hormozi Classic",
+    category: "creators",
+    badge: "Most Viral",
+    desc: "Heavy bold uppercase with intense yellow active word and high-contrast backdrop.",
     fontFamily: "'Montserrat', 'Arial Black', sans-serif",
     fontWeight: "900",
     fontSize: 28,
@@ -74,16 +99,37 @@ const PRESET_CONFIGS: Record<CaptionPreset, PresetConfig> = {
     highlightColor: "#FFE600",
     highlightBg: "#000000",
     textTransform: "uppercase",
+    textShadow: "0 4px 14px rgba(0,0,0,0.95)",
+    stroke: "2px #000000",
+    boxBg: "rgba(0, 0, 0, 0.75)",
+    bgMode: "pill",
+    animation: "pop",
+  },
+  "hormozi-red": {
+    id: "hormozi-red",
+    name: "Hormozi Red Punch",
+    category: "creators",
+    badge: "High Impact",
+    desc: "Punchy bold font with bright crimson red highlight for urgency and retention.",
+    fontFamily: "'Montserrat', 'Arial Black', sans-serif",
+    fontWeight: "900",
+    fontSize: 28,
+    textColor: "#FFFFFF",
+    highlightColor: "#FF2244",
+    highlightBg: "#000000",
+    textTransform: "uppercase",
     textShadow: "0 4px 12px rgba(0,0,0,0.9)",
     stroke: "2px #000000",
     boxBg: "rgba(0, 0, 0, 0.75)",
+    bgMode: "pill",
     animation: "pop",
   },
   beast: {
     id: "beast",
-    name: "Beast Energy",
+    name: "MrBeast Comic Pop",
+    category: "creators",
     badge: "High Energy",
-    desc: "Punchy comic-style scale pop with bright cyan and yellow high-contrast glow.",
+    desc: "Iconic scale-bouncing cyan and yellow comic typography with heavy black outer stroke.",
     fontFamily: "'Impact', 'Arial Black', sans-serif",
     fontWeight: "900",
     fontSize: 30,
@@ -91,15 +137,172 @@ const PRESET_CONFIGS: Record<CaptionPreset, PresetConfig> = {
     highlightColor: "#00F0FF",
     highlightBg: "transparent",
     textTransform: "uppercase",
-    textShadow: "0 0 16px rgba(0, 240, 255, 0.8), 0 4px 8px #000",
+    textShadow: "0 0 18px rgba(0, 240, 255, 0.85), 0 4px 10px #000000",
     stroke: "3px #000000",
+    boxBg: "transparent",
+    bgMode: "none",
     animation: "bounce",
+  },
+  "beast-gold": {
+    id: "beast-gold",
+    name: "MrBeast Electric Gold",
+    category: "creators",
+    badge: "Challenge",
+    desc: "Electrifying golden yellow bounce font tailored for challenge and giveaway shorts.",
+    fontFamily: "'Impact', 'Arial Black', sans-serif",
+    fontWeight: "900",
+    fontSize: 30,
+    textColor: "#FFFFFF",
+    highlightColor: "#FFD700",
+    highlightBg: "transparent",
+    textTransform: "uppercase",
+    textShadow: "0 0 20px rgba(255, 215, 0, 0.9), 0 4px 12px #000",
+    stroke: "3px #000000",
+    boxBg: "transparent",
+    bgMode: "none",
+    animation: "bounce",
+  },
+  "ali-abdaal": {
+    id: "ali-abdaal",
+    name: "Ali Abdaal Clean",
+    category: "creators",
+    badge: "Productivity",
+    desc: "Clean minimal Inter font with an authentic neon yellow marker highlighter box.",
+    fontFamily: "'Inter', sans-serif",
+    fontWeight: "700",
+    fontSize: 23,
+    textColor: "#FFFFFF",
+    highlightColor: "#000000",
+    highlightBg: "#FFE500",
+    textTransform: "none",
+    textShadow: "0 2px 8px rgba(0,0,0,0.7)",
+    stroke: "none",
+    boxBg: "rgba(0, 0, 0, 0.5)",
+    bgMode: "highlight-only",
+    animation: "simple",
+  },
+  goggins: {
+    id: "goggins",
+    name: "David Goggins Grit",
+    category: "creators",
+    badge: "Motivation",
+    desc: "Aggressive condensed bold typography with stark blood-orange word pop.",
+    fontFamily: "'Impact', 'Arial Black', sans-serif",
+    fontWeight: "900",
+    fontSize: 29,
+    textColor: "#F0F0F0",
+    highlightColor: "#FF3B30",
+    highlightBg: "transparent",
+    textTransform: "uppercase",
+    textShadow: "0 4px 14px #000000",
+    stroke: "2px #000000",
+    boxBg: "rgba(10, 10, 10, 0.8)",
+    bgMode: "pill",
+    animation: "shake",
+  },
+  "iman-gadzhi": {
+    id: "iman-gadzhi",
+    name: "Iman Gadzhi Luxury",
+    category: "creators",
+    badge: "Aesthetic",
+    desc: "Cinematic elegant serif styling with warm champagne gold active word glow.",
+    fontFamily: "'Playfair Display', 'Georgia', serif",
+    fontWeight: "700",
+    fontSize: 24,
+    textColor: "#EAEAEA",
+    highlightColor: "#F3E5AB",
+    highlightBg: "transparent",
+    textTransform: "capitalize",
+    textShadow: "0 0 16px rgba(243, 229, 171, 0.75), 0 2px 8px #000",
+    stroke: "none",
+    boxBg: "rgba(15, 12, 10, 0.7)",
+    bgMode: "pill",
+    animation: "glow",
+  },
+  cattoni: {
+    id: "cattoni",
+    name: "Alex Cattoni Punch",
+    category: "creators",
+    badge: "Copywriting",
+    desc: "Modern punchy sans font with hot electric magenta highlight.",
+    fontFamily: "'Montserrat', sans-serif",
+    fontWeight: "800",
+    fontSize: 25,
+    textColor: "#FFFFFF",
+    highlightColor: "#FF007F",
+    highlightBg: "transparent",
+    textTransform: "uppercase",
+    textShadow: "0 0 16px rgba(255, 0, 127, 0.8), 0 3px 8px #000",
+    stroke: "2px #000000",
+    boxBg: "transparent",
+    bgMode: "none",
+    animation: "pop",
+  },
+  "logan-paul": {
+    id: "logan-paul",
+    name: "Logan Paul Energy",
+    category: "creators",
+    badge: "Vlog Punch",
+    desc: "Vibrant neon orange uppercase text with comic drop shadow and spring scale.",
+    fontFamily: "'Impact', sans-serif",
+    fontWeight: "900",
+    fontSize: 29,
+    textColor: "#FFFFFF",
+    highlightColor: "#FF6B00",
+    highlightBg: "transparent",
+    textTransform: "uppercase",
+    textShadow: "0 4px 10px #000000, 0 0 16px rgba(255, 107, 0, 0.7)",
+    stroke: "3px #000000",
+    boxBg: "transparent",
+    bgMode: "none",
+    animation: "bounce",
+  },
+  "sam-sulek": {
+    id: "sam-sulek",
+    name: "Sam Sulek Raw",
+    category: "creators",
+    badge: "Brutalist",
+    desc: "Raw heavy brutalist sans typography with stark yellow accent and zero box distractions.",
+    fontFamily: "'Arial Black', sans-serif",
+    fontWeight: "900",
+    fontSize: 27,
+    textColor: "#FFFFFF",
+    highlightColor: "#FFF500",
+    highlightBg: "transparent",
+    textTransform: "uppercase",
+    textShadow: "0 3px 6px #000000",
+    stroke: "2px #000000",
+    boxBg: "transparent",
+    bgMode: "none",
+    animation: "pop",
+  },
+
+  // 2. TikTok & Reels Trends (10 Presets)
+  tiktok: {
+    id: "tiktok",
+    name: "TikTok Classic",
+    category: "social",
+    badge: "Viral Classic",
+    desc: "Bold white text with thick black outer stroke and energetic red highlight.",
+    fontFamily: "'Proxima Nova', 'Arial', sans-serif",
+    fontWeight: "800",
+    fontSize: 26,
+    textColor: "#FFFFFF",
+    highlightColor: "#FF2A55",
+    highlightBg: "transparent",
+    textTransform: "capitalize",
+    textShadow: "0 3px 6px rgba(0,0,0,0.9)",
+    stroke: "3px #000000",
+    boxBg: "transparent",
+    bgMode: "none",
+    animation: "pop",
   },
   emerald: {
     id: "emerald",
-    name: "CompX Emerald",
+    name: "CompX Emerald Glow",
+    category: "social",
     badge: "Cyber Aesthetic",
-    desc: "Sleek dark neon green capsule pill with smooth word illumination.",
+    desc: "Sleek dark neon green capsule pill with smooth laser word illumination.",
     fontFamily: "'Inter', sans-serif",
     fontWeight: "800",
     fontSize: 24,
@@ -107,14 +310,208 @@ const PRESET_CONFIGS: Record<CaptionPreset, PresetConfig> = {
     highlightColor: "#3CFF5F",
     highlightBg: "rgba(16, 42, 22, 0.85)",
     textTransform: "uppercase",
-    textShadow: "0 0 14px rgba(60, 255, 95, 0.6)",
+    textShadow: "0 0 16px rgba(60, 255, 95, 0.75)",
     stroke: "none",
     boxBg: "rgba(12, 21, 16, 0.85)",
+    bgMode: "pill",
     animation: "glow",
   },
-  minimal: {
-    id: "minimal",
-    name: "Minimal Aesthetic",
+  cyberpunk: {
+    id: "cyberpunk",
+    name: "Cyberpunk 2077",
+    category: "social",
+    badge: "Sci-Fi Glitch",
+    desc: "High-voltage neon yellow and cyan text with subtle chromatic glitch pop.",
+    fontFamily: "'Impact', 'Arial Black', sans-serif",
+    fontWeight: "900",
+    fontSize: 28,
+    textColor: "#FFEE00",
+    highlightColor: "#00FFFF",
+    highlightBg: "rgba(0,0,0,0.9)",
+    textTransform: "uppercase",
+    textShadow: "0 0 16px #00ffff, 0 0 30px #ffee00",
+    stroke: "2px #000000",
+    boxBg: "rgba(10, 10, 15, 0.85)",
+    bgMode: "pill",
+    animation: "glitch",
+  },
+  "y2k-pop": {
+    id: "y2k-pop",
+    name: "Y2K Retro Pop",
+    category: "social",
+    badge: "Gen Z Aesthetic",
+    desc: "Hot pink and candy violet bouncing scale font with playful shadow.",
+    fontFamily: "'Montserrat', sans-serif",
+    fontWeight: "900",
+    fontSize: 27,
+    textColor: "#FFFFFF",
+    highlightColor: "#FF1493",
+    highlightBg: "transparent",
+    textTransform: "uppercase",
+    textShadow: "0 0 16px rgba(255, 20, 147, 0.8), 0 4px 8px #000",
+    stroke: "2px #3A003A",
+    boxBg: "rgba(40, 0, 30, 0.6)",
+    bgMode: "pill",
+    animation: "bounce",
+  },
+  karaoke: {
+    id: "karaoke",
+    name: "Karaoke Word Fill",
+    category: "social",
+    badge: "Sing-Along",
+    desc: "Smooth color transition that illuminates words precisely in sync with vocal cadence.",
+    fontFamily: "'Inter', sans-serif",
+    fontWeight: "800",
+    fontSize: 25,
+    textColor: "rgba(255,255,255,0.6)",
+    highlightColor: "#FFE600",
+    highlightBg: "transparent",
+    textTransform: "uppercase",
+    textShadow: "0 2px 8px rgba(0,0,0,0.8)",
+    stroke: "1px #000000",
+    boxBg: "rgba(0,0,0,0.65)",
+    bgMode: "pill",
+    animation: "pop",
+  },
+  bouncy: {
+    id: "bouncy",
+    name: "Bouncy Ball Pop",
+    category: "social",
+    badge: "Playful Spring",
+    desc: "Elastic physics-based bouncing spring scale that jumps dynamically on spoken keywords.",
+    fontFamily: "'Poppins', sans-serif",
+    fontWeight: "800",
+    fontSize: 26,
+    textColor: "#FFFFFF",
+    highlightColor: "#FFDE59",
+    highlightBg: "transparent",
+    textTransform: "capitalize",
+    textShadow: "0 4px 10px rgba(0,0,0,0.85)",
+    stroke: "2px #000000",
+    boxBg: "transparent",
+    bgMode: "none",
+    animation: "bounce",
+  },
+  "submagic-lime": {
+    id: "submagic-lime",
+    name: "Submagic Viral Lime",
+    category: "social",
+    badge: "Submagic Style",
+    desc: "Vivid neon lime green highlight with dark rounded backdrop, popular across 2026 Shorts.",
+    fontFamily: "'Montserrat', sans-serif",
+    fontWeight: "900",
+    fontSize: 27,
+    textColor: "#FFFFFF",
+    highlightColor: "#A6FF00",
+    highlightBg: "rgba(10, 20, 10, 0.9)",
+    textTransform: "uppercase",
+    textShadow: "0 0 16px rgba(166, 255, 0, 0.75)",
+    stroke: "2px #000000",
+    boxBg: "rgba(0, 0, 0, 0.75)",
+    bgMode: "pill",
+    animation: "pop",
+  },
+  "capcut-fire": {
+    id: "capcut-fire",
+    name: "CapCut Fire Flame",
+    category: "social",
+    badge: "Trending Flame",
+    desc: "Fiery hot ember gradient glow with bold impact stroke, famous on CapCut templates.",
+    fontFamily: "'Impact', sans-serif",
+    fontWeight: "900",
+    fontSize: 29,
+    textColor: "#FFFFFF",
+    highlightColor: "#FF4500",
+    highlightBg: "transparent",
+    textTransform: "uppercase",
+    textShadow: "0 0 20px #ff4500, 0 4px 8px #000",
+    stroke: "3px #000000",
+    boxBg: "transparent",
+    bgMode: "none",
+    animation: "pop",
+  },
+  "glitch-wave": {
+    id: "glitch-wave",
+    name: "Glitch RGB Split",
+    category: "social",
+    badge: "Cyber Glitch",
+    desc: "Cyan and red RGB optical aberration that flickers on high-intensity words.",
+    fontFamily: "'Montserrat', sans-serif",
+    fontWeight: "900",
+    fontSize: 26,
+    textColor: "#FFFFFF",
+    highlightColor: "#00F0FF",
+    highlightBg: "transparent",
+    textTransform: "uppercase",
+    textShadow: "-2px 0 #ff0055, 2px 0 #00ffff",
+    stroke: "1px #000",
+    boxBg: "rgba(0,0,0,0.6)",
+    bgMode: "pill",
+    animation: "glitch",
+  },
+  "floating-words": {
+    id: "floating-words",
+    name: "Floating Motion",
+    category: "social",
+    badge: "Smooth Wave",
+    desc: "Gentle vertical floating wave that lifts words gracefully as they are voiced.",
+    fontFamily: "'Inter', sans-serif",
+    fontWeight: "800",
+    fontSize: 24,
+    textColor: "#FFFFFF",
+    highlightColor: "#7000FF",
+    highlightBg: "transparent",
+    textTransform: "capitalize",
+    textShadow: "0 0 14px rgba(112, 0, 255, 0.8), 0 3px 6px #000",
+    stroke: "1px #000",
+    boxBg: "rgba(0,0,0,0.5)",
+    bgMode: "pill",
+    animation: "float",
+  },
+
+  // 3. Cinematic, Documentary & Minimal (8 Presets)
+  documentary: {
+    id: "documentary",
+    name: "Documentary Vox",
+    category: "cinematic",
+    badge: "Explainer",
+    desc: "Classic yellow news & explainer subtitle typography with clean drop shadow.",
+    fontFamily: "'Helvetica Neue', 'Arial', sans-serif",
+    fontWeight: "700",
+    fontSize: 24,
+    textColor: "#FFFFFF",
+    highlightColor: "#FFE600",
+    highlightBg: "transparent",
+    textTransform: "none",
+    textShadow: "0 2px 8px rgba(0,0,0,0.9)",
+    stroke: "1px #000000",
+    boxBg: "transparent",
+    bgMode: "none",
+    animation: "simple",
+  },
+  netflix: {
+    id: "netflix",
+    name: "Netflix Original",
+    category: "cinematic",
+    badge: "Cinema Standard",
+    desc: "Crisp off-white Helvetica with genuine theatrical drop shadow and zero borders.",
+    fontFamily: "'Arial', 'Helvetica', sans-serif",
+    fontWeight: "600",
+    fontSize: 23,
+    textColor: "#F5F5F5",
+    highlightColor: "#FFFFFF",
+    highlightBg: "transparent",
+    textTransform: "none",
+    textShadow: "0 2px 6px rgba(0,0,0,0.95), 0 0 12px rgba(0,0,0,0.8)",
+    stroke: "none",
+    boxBg: "transparent",
+    bgMode: "none",
+    animation: "simple",
+  },
+  "minimal-white": {
+    id: "minimal-white",
+    name: "Minimalist Studio",
+    category: "cinematic",
     badge: "Clean & Elegant",
     desc: "Modern crisp typography with subtle contrast shadow, perfect for vlogs and tutorials.",
     fontFamily: "'Inter', sans-serif",
@@ -127,27 +524,260 @@ const PRESET_CONFIGS: Record<CaptionPreset, PresetConfig> = {
     textShadow: "0 2px 8px rgba(0, 0, 0, 0.8)",
     stroke: "1px rgba(0,0,0,0.5)",
     boxBg: "rgba(0,0,0,0.45)",
+    bgMode: "pill",
     animation: "simple",
   },
-  tiktok: {
-    id: "tiktok",
-    name: "TikTok Classic",
-    badge: "Viral Classic",
-    desc: "Bold white text with thick black outer stroke and energetic red highlight.",
-    fontFamily: "'Proxima Nova', 'Arial', sans-serif",
+  "vlog-casual": {
+    id: "vlog-casual",
+    name: "Cozy Vlog Pastel",
+    category: "cinematic",
+    badge: "Casual Lifestyle",
+    desc: "Rounded friendly font with soft peach highlight for daily vlogs and travel shorts.",
+    fontFamily: "'Nunito', 'Poppins', sans-serif",
+    fontWeight: "700",
+    fontSize: 24,
+    textColor: "#FFFFFF",
+    highlightColor: "#FFA07A",
+    highlightBg: "transparent",
+    textTransform: "capitalize",
+    textShadow: "0 3px 8px rgba(0,0,0,0.7)",
+    stroke: "none",
+    boxBg: "rgba(20, 15, 15, 0.65)",
+    bgMode: "pill",
+    animation: "pop",
+  },
+  podcast: {
+    id: "podcast",
+    name: "Studio Podcast Blue",
+    category: "cinematic",
+    badge: "Audio & Talk",
+    desc: "Sleek podcast interview captioning with calming ice-blue active word accent.",
+    fontFamily: "'Inter', sans-serif",
+    fontWeight: "700",
+    fontSize: 23,
+    textColor: "#E2E8F0",
+    highlightColor: "#60A5FA",
+    highlightBg: "transparent",
+    textTransform: "none",
+    textShadow: "0 2px 8px rgba(0,0,0,0.8)",
+    stroke: "none",
+    boxBg: "rgba(15, 23, 42, 0.8)",
+    bgMode: "pill",
+    animation: "glow",
+  },
+  highlighter: {
+    id: "highlighter",
+    name: "Highlighter Marker Bar",
+    category: "cinematic",
+    badge: "Study & Book",
+    desc: "Black text against a fluorescent yellow highlighter box strip, perfect for book summaries.",
+    fontFamily: "'Montserrat', sans-serif",
+    fontWeight: "800",
+    fontSize: 24,
+    textColor: "#FFFFFF",
+    highlightColor: "#050505",
+    highlightBg: "#FFFF00",
+    textTransform: "none",
+    textShadow: "none",
+    stroke: "none",
+    boxBg: "rgba(0, 0, 0, 0.7)",
+    bgMode: "highlight-only",
+    animation: "pop",
+  },
+  nordic: {
+    id: "nordic",
+    name: "Nordic Monochrome",
+    category: "cinematic",
+    badge: "Architectural",
+    desc: "Stark minimalist pitch-black capsule with ultra-bright pristine white text.",
+    fontFamily: "'Inter', sans-serif",
+    fontWeight: "900",
+    fontSize: 23,
+    textColor: "#888888",
+    highlightColor: "#FFFFFF",
+    highlightBg: "transparent",
+    textTransform: "uppercase",
+    textShadow: "none",
+    stroke: "none",
+    boxBg: "#000000",
+    bgMode: "pill",
+    animation: "pop",
+  },
+  "cinematic-gold": {
+    id: "cinematic-gold",
+    name: "35mm Film Gold",
+    category: "cinematic",
+    badge: "Vintage Film",
+    desc: "Warm filmic golden subtitle font with soft theatrical letterboxing.",
+    fontFamily: "'Playfair Display', serif",
+    fontWeight: "700",
+    fontSize: 24,
+    textColor: "#FAF3E0",
+    highlightColor: "#E6C280",
+    highlightBg: "transparent",
+    textTransform: "capitalize",
+    textShadow: "0 3px 10px rgba(0,0,0,0.9)",
+    stroke: "none",
+    boxBg: "rgba(0,0,0,0.5)",
+    bgMode: "none",
+    animation: "glow",
+  },
+
+  // 4. Gaming, Motion Graphics & Visual FX (8 Presets)
+  matrix: {
+    id: "matrix",
+    name: "Matrix Terminal Green",
+    category: "gaming",
+    badge: "Code & Hacker",
+    desc: "Monospaced terminal phosphor glow with green CRT scanline ambiance.",
+    fontFamily: "'Courier New', monospace",
+    fontWeight: "700",
+    fontSize: 23,
+    textColor: "#00FF66",
+    highlightColor: "#FFFFFF",
+    highlightBg: "#003311",
+    textTransform: "uppercase",
+    textShadow: "0 0 14px #00ff66, 0 0 25px #00ff66",
+    stroke: "none",
+    boxBg: "rgba(0, 15, 5, 0.85)",
+    bgMode: "pill",
+    animation: "glow",
+  },
+  valorant: {
+    id: "valorant",
+    name: "Valorant Radiant",
+    category: "gaming",
+    badge: "FPS Gaming",
+    desc: "Aggressive sharp angular esports typography with radiant laser cyan.",
+    fontFamily: "'Impact', 'Arial Black', sans-serif",
+    fontWeight: "900",
+    fontSize: 28,
+    textColor: "#FFFFFF",
+    highlightColor: "#00FFFF",
+    highlightBg: "transparent",
+    textTransform: "uppercase",
+    textShadow: "0 0 18px #00ffff, 0 4px 8px #000",
+    stroke: "2px #000000",
+    boxBg: "rgba(10, 20, 25, 0.75)",
+    bgMode: "pill",
+    animation: "pop",
+  },
+  "apex-red": {
+    id: "apex-red",
+    name: "Apex Legends Red",
+    category: "gaming",
+    badge: "Battle Royale",
+    desc: "Industrial combat red highlight with heavy dark outline, built for gaming highlights.",
+    fontFamily: "'Impact', sans-serif",
+    fontWeight: "900",
+    fontSize: 28,
+    textColor: "#FFFFFF",
+    highlightColor: "#FF2E4C",
+    highlightBg: "transparent",
+    textTransform: "uppercase",
+    textShadow: "0 0 16px rgba(255, 46, 76, 0.8), 0 3px 8px #000",
+    stroke: "3px #000000",
+    boxBg: "transparent",
+    bgMode: "none",
+    animation: "shake",
+  },
+  "anime-speed": {
+    id: "anime-speed",
+    name: "Anime Manga Action",
+    category: "gaming",
+    badge: "Waifu2x Style",
+    desc: "High-contrast action comic styling with double outline for anime edits and AMVs.",
+    fontFamily: "'Arial Black', sans-serif",
+    fontWeight: "900",
+    fontSize: 27,
+    textColor: "#FFFFFF",
+    highlightColor: "#FFE600",
+    highlightBg: "transparent",
+    textTransform: "uppercase",
+    textShadow: "0 0 12px rgba(255,230,0,0.8), 0 4px 8px #000",
+    stroke: "3px #000000",
+    boxBg: "transparent",
+    bgMode: "none",
+    animation: "bounce",
+  },
+  "electric-violet": {
+    id: "electric-violet",
+    name: "Neon Violet Wave",
+    category: "gaming",
+    badge: "Synthwave",
+    desc: "Deep ultraviolet neon glow that radiates with smooth pulsing animations.",
+    fontFamily: "'Montserrat', sans-serif",
+    fontWeight: "900",
+    fontSize: 26,
+    textColor: "#FFFFFF",
+    highlightColor: "#B026FF",
+    highlightBg: "transparent",
+    textTransform: "uppercase",
+    textShadow: "0 0 20px #b026ff, 0 4px 10px #000",
+    stroke: "2px #000",
+    boxBg: "rgba(20, 5, 30, 0.75)",
+    bgMode: "pill",
+    animation: "glow",
+  },
+  "golden-trophy": {
+    id: "golden-trophy",
+    name: "24K Gold Champion",
+    category: "gaming",
+    badge: "Victory Royale",
+    desc: "Metallic shimmering gold gradient text shadow for clutch plays and winning moments.",
+    fontFamily: "'Montserrat', sans-serif",
+    fontWeight: "900",
+    fontSize: 27,
+    textColor: "#FFF9E6",
+    highlightColor: "#FFCC00",
+    highlightBg: "transparent",
+    textTransform: "uppercase",
+    textShadow: "0 0 18px rgba(255, 204, 0, 0.9), 0 4px 10px #000",
+    stroke: "2px #4A3B00",
+    boxBg: "rgba(25, 20, 5, 0.7)",
+    bgMode: "pill",
+    animation: "pop",
+  },
+  "sunset-coral": {
+    id: "sunset-coral",
+    name: "Sunset Horizon",
+    category: "gaming",
+    badge: "Warm Coral",
+    desc: "Vibrant coral-orange with dusk magenta shadow, great for aesthetic edits.",
+    fontFamily: "'Inter', sans-serif",
+    fontWeight: "800",
+    fontSize: 25,
+    textColor: "#FFFFFF",
+    highlightColor: "#FF6F61",
+    highlightBg: "transparent",
+    textTransform: "capitalize",
+    textShadow: "0 0 16px rgba(255, 111, 97, 0.8), 0 3px 8px #000",
+    stroke: "1px #000",
+    boxBg: "rgba(30, 10, 15, 0.65)",
+    bgMode: "pill",
+    animation: "pop",
+  },
+  bubblegum: {
+    id: "bubblegum",
+    name: "Bubblegum Sugar",
+    category: "gaming",
+    badge: "Pastel Pop",
+    desc: "Playful bubble pastel pink and sky blue bounce font for cute and wholesome clips.",
+    fontFamily: "'Poppins', sans-serif",
     fontWeight: "800",
     fontSize: 26,
     textColor: "#FFFFFF",
-    highlightColor: "#FF2A55",
+    highlightColor: "#FF66B2",
     highlightBg: "transparent",
     textTransform: "capitalize",
-    textShadow: "0 3px 6px rgba(0,0,0,0.9)",
-    stroke: "3px #000000",
-    animation: "pop",
+    textShadow: "0 0 14px rgba(255, 102, 178, 0.8), 0 3px 6px #000",
+    stroke: "2px #4A0033",
+    boxBg: "transparent",
+    bgMode: "none",
+    animation: "bounce",
   },
 };
 
-// Initial Demo Cues
 const INITIAL_DEMO_CUES: CaptionCue[] = [
   {
     id: "cue-1",
@@ -259,10 +889,22 @@ export default function AutoCaptionsTool() {
   const [isMuted, setIsMuted] = useState<boolean>(false);
 
   // Styling state
-  const [preset, setPreset] = useState<CaptionPreset>("hormozi");
+  const [preset, setPreset] = useState<string>("hormozi");
+  const [presetCategory, setPresetCategory] = useState<PresetCategory>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
+  // Pacing & Chunking Controls
+  const [wordsPerScreen, setWordsPerScreen] = useState<WordsPerScreenOption>("3");
+  const [maxLines, setMaxLines] = useState<MaxLinesOption>("2");
+
+  // Background Customization Controls
+  const [bgMode, setBgMode] = useState<BgMode>("pill");
+  const [boxBgColor, setBoxBgColor] = useState<string>("#000000");
+  const [boxBgOpacity, setBoxBgOpacity] = useState<number>(75);
+
+  // Typography controls
   const [fontSize, setFontSize] = useState<number>(26);
   const [position, setPosition] = useState<"bottom" | "center" | "top">("bottom");
-  const [wordsPerLine, setWordsPerLine] = useState<number>(3);
   const [highlightColor, setHighlightColor] = useState<string>("#FFE600");
   const [textColor, setTextColor] = useState<string>("#FFFFFF");
   const [textTransform, setTextTransform] = useState<"uppercase" | "capitalize" | "none">("uppercase");
@@ -278,20 +920,32 @@ export default function AutoCaptionsTool() {
   const srtInputRef = useRef<HTMLInputElement | null>(null);
 
   // Sync preset changes with controls
-  const handlePresetSelect = (p: CaptionPreset) => {
-    setPreset(p);
-    const cfg = PRESET_CONFIGS[p];
+  const handlePresetSelect = (presetId: string) => {
+    setPreset(presetId);
+    const cfg = PRESET_CONFIGS[presetId];
+    if (!cfg) return;
+
     setFontSize(cfg.fontSize);
     setHighlightColor(cfg.highlightColor);
     setTextColor(cfg.textColor);
     setTextTransform(cfg.textTransform);
+    setBgMode(cfg.bgMode);
+
+    // Parse boxBg if present
+    if (cfg.boxBg.startsWith("rgba(")) {
+      setBoxBgColor("#000000");
+      setBoxBgOpacity(75);
+    } else if (cfg.boxBg === "transparent") {
+      setBoxBgOpacity(0);
+    }
   };
 
-  // Find currently active cue and active word based on currentTime
+  // Find currently active cue based on currentTime
   const activeCue = useMemo(() => {
     return cues.find((c) => currentTime >= c.start && currentTime <= c.end);
   }, [cues, currentTime]);
 
+  // Find currently active word within active cue
   const activeWordId = useMemo(() => {
     if (!activeCue) return null;
     const match = activeCue.words.find(
@@ -299,6 +953,63 @@ export default function AutoCaptionsTool() {
     );
     return match ? match.id : activeCue.words[0]?.id;
   }, [activeCue, currentTime]);
+
+  // Chunking Logic: Slice cue words into chunk intervals based on wordsPerScreen
+  const activeChunk = useMemo<CaptionChunk | null>(() => {
+    if (!activeCue) return null;
+
+    if (wordsPerScreen === "all") {
+      return {
+        id: `${activeCue.id}-all`,
+        cueId: activeCue.id,
+        start: activeCue.start,
+        end: activeCue.end,
+        words: activeCue.words,
+      };
+    }
+
+    const wCount = parseInt(wordsPerScreen, 10) || 3;
+    const chunks: CaptionChunk[] = [];
+
+    for (let i = 0; i < activeCue.words.length; i += wCount) {
+      const chunkWords = activeCue.words.slice(i, i + wCount);
+      if (chunkWords.length > 0) {
+        chunks.push({
+          id: `${activeCue.id}-chk-${i}`,
+          cueId: activeCue.id,
+          start: chunkWords[0].start,
+          end: chunkWords[chunkWords.length - 1].end,
+          words: chunkWords,
+        });
+      }
+    }
+
+    // Return the chunk containing currentTime
+    const currentChunk = chunks.find(
+      (chk) => currentTime >= chk.start && currentTime <= chk.end
+    );
+    if (currentChunk) return currentChunk;
+
+    // Fallback: chunk containing activeWordId, or first chunk
+    const chunkWithActiveWord = chunks.find((chk) =>
+      chk.words.some((w) => w.id === activeWordId)
+    );
+    return chunkWithActiveWord || chunks[0] || null;
+  }, [activeCue, currentTime, wordsPerScreen, activeWordId]);
+
+  // Filtered preset list based on category and search query
+  const filteredPresets = useMemo(() => {
+    const list = Object.values(PRESET_CONFIGS);
+    return list.filter((p) => {
+      const matchesCategory = presetCategory === "all" || p.category === presetCategory;
+      const matchesSearch =
+        searchQuery.trim() === "" ||
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.desc.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.badge.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
+  }, [presetCategory, searchQuery]);
 
   // Handle Video Upload
   const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -498,7 +1209,7 @@ export default function AutoCaptionsTool() {
 
   // ASS format for Premiere Pro / After Effects / CapCut
   const generateASS = useCallback(() => {
-    const cfg = PRESET_CONFIGS[preset];
+    const cfg = PRESET_CONFIGS[preset] || PRESET_CONFIGS.hormozi;
     return `[Script Info]
 Title: CompX Orbit Auto Captions
 ScriptType: v4.00+
@@ -508,7 +1219,7 @@ Timer: 100.0000
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,${cfg.fontFamily.split(",")[0].replace(/'/g, "")},${cfg.fontSize * 1.5},&H00FFFFFF,&H0000E6FF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,3,2,2,10,10,60,1
+Style: Default,${cfg.fontFamily.split(",")[0].replace(/'/g, "")},${cfg.fontSize * 1.5},&H00FFFFFF,&H0000E6FF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,${bgMode === "none" ? "1" : "3"},3,2,2,10,10,60,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -526,7 +1237,7 @@ ${cues
   })
   .join("\n")}
 `;
-  }, [cues, preset]);
+  }, [cues, preset, bgMode]);
 
   const downloadFile = (content: string, filename: string, mime: string) => {
     const blob = new Blob([content], { type: mime });
@@ -546,24 +1257,137 @@ ${cues
     setTimeout(() => setCopiedFormat(null), 2500);
   };
 
-  const currentCfg = PRESET_CONFIGS[preset];
+  const currentCfg = PRESET_CONFIGS[preset] || PRESET_CONFIGS.hormozi;
+
+  // Resolve background color with opacity
+  const resolvedBoxBg = useMemo(() => {
+    if (bgMode === "none") return "transparent";
+    // Convert hex to rgb
+    const hex = boxBgColor.replace("#", "");
+    const r = parseInt(hex.substring(0, 2), 16) || 0;
+    const g = parseInt(hex.substring(2, 4), 16) || 0;
+    const b = parseInt(hex.substring(4, 6), 16) || 0;
+    return `rgba(${r}, ${g}, ${b}, ${boxBgOpacity / 100})`;
+  }, [bgMode, boxBgColor, boxBgOpacity]);
 
   return (
     <div className="w-full space-y-8">
+      {/* Dynamic Keyframes for Animations */}
+      <style jsx global>{`
+        @keyframes captionPopAnim {
+          0% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.18);
+          }
+          100% {
+            transform: scale(1.1);
+          }
+        }
+        @keyframes captionBounceAnim {
+          0% {
+            transform: translateY(0) scale(1);
+          }
+          35% {
+            transform: translateY(-6px) scale(1.22);
+          }
+          70% {
+            transform: translateY(1px) scale(1.1);
+          }
+          100% {
+            transform: translateY(0) scale(1.14);
+          }
+        }
+        @keyframes captionGlowPulseAnim {
+          0%,
+          100% {
+            filter: drop-shadow(0 0 6px currentColor);
+            transform: scale(1.08);
+          }
+          50% {
+            filter: drop-shadow(0 0 18px currentColor);
+            transform: scale(1.14);
+          }
+        }
+        @keyframes captionGlitchAnim {
+          0% {
+            transform: translate(0) scale(1.08);
+            text-shadow: -2px 0 #00ffff, 2px 0 #ff0055;
+          }
+          25% {
+            transform: translate(-1.5px, 1px) scale(1.12);
+          }
+          50% {
+            transform: translate(1.5px, -1px) scale(1.14);
+            text-shadow: 2px 0 #00ffff, -2px 0 #ff0055;
+          }
+          75% {
+            transform: translate(-1px, -1px) scale(1.1);
+          }
+          100% {
+            transform: translate(0) scale(1.08);
+            text-shadow: -1px 0 #00ffff, 1px 0 #ff0055;
+          }
+        }
+        @keyframes captionFloatAnim {
+          0%,
+          100% {
+            transform: translateY(0) scale(1.06);
+          }
+          50% {
+            transform: translateY(-4px) scale(1.12);
+          }
+        }
+        @keyframes captionShakeAnim {
+          0%,
+          100% {
+            transform: rotate(0deg) scale(1.12);
+          }
+          25% {
+            transform: rotate(-3deg) scale(1.16);
+          }
+          75% {
+            transform: rotate(3deg) scale(1.16);
+          }
+        }
+        .anim-pop {
+          animation: captionPopAnim 0.22s ease-out forwards;
+        }
+        .anim-bounce {
+          animation: captionBounceAnim 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        .anim-glow {
+          animation: captionGlowPulseAnim 0.8s infinite alternate ease-in-out;
+        }
+        .anim-glitch {
+          animation: captionGlitchAnim 0.3s infinite steps(2, start);
+        }
+        .anim-float {
+          animation: captionFloatAnim 0.6s infinite alternate ease-in-out;
+        }
+        .anim-shake {
+          animation: captionShakeAnim 0.2s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        }
+        .anim-simple {
+          transform: scale(1.08);
+        }
+      `}</style>
+
       {/* Top Banner & Upload Toolbar */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 rounded-3xl border border-[#213026] bg-[#0c1510] p-6 shadow-xl">
         <div className="space-y-1">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#102a16] border border-[#2a5234] px-3 py-0.5 text-xs font-semibold text-[#3cff5f]">
-            <Sparkles className="h-3 w-3" />
-            <span>AI Auto-Captions Engine</span>
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>AI Auto-Captions Engine • 36 Viral Presets</span>
             <span>•</span>
             <span className="text-[#9baaa1]">Free Submagic &amp; Captions Alternative</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold text-[#e7eee9]">
-            Reels &amp; Shorts Animated Captions
+            Reels &amp; Shorts Animated Captions Studio
           </h2>
           <p className="text-xs text-[#9baaa1]">
-            Upload your video and auto-transcribe speech, or upload an existing .SRT subtitle file for instant animated styling.
+            Custom lines, words per screen, transparent background options, and 36+ viral creator animations.
           </p>
         </div>
 
@@ -650,7 +1474,7 @@ ${cues
               </div>
             )}
 
-            {/* Live Synchronized Caption Overlay */}
+            {/* Live Synchronized Caption Overlay with Chunking & MaxLines */}
             <div
               className={`absolute inset-x-4 z-10 flex flex-col items-center pointer-events-none transition-all duration-300 ${
                 position === "bottom"
@@ -660,33 +1484,44 @@ ${cues
                   : "top-16"
               }`}
             >
-              {activeCue ? (
+              {activeChunk ? (
                 <div
-                  className="rounded-2xl px-4 py-2.5 text-center flex flex-wrap items-center justify-center gap-1.5 transition-all max-w-[92%]"
+                  className={`text-center transition-all ${
+                    bgMode === "pill"
+                      ? "rounded-2xl px-4 py-2.5 shadow-lg backdrop-blur-md"
+                      : bgMode === "card"
+                      ? "rounded-3xl px-5 py-3.5 border border-white/10 shadow-2xl backdrop-blur-md"
+                      : "px-2 py-1"
+                  } ${
+                    maxLines === "1"
+                      ? "max-w-[94%] flex flex-nowrap justify-center overflow-hidden"
+                      : "max-w-[92%] flex flex-wrap justify-center gap-1.5"
+                  }`}
                   style={{
-                    backgroundColor: currentCfg.boxBg || "transparent",
-                    backdropFilter: currentCfg.boxBg ? "blur(8px)" : "none",
+                    backgroundColor: bgMode === "none" || bgMode === "highlight-only" ? "transparent" : resolvedBoxBg,
                   }}
                 >
-                  {activeCue.words.map((word) => {
+                  {activeChunk.words.map((word) => {
                     const isHighlighted = word.id === activeWordId;
+                    const animClass = isHighlighted
+                      ? `anim-${currentCfg.animation || "pop"}`
+                      : "opacity-95";
+
                     return (
                       <span
                         key={word.id}
-                        className={`inline-block transition-all duration-150 ${
-                          isHighlighted ? "scale-110 font-black" : "opacity-90"
-                        }`}
+                        className={`inline-block transition-all duration-150 ${animClass}`}
                         style={{
                           fontFamily: currentCfg.fontFamily,
                           fontWeight: currentCfg.fontWeight,
                           fontSize: `${fontSize}px`,
                           color: isHighlighted ? highlightColor : textColor,
                           backgroundColor:
-                            isHighlighted && currentCfg.highlightBg !== "transparent"
+                            isHighlighted && (bgMode === "highlight-only" || currentCfg.highlightBg !== "transparent")
                               ? currentCfg.highlightBg
                               : "transparent",
                           padding:
-                            isHighlighted && currentCfg.highlightBg !== "transparent"
+                            isHighlighted && (bgMode === "highlight-only" || currentCfg.highlightBg !== "transparent")
                               ? "2px 8px"
                               : "0",
                           borderRadius: "8px",
@@ -695,6 +1530,8 @@ ${cues
                             ? `0 0 16px ${highlightColor}88, ${currentCfg.textShadow}`
                             : currentCfg.textShadow,
                           WebkitTextStroke: currentCfg.stroke,
+                          margin: "0 2px",
+                          whiteSpace: maxLines === "1" ? "nowrap" : "normal",
                         }}
                       >
                         {word.word}
@@ -761,37 +1598,78 @@ ${cues
 
         {/* Right Column: Customization Controls & Script Editor */}
         <div className="lg:col-span-7 space-y-6">
-          {/* Preset Selector */}
+          {/* 1. Viral Animation Presets Library (36 Presets) */}
           <div className="rounded-3xl border border-[#213026] bg-[#0c1510] p-6 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <h3 className="text-sm font-bold uppercase tracking-wider text-[#9baaa1] flex items-center gap-2">
                 <Palette className="h-4 w-4 text-[#3cff5f]" />
-                <span>1. Select Viral Caption Preset</span>
+                <span>1. Select Animation Preset (36 Available)</span>
               </h3>
               <span className="text-xs text-[#3cff5f] font-mono font-semibold">
                 {currentCfg.name}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {(Object.keys(PRESET_CONFIGS) as CaptionPreset[]).map((key) => {
-                const p = PRESET_CONFIGS[key];
-                const isActive = preset === key;
+            {/* Category Filter Pills & Search Bar */}
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-1.5">
+                {[
+                  { id: "all", label: "All (36)", icon: Compass },
+                  { id: "creators", label: "🔥 Creator Icons (10)", icon: Flame },
+                  { id: "social", label: "📱 TikTok & Reels (10)", icon: Zap },
+                  { id: "cinematic", label: "🎬 Cinematic & Docu (8)", icon: Film },
+                  { id: "gaming", label: "⚡ Gaming & VFX (8)", icon: Sparkles },
+                ].map((cat) => {
+                  const isActive = presetCategory === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setPresetCategory(cat.id as PresetCategory)}
+                      className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+                        isActive
+                          ? "bg-[#102a16] text-[#3cff5f] border border-[#2a5234] shadow-sm"
+                          : "bg-[#080e0b] text-[#9baaa1] border border-[#213026] hover:text-[#e7eee9] hover:border-[#3cff5f]/40"
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#62776a]" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search presets by creator, style (e.g. Hormozi, Beast, Cyberpunk, Glow, Vox)..."
+                  className="w-full rounded-xl border border-[#213026] bg-[#080e0b] pl-10 pr-4 py-2 text-xs text-[#e7eee9] placeholder-[#62776a] focus:border-[#3cff5f] focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Presets Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto pr-1">
+              {filteredPresets.map((p) => {
+                const isActive = preset === p.id;
                 return (
                   <button
-                    key={key}
+                    key={p.id}
                     type="button"
-                    onClick={() => handlePresetSelect(key)}
-                    className={`rounded-2xl border p-3.5 text-left transition-all cursor-pointer ${
+                    onClick={() => handlePresetSelect(p.id)}
+                    className={`rounded-2xl border p-3 text-left transition-all cursor-pointer ${
                       isActive
                         ? "border-[#3cff5f] bg-[#102a16] shadow-[0_0_15px_rgba(60,255,95,0.15)]"
                         : "border-[#213026] bg-[#080e0b] hover:border-[#3cff5f]/50 hover:bg-[#0c1510]"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-1 mb-1">
-                      <span className="text-xs font-bold text-[#e7eee9]">{p.name}</span>
+                      <span className="text-xs font-bold text-[#e7eee9] truncate">{p.name}</span>
                       <span
-                        className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${
+                        className={`text-[9px] font-mono px-1 py-0.5 rounded shrink-0 ${
                           isActive
                             ? "bg-[#3cff5f] text-[#050a08] font-bold"
                             : "bg-[#17221b] text-[#9baaa1]"
@@ -800,7 +1678,7 @@ ${cues
                         {p.badge}
                       </span>
                     </div>
-                    <p className="text-[11px] text-[#9baaa1] line-clamp-2 leading-tight">
+                    <p className="text-[10px] text-[#9baaa1] line-clamp-2 leading-tight">
                       {p.desc}
                     </p>
                   </button>
@@ -809,11 +1687,153 @@ ${cues
             </div>
           </div>
 
-          {/* Typography & Position Customizer */}
+          {/* 2. Pacing, Line Breaks & Background Customizer */}
           <div className="rounded-3xl border border-[#213026] bg-[#0c1510] p-6 space-y-5">
             <h3 className="text-sm font-bold uppercase tracking-wider text-[#9baaa1] flex items-center gap-2">
               <Sliders className="h-4 w-4 text-[#3cff5f]" />
-              <span>2. Customize Typography &amp; Alignment</span>
+              <span>2. Caption Pacing, Lines &amp; Background Box</span>
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {/* Words Per Screen (Pacing) */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs text-[#9baaa1]">
+                  <span>Words Per Screen:</span>
+                  <span className="text-[#3cff5f] font-mono font-bold">
+                    {wordsPerScreen === "all" ? "All Words" : `${wordsPerScreen} Words`}
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 sm:grid-cols-7 gap-1">
+                  {(["1", "2", "3", "4", "5", "6", "all"] as WordsPerScreenOption[]).map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => setWordsPerScreen(opt)}
+                      className={`rounded-xl border py-2 text-xs font-semibold transition-all cursor-pointer ${
+                        wordsPerScreen === opt
+                          ? "border-[#3cff5f] bg-[#102a16] text-[#3cff5f]"
+                          : "border-[#213026] bg-[#080e0b] text-[#9baaa1] hover:text-[#e7eee9]"
+                      }`}
+                    >
+                      {opt === "all" ? "All" : `${opt}W`}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-[#62776a]">
+                  1W: 1-word pop (Hormozi), 3W: Viral Sweet Spot, All: Full sentence.
+                </p>
+              </div>
+
+              {/* Max Lines Per Screen */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs text-[#9baaa1]">
+                  <span>Lines Per Screen:</span>
+                  <span className="text-[#3cff5f] font-mono font-bold">
+                    {maxLines === "1" ? "1 Line" : maxLines === "2" ? "2 Lines" : "Auto"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["1", "2", "auto"] as MaxLinesOption[]).map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => setMaxLines(opt)}
+                      className={`rounded-xl border py-2 text-xs font-semibold transition-all cursor-pointer ${
+                        maxLines === opt
+                          ? "border-[#3cff5f] bg-[#102a16] text-[#3cff5f]"
+                          : "border-[#213026] bg-[#080e0b] text-[#9baaa1] hover:text-[#e7eee9]"
+                      }`}
+                    >
+                      {opt === "1" ? "1 Line" : opt === "2" ? "2 Lines" : "Auto Wrap"}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-[#62776a]">
+                  Limit text height so subtitles never block the speaker&apos;s face.
+                </p>
+              </div>
+
+              {/* Background Box Mode (None / Pill / Highlight / Card) */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs text-[#9baaa1]">
+                  <span>Text Background Box:</span>
+                  <span className="text-[#3cff5f] font-mono font-bold capitalize">
+                    {bgMode}
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[
+                    { id: "none", label: "None", icon: EyeOff },
+                    { id: "pill", label: "Pill Box", icon: Eye },
+                    { id: "highlight-only", label: "Word Only", icon: Sparkles },
+                    { id: "card", label: "Full Card", icon: Layers },
+                  ].map((b) => (
+                    <button
+                      key={b.id}
+                      type="button"
+                      onClick={() => setBgMode(b.id as BgMode)}
+                      className={`rounded-xl border py-2 text-xs font-semibold flex flex-col items-center gap-1 transition-all cursor-pointer ${
+                        bgMode === b.id
+                          ? "border-[#3cff5f] bg-[#102a16] text-[#3cff5f]"
+                          : "border-[#213026] bg-[#080e0b] text-[#9baaa1] hover:text-[#e7eee9]"
+                      }`}
+                    >
+                      <b.icon className="h-3.5 w-3.5" />
+                      <span className="text-[10px]">{b.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Background Color & Opacity Slider */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs text-[#9baaa1]">
+                  <span>Box Color &amp; Opacity:</span>
+                  <strong className="text-[#3cff5f] font-mono">
+                    {bgMode === "none" ? "Transparent" : `${boxBgOpacity}%`}
+                  </strong>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={boxBgColor}
+                    disabled={bgMode === "none"}
+                    onChange={(e) => setBoxBgColor(e.target.value)}
+                    className="h-8 w-8 rounded border border-[#213026] bg-transparent cursor-pointer disabled:opacity-40"
+                    title="Change background box color"
+                  />
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={boxBgOpacity}
+                    disabled={bgMode === "none"}
+                    onChange={(e) => setBoxBgOpacity(Number(e.target.value))}
+                    className="flex-1 accent-[#3cff5f] cursor-pointer disabled:opacity-40"
+                  />
+                </div>
+                <div className="flex gap-1.5 pt-1">
+                  {["#000000", "#0c1510", "#101827", "#1e102d", "#2d1010"].map((hex) => (
+                    <button
+                      key={hex}
+                      type="button"
+                      disabled={bgMode === "none"}
+                      onClick={() => setBoxBgColor(hex)}
+                      className="w-5 h-5 rounded-full border border-white/20 cursor-pointer hover:scale-110 transition-all disabled:opacity-40"
+                      style={{ backgroundColor: hex }}
+                      title={`Set ${hex}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Typography & Alignment Customizer */}
+          <div className="rounded-3xl border border-[#213026] bg-[#0c1510] p-6 space-y-5">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-[#9baaa1] flex items-center gap-2">
+              <Type className="h-4 w-4 text-[#3cff5f]" />
+              <span>3. Typography, Alignment &amp; Colors</span>
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -826,7 +1846,7 @@ ${cues
                 <input
                   type="range"
                   min="18"
-                  max="40"
+                  max="42"
                   value={fontSize}
                   onChange={(e) => setFontSize(Number(e.target.value))}
                   className="w-full accent-[#3cff5f] cursor-pointer"
@@ -877,7 +1897,7 @@ ${cues
 
               {/* Color Customizer */}
               <div className="space-y-2">
-                <label className="text-xs text-[#9baaa1]">Colors:</label>
+                <label className="text-xs text-[#9baaa1]">Colors (Active &amp; Base):</label>
                 <div className="flex items-center gap-4 text-xs text-[#9baaa1]">
                   <div className="flex items-center gap-2">
                     <span>Active:</span>
@@ -902,12 +1922,12 @@ ${cues
             </div>
           </div>
 
-          {/* Subtitle Dialogue & Timeline Editor */}
+          {/* 4. Subtitle Dialogue & Timeline Editor */}
           <div className="rounded-3xl border border-[#213026] bg-[#0c1510] p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold uppercase tracking-wider text-[#9baaa1] flex items-center gap-2">
                 <FileText className="h-4 w-4 text-[#3cff5f]" />
-                <span>3. Subtitle Cues &amp; Timestamps</span>
+                <span>4. Subtitle Cues &amp; Timestamps</span>
               </h3>
 
               {/* View Tabs */}
@@ -940,7 +1960,7 @@ ${cues
             {/* Tab 1: Timeline Cue Cards with Click-to-Seek */}
             {activeTab === "cues" ? (
               <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                {cues.map((cue, idx) => {
+                {cues.map((cue) => {
                   const isCurrent = activeCue?.id === cue.id;
                   return (
                     <div
@@ -1021,11 +2041,11 @@ ${cues
             )}
           </div>
 
-          {/* Export & Download Hub */}
+          {/* 5. Export & Download Hub */}
           <div className="rounded-3xl border border-[#213026] bg-[#0c1510] p-6 space-y-4">
             <h3 className="text-sm font-bold uppercase tracking-wider text-[#9baaa1] flex items-center gap-2">
               <Download className="h-4 w-4 text-[#3cff5f]" />
-              <span>4. Export Subtitles &amp; Animations (100% Free)</span>
+              <span>5. Export Subtitles &amp; Animations (100% Free)</span>
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

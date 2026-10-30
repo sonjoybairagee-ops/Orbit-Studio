@@ -39,13 +39,13 @@ export const metadata: Metadata = {
 const FEATURES = [
   {
     icon: Sparkles,
-    title: "Viral Caption Presets",
-    desc: "Instant Hormozi, Beast, Cyber Emerald, and TikTok bold font styles with active-word illumination.",
+    title: "36+ Viral Animation Presets",
+    desc: "Creator icons (Hormozi, MrBeast, Ali Abdaal, Goggins), TikTok trends, cinematic Netflix, and gaming VFX styles.",
   },
   {
     icon: Zap,
-    title: "Word-by-Word Sync",
-    desc: "Precision timing synchronization with live 9:16 vertical phone preview player.",
+    title: "Custom Words & Lines Per Screen",
+    desc: "Switch from 1-word punchy Hormozi pops to 3-word sweet spots, single lines, or auto wrap to avoid face obstructions.",
   },
   {
     icon: Film,
@@ -55,7 +55,7 @@ const FEATURES = [
   {
     icon: ShieldCheck,
     title: "100% Free & No Watermarks",
-    desc: "Zero subscriptions, no credit cards, and no annoying watermark overlays on your export.",
+    desc: "Zero subscriptions, transparent or custom background options, and no annoying watermark overlays on your export.",
   },
 ];
 
