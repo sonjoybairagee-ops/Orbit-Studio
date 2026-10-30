@@ -1691,9 +1691,9 @@ export const TOOLS_DATA: ToolItem[] = [
 ];
 
 export const CATEGORIES = [
-  { id: "all", label: "All Tools", count: 100 },
+  { id: "all", label: "All Tools", count: 101 },
   { id: "downloader", label: "Downloader Tools", count: 3 },
-  { id: "video", label: "Video Tools", count: 11 },
+  { id: "video", label: "Video Tools", count: 12 },
   { id: "image", label: "Image Tools", count: 6 },
   { id: "pdf", label: "PDF Tools", count: 5 },
   { id: "text", label: "Text Tools", count: 5 },
