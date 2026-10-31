@@ -39,13 +39,36 @@ function decodeHtmlEntities(str: string): string {
     .replace(/&lt;&lt;/g, "<<");
 }
 
+// Helper to fetch video metadata via official YouTube oEmbed
+async function fetchVideoMeta(videoId: string): Promise<{ title: string; author: string }> {
+  try {
+    const res = await fetch(
+      `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`,
+      { next: { revalidate: 3600 } }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      return {
+        title: data.title || "YouTube Video",
+        author: data.author_name || "YouTube Creator",
+      };
+    }
+  } catch {
+    // ignore
+  }
+  return { title: "YouTube Video", author: "YouTube Creator" };
+}
+
 export async function POST(req: NextRequest) {
+  let videoId: string | null = null;
+  let videoMeta = { title: "YouTube Video", author: "YouTube Creator" };
+
   try {
     const body = await req.json();
     const rawUrl = body.url || "";
     const requestedLang = body.lang || null;
 
-    const videoId = extractVideoId(rawUrl);
+    videoId = extractVideoId(rawUrl);
     if (!videoId) {
       return NextResponse.json(
         { error: "Invalid YouTube URL. Please enter a valid YouTube video or Shorts link." },
@@ -53,18 +76,48 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Pre-fetch video title and channel for rich feedback
+    videoMeta = await fetchVideoMeta(videoId);
+
     const api = new YouTubeTranscriptApi();
 
     // 1. Fetch available transcript tracks (TranscriptList is iterable)
-    const list = await api.list(videoId);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const allTracks: any[] = Array.from(list as any);
+    let allTracks: any[] = [];
+    try {
+      const list = await api.list(videoId);
+      allTracks = Array.from(list as any);
+    } catch (listErr: any) {
+      const errMsg = String(listErr?.message || "");
+      console.warn(`api.list failed for ${videoId}:`, errMsg);
+
+      // Check if subtitles are disabled on this video
+      if (
+        errMsg.toLowerCase().includes("subtitles are disabled") ||
+        errMsg.toLowerCase().includes("could not retrieve a transcript") ||
+        errMsg.toLowerCase().includes("transcriptsdisabled")
+      ) {
+        return NextResponse.json(
+          {
+            error: `Closed captions (CC) are disabled for "${videoMeta.title}". The creator did not upload subtitles, and auto-generated captions are not available for this video.`,
+            reason: "no_subtitles",
+            title: videoMeta.title,
+            author: videoMeta.author,
+            videoId,
+          },
+          { status: 404 }
+        );
+      }
+      throw listErr;
+    }
 
     if (allTracks.length === 0) {
       return NextResponse.json(
         {
-          error:
-            "No subtitles or transcripts are available for this YouTube video. The creator might not have added captions or enabled automatic speech recognition.",
+          error: `No subtitles or transcripts are available for "${videoMeta.title}". The creator might not have added captions or enabled automatic speech recognition.`,
+          reason: "no_subtitles",
+          title: videoMeta.title,
+          author: videoMeta.author,
+          videoId,
         },
         { status: 404 }
       );
@@ -121,8 +174,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       videoId,
-      title: fetchedTranscript.metadata?.title || (list as any).metadata?.title || "YouTube Video",
-      author: fetchedTranscript.metadata?.author || (list as any).metadata?.author || "",
+      title: fetchedTranscript.metadata?.title || videoMeta.title || "YouTube Video",
+      author: fetchedTranscript.metadata?.author || videoMeta.author || "",
       activeLanguage: {
         code: targetTrack.languageCode,
         name: targetTrack.language,
@@ -138,12 +191,22 @@ export async function POST(req: NextRequest) {
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Failed to extract transcript";
     console.error("YouTube Transcript API Error:", msg);
+    const isNoSubtitles =
+      msg.toLowerCase().includes("subtitles are disabled") ||
+      msg.toLowerCase().includes("could not retrieve a transcript") ||
+      msg.toLowerCase().includes("transcriptsdisabled");
+
     return NextResponse.json(
       {
-        error:
-          "Could not retrieve transcript. This video might have closed captions disabled, or is private/region-restricted.",
+        error: isNoSubtitles
+          ? `Closed captions (CC) are disabled for "${videoMeta.title}". The creator did not upload subtitles, and auto-generated captions are not available.`
+          : "Could not retrieve transcript. This video might have closed captions disabled, or is private/region-restricted.",
+        reason: isNoSubtitles ? "no_subtitles" : "failed",
+        title: videoMeta.title,
+        author: videoMeta.author,
+        videoId: videoId || undefined,
       },
-      { status: 500 }
+      { status: isNoSubtitles ? 404 : 500 }
     );
   }
 }

@@ -92,6 +92,12 @@ export default function YoutubeTranscriptTool() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<{
+    reason?: string;
+    title?: string;
+    author?: string;
+    videoId?: string;
+  } | null>(null);
 
   // Transcript Data
   const [videoId, setVideoId] = useState<string | null>(null);
@@ -144,6 +150,7 @@ export default function YoutubeTranscriptTool() {
     setIsLoading(true);
     setStatusMessage("Extracting YouTube captions & timestamped dialogues...");
     setErrorMessage(null);
+    setErrorDetails(null);
 
     try {
       const res = await fetch("/api/tools/youtube-transcript", {
@@ -157,6 +164,12 @@ export default function YoutubeTranscriptTool() {
 
       const data = await res.json();
       if (!res.ok) {
+        setErrorDetails({
+          reason: data.reason,
+          title: data.title,
+          author: data.author,
+          videoId: data.videoId,
+        });
         throw new Error(data.error || "Failed to fetch transcript");
       }
 
@@ -597,12 +610,58 @@ export default function YoutubeTranscriptTool() {
           </div>
         )}
 
-        {/* Error Alert */}
+        {/* Error Alert & Guidance */}
         {errorMessage && (
-          <div className="rounded-2xl border border-red-500/40 bg-red-950/20 p-4 text-xs text-red-300 flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 shrink-0 text-red-400 mt-0.5" />
-            <p className="leading-relaxed">{errorMessage}</p>
-          </div>
+          errorDetails?.reason === "no_subtitles" ? (
+            <div className="rounded-2xl border border-amber-500/40 bg-[#14120a] p-5 text-xs text-amber-200 space-y-3 shadow-xl">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 shrink-0 text-amber-400 mt-0.5" />
+                <div className="space-y-1 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-bold text-sm text-[#e7eee9]">
+                      {errorDetails?.title ? `"${errorDetails.title}"` : "YouTube Video"}
+                    </span>
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                      No Subtitles (CC Disabled)
+                    </span>
+                  </div>
+                  <p className="text-[#a8b8ae] text-xs leading-relaxed">
+                    এই ভিডিওটির ক্রিয়েটর ইউটিউবে কোনো সাবটাইটেল (CC) বা লিরিক্স আপলোড করেননি এবং ইউটিউবের স্বয়ংক্রিয় স্পিচ ক্যাপশনও নেই।
+                  </p>
+                </div>
+              </div>
+
+              <div className="pl-8 pt-1 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab("local");
+                    setErrorMessage(null);
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-[#102a16] border border-[#2a5234] text-[#3cff5f] hover:bg-[#15381d] text-xs font-semibold flex items-center gap-2 transition-all shadow-sm cursor-pointer"
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  <span>Upload Video / Audio ট্যাবে ফাইল দিয়ে AI ট্রান্সক্রিপ্ট করুন</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUrl("https://www.youtube.com/watch?v=UF8uR6Z6KLc");
+                    fetchTranscript("https://www.youtube.com/watch?v=UF8uR6Z6KLc");
+                  }}
+                  className="px-3 py-2 rounded-xl bg-[#0c1510] border border-[#213026] text-[#e7eee9] hover:text-[#3cff5f] hover:border-[#2a5234] text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <Play className="h-3.5 w-3.5 text-[#3cff5f]" />
+                  <span>ক্যাপশনযুক্ত ভিডিও টেস্ট করুন (Steve Jobs Speech)</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-red-500/40 bg-red-950/20 p-4 text-xs text-red-300 flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 shrink-0 text-red-400 mt-0.5" />
+              <p className="leading-relaxed">{errorMessage}</p>
+            </div>
+          )
         )}
       </div>
 
