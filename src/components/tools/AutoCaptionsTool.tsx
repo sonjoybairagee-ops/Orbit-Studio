@@ -33,6 +33,8 @@ import {
   AlignLeft,
   AlignCenter,
   Timer,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 export interface CaptionWord {
@@ -961,6 +963,28 @@ export function recomputeTimedCues(
   return newCues;
 }
 
+const FEATURED_PRESETS = [
+  "hormozi",
+  "hormozi-red",
+  "beast",
+  "ali-abdaal",
+  "tiktok",
+  "submagic-lime",
+  "netflix",
+  "goggins",
+];
+
+const QUICK_COLORS = [
+  { name: "Yellow", hex: "#FFE600" },
+  { name: "Crimson", hex: "#FF2244" },
+  { name: "Neon Green", hex: "#3CFF5F" },
+  { name: "Cyan", hex: "#00F0FF" },
+  { name: "Magenta", hex: "#FF007F" },
+  { name: "Orange", hex: "#FF6B00" },
+  { name: "Gold", hex: "#FFD700" },
+  { name: "White", hex: "#FFFFFF" },
+];
+
 export default function AutoCaptionsTool() {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoSrc, setVideoSrc] = useState<string>("");
@@ -968,6 +992,10 @@ export default function AutoCaptionsTool() {
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
   const [isMuted, setIsMuted] = useState<boolean>(false);
+
+  // Simplified Studio Tabs
+  const [controlTab, setControlTab] = useState<"presets" | "adjust" | "cues">("presets");
+  const [showAllPresets, setShowAllPresets] = useState<boolean>(false);
 
   // Styling state
   const [preset, setPreset] = useState<string>("hormozi");
@@ -1701,272 +1729,275 @@ ${cues
           </p>
         </div>
 
-        {/* Right Column: Customization Controls & Script Editor */}
-        <div className="lg:col-span-7 space-y-6">
-          {/* 1. Viral Animation Presets Library (36 Presets) */}
-          <div className="rounded-3xl border border-[#213026] bg-[#0c1510] p-6 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-[#9baaa1] flex items-center gap-2">
-                <Palette className="h-4 w-4 text-[#3cff5f]" />
-                <span>1. Select Animation Preset (36 Available)</span>
-              </h3>
-              <span className="text-xs text-[#3cff5f] font-mono font-semibold">
-                {currentCfg.name}
+        {/* Right Column: Clean 3-Tab Studio Panel */}
+        <div className="lg:col-span-7 space-y-4">
+          {/* 1. Top Quick Export Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#26332d] bg-[#0c1510] p-4 shadow-lg">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-[#e7eee9] flex items-center gap-1.5">
+                <Sparkles className="h-4 w-4 text-[#3cff5f]" />
+                <span>{currentCfg.name}</span>
+              </span>
+              <span className="text-[10px] font-mono text-[#3cff5f] bg-[#102a16] px-2 py-0.5 rounded-full border border-[#2a5234]">
+                {cues.length} lines
               </span>
             </div>
 
-            {/* Category Filter Pills & Search Bar */}
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-1.5">
-                {[
-                  { id: "all", label: "All (36)", icon: Compass },
-                  { id: "creators", label: "🔥 Creator Icons (10)", icon: Flame },
-                  { id: "social", label: "📱 TikTok & Reels (10)", icon: Zap },
-                  { id: "cinematic", label: "🎬 Cinematic & Docu (8)", icon: Film },
-                  { id: "gaming", label: "⚡ Gaming & VFX (8)", icon: Sparkles },
-                ].map((cat) => {
-                  const isActive = presetCategory === cat.id;
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => downloadFile(generateASS(), "viral_captions.ass", "text/plain")}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[#3cff5f] px-4 py-2 text-xs font-bold text-[#050a08] hover:bg-[#52ff71] transition-all cursor-pointer shadow-md shadow-[#3cff5f]/20"
+                title="Download styled captions for CapCut, Premiere Pro, or After Effects"
+              >
+                <Download className="h-3.5 w-3.5" />
+                <span>Download .ASS</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => downloadFile(generateSRT(), "subtitles.srt", "text/plain")}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[#213026] bg-[#080e0b] px-3 py-2 text-xs font-semibold text-[#e7eee9] hover:border-[#3cff5f] hover:text-[#3cff5f] transition-all cursor-pointer"
+                title="Download standard SRT subtitle file"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                <span>.SRT</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => copyToClipboard(cues.map((c) => c.text).join(" "), "text")}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[#213026] bg-[#080e0b] px-3 py-2 text-xs font-semibold text-[#9baaa1] hover:text-[#e7eee9] transition-all cursor-pointer"
+                title="Copy plain text script"
+              >
+                {copiedFormat === "text" ? <Check className="h-3.5 w-3.5 text-[#3cff5f]" /> : <Copy className="h-3.5 w-3.5" />}
+              </button>
+            </div>
+          </div>
+
+          {/* 2. Studio Tabs Switcher */}
+          <div className="flex items-center gap-1 rounded-2xl border border-[#213026] bg-[#080e0b] p-1.5">
+            <button
+              type="button"
+              onClick={() => setControlTab("presets")}
+              className={`flex-1 rounded-xl py-2.5 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                controlTab === "presets"
+                  ? "bg-[#102a16] text-[#3cff5f] border border-[#2a5234] shadow-sm"
+                  : "text-[#9baaa1] hover:text-[#e7eee9]"
+              }`}
+            >
+              <Palette className="h-3.5 w-3.5" />
+              <span>Animation Styles</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setControlTab("adjust")}
+              className={`flex-1 rounded-xl py-2.5 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                controlTab === "adjust"
+                  ? "bg-[#102a16] text-[#3cff5f] border border-[#2a5234] shadow-sm"
+                  : "text-[#9baaa1] hover:text-[#e7eee9]"
+              }`}
+            >
+              <Sliders className="h-3.5 w-3.5" />
+              <span>Pacing & Size</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setControlTab("cues")}
+              className={`flex-1 rounded-xl py-2.5 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                controlTab === "cues"
+                  ? "bg-[#102a16] text-[#3cff5f] border border-[#2a5234] shadow-sm"
+                  : "text-[#9baaa1] hover:text-[#e7eee9]"
+              }`}
+            >
+              <FileText className="h-3.5 w-3.5" />
+              <span>Edit Script ({cues.length})</span>
+            </button>
+          </div>
+
+          {/* Tab 1: Animation Styles */}
+          {controlTab === "presets" && (
+            <div className="rounded-3xl border border-[#213026] bg-[#0c1510] p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-[#e7eee9]">Popular Creator Styles</h3>
+                  <p className="text-xs text-[#9baaa1]">Click any style to apply instantly to your video.</p>
+                </div>
+                <span className="text-xs text-[#3cff5f] font-mono font-bold bg-[#102a16] px-2.5 py-1 rounded-xl border border-[#2a5234]">
+                  Active: {currentCfg.name}
+                </span>
+              </div>
+
+              {/* Top 8 Featured Presets Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                {FEATURED_PRESETS.map((pId) => {
+                  const p = PRESET_CONFIGS[pId];
+                  if (!p) return null;
+                  const isActive = preset === p.id;
                   return (
                     <button
-                      key={cat.id}
+                      key={p.id}
                       type="button"
-                      onClick={() => setPresetCategory(cat.id as PresetCategory)}
-                      className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+                      onClick={() => handlePresetSelect(p.id)}
+                      className={`rounded-2xl border p-3 text-left transition-all cursor-pointer flex flex-col justify-between min-h-[96px] ${
                         isActive
-                          ? "bg-[#102a16] text-[#3cff5f] border border-[#2a5234] shadow-sm"
-                          : "bg-[#080e0b] text-[#9baaa1] border border-[#213026] hover:text-[#e7eee9] hover:border-[#3cff5f]/40"
+                          ? "border-[#3cff5f] bg-[#102a16] shadow-lg shadow-[#3cff5f]/15 ring-1 ring-[#3cff5f]"
+                          : "border-[#213026] bg-[#080e0b] hover:border-[#3cff5f]/50 hover:bg-[#0c1510]"
                       }`}
                     >
-                      {cat.label}
+                      <div className="flex items-center justify-between gap-1 w-full">
+                        <span className="text-xs font-bold text-[#e7eee9] truncate">{p.name}</span>
+                        {isActive && <Check className="h-3.5 w-3.5 text-[#3cff5f] shrink-0" />}
+                      </div>
+
+                      {/* Live Mini Preview Word */}
+                      <div className="my-2 flex justify-center">
+                        <span
+                          className="px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider"
+                          style={{
+                            fontFamily: p.fontFamily,
+                            color: p.highlightColor,
+                            backgroundColor:
+                              p.highlightBg !== "transparent"
+                                ? p.highlightBg
+                                : p.boxBg !== "transparent"
+                                ? p.boxBg
+                                : "rgba(0,0,0,0.6)",
+                            textShadow: p.textShadow,
+                            WebkitTextStroke: p.stroke,
+                          }}
+                        >
+                          VIRAL
+                        </span>
+                      </div>
+
+                      <span className="text-[10px] text-[#9baaa1] truncate block">{p.badge}</span>
                     </button>
                   );
                 })}
               </div>
 
-              {/* Search Bar */}
-              <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#62776a]" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search presets by creator, style (e.g. Hormozi, Beast, Cyberpunk, Glow, Vox)..."
-                  className="w-full rounded-xl border border-[#213026] bg-[#080e0b] pl-10 pr-4 py-2 text-xs text-[#e7eee9] placeholder-[#62776a] focus:border-[#3cff5f] focus:outline-none"
-                />
-              </div>
-            </div>
+              {/* Toggle to expand all 36 presets */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAllPresets(!showAllPresets)}
+                  className="w-full flex items-center justify-center gap-1.5 rounded-2xl border border-[#213026] bg-[#080e0b] py-2.5 text-xs font-semibold text-[#9baaa1] hover:text-[#e7eee9] hover:border-[#3cff5f]/40 transition-all cursor-pointer"
+                >
+                  <span>{showAllPresets ? "Hide Extra Styles" : "Browse All 36 Animation Presets"}</span>
+                  {showAllPresets ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </button>
 
-            {/* Presets Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto pr-1">
-              {filteredPresets.map((p) => {
-                const isActive = preset === p.id;
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => handlePresetSelect(p.id)}
-                    className={`rounded-2xl border p-3 text-left transition-all cursor-pointer ${
-                      isActive
-                        ? "border-[#3cff5f] bg-[#102a16] shadow-[0_0_15px_rgba(60,255,95,0.15)]"
-                        : "border-[#213026] bg-[#080e0b] hover:border-[#3cff5f]/50 hover:bg-[#0c1510]"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-1 mb-1">
-                      <span className="text-xs font-bold text-[#e7eee9] truncate">{p.name}</span>
-                      <span
-                        className={`text-[9px] font-mono px-1 py-0.5 rounded shrink-0 ${
-                          isActive
-                            ? "bg-[#3cff5f] text-[#050a08] font-bold"
-                            : "bg-[#17221b] text-[#9baaa1]"
-                        }`}
-                      >
-                        {p.badge}
-                      </span>
+                {showAllPresets && (
+                  <div className="mt-4 pt-4 border-t border-[#213026] space-y-3">
+                    {/* Category Filter Pills & Search */}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {[
+                        { id: "all", label: "All (36)" },
+                        { id: "creators", label: "🔥 Creators" },
+                        { id: "social", label: "📱 Reels & TikTok" },
+                        { id: "cinematic", label: "🎬 Cinematic" },
+                        { id: "gaming", label: "⚡ Gaming" },
+                      ].map((cat) => (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => setPresetCategory(cat.id as PresetCategory)}
+                          className={`rounded-xl px-3 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                            presetCategory === cat.id
+                              ? "bg-[#102a16] text-[#3cff5f] border border-[#2a5234]"
+                              : "bg-[#080e0b] text-[#9baaa1] border border-[#213026] hover:text-[#e7eee9]"
+                          }`}
+                        >
+                          {cat.label}
+                        </button>
+                      ))}
                     </div>
-                    <p className="text-[10px] text-[#9baaa1] line-clamp-2 leading-tight">
-                      {p.desc}
-                    </p>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
 
-          {/* 2. Pacing, Line Breaks & Background Customizer */}
-          <div className="rounded-3xl border border-[#213026] bg-[#0c1510] p-6 space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-[#9baaa1] flex items-center gap-2">
-                <Sliders className="h-4 w-4 text-[#3cff5f]" />
-                <span>2. Caption Pacing, Lines &amp; Background Box</span>
-              </h3>
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-[#3cff5f] bg-[#102a16] px-2.5 py-0.5 rounded-full border border-[#2a5234]">
-                <Timer className="h-3 w-3" />
-                <span>Auto-Timed SRT: {cues.length} chunks</span>
-              </span>
-            </div>
+                    <div className="relative">
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#62776a]" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search presets by name (e.g. Beast, Hormozi, Cyberpunk)..."
+                        className="w-full rounded-xl border border-[#213026] bg-[#080e0b] pl-9 pr-4 py-2 text-xs text-[#e7eee9] placeholder-[#62776a] focus:border-[#3cff5f] focus:outline-none"
+                      />
+                    </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {/* Words Per Screen (Pacing) */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center text-xs text-[#9baaa1]">
-                  <span>Words Per Screen:</span>
-                  <span className="text-[#3cff5f] font-mono font-bold">
-                    {wordsPerScreen === "all" ? "All Words" : `${wordsPerScreen} Words`}
-                  </span>
-                </div>
-                <div className="grid grid-cols-4 sm:grid-cols-7 gap-1">
-                  {(["1", "2", "3", "4", "5", "6", "all"] as WordsPerScreenOption[]).map((opt) => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => handleWordsPerScreenChange(opt)}
-                      className={`rounded-xl border py-2 text-xs font-semibold transition-all cursor-pointer ${
-                        wordsPerScreen === opt
-                          ? "border-[#3cff5f] bg-[#102a16] text-[#3cff5f] shadow-md shadow-[#3cff5f]/15"
-                          : "border-[#213026] bg-[#080e0b] text-[#9baaa1] hover:text-[#e7eee9]"
-                      }`}
-                    >
-                      {opt === "all" ? "All" : `${opt}W`}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-[10px] text-[#62776a]">
-                  Changes chunking and automatically recalculates accurate start/end timestamps for each chunk.
-                </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-1">
+                      {filteredPresets.map((p) => {
+                        const isActive = preset === p.id;
+                        return (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => handlePresetSelect(p.id)}
+                            className={`rounded-xl border p-2.5 text-left transition-all cursor-pointer ${
+                              isActive
+                                ? "border-[#3cff5f] bg-[#102a16]"
+                                : "border-[#213026] bg-[#080e0b] hover:border-[#3cff5f]/40"
+                            }`}
+                          >
+                            <span className="text-xs font-bold text-[#e7eee9] block truncate">{p.name}</span>
+                            <span className="text-[10px] text-[#9baaa1] block truncate">{p.badge}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
+            </div>
+          )}
 
-              {/* Max Lines Per Screen */}
+          {/* Tab 2: Pacing & Adjustments */}
+          {controlTab === "adjust" && (
+            <div className="rounded-3xl border border-[#213026] bg-[#0c1510] p-6 space-y-5">
+              {/* Words on Screen */}
               <div className="space-y-2">
-                <div className="flex justify-between items-center text-xs text-[#9baaa1]">
-                  <span>Lines Per Screen:</span>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-[#e7eee9] font-semibold">Words Per Screen (Pacing):</span>
                   <span className="text-[#3cff5f] font-mono font-bold">
-                    {maxLines === "1" ? "1 Line" : maxLines === "2" ? "2 Lines" : "Auto"}
+                    {wordsPerScreen === "1"
+                      ? "1 Word (Punchy)"
+                      : wordsPerScreen === "2"
+                      ? "2 Words"
+                      : wordsPerScreen === "3"
+                      ? "3 Words (Recommended)"
+                      : "Full Sentence"}
                   </span>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {(["1", "2", "auto"] as MaxLinesOption[]).map((opt) => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => handleMaxLinesChange(opt)}
-                      className={`rounded-xl border py-2 text-xs font-semibold transition-all cursor-pointer ${
-                        maxLines === opt
-                          ? "border-[#3cff5f] bg-[#102a16] text-[#3cff5f]"
-                          : "border-[#213026] bg-[#080e0b] text-[#9baaa1] hover:text-[#e7eee9]"
-                      }`}
-                    >
-                      {opt === "1" ? "1 Line" : opt === "2" ? "2 Lines" : "Auto Wrap"}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-[10px] text-[#62776a]">
-                  Limit text height so subtitles never block the speaker&apos;s face.
-                </p>
-              </div>
-
-              {/* Background Box Mode (None / Pill / Highlight / Card) */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center text-xs text-[#9baaa1]">
-                  <span>Text Background Box:</span>
-                  <span className="text-[#3cff5f] font-mono font-bold capitalize">
-                    {bgMode}
-                  </span>
-                </div>
-                <div className="grid grid-cols-4 gap-1.5">
+                <div className="grid grid-cols-4 gap-2">
                   {[
-                    { id: "none", label: "None", icon: EyeOff },
-                    { id: "pill", label: "Pill Box", icon: Eye },
-                    { id: "highlight-only", label: "Word Only", icon: Sparkles },
-                    { id: "card", label: "Full Card", icon: Layers },
-                  ].map((b) => (
+                    { val: "1", label: "1 Word", sub: "Hormozi" },
+                    { val: "2", label: "2 Words", sub: "Fast" },
+                    { val: "3", label: "3 Words", sub: "Recommended" },
+                    { val: "all", label: "Full Line", sub: "Classic" },
+                  ].map((opt) => (
                     <button
-                      key={b.id}
+                      key={opt.val}
                       type="button"
-                      onClick={() => setBgMode(b.id as BgMode)}
-                      className={`rounded-xl border py-2 text-xs font-semibold flex flex-col items-center gap-1 transition-all cursor-pointer ${
-                        bgMode === b.id
-                          ? "border-[#3cff5f] bg-[#102a16] text-[#3cff5f]"
+                      onClick={() => handleWordsPerScreenChange(opt.val as WordsPerScreenOption)}
+                      className={`rounded-xl border py-2.5 px-2 text-center transition-all cursor-pointer ${
+                        wordsPerScreen === opt.val
+                          ? "border-[#3cff5f] bg-[#102a16] text-[#3cff5f] shadow-sm ring-1 ring-[#3cff5f]"
                           : "border-[#213026] bg-[#080e0b] text-[#9baaa1] hover:text-[#e7eee9]"
                       }`}
                     >
-                      <b.icon className="h-3.5 w-3.5" />
-                      <span className="text-[10px]">{b.label}</span>
+                      <div className="text-xs font-bold">{opt.label}</div>
+                      <div className="text-[10px] text-[#62776a]">{opt.sub}</div>
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Background Color & Opacity Slider */}
+              {/* Subtitle Position */}
               <div className="space-y-2">
-                <div className="flex justify-between items-center text-xs text-[#9baaa1]">
-                  <span>Box Color &amp; Opacity:</span>
-                  <strong className="text-[#3cff5f] font-mono">
-                    {bgMode === "none" ? "Transparent" : `${boxBgOpacity}%`}
-                  </strong>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-[#e7eee9] font-semibold">Screen Position:</span>
+                  <span className="text-[#3cff5f] font-mono font-bold capitalize">{position}</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="color"
-                    value={boxBgColor}
-                    disabled={bgMode === "none"}
-                    onChange={(e) => setBoxBgColor(e.target.value)}
-                    className="h-8 w-8 rounded border border-[#213026] bg-transparent cursor-pointer disabled:opacity-40"
-                    title="Change background box color"
-                  />
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={boxBgOpacity}
-                    disabled={bgMode === "none"}
-                    onChange={(e) => setBoxBgOpacity(Number(e.target.value))}
-                    className="flex-1 accent-[#3cff5f] cursor-pointer disabled:opacity-40"
-                  />
-                </div>
-                <div className="flex gap-1.5 pt-1">
-                  {["#000000", "#0c1510", "#101827", "#1e102d", "#2d1010"].map((hex) => (
-                    <button
-                      key={hex}
-                      type="button"
-                      disabled={bgMode === "none"}
-                      onClick={() => setBoxBgColor(hex)}
-                      className="w-5 h-5 rounded-full border border-white/20 cursor-pointer hover:scale-110 transition-all disabled:opacity-40"
-                      style={{ backgroundColor: hex }}
-                      title={`Set ${hex}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 3. Typography & Alignment Customizer */}
-          <div className="rounded-3xl border border-[#213026] bg-[#0c1510] p-6 space-y-5">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-[#9baaa1] flex items-center gap-2">
-              <Type className="h-4 w-4 text-[#3cff5f]" />
-              <span>3. Typography, Alignment &amp; Colors</span>
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {/* Font Size Slider */}
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs text-[#9baaa1]">
-                  <span>Font Size:</span>
-                  <strong className="text-[#3cff5f] font-mono">{fontSize}px</strong>
-                </div>
-                <input
-                  type="range"
-                  min="18"
-                  max="42"
-                  value={fontSize}
-                  onChange={(e) => setFontSize(Number(e.target.value))}
-                  className="w-full accent-[#3cff5f] cursor-pointer"
-                />
-              </div>
-
-              {/* Vertical Position */}
-              <div className="space-y-2">
-                <label className="text-xs text-[#9baaa1]">Screen Position:</label>
                 <div className="grid grid-cols-3 gap-2">
                   {(["top", "center", "bottom"] as const).map((pos) => (
                     <button
@@ -1979,177 +2010,205 @@ ${cues
                           : "border-[#213026] bg-[#080e0b] text-[#9baaa1] hover:text-[#e7eee9]"
                       }`}
                     >
-                      {pos}
+                      {pos === "bottom" ? "Bottom (Reels)" : pos === "center" ? "Center" : "Top"}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Text Case Transform */}
+              {/* Font Size Slider */}
               <div className="space-y-2">
-                <label className="text-xs text-[#9baaa1]">Text Casing:</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(["uppercase", "capitalize", "none"] as const).map((casing) => (
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-[#e7eee9] font-semibold">Font Size:</span>
+                  <span className="text-[#3cff5f] font-mono font-bold">{fontSize}px</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="18"
+                    max="40"
+                    value={fontSize}
+                    onChange={(e) => setFontSize(Number(e.target.value))}
+                    className="flex-1 accent-[#3cff5f] cursor-pointer"
+                  />
+                  <div className="flex items-center gap-1">
                     <button
-                      key={casing}
                       type="button"
-                      onClick={() => setTextTransform(casing)}
+                      onClick={() => setFontSize((p) => Math.max(18, p - 2))}
+                      className="h-7 w-7 rounded-lg border border-[#213026] bg-[#080e0b] text-xs font-bold text-[#9baaa1] hover:text-[#e7eee9] cursor-pointer"
+                    >
+                      -
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFontSize((p) => Math.min(40, p + 2))}
+                      className="h-7 w-7 rounded-lg border border-[#213026] bg-[#080e0b] text-xs font-bold text-[#9baaa1] hover:text-[#e7eee9] cursor-pointer"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Active Highlight Color Swatches */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-[#e7eee9] font-semibold">Active Highlight Color:</span>
+                  <span className="text-[#3cff5f] font-mono font-bold">{highlightColor}</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {QUICK_COLORS.map((c) => (
+                    <button
+                      key={c.hex}
+                      type="button"
+                      onClick={() => setHighlightColor(c.hex)}
+                      className={`h-7 w-7 rounded-full border transition-all cursor-pointer hover:scale-110 ${
+                        highlightColor.toLowerCase() === c.hex.toLowerCase()
+                          ? "border-[#3cff5f] ring-2 ring-[#3cff5f]"
+                          : "border-white/20"
+                      }`}
+                      style={{ backgroundColor: c.hex }}
+                      title={c.name}
+                    />
+                  ))}
+                  <input
+                    type="color"
+                    value={highlightColor}
+                    onChange={(e) => setHighlightColor(e.target.value)}
+                    className="h-7 w-7 rounded-lg border border-[#213026] bg-transparent cursor-pointer ml-1"
+                    title="Custom color"
+                  />
+                </div>
+              </div>
+
+              {/* Background Box Mode */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-[#e7eee9] font-semibold">Subtitle Background:</span>
+                  <span className="text-[#3cff5f] font-mono font-bold capitalize">{bgMode}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: "none", label: "None (Clean)" },
+                    { id: "pill", label: "Dark Pill Box" },
+                    { id: "highlight-only", label: "Word Highlight" },
+                  ].map((b) => (
+                    <button
+                      key={b.id}
+                      type="button"
+                      onClick={() => setBgMode(b.id as BgMode)}
                       className={`rounded-xl border py-2 text-xs font-semibold transition-all cursor-pointer ${
-                        textTransform === casing
+                        bgMode === b.id
                           ? "border-[#3cff5f] bg-[#102a16] text-[#3cff5f]"
                           : "border-[#213026] bg-[#080e0b] text-[#9baaa1] hover:text-[#e7eee9]"
                       }`}
                     >
-                      {casing === "uppercase" ? "ALL CAPS" : casing === "capitalize" ? "Title" : "Normal"}
+                      {b.label}
                     </button>
                   ))}
                 </div>
               </div>
+            </div>
+          )}
 
-              {/* Color Customizer */}
-              <div className="space-y-2">
-                <label className="text-xs text-[#9baaa1]">Colors (Active &amp; Base):</label>
-                <div className="flex items-center gap-4 text-xs text-[#9baaa1]">
-                  <div className="flex items-center gap-2">
-                    <span>Active:</span>
-                    <input
-                      type="color"
-                      value={highlightColor}
-                      onChange={(e) => setHighlightColor(e.target.value)}
-                      className="h-8 w-8 rounded border border-[#213026] bg-transparent cursor-pointer"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span>Base:</span>
-                    <input
-                      type="color"
-                      value={textColor}
-                      onChange={(e) => setTextColor(e.target.value)}
-                      className="h-8 w-8 rounded border border-[#213026] bg-transparent cursor-pointer"
-                    />
-                  </div>
+          {/* Tab 3: Edit Script & Dialogue */}
+          {controlTab === "cues" && (
+            <div className="rounded-3xl border border-[#213026] bg-[#0c1510] p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-[#e7eee9]">Subtitle Cues &amp; Timestamps</h3>
+                  <p className="text-xs text-[#9baaa1]">Click any word to fix typos or adjust timings.</p>
+                </div>
+
+                <div className="flex items-center gap-1 rounded-xl bg-[#080e0b] p-1 border border-[#213026]">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("cues")}
+                    className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all ${
+                      activeTab === "cues"
+                        ? "bg-[#102a16] text-[#3cff5f] border border-[#2a5234]"
+                        : "text-[#9baaa1] hover:text-[#e7eee9]"
+                    }`}
+                  >
+                    List ({cues.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("raw")}
+                    className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all ${
+                      activeTab === "raw"
+                        ? "bg-[#102a16] text-[#3cff5f] border border-[#2a5234]"
+                        : "text-[#9baaa1] hover:text-[#e7eee9]"
+                    }`}
+                  >
+                    Raw SRT
+                  </button>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* 4. Subtitle Dialogue & Timeline Editor */}
-          <div className="rounded-3xl border border-[#213026] bg-[#0c1510] p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-[#9baaa1] flex items-center gap-2">
-                <FileText className="h-4 w-4 text-[#3cff5f]" />
-                <span>4. Subtitle Cues &amp; Timestamps ({cues.length} Lines)</span>
-              </h3>
-
-              {/* View Tabs */}
-              <div className="flex items-center gap-1 rounded-xl bg-[#080e0b] p-1 border border-[#213026]">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("cues")}
-                  className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all ${
-                    activeTab === "cues"
-                      ? "bg-[#102a16] text-[#3cff5f] border border-[#2a5234]"
-                      : "text-[#9baaa1] hover:text-[#e7eee9]"
-                  }`}
-                >
-                  Timeline Cues ({cues.length})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("raw")}
-                  className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all ${
-                    activeTab === "raw"
-                      ? "bg-[#102a16] text-[#3cff5f] border border-[#2a5234]"
-                      : "text-[#9baaa1] hover:text-[#e7eee9]"
-                  }`}
-                >
-                  Raw SRT
-                </button>
-              </div>
-            </div>
-
-            {/* Tab 1: Timeline Cue Cards with Click-to-Seek & Timestamp Editor */}
-            {activeTab === "cues" ? (
-              <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
-                {cues.map((cue, idx) => {
-                  const isCurrent = activeCue?.id === cue.id;
-                  const dur = Math.max(0, cue.end - cue.start).toFixed(2);
-                  return (
-                    <div
-                      key={cue.id}
-                      className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border p-3.5 transition-all ${
-                        isCurrent
-                          ? "border-[#3cff5f] bg-[#102a16]/95 shadow-lg shadow-[#3cff5f]/10"
-                          : "border-[#213026] bg-[#080e0b] hover:border-[#3cff5f]/40"
-                      }`}
-                    >
-                      {/* Left: Cue Number + Timestamp Seek Pill */}
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-[10px] font-mono text-[#62776a] w-5">
-                          #{idx + 1}
-                        </span>
+              {activeTab === "cues" ? (
+                <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                  {cues.map((cue, idx) => {
+                    const isCurrent = activeCue?.id === cue.id;
+                    return (
+                      <div
+                        key={cue.id}
+                        className={`flex items-center gap-2.5 rounded-xl border p-2.5 transition-all ${
+                          isCurrent
+                            ? "border-[#3cff5f] bg-[#102a16]"
+                            : "border-[#213026] bg-[#080e0b] hover:border-[#3cff5f]/40"
+                        }`}
+                      >
                         <button
                           type="button"
                           onClick={() => seekTo(cue.start)}
-                          className="flex items-center gap-1.5 rounded-xl bg-[#17221b] border border-[#243729] px-2.5 py-1.5 text-xs font-mono text-[#3cff5f] hover:bg-[#3cff5f] hover:text-[#050a08] transition-all cursor-pointer"
-                          title="Seek video to this subtitle timestamp"
+                          className="flex items-center gap-1 rounded-lg bg-[#17221b] px-2 py-1 text-[11px] font-mono text-[#3cff5f] shrink-0 hover:bg-[#3cff5f] hover:text-[#050a08] transition-all cursor-pointer"
+                          title="Seek video here"
                         >
-                          <Clock className="h-3.5 w-3.5" />
-                          <span>
-                            {cue.start.toFixed(2)}s → {cue.end.toFixed(2)}s
-                          </span>
+                          <Clock className="h-3 w-3" />
+                          <span>{cue.start.toFixed(1)}s</span>
                         </button>
-                        <span className="text-[10px] font-mono text-[#9baaa1] bg-[#0c1510] px-1.5 py-0.5 rounded border border-[#213026]">
-                          {dur}s
-                        </span>
+
+                        <input
+                          type="text"
+                          value={cue.text}
+                          onChange={(e) => {
+                            const newText = e.target.value;
+                            setCues((prev) =>
+                              prev.map((c) => {
+                                if (c.id !== cue.id) return c;
+                                const words = newText.split(/\s+/).filter(Boolean);
+                                const cDur = Math.max(0.1, c.end - c.start);
+                                const wDur = cDur / Math.max(1, words.length);
+                                return {
+                                  ...c,
+                                  text: newText,
+                                  words: words.map((w, wIdx) => ({
+                                    id: `${c.id}-w${wIdx}`,
+                                    word: w,
+                                    start: Math.round((c.start + wIdx * wDur) * 1000) / 1000,
+                                    end: Math.round((c.start + (wIdx + 1) * wDur) * 1000) / 1000,
+                                  })),
+                                };
+                              })
+                            );
+                          }}
+                          className="flex-1 bg-transparent text-xs text-[#e7eee9] focus:outline-none focus:border-b focus:border-[#3cff5f] px-1 py-0.5"
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => setCues((prev) => prev.filter((c) => c.id !== cue.id))}
+                          className="p-1 text-[#62776a] hover:text-red-400 transition-colors shrink-0"
+                          title="Delete line"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </div>
-
-                      {/* Middle: Editable Subtitle Text */}
-                      <input
-                        type="text"
-                        value={cue.text}
-                        onChange={(e) => {
-                          const newText = e.target.value;
-                          setCues((prev) =>
-                            prev.map((c) => {
-                              if (c.id !== cue.id) return c;
-                              const words = newText.split(/\s+/).filter(Boolean);
-                              const cDur = Math.max(0.1, c.end - c.start);
-                              const wDur = cDur / Math.max(1, words.length);
-                              return {
-                                ...c,
-                                text: newText,
-                                words: words.map((w, wIdx) => ({
-                                  id: `${c.id}-w${wIdx}`,
-                                  word: w,
-                                  start: Math.round((c.start + wIdx * wDur) * 1000) / 1000,
-                                  end: Math.round((c.start + (wIdx + 1) * wDur) * 1000) / 1000,
-                                })),
-                              };
-                            })
-                          );
-                        }}
-                        className="flex-1 bg-transparent text-xs text-[#e7eee9] font-medium focus:outline-none focus:border-b focus:border-[#3cff5f] px-1 py-1"
-                      />
-
-                      {/* Right: Delete button */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCues((prev) => prev.filter((c) => c.id !== cue.id));
-                        }}
-                        className="p-1.5 text-[#62776a] hover:text-red-400 transition-colors shrink-0"
-                        title="Delete this subtitle cue"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              /* Tab 2: Raw SRT Editor (Live Synchronized) */
-              <div className="space-y-2">
+                    );
+                  })}
+                </div>
+              ) : (
                 <textarea
                   rows={8}
                   value={generateSRT()}
@@ -2160,91 +2219,11 @@ ${cues
                       setCues(parsed);
                     }
                   }}
-                  placeholder="Paste standard SRT code with timecodes here..."
-                  className="w-full rounded-2xl border border-[#213026] bg-[#080e0b] p-4 font-mono text-xs text-[#e7eee9] focus:border-[#3cff5f] focus:outline-none leading-relaxed"
+                  className="w-full rounded-2xl border border-[#213026] bg-[#080e0b] p-3 font-mono text-xs text-[#e7eee9] focus:border-[#3cff5f] focus:outline-none"
                 />
-              </div>
-            )}
-          </div>
-
-          {/* 5. Export & Download Hub */}
-          <div className="rounded-3xl border border-[#213026] bg-[#0c1510] p-6 space-y-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-[#9baaa1] flex items-center gap-2">
-              <Download className="h-4 w-4 text-[#3cff5f]" />
-              <span>5. Export Subtitles &amp; Animations (100% Free)</span>
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {/* ASS File for Premiere / After Effects / CapCut */}
-              <button
-                type="button"
-                onClick={() => downloadFile(generateASS(), "viral_captions.ass", "text/plain")}
-                className="flex flex-col items-start gap-1 rounded-2xl border border-[#2a5234] bg-[#102a16] p-4 text-left transition-all hover:bg-[#16381e] cursor-pointer shadow-md shadow-[#3cff5f]/10"
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-sm font-bold text-[#3cff5f]">Download .ASS</span>
-                  <span className="rounded bg-[#3cff5f] px-1.5 py-0.5 text-[9px] font-bold text-[#050a08]">
-                    Pro Styler
-                  </span>
-                </div>
-                <p className="text-[11px] text-[#9baaa1]">
-                  Exact styling for CapCut, Premiere Pro &amp; AE.
-                </p>
-              </button>
-
-              {/* Standard SRT */}
-              <button
-                type="button"
-                onClick={() => downloadFile(generateSRT(), "subtitles.srt", "text/plain")}
-                className="flex flex-col items-start gap-1 rounded-2xl border border-[#213026] bg-[#080e0b] p-4 text-left transition-all hover:border-[#3cff5f]/50 hover:bg-[#0c1510] cursor-pointer"
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-sm font-bold text-[#e7eee9]">Download .SRT</span>
-                  <span className="text-[10px] font-mono text-[#9baaa1]">Universal</span>
-                </div>
-                <p className="text-[11px] text-[#9baaa1]">
-                  Standard subtitle file for YouTube &amp; VLC.
-                </p>
-              </button>
-
-              {/* WebVTT */}
-              <button
-                type="button"
-                onClick={() => downloadFile(generateVTT(), "subtitles.vtt", "text/vtt")}
-                className="flex flex-col items-start gap-1 rounded-2xl border border-[#213026] bg-[#080e0b] p-4 text-left transition-all hover:border-[#3cff5f]/50 hover:bg-[#0c1510] cursor-pointer"
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-sm font-bold text-[#e7eee9]">Download .VTT</span>
-                  <span className="text-[10px] font-mono text-[#9baaa1]">HTML5</span>
-                </div>
-                <p className="text-[11px] text-[#9baaa1]">
-                  Web-ready captions for modern players.
-                </p>
-              </button>
+              )}
             </div>
-
-            {/* Quick Copy */}
-            <div className="flex flex-wrap items-center gap-3 pt-2 text-xs text-[#9baaa1]">
-              <span>Quick Copy:</span>
-              <button
-                type="button"
-                onClick={() => copyToClipboard(generateSRT(), "srt")}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-[#213026] bg-[#080e0b] px-3 py-1.5 hover:text-[#e7eee9] hover:border-[#3cff5f] transition-all cursor-pointer"
-              >
-                {copiedFormat === "srt" ? <Check className="h-3.5 w-3.5 text-[#3cff5f]" /> : <Copy className="h-3.5 w-3.5" />}
-                <span>Copy SRT</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => copyToClipboard(cues.map((c) => c.text).join(" "), "text")}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-[#213026] bg-[#080e0b] px-3 py-1.5 hover:text-[#e7eee9] hover:border-[#3cff5f] transition-all cursor-pointer"
-              >
-                {copiedFormat === "text" ? <Check className="h-3.5 w-3.5 text-[#3cff5f]" /> : <Copy className="h-3.5 w-3.5" />}
-                <span>Copy Plain Text</span>
-              </button>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
