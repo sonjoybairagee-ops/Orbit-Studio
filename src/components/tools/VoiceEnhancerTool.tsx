@@ -14,6 +14,9 @@ import {
   CheckCircle2,
   AlertCircle,
   AudioWaveform,
+  Zap,
+  Radio,
+  Flame,
 } from "lucide-react";
 import { encodeWav } from "@/lib/audio-file-utils";
 import { spectralDenoiseAudio } from "@/lib/spectral-denoise";
@@ -27,45 +30,60 @@ interface PresetConfig {
   desc: string;
   noiseReduction: number; // 0 to 100
   clarityBoost: number; // 0 to 100
-  highPassFreq: number; // 60 to 140 Hz
+  warmthBoost: number; // 0 to 100
+  roomDeMuffle: number; // 0 to 100
+  highPassFreq: number; // 60 to 150 Hz
+  broadcastLeveling: boolean;
 }
 
 const PRESETS: Record<PresetType, PresetConfig> = {
   studio: {
     id: "studio",
-    name: "Studio Podcast Voice",
+    name: "Adobe Podcast AI (Broadcast Studio)",
     badge: "Recommended",
-    desc: "Cuts room hum, boosts speech presence, and levels vocal dynamics for broadcast punch.",
-    noiseReduction: 75,
-    clarityBoost: 60,
-    highPassFreq: 85,
+    desc: "Cuts 100% room & AC hum, gives warm deep chest resonance, and auto-levels voice to loud broadcast punch.",
+    noiseReduction: 88,
+    clarityBoost: 78,
+    warmthBoost: 75,
+    roomDeMuffle: 65,
+    highPassFreq: 90,
+    broadcastLeveling: true,
   },
   "noise-cut": {
     id: "noise-cut",
-    name: "Aggressive Noise Removal",
-    badge: "For AC / Fans",
-    desc: "Heavy de-hum filter and smooth background silence gate for noisy rooms or outdoor mics.",
-    noiseReduction: 90,
-    clarityBoost: 50,
-    highPassFreq: 110,
+    name: "Max Fan & AC Noise Eradicator",
+    badge: "Heavy AC / Fans",
+    desc: "Maximum multi-band spectral suppression for loud air conditioners, noisy room fans, or outdoor background.",
+    noiseReduction: 98,
+    clarityBoost: 60,
+    warmthBoost: 45,
+    roomDeMuffle: 70,
+    highPassFreq: 115,
+    broadcastLeveling: true,
   },
   clarity: {
     id: "clarity",
-    name: "De-Muffle & Vocal Air",
-    badge: "Crisp Speech",
-    desc: "Removes boxy phone mic resonance and lifts mid-high frequencies for crisp intelligibility.",
-    noiseReduction: 55,
-    clarityBoost: 85,
-    highPassFreq: 75,
+    name: "Crisp & Punchy YouTube Vocal",
+    badge: "Air & Presence",
+    desc: "Cuts boxy bedroom resonance and lifts presence and silky condenser air for punchy mobile listening.",
+    noiseReduction: 80,
+    clarityBoost: 90,
+    warmthBoost: 50,
+    roomDeMuffle: 80,
+    highPassFreq: 80,
+    broadcastLeveling: true,
   },
   custom: {
     id: "custom",
-    name: "Custom EQ & Gate",
+    name: "Custom Studio EQ & Gate",
     badge: "Manual",
-    desc: "Fine-tune individual noise reduction, clarity lift, and rumble cutoff frequencies.",
-    noiseReduction: 70,
-    clarityBoost: 60,
-    highPassFreq: 85,
+    desc: "Fine-tune individual noise cut, warmth, room de-muffle, and speech presence sliders.",
+    noiseReduction: 85,
+    clarityBoost: 75,
+    warmthBoost: 65,
+    roomDeMuffle: 60,
+    highPassFreq: 90,
+    broadcastLeveling: true,
   },
 };
 
@@ -84,9 +102,13 @@ export default function VoiceEnhancerTool() {
 
   // Settings & Presets
   const [selectedPreset, setSelectedPreset] = useState<PresetType>("studio");
-  const [noiseReduction, setNoiseReduction] = useState<number>(75);
-  const [clarityBoost, setClarityBoost] = useState<number>(60);
-  const [highPassFreq, setHighPassFreq] = useState<number>(85);
+  const [noiseReduction, setNoiseReduction] = useState<number>(88);
+  const [clarityBoost, setClarityBoost] = useState<number>(78);
+  const [warmthBoost, setWarmthBoost] = useState<number>(75);
+  const [roomDeMuffle, setRoomDeMuffle] = useState<number>(65);
+  const [highPassFreq, setHighPassFreq] = useState<number>(90);
+  const [broadcastLeveling, setBroadcastLeveling] = useState<boolean>(true);
+  const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
 
   // Processing state
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
@@ -128,10 +150,13 @@ export default function VoiceEnhancerTool() {
       buffer: AudioBuffer,
       nrStrength: number,
       clarity: number,
-      hpFreq: number
+      hpFreq: number,
+      warmth: number,
+      deMuffle: number,
+      leveling: boolean
     ) => {
       setIsProcessing(true);
-      setProgressMsg("Analyzing background noise profile & eliminating hum...");
+      setProgressMsg("Applying deep spectral noise removal & studio vocal enhancement...");
 
       try {
         // Yield to browser UI thread so spinner renders
@@ -141,6 +166,9 @@ export default function VoiceEnhancerTool() {
           noiseReductionStrength: nrStrength,
           vocalClarityBoost: clarity,
           highPassRumbleCutHz: hpFreq,
+          warmthBoost: warmth,
+          roomDeMuffle: deMuffle,
+          broadcastLeveling: leveling,
         });
 
         const wavBlob = encodeWav(cleanedBuffer);
@@ -164,10 +192,35 @@ export default function VoiceEnhancerTool() {
     const p = PRESETS[presetId];
     setNoiseReduction(p.noiseReduction);
     setClarityBoost(p.clarityBoost);
+    setWarmthBoost(p.warmthBoost);
+    setRoomDeMuffle(p.roomDeMuffle);
     setHighPassFreq(p.highPassFreq);
+    setBroadcastLeveling(p.broadcastLeveling);
 
     if (rawAudioBufferRef.current) {
-      processAudioBuffer(rawAudioBufferRef.current, p.noiseReduction, p.clarityBoost, p.highPassFreq);
+      processAudioBuffer(
+        rawAudioBufferRef.current,
+        p.noiseReduction,
+        p.clarityBoost,
+        p.highPassFreq,
+        p.warmthBoost,
+        p.roomDeMuffle,
+        p.broadcastLeveling
+      );
+    }
+  };
+
+  const reprocessWithCurrentSettings = () => {
+    if (rawAudioBufferRef.current) {
+      processAudioBuffer(
+        rawAudioBufferRef.current,
+        noiseReduction,
+        clarityBoost,
+        highPassFreq,
+        warmthBoost,
+        roomDeMuffle,
+        broadcastLeveling
+      );
     }
   };
 
@@ -212,7 +265,15 @@ export default function VoiceEnhancerTool() {
       setDuration(decodedBuffer.duration);
 
       const p = PRESETS[selectedPreset];
-      await processAudioBuffer(decodedBuffer, noiseReduction, clarityBoost, highPassFreq);
+      await processAudioBuffer(
+        decodedBuffer,
+        p.noiseReduction,
+        p.clarityBoost,
+        p.highPassFreq,
+        p.warmthBoost,
+        p.roomDeMuffle,
+        p.broadcastLeveling
+      );
     } catch {
       setError("Could not decode audio file. Please try another MP3 or WAV file.");
       setIsProcessing(false);
@@ -253,7 +314,6 @@ export default function VoiceEnhancerTool() {
     const orig = originalAudioRef.current;
     if (!enh || !orig) return;
 
-    // Instant volume crossfade without stopping playback
     if (!isMuted) {
       if (newTrack === "enhanced") {
         enh.volume = 1;
@@ -295,7 +355,7 @@ export default function VoiceEnhancerTool() {
     if (!enhancedAudioUrl) return;
     const link = document.createElement("a");
     link.href = enhancedAudioUrl;
-    link.download = `enhanced-${fileName.replace(/\.[^/.]+$/, "") || "audio"}.wav`;
+    link.download = `enhanced-studio-${fileName.replace(/\.[^/.]+$/, "") || "audio"}.wav`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -318,15 +378,15 @@ export default function VoiceEnhancerTool() {
       const buffer = ctx.createBuffer(1, numFrames, sampleRate);
       const data = buffer.getChannelData(0);
 
-      // Realistic speech modulation with audible room AC hum and air hiss
+      // Distinct room fan hum (60Hz & 180Hz) + AC airflow hiss
       for (let i = 0; i < numFrames; i++) {
         const t = i / sampleRate;
 
-        // Distinct room fan hum (60Hz & 180Hz) + air conditioner hiss
-        const hum = 0.09 * Math.sin(2 * Math.PI * 60 * t) + 0.05 * Math.sin(2 * Math.PI * 180 * t);
-        const hiss = 0.04 * (Math.random() * 2 - 1);
+        // Distinct fan motor hum (60Hz & 180Hz) + broadband AC air hiss
+        const hum = 0.12 * Math.sin(2 * Math.PI * 60 * t) + 0.07 * Math.sin(2 * Math.PI * 180 * t);
+        const hiss = 0.05 * (Math.random() * 2 - 1);
 
-        // Natural speech cadence ("Testing audio clarity and background noise reduction")
+        // Natural speech cadence
         const isSpeaking = (t > 0.5 && t < 2.5) || (t > 3.2 && t < 5.5);
         let voice = 0;
         if (isSpeaking) {
@@ -334,10 +394,10 @@ export default function VoiceEnhancerTool() {
           const env = Math.sin(Math.PI * ((t % 0.4) / 0.4));
           voice =
             Math.max(0, env) *
-            (0.35 * Math.sin(2 * Math.PI * pitch * t) +
-              0.24 * Math.sin(2 * Math.PI * pitch * 2 * t) +
-              0.18 * Math.sin(2 * Math.PI * pitch * 3 * t) +
-              0.12 * Math.sin(2 * Math.PI * 3000 * t));
+            (0.38 * Math.sin(2 * Math.PI * pitch * t) +
+              0.26 * Math.sin(2 * Math.PI * pitch * 2 * t) +
+              0.19 * Math.sin(2 * Math.PI * pitch * 3 * t) +
+              0.14 * Math.sin(2 * Math.PI * 3200 * t));
         }
 
         data[i] = voice + hum + hiss;
@@ -352,7 +412,15 @@ export default function VoiceEnhancerTool() {
       setDuration(durationSec);
 
       const p = PRESETS[selectedPreset];
-      await processAudioBuffer(buffer, noiseReduction, clarityBoost, highPassFreq);
+      await processAudioBuffer(
+        buffer,
+        p.noiseReduction,
+        p.clarityBoost,
+        p.highPassFreq,
+        p.warmthBoost,
+        p.roomDeMuffle,
+        p.broadcastLeveling
+      );
     } catch {
       setError("Failed to create sample audio.");
       setIsProcessing(false);
@@ -393,11 +461,14 @@ export default function VoiceEnhancerTool() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-base sm:text-lg font-bold text-[#e7eee9] flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-[#3cff5f]" />
-              <span>Voice Enhancer &amp; Noise Reducer</span>
+              <Sparkles className="h-5 w-5 text-[#3cff5f]" />
+              <span>AI Voice Enhancer &amp; Deep Noise Reducer</span>
+              <span className="rounded-full bg-[#102a16] border border-[#2a5234] px-2.5 py-0.5 text-[10px] text-[#3cff5f] font-mono">
+                Adobe Podcast Alt
+              </span>
             </h2>
             <p className="text-xs text-[#9baaa1] mt-0.5">
-              Remove background room hum, eliminate mic hiss, and enhance vocal clarity for crisp podcasts and videos.
+              Multi-band spectral noise eradication, warm broadcast chest resonance, and auto-leveled studio clarity.
             </p>
           </div>
 
@@ -426,16 +497,27 @@ export default function VoiceEnhancerTool() {
               className="inline-flex items-center gap-1.5 rounded-2xl bg-[#102a16] px-3.5 py-3 text-xs font-semibold text-[#3cff5f] border border-[#2a5234] hover:bg-[#16381e] transition-colors cursor-pointer"
             >
               <Sparkles className="h-3.5 w-3.5" />
-              <span>Try Sample with Noise</span>
+              <span>Try Sample with AC Noise</span>
             </button>
           </div>
         </div>
 
         {/* Studio Presets */}
         <div className="mt-6 pt-5 border-t border-[#213026]">
-          <label className="block text-xs font-semibold text-[#9baaa1] uppercase tracking-wider mb-3">
-            Enhancement Presets:
-          </label>
+          <div className="flex items-center justify-between mb-3">
+            <label className="block text-xs font-semibold text-[#9baaa1] uppercase tracking-wider">
+              Enhancement Presets:
+            </label>
+            <button
+              type="button"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className="text-xs text-[#3cff5f] hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <Sliders className="h-3.5 w-3.5" />
+              <span>{showAdvanced ? "Hide Fine Tuning" : "Customize EQ & Warmth Sliders"}</span>
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {(["studio", "noise-cut", "clarity"] as PresetType[]).map((pid) => {
               const p = PRESETS[pid];
@@ -452,7 +534,12 @@ export default function VoiceEnhancerTool() {
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-bold text-[#e7eee9]">{p.name}</span>
+                    <span className="text-xs font-bold text-[#e7eee9] flex items-center gap-1">
+                      {pid === "studio" && <Radio className="h-3.5 w-3.5 text-[#3cff5f]" />}
+                      {pid === "noise-cut" && <Zap className="h-3.5 w-3.5 text-amber-400" />}
+                      {pid === "clarity" && <Sparkles className="h-3.5 w-3.5 text-sky-400" />}
+                      <span>{p.name}</span>
+                    </span>
                     <span
                       className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                         isActive
@@ -466,99 +553,164 @@ export default function VoiceEnhancerTool() {
                   <p className="text-[11px] text-[#9baaa1] leading-relaxed line-clamp-2">
                     {p.desc}
                   </p>
+                  <div className="mt-2.5 pt-2 border-t border-[#1f2d24] flex items-center justify-between text-[10px] font-mono text-[#62776a]">
+                    <span>Noise Cut: {p.noiseReduction}%</span>
+                    <span className="text-[#3cff5f]">Warmth: {p.warmthBoost}%</span>
+                  </div>
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Fine-Tuning Sliders */}
-        <div className="mt-6 pt-5 border-t border-[#213026] grid grid-cols-1 sm:grid-cols-3 gap-6 text-xs text-[#9baaa1]">
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="font-semibold text-[#e7eee9]">Noise Reduction:</span>
-              <span className="font-mono text-[#3cff5f]">{noiseReduction}%</span>
+        {/* Fine-Tuning Sliders (Show when toggled) */}
+        {showAdvanced && (
+          <div className="mt-6 pt-5 border-t border-[#213026] grid grid-cols-1 sm:grid-cols-3 gap-6 text-xs text-[#9baaa1] animate-in fade-in duration-200">
+            {/* 1. Noise Reduction Strength */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-[#e7eee9]">Noise Reduction Cut:</span>
+                <span className="font-mono text-[#3cff5f] font-bold">{noiseReduction}%</span>
+              </div>
+              <input
+                type="range"
+                min="20"
+                max="100"
+                value={noiseReduction}
+                onChange={(e) => {
+                  setNoiseReduction(Number(e.target.value));
+                  setSelectedPreset("custom");
+                }}
+                className="w-full accent-[#3cff5f] cursor-pointer"
+              />
+              <span className="text-[10px] text-[#62776a] block">
+                Higher = eradicates AC hum, fans, and hiss
+              </span>
             </div>
-            <input
-              type="range"
-              min="20"
-              max="98"
-              value={noiseReduction}
-              onChange={(e) => {
-                setNoiseReduction(Number(e.target.value));
-                setSelectedPreset("custom");
-              }}
-              onMouseUp={() => {
-                if (rawAudioBufferRef.current) {
-                  processAudioBuffer(rawAudioBufferRef.current, noiseReduction, clarityBoost, highPassFreq);
-                }
-              }}
-              onTouchEnd={() => {
-                if (rawAudioBufferRef.current) {
-                  processAudioBuffer(rawAudioBufferRef.current, noiseReduction, clarityBoost, highPassFreq);
-                }
-              }}
-              className="w-full accent-[#3cff5f] cursor-pointer"
-            />
-          </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="font-semibold text-[#e7eee9]">Voice Clarity &amp; Presence:</span>
-              <span className="font-mono text-[#3cff5f]">{clarityBoost}%</span>
+            {/* 2. Warmth & Chest Resonance */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-[#e7eee9]">Warm Chest Resonance:</span>
+                <span className="font-mono text-[#3cff5f] font-bold">{warmthBoost}%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={warmthBoost}
+                onChange={(e) => {
+                  setWarmthBoost(Number(e.target.value));
+                  setSelectedPreset("custom");
+                }}
+                className="w-full accent-[#3cff5f] cursor-pointer"
+              />
+              <span className="text-[10px] text-[#62776a] block">
+                Adds deep radio DJ warmth (SM7B proximity effect)
+              </span>
             </div>
-            <input
-              type="range"
-              min="10"
-              max="100"
-              value={clarityBoost}
-              onChange={(e) => {
-                setClarityBoost(Number(e.target.value));
-                setSelectedPreset("custom");
-              }}
-              onMouseUp={() => {
-                if (rawAudioBufferRef.current) {
-                  processAudioBuffer(rawAudioBufferRef.current, noiseReduction, clarityBoost, highPassFreq);
-                }
-              }}
-              onTouchEnd={() => {
-                if (rawAudioBufferRef.current) {
-                  processAudioBuffer(rawAudioBufferRef.current, noiseReduction, clarityBoost, highPassFreq);
-                }
-              }}
-              className="w-full accent-[#3cff5f] cursor-pointer"
-            />
-          </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="font-semibold text-[#e7eee9]">Low Rumble Cut:</span>
-              <span className="font-mono text-[#3cff5f]">{highPassFreq} Hz</span>
+            {/* 3. Speech Clarity & Presence */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-[#e7eee9]">Vocal Clarity &amp; Air:</span>
+                <span className="font-mono text-[#3cff5f] font-bold">{clarityBoost}%</span>
+              </div>
+              <input
+                type="range"
+                min="10"
+                max="100"
+                value={clarityBoost}
+                onChange={(e) => {
+                  setClarityBoost(Number(e.target.value));
+                  setSelectedPreset("custom");
+                }}
+                className="w-full accent-[#3cff5f] cursor-pointer"
+              />
+              <span className="text-[10px] text-[#62776a] block">
+                Boosts consonant presence &amp; crisp condenser sheen
+              </span>
             </div>
-            <input
-              type="range"
-              min="60"
-              max="140"
-              step="5"
-              value={highPassFreq}
-              onChange={(e) => {
-                setHighPassFreq(Number(e.target.value));
-                setSelectedPreset("custom");
-              }}
-              onMouseUp={() => {
-                if (rawAudioBufferRef.current) {
-                  processAudioBuffer(rawAudioBufferRef.current, noiseReduction, clarityBoost, highPassFreq);
-                }
-              }}
-              onTouchEnd={() => {
-                if (rawAudioBufferRef.current) {
-                  processAudioBuffer(rawAudioBufferRef.current, noiseReduction, clarityBoost, highPassFreq);
-                }
-              }}
-              className="w-full accent-[#3cff5f] cursor-pointer"
-            />
+
+            {/* 4. Room De-Muffle */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-[#e7eee9]">Room De-Muffle (Boxiness Cut):</span>
+                <span className="font-mono text-[#3cff5f] font-bold">{roomDeMuffle}%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={roomDeMuffle}
+                onChange={(e) => {
+                  setRoomDeMuffle(Number(e.target.value));
+                  setSelectedPreset("custom");
+                }}
+                className="w-full accent-[#3cff5f] cursor-pointer"
+              />
+              <span className="text-[10px] text-[#62776a] block">
+                Removes hollow cardboard bedroom resonance (500Hz)
+              </span>
+            </div>
+
+            {/* 5. Low Rumble Cut */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-[#e7eee9]">Low Rumble Cut:</span>
+                <span className="font-mono text-[#3cff5f] font-bold">{highPassFreq} Hz</span>
+              </div>
+              <input
+                type="range"
+                min="60"
+                max="150"
+                step="5"
+                value={highPassFreq}
+                onChange={(e) => {
+                  setHighPassFreq(Number(e.target.value));
+                  setSelectedPreset("custom");
+                }}
+                className="w-full accent-[#3cff5f] cursor-pointer"
+              />
+              <span className="text-[10px] text-[#62776a] block">
+                Cuts desk bumps and HVAC low-frequency vibrations
+              </span>
+            </div>
+
+            {/* 6. Broadcast Leveling Toggle */}
+            <div className="space-y-1.5 flex flex-col justify-center">
+              <label className="flex items-center gap-2 cursor-pointer pt-2">
+                <input
+                  type="checkbox"
+                  checked={broadcastLeveling}
+                  onChange={(e) => {
+                    setBroadcastLeveling(e.target.checked);
+                    setSelectedPreset("custom");
+                  }}
+                  className="rounded accent-[#3cff5f] h-4 w-4"
+                />
+                <span className="font-semibold text-[#e7eee9] text-xs">
+                  Broadcast Loudness Auto-Leveler
+                </span>
+              </label>
+              <span className="text-[10px] text-[#62776a] block">
+                Brings quiet words up to loud, confident studio volume
+              </span>
+            </div>
+
+            {/* Apply Button */}
+            <div className="sm:col-span-3 flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={reprocessWithCurrentSettings}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[#3cff5f] text-[#050a08] px-4 py-2 text-xs font-bold shadow-md shadow-[#3cff5f]/20 cursor-pointer"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>Apply Custom Settings</span>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {isProcessing && (
           <div className="mt-4 flex items-center gap-2 text-xs text-[#3cff5f]">
@@ -583,10 +735,10 @@ export default function VoiceEnhancerTool() {
             <div>
               <h3 className="text-base font-bold text-[#e7eee9] flex items-center gap-2">
                 <AudioWaveform className="h-5 w-5 text-[#3cff5f]" />
-                <span>Live A/B Comparison Player</span>
+                <span>Live A/B Before &amp; After Switcher</span>
               </h3>
               <p className="text-xs text-[#9baaa1] mt-0.5">
-                Toggle between Enhanced and Original instantly while playing to hear the noise reduction live.
+                Switch between Enhanced and Original in real-time while playing to hear the noise removal and warmth.
               </p>
             </div>
 
@@ -602,7 +754,7 @@ export default function VoiceEnhancerTool() {
                 }`}
               >
                 <Sparkles className="h-3.5 w-3.5" />
-                <span>Enhanced Voice (Active)</span>
+                <span>Enhanced Studio Voice (Active)</span>
               </button>
 
               <button
@@ -614,7 +766,7 @@ export default function VoiceEnhancerTool() {
                     : "text-[#9baaa1] hover:text-[#e7eee9]"
                 }`}
               >
-                <span>Original (Noisy)</span>
+                <span>Original (Noisy Raw)</span>
               </button>
             </div>
           </div>
@@ -682,7 +834,7 @@ export default function VoiceEnhancerTool() {
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#3cff5f] px-6 py-3.5 text-sm font-bold text-[#050a08] hover:bg-[#48ff69] transition-all cursor-pointer shadow-lg shadow-[#3cff5f]/20"
             >
               <Download className="h-4 w-4" />
-              <span>Download Enhanced Audio (WAV)</span>
+              <span>Download Enhanced Studio Audio (Lossless WAV)</span>
             </button>
           </div>
         </div>
@@ -703,15 +855,15 @@ export default function VoiceEnhancerTool() {
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs font-semibold text-[#3cff5f]">
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-4 w-4" /> AC &amp; Room Hum Removal
+              <CheckCircle2 className="h-4 w-4" /> AC &amp; Room Fan Noise Removal
             </span>
             <span className="text-[#334538]">•</span>
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-4 w-4" /> Broadcast Vocal Clarity
+              <CheckCircle2 className="h-4 w-4" /> Adobe Podcast AI Warmth &amp; Presence
             </span>
             <span className="text-[#334538]">•</span>
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-4 w-4" /> 100% Free &amp; Private
+              <CheckCircle2 className="h-4 w-4" /> 100% Free &amp; Client-Side Private
             </span>
           </div>
         </div>
