@@ -186,7 +186,7 @@ export default function YoutubeTranscriptTool() {
       setPlainText(data.plainText);
       setOriginalPlainText(data.plainText);
       setLanguages(data.languages || []);
-      setTranscriptSource("youtube");
+      setTranscriptSource(data.isAiGenerated ? "ai_speech" : "youtube");
       setTargetTranslationLang("original");
       if (data.activeLanguage?.code) {
         setSelectedLang(data.activeLanguage.code);
@@ -611,66 +611,17 @@ export default function YoutubeTranscriptTool() {
           </div>
         )}
 
-        {/* Error Alert & Guidance */}
+        {/* Error Alert */}
         {errorMessage && (
-          errorDetails?.reason === "no_subtitles" ? (
-            <div className="rounded-2xl border border-amber-500/40 bg-[#14120a] p-5 text-xs text-amber-200 space-y-3 shadow-xl">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 shrink-0 text-amber-400 mt-0.5" />
-                <div className="space-y-1 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-bold text-sm text-[#e7eee9]">
-                      {errorDetails?.title ? `"${errorDetails.title}"` : "YouTube Video"}
-                    </span>
-                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                      No Subtitles (CC Disabled)
-                    </span>
-                  </div>
-                  <p className="text-[#a8b8ae] text-xs leading-relaxed">
-                    এই ভিডিওটির ক্রিয়েটর ইউটিউবে কোনো সাবটাইটেল (CC) বা লিরিক্স আপলোড করেননি এবং ইউটিউবের স্বয়ংক্রিয় স্পিচ ক্যাপশনও নেই।
-                  </p>
-                </div>
-              </div>
-
-              <div className="pl-8 pt-1 flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveTab("local");
-                    setErrorMessage(null);
-                  }}
-                  className="px-3.5 py-2 rounded-xl bg-[#102a16] border border-[#2a5234] text-[#3cff5f] hover:bg-[#15381d] text-xs font-semibold flex items-center gap-2 transition-all shadow-sm cursor-pointer"
-                >
-                  <Upload className="h-3.5 w-3.5" />
-                  <span>Upload Video / Audio ট্যাবে ফাইল দিয়ে AI ট্রান্সক্রিপ্ট করুন</span>
-                </button>
-                <Link
-                  href="/downloader-tools"
-                  target="_blank"
-                  className="px-3 py-2 rounded-xl bg-[#0c1510] border border-[#213026] text-[#e7eee9] hover:text-[#3cff5f] hover:border-[#2a5234] text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5"
-                >
-                  <Download className="h-3.5 w-3.5 text-[#3cff5f]" />
-                  <span>ভিডিওর অডিও (MP3) ডাউনলোড করুন</span>
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setUrl("https://www.youtube.com/watch?v=UF8uR6Z6KLc");
-                    fetchTranscript("https://www.youtube.com/watch?v=UF8uR6Z6KLc");
-                  }}
-                  className="px-3 py-2 rounded-xl bg-[#0c1510] border border-[#213026] text-[#e7eee9] hover:text-[#3cff5f] hover:border-[#2a5234] text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5"
-                >
-                  <Play className="h-3.5 w-3.5 text-[#3cff5f]" />
-                  <span>ক্যাপশনযুক্ত ভিডিও টেস্ট করুন (Steve Jobs)</span>
-                </button>
-              </div>
+          <div className="rounded-2xl border border-red-500/30 bg-[#160c0c] p-4 text-xs text-red-300 flex items-start gap-3 shadow-lg">
+            <AlertCircle className="h-5 w-5 shrink-0 text-red-400 mt-0.5" />
+            <div className="space-y-1">
+              <p className="font-semibold text-[#e7eee9]">{errorMessage}</p>
+              <p className="text-[#a08a8a] text-[11px]">
+                Please verify that the link is a public YouTube video or Shorts with audible speech/audio.
+              </p>
             </div>
-          ) : (
-            <div className="rounded-2xl border border-red-500/40 bg-red-950/20 p-4 text-xs text-red-300 flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 shrink-0 text-red-400 mt-0.5" />
-              <p className="leading-relaxed">{errorMessage}</p>
-            </div>
-          )
+          </div>
         )}
       </div>
 
@@ -679,7 +630,7 @@ export default function YoutubeTranscriptTool() {
         <div className="space-y-6">
           {/* Top Actions & Download Bar */}
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-[#26332d] bg-[#0c1510] p-5 shadow-xl">
-            <div className="flex items-center gap-4 text-xs">
+            <div className="flex flex-wrap items-center gap-3 text-xs">
               <span className="font-bold text-[#e7eee9] flex items-center gap-1.5">
                 <FileText className="h-4 w-4 text-[#3cff5f]" />
                 {snippets.length} Dialogue Lines
@@ -692,6 +643,12 @@ export default function YoutubeTranscriptTool() {
               <span className="text-[#9baaa1]">
                 Est. Reading Time: <strong className="text-[#3cff5f]">{readingMinutes} min</strong>
               </span>
+              {transcriptSource === "ai_speech" && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#102a16] text-[#3cff5f] border border-[#2a5234]">
+                  <Sparkles className="h-3 w-3" />
+                  AI Speech Transcribed
+                </span>
+              )}
             </div>
 
             {/* Export & Translation Actions */}
