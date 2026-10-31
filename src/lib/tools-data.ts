@@ -1406,7 +1406,7 @@ export const TOOLS_DATA: ToolItem[] = [
     description: "Multi-stage vocal enhancement audio processor: Low-end rumble filter, room resonance de-muffle, speech presence boost, and dynamic broadcast leveling with live A/B preview.",
     category: "audio",
     href: "/audio-tools/voice-enhancer-noise-reducer",
-    badge: "Studio Audio",
+    badge: "Adobe Podcast Alt",
     isPopular: true,
     cardColor: {
       bg: "bg-emerald-50/50 hover:bg-emerald-50",
@@ -1589,11 +1589,11 @@ export const TOOLS_DATA: ToolItem[] = [
   {
     id: "text-to-speech",
     name: "Text to Speech (TTS) & AI Voiceover",
-    shortDesc: "Natural AI voiceovers with Storytelling, Viral Promo, News & Cinematic styles.",
-    description: "Free in-browser Text to Speech with 6 Voice Emotion Styles (Storytelling, High-Energy Promo, News Anchor, Cinematic Trailer), Bengali & multi-language support, live EQ mastering, and direct MP3 export.",
+    shortDesc: "ElevenLabs quality realistic AI voices with Storytelling, Promo & Cinematic styles.",
+    description: "Free in-browser Neural AI Text to Speech with realistic voices (English, Bengali, Hindi, etc.), 6 Voice Emotion Styles, live EQ mastering, and direct MP3 export.",
     category: "audio",
     href: "/audio-tools/text-to-speech",
-    badge: "7M+ Searches",
+    badge: "ElevenLabs Alternative",
     isPopular: true,
     cardColor: {
       bg: "bg-cyan-50/50 hover:bg-cyan-50",
@@ -1636,6 +1636,23 @@ export const TOOLS_DATA: ToolItem[] = [
       headerBg: "bg-red-100/70 text-red-800",
     },
     iconName: "FileText",
+  },
+  {
+    id: "silence-remover",
+    name: "AI Video Silence Remover & Jump Cuts",
+    shortDesc: "Cut dead air, generate jump cuts, and export Premiere Pro XML & DaVinci Resolve EDL.",
+    description: "Free in-browser AI silence remover and jump cut generator. Eliminates dead air and pauses from talking-head videos, podcasts, and gameplay with zero server upload, instant waveform analysis, and 1-click NLE timeline export.",
+    category: "video",
+    href: "/video-tools/silence-remover",
+    badge: "TimeBolt Alternative",
+    isPopular: true,
+    cardColor: {
+      bg: "bg-emerald-50/50 hover:bg-emerald-50",
+      border: "border-emerald-200",
+      accent: "text-emerald-700",
+      headerBg: "bg-emerald-100/70 text-emerald-800",
+    },
+    iconName: "Scissors",
   },
   {
     id: "social-video-downloader",

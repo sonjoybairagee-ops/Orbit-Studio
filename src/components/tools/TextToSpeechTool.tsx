@@ -133,6 +133,41 @@ interface LanguageOption {
   flag: string;
 }
 
+export interface NeuralVoiceOption {
+  id: string;
+  name: string;
+  lang: string;
+  gender: "Male" | "Female";
+  badge: string;
+  tag: string;
+  flag: string;
+}
+
+export const POPULAR_NEURAL_VOICES: NeuralVoiceOption[] = [
+  { id: "auto", name: "✨ Auto-Match Script Language", lang: "auto", gender: "Male", badge: "Smart AI", tag: "Auto Detects Voice", flag: "⚡" },
+  // Bengali Voices
+  { id: "bn-BD-PradeepNeural", name: "Pradeep (BD Male)", lang: "bn", gender: "Male", badge: "Bangla Male", tag: "Natural & Clear", flag: "🇧🇩" },
+  { id: "bn-BD-NabanitaNeural", name: "Nabanita (BD Female)", lang: "bn", gender: "Female", badge: "Bangla Female", tag: "Sweet & Emotional", flag: "🇧🇩" },
+  { id: "bn-IN-BashkarNeural", name: "Bashkar (IN Male)", lang: "bn", gender: "Male", badge: "Indian Bangla", tag: "Sharp & Expressive", flag: "🇮🇳" },
+  { id: "bn-IN-TanishaNeural", name: "Tanisha (IN Female)", lang: "bn", gender: "Female", badge: "Indian Bangla", tag: "Smooth & Melodic", flag: "🇮🇳" },
+  // English Voices (ElevenLabs / Murf level)
+  { id: "en-US-ChristopherNeural", name: "Christopher (US Male)", lang: "en", gender: "Male", badge: "Storyteller", tag: "Deep & Rich (Adam Style)", flag: "🇺🇸" },
+  { id: "en-US-GuyNeural", name: "Guy (US Male)", lang: "en", gender: "Male", badge: "YouTube & Vlog", tag: "Friendly & Conversational", flag: "🇺🇸" },
+  { id: "en-US-JennyNeural", name: "Jenny (US Female)", lang: "en", gender: "Female", badge: "Warm Female", tag: "Clear & Engaging (Rachel)", flag: "🇺🇸" },
+  { id: "en-US-AriaNeural", name: "Aria (US Female)", lang: "en", gender: "Female", badge: "News & Reels", tag: "Dynamic & Punchy", flag: "🇺🇸" },
+  { id: "en-GB-RyanNeural", name: "Ryan (UK Male)", lang: "en", gender: "Male", badge: "British Docu", tag: "Sophisticated British", flag: "🇬🇧" },
+  { id: "en-GB-SoniaNeural", name: "Sonia (UK Female)", lang: "en", gender: "Female", badge: "British Female", tag: "Crisp & Professional", flag: "🇬🇧" },
+  // Hindi Voices
+  { id: "hi-IN-MadhurNeural", name: "Madhur (Hindi Male)", lang: "hi", gender: "Male", badge: "Hindi Male", tag: "Bold & Authoritative", flag: "🇮🇳" },
+  { id: "hi-IN-SwaraNeural", name: "Swara (Hindi Female)", lang: "hi", gender: "Female", badge: "Hindi Female", tag: "Vibrant & Warm", flag: "🇮🇳" },
+  // Global Voices
+  { id: "ar-SA-HamedNeural", name: "Hamed (Arabic Male)", lang: "ar", gender: "Male", badge: "Arabic Voice", tag: "Fusha Standard", flag: "🇸🇦" },
+  { id: "es-ES-AlvaroNeural", name: "Alvaro (Spanish Male)", lang: "es", gender: "Male", badge: "Spanish Voice", tag: "Natural Castilian", flag: "🇪🇸" },
+  { id: "fr-FR-HenriNeural", name: "Henri (French Male)", lang: "fr", gender: "Male", badge: "French Voice", tag: "Smooth & Elegant", flag: "🇫🇷" },
+  { id: "de-DE-ConradNeural", name: "Conrad (German Male)", lang: "de", gender: "Male", badge: "German Voice", tag: "Clear & Articulate", flag: "🇩🇪" },
+  { id: "ja-JP-KeitaNeural", name: "Keita (Japanese Male)", lang: "ja", gender: "Male", badge: "Japanese Voice", tag: "Anime & Docu", flag: "🇯🇵" },
+];
+
 const SUPPORTED_LANGUAGES: LanguageOption[] = [
   { code: "auto", label: "Auto-Detect Language", flag: "🌐" },
   { code: "bn", label: "Bengali (বাংলা)", flag: "🇧🇩" },
@@ -181,6 +216,7 @@ export default function TextToSpeechTool() {
   const [text, setText] = useState<string>(PRESET_SCRIPTS[0].text);
   const [historyText, setHistoryText] = useState<string | null>(null);
   const [selectedLang, setSelectedLang] = useState<string>("auto");
+  const [selectedNeuralVoice, setSelectedNeuralVoice] = useState<string>("auto");
 
   // Voice Tuning
   const [rate, setRate] = useState<number>(0.9);
@@ -399,6 +435,9 @@ export default function TextToSpeechTool() {
         body: JSON.stringify({
           text: q,
           lang: activeLangCode,
+          voice: selectedNeuralVoice !== "auto" ? selectedNeuralVoice : undefined,
+          rate: rate,
+          pitch: pitch,
         }),
       });
 
@@ -761,24 +800,23 @@ export default function TextToSpeechTool() {
           </div>
         </div>
 
-        {/* Language Selection Row */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 rounded-2xl border border-[#213026] bg-[#080e0b] p-4">
-          <div className="flex items-center gap-2.5">
-            <Globe className="h-5 w-5 text-[#3cff5f]" />
-            <div>
-              <span className="text-xs font-bold text-[#e7eee9] block">
-                {engine === "studio" ? "Language Model:" : "Device Installed Voice:"}
-              </span>
-              <span className="text-[11px] text-[#9baaa1]">
-                {engine === "studio"
-                  ? `Active Language: ${activeLangObj.flag} ${activeLangObj.label}`
-                  : `${systemVoices.length} voice profiles detected on your operating system`}
-              </span>
+        {/* Language & Voice Selection Controls */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Target Language Card */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-[#213026] bg-[#080e0b] p-4">
+            <div className="flex items-center gap-2.5">
+              <Globe className="h-5 w-5 text-[#3cff5f] shrink-0" />
+              <div>
+                <span className="text-xs font-bold text-[#e7eee9] block">
+                  Language Model:
+                </span>
+                <span className="text-[11px] text-[#9baaa1]">
+                  Active: {activeLangObj.flag} {activeLangObj.label}
+                </span>
+              </div>
             </div>
-          </div>
 
-          <div className="w-full lg:w-72">
-            {engine === "studio" ? (
+            <div className="w-full sm:w-56">
               <select
                 value={selectedLang}
                 onChange={(e) => {
@@ -788,7 +826,7 @@ export default function TextToSpeechTool() {
                     setAudioUrl(null);
                   }
                 }}
-                className="w-full rounded-xl border border-[#213026] bg-[#0c1510] px-3.5 py-2.5 text-xs text-[#e7eee9] focus:border-[#3cff5f] focus:outline-none cursor-pointer"
+                className="w-full rounded-xl border border-[#213026] bg-[#0c1510] px-3 py-2 text-xs text-[#e7eee9] focus:border-[#3cff5f] focus:outline-none cursor-pointer"
               >
                 {SUPPORTED_LANGUAGES.map((l) => (
                   <option key={l.code} value={l.code} className="bg-[#0c1510] text-[#e7eee9]">
@@ -796,19 +834,58 @@ export default function TextToSpeechTool() {
                   </option>
                 ))}
               </select>
-            ) : (
-              <select
-                value={selectedVoiceName}
-                onChange={(e) => setSelectedVoiceName(e.target.value)}
-                className="w-full rounded-xl border border-[#213026] bg-[#0c1510] px-3.5 py-2.5 text-xs text-[#e7eee9] focus:border-[#3cff5f] focus:outline-none cursor-pointer"
-              >
-                {systemVoices.map((v) => (
-                  <option key={v.name} value={v.name} className="bg-[#0c1510] text-[#e7eee9]">
-                    {v.name} ({v.lang})
-                  </option>
-                ))}
-              </select>
-            )}
+            </div>
+          </div>
+
+          {/* Voice Model Card */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-[#213026] bg-[#080e0b] p-4">
+            <div className="flex items-center gap-2.5">
+              <Mic className="h-5 w-5 text-[#3cff5f] shrink-0" />
+              <div>
+                <span className="text-xs font-bold text-[#e7eee9] block">
+                  {engine === "studio" ? "AI Neural Voice Actor:" : "Device System Voice:"}
+                </span>
+                <span className="text-[11px] text-[#9baaa1]">
+                  {engine === "studio"
+                    ? "ElevenLabs quality realistic voices"
+                    : `${systemVoices.length} voice profiles detected`}
+                </span>
+              </div>
+            </div>
+
+            <div className="w-full sm:w-56">
+              {engine === "studio" ? (
+                <select
+                  value={selectedNeuralVoice}
+                  onChange={(e) => {
+                    setSelectedNeuralVoice(e.target.value);
+                    if (audioUrl) {
+                      URL.revokeObjectURL(audioUrl);
+                      setAudioUrl(null);
+                    }
+                  }}
+                  className="w-full rounded-xl border border-[#213026] bg-[#0c1510] px-3 py-2 text-xs text-[#e7eee9] focus:border-[#3cff5f] focus:outline-none cursor-pointer font-medium"
+                >
+                  {POPULAR_NEURAL_VOICES.map((v) => (
+                    <option key={v.id} value={v.id} className="bg-[#0c1510] text-[#e7eee9]">
+                      {v.flag} {v.name} • {v.badge}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <select
+                  value={selectedVoiceName}
+                  onChange={(e) => setSelectedVoiceName(e.target.value)}
+                  className="w-full rounded-xl border border-[#213026] bg-[#0c1510] px-3 py-2 text-xs text-[#e7eee9] focus:border-[#3cff5f] focus:outline-none cursor-pointer"
+                >
+                  {systemVoices.map((v) => (
+                    <option key={v.name} value={v.name} className="bg-[#0c1510] text-[#e7eee9]">
+                      {v.name} ({v.lang})
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
           </div>
         </div>
 
