@@ -9,7 +9,7 @@ declare global {
 }
 
 interface AdBannerProps {
-  /** Optional custom AdSense slot ID. If omitted, AdSense Auto-Format is used */
+  /** Optional custom AdSense slot ID */
   slot?: string;
   /** Layout format: "auto" (default), "horizontal", "rectangle", or "vertical" */
   format?: "auto" | "horizontal" | "rectangle" | "vertical";
@@ -22,12 +22,12 @@ interface AdBannerProps {
 }
 
 /**
- * AdBanner - Production-ready, zero-CLS Google AdSense banner component.
+ * AdBanner - Zero-CLS, zero-empty-box Google AdSense banner component.
  *
  * 🛡️ Safety Feature for AdSense Approval:
- * If `NEXT_PUBLIC_ADSENSE_CLIENT_ID` is not set or empty, this component
- * renders NULL (0 bytes, 0 empty white boxes), preventing rejection by
- * Google AdSense reviewers for "Site under construction" or broken layouts.
+ * While Google AdSense review is pending, this component returns NULL (0px height, 0 borders, 0 blank boxes).
+ * This prevents Google AdSense reviewers from rejecting the site for empty containers or broken layouts.
+ * Once approved, Google Auto Ads handles ad placements automatically via layout.tsx.
  */
 export function AdBanner({
   slot,
@@ -36,12 +36,12 @@ export function AdBanner({
   className = "",
   style = {},
 }: AdBannerProps) {
-  const clientId =
-    process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || "ca-pub-3118671109259877";
+  const isEnabled = process.env.NEXT_PUBLIC_ADSENSE_ENABLED === "true";
+  const clientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
   const isPushed = useRef(false);
 
   useEffect(() => {
-    if (!clientId || isPushed.current) return;
+    if (!isEnabled || !clientId || !slot || isPushed.current) return;
 
     try {
       if (typeof window !== "undefined") {
@@ -51,21 +51,18 @@ export function AdBanner({
     } catch {
       // Silently handle any push or adblock exceptions
     }
-  }, [clientId]);
+  }, [isEnabled, clientId, slot]);
 
-  // If no AdSense publisher ID is configured yet, render absolutely nothing
-  if (!clientId) {
+  // While approval is pending or not enabled, render absolutely NOTHING (no empty box, no border)
+  if (!isEnabled || !clientId || !slot) {
     return null;
   }
 
   return (
-    <div
-      className={`ad-wrapper my-6 flex w-full items-center justify-center overflow-hidden rounded-xl bg-[#080e0b]/50 border border-[#1b2720]/40 p-2 ${className}`}
-      aria-label="Advertisement"
-    >
+    <div className={`ad-wrapper overflow-hidden ${className}`} aria-label="Advertisement">
       <ins
         className="adsbygoogle"
-        style={{ display: "block", minHeight: "90px", width: "100%", ...style }}
+        style={{ display: "block", ...style }}
         data-ad-client={clientId}
         data-ad-slot={slot}
         data-ad-format={format}

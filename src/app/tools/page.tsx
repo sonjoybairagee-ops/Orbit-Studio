@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import ToolsExplorer from "@/components/tools/ToolsExplorer";
-import { AdBanner } from "@/components/ads/AdBanner";
 import { TOOLS_DATA, CATEGORIES } from "@/lib/tools-data";
 
 export const metadata: Metadata = {
@@ -43,11 +42,6 @@ export default function ToolsHubPage() {
       <main className="relative mx-auto max-w-7xl px-4 pt-10 pb-16 sm:px-6 lg:px-8 w-full">
         <ToolsExplorer tools={TOOLS_DATA} categories={CATEGORIES} />
       </main>
-
-      {/* Bottom Ad Slot (Active when AdSense ID is set) */}
-      <div className="mx-auto max-w-5xl px-4 pb-12 sm:px-6">
-        <AdBanner slot="tools-hub-bottom" format="auto" />
-      </div>
 
       {/* Structured Data for Google Search */}
       <script
