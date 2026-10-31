@@ -126,13 +126,25 @@ export default function BackgroundRemoverTool() {
     setError("");
 
     try {
-      // Dynamic import to prevent any SSR evaluation issues
-      const { removeBackground } = await import("@imgly/background-removal");
+      // Load ESM dynamically at client runtime via native browser import
+      // Using Function constructor prevents Webpack/SWC from statically analyzing or bundling onnxruntime-web
+      const dynamicImport = new Function("url", "return import(url)");
+      const imglyModule: any = await dynamicImport(
+        "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm"
+      );
+      const removeBackgroundFn =
+        imglyModule.removeBackground ||
+        imglyModule.default?.removeBackground ||
+        imglyModule.default;
+
+      if (!removeBackgroundFn) {
+        throw new Error("Could not initialize background removal engine");
+      }
 
       setProgressMsg("Detecting subject and removing background...");
       setProgressPercent(35);
 
-      const blob = await removeBackground(file, {
+      const blob = await removeBackgroundFn(file, {
         progress: (key: string, current: number, total: number) => {
           if (total > 0) {
             const p = Math.round((current / total) * 100);
