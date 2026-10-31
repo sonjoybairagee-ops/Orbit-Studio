@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import {
   Search,
   Download,
@@ -643,6 +644,14 @@ export default function YoutubeTranscriptTool() {
                   <Upload className="h-3.5 w-3.5" />
                   <span>Upload Video / Audio ট্যাবে ফাইল দিয়ে AI ট্রান্সক্রিপ্ট করুন</span>
                 </button>
+                <Link
+                  href="/downloader-tools"
+                  target="_blank"
+                  className="px-3 py-2 rounded-xl bg-[#0c1510] border border-[#213026] text-[#e7eee9] hover:text-[#3cff5f] hover:border-[#2a5234] text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <Download className="h-3.5 w-3.5 text-[#3cff5f]" />
+                  <span>ভিডিওর অডিও (MP3) ডাউনলোড করুন</span>
+                </Link>
                 <button
                   type="button"
                   onClick={() => {
@@ -652,7 +661,7 @@ export default function YoutubeTranscriptTool() {
                   className="px-3 py-2 rounded-xl bg-[#0c1510] border border-[#213026] text-[#e7eee9] hover:text-[#3cff5f] hover:border-[#2a5234] text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5"
                 >
                   <Play className="h-3.5 w-3.5 text-[#3cff5f]" />
-                  <span>ক্যাপশনযুক্ত ভিডিও টেস্ট করুন (Steve Jobs Speech)</span>
+                  <span>ক্যাপশনযুক্ত ভিডিও টেস্ট করুন (Steve Jobs)</span>
                 </button>
               </div>
             </div>
