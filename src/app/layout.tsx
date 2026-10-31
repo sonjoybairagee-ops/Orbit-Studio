@@ -153,6 +153,9 @@ const schemas = [
   },
 ];
 
+const ADSENSE_CLIENT_ID =
+  process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || "ca-pub-3118671109259877";
+
 export default function RootLayout({
   children,
 }: {
@@ -161,13 +164,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID && (
-          <script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID}`}
-            crossOrigin="anonymous"
-          />
-        )}
+        <meta name="google-adsense-account" content="ca-pub-3118671109259877" />
+        <script
+          async
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`}
+          crossOrigin="anonymous"
+        />
         <Script
           id="fb-pixel"
           strategy="afterInteractive"

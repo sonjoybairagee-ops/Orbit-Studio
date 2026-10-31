@@ -36,7 +36,8 @@ export function AdBanner({
   className = "",
   style = {},
 }: AdBannerProps) {
-  const clientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
+  const clientId =
+    process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || "ca-pub-3118671109259877";
   const isPushed = useRef(false);
 
   useEffect(() => {
