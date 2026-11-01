@@ -17,6 +17,14 @@ import {
   Minimize2,
   Zap,
   X,
+  Handshake,
+  DollarSign,
+  ArrowRightLeft,
+  Building,
+  Check,
+  AlertCircle,
+  HelpCircle,
+  Scale,
 } from "lucide-react";
 import { GameSound, fireVictoryConfetti } from "./GameAudio";
 import { DiceCube, Pawn } from "./GameTokens";
@@ -27,10 +35,11 @@ import { useNetGame } from "./net/useNetGame";
    Monopoly Empire Tycoon — full classic 40-space board, simplified house rules
    - You (red pawn) vs 3 AI bots
    - Buy properties, complete colour groups for double rent, build houses
+   - Sell houses or sell properties back to Bank for liquidation cash
+   - Trade & Deal with AI opponents: Swap lands, offer cash, negotiate deals
    - Chance & Community Chest cards, income/luxury tax into the Free Parking pot
    - Jail: pay $50 or roll doubles (3-turn limit), 3 doubles in a row → jail
-   - Can't pay? Houses get sold back at half price, then you go bankrupt & your
-     rival inherits everything. Last player standing wins.
+   - Last player standing wins.
 ──────────────────────────────────────────────────────────────────────────── */
 
 type GroupKey =
@@ -177,7 +186,7 @@ function sideOf(i: number): "bottom" | "left" | "top" | "right" | "corner" {
 
 const money = (n: number) => `$${n.toLocaleString()}`;
 
-/* ── token styling (same palette as the Ludo game) ── */
+/* ── token styling ── */
 const P = [
   { name: "You (Red)", short: "You", hex: "#ef4444", dark: "#b91c1c", glow: "#f87171", bot: false },
   { name: "AI Green", short: "Green", hex: "#22c55e", dark: "#15803d", glow: "#4ade80", bot: true },
@@ -198,6 +207,14 @@ interface Player {
 interface Deeds {
   owners: (number | null)[];
   levels: number[];
+}
+
+interface IncomingTrade {
+  fromPlayer: number;
+  offeredProps: number[];
+  requestedProps: number[];
+  offeredCash: number;
+  requestedCash: number;
 }
 
 const START_CASH = 1500;
@@ -245,6 +262,16 @@ export default function MonopolyTycoon() {
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // ── Trade & Deal System State ──────────────────────────────────────────────
+  const [tradeOpen, setTradeOpen] = useState(false);
+  const [tradeTarget, setTradeTarget] = useState<number>(1); // Default to AI Green
+  const [myOfferedProps, setMyOfferedProps] = useState<number[]>([]);
+  const [theirRequestedProps, setTheirRequestedProps] = useState<number[]>([]);
+  const [myOfferedCash, setMyOfferedCash] = useState<number>(0);
+  const [theirRequestedCash, setTheirRequestedCash] = useState<number>(0);
+  const [tradeFeedback, setTradeFeedback] = useState<{ message: string; type: "ok" | "warn" | "err" } | null>(null);
+  const [incomingTrade, setIncomingTrade] = useState<IncomingTrade | null>(null);
 
   useEffect(() => {
     setIsMuted(GameSound.getMuted());
@@ -462,10 +489,11 @@ export default function MonopolyTycoon() {
       advanceTurn(p);
       return;
     }
-    // bots may build one house before ending their turn
+    // bots may build one house or evaluate trade before ending their turn
     timers.current.push(
       setTimeout(() => {
         aiBuild(p);
+        checkAiProposeTrade(p);
         advanceTurn(p);
       }, 350)
     );
@@ -759,6 +787,242 @@ export default function MonopolyTycoon() {
     }
   };
 
+  /* ── selling & liquidation (User requested) ── */
+  const sellHouse = (p: number, si: number) => {
+    const sp = SPACES[si];
+    if (sp.type !== "street" || !sp.house) return;
+    if (deedsRef.current.owners[si] !== p) return;
+    if (deedsRef.current.levels[si] <= 0) return;
+
+    const refund = Math.floor(sp.house * 0.5);
+    const arr = snapPlayers();
+    const deedsNow = snapDeeds();
+    arr[p].cash += refund;
+    deedsNow.levels[si] -= 1;
+    setP(arr);
+    setD(deedsNow);
+    GameSound.playCashRegister();
+    addLog(`🏚️ ${P[p].short} sold a house on ${sp.name} for +${money(refund)}.`);
+  };
+
+  const sellPropertyToBank = (p: number, si: number) => {
+    const sp = SPACES[si];
+    if (deedsRef.current.owners[si] !== p) return;
+    if (deedsRef.current.levels[si] > 0) {
+      addLog(`⚠️ You must sell all houses on ${sp.name} first!`);
+      return;
+    }
+
+    const refund = Math.floor((sp.price ?? 100) * 0.6); // 60% liquidation value
+    const arr = snapPlayers();
+    const deedsNow = snapDeeds();
+    arr[p].cash += refund;
+    deedsNow.owners[si] = null;
+    deedsNow.levels[si] = 0;
+    setP(arr);
+    setD(deedsNow);
+    GameSound.playCashRegister();
+    addLog(`🏦 ${P[p].short} sold ${sp.name} to the Bank for +${money(refund)}.`);
+  };
+
+  /* ── Trade Evaluation & Execution ── */
+  const evaluateTradeProposal = (
+    target: number,
+    yourProps: number[],
+    theirProps: number[],
+    yourCash: number,
+    theirCash: number
+  ) => {
+    const targetPl = playersRef.current[target];
+
+    // Cannot demand more cash than opponent has
+    if (theirCash > targetPl.cash) {
+      return {
+        accepted: false,
+        message: `${P[target].short}: "I don't have ${money(theirCash)} cash! My maximum is ${money(targetPl.cash)}."`,
+        type: "err" as const,
+      };
+    }
+
+    if (theirCash > 0 && targetPl.cash - theirCash < 100) {
+      return {
+        accepted: false,
+        message: `${P[target].short}: "I can't give that much cash, I need to keep at least $100 for rent safety!"`,
+        type: "warn" as const,
+      };
+    }
+
+    // Valuation of what AI is giving up
+    let givingVal = theirCash;
+    for (const si of theirProps) {
+      const sp = SPACES[si];
+      let val = sp.price ?? 100;
+      if (sp.group && ownsGroup(target, sp.group)) val *= 2.2;
+      else if (sp.group) {
+        const myCount = SPACES.filter((s, i) => s.group === sp.group && (deedsRef.current.owners[i] === 0 || i === si)).length;
+        if (myCount === (GROUP_COUNT[sp.group] ?? 3)) val *= 1.7; // Human completes monopoly
+      }
+      givingVal += val;
+    }
+
+    // Valuation of what AI is receiving
+    let recVal = yourCash;
+    for (const si of yourProps) {
+      const sp = SPACES[si];
+      let val = sp.price ?? 100;
+      if (sp.group) {
+        const aiCount = SPACES.filter((s, i) => s.group === sp.group && (deedsRef.current.owners[i] === target || i === si)).length;
+        if (aiCount === (GROUP_COUNT[sp.group] ?? 3)) val *= 2.0; // AI completes monopoly
+      }
+      recVal += val;
+    }
+
+    if (theirProps.length === 0 && theirCash === 0) {
+      return {
+        accepted: true,
+        message: `${P[target].short}: "A free gift? I'll gladly take it! 🎁"`,
+        type: "ok" as const,
+      };
+    }
+
+    if (yourProps.length === 0 && yourCash === 0) {
+      return {
+        accepted: false,
+        message: `${P[target].short}: "You're offering me literally nothing in return! 😂"`,
+        type: "err" as const,
+      };
+    }
+
+    if (recVal >= givingVal * 0.95) {
+      return {
+        accepted: true,
+        message: `${P[target].short}: "Deal accepted! 🤝 A fair exchange."`,
+        type: "ok" as const,
+      };
+    } else if (recVal >= givingVal * 0.70) {
+      const diff = Math.round(givingVal - recVal);
+      return {
+        accepted: false,
+        message: `${P[target].short}: "Almost fair! Offer me around ${money(diff)} more cash or another property."`,
+        type: "warn" as const,
+      };
+    } else {
+      return {
+        accepted: false,
+        message: `${P[target].short}: "No way! That's a total ripoff for me."`,
+        type: "err" as const,
+      };
+    }
+  };
+
+  const executeTrade = (
+    fromP: number,
+    toP: number,
+    fromProps: number[],
+    toProps: number[],
+    fromCash: number,
+    toCash: number
+  ) => {
+    const arr = snapPlayers();
+    const deedsNow = snapDeeds();
+
+    // Check cash limits
+    if (arr[fromP].cash < fromCash || arr[toP].cash < toCash) {
+      addLog("⚠️ Trade failed: insufficient cash balance.");
+      return;
+    }
+
+    // Transfer cash
+    arr[fromP].cash = arr[fromP].cash - fromCash + toCash;
+    arr[toP].cash = arr[toP].cash - toCash + fromCash;
+
+    // Transfer properties
+    for (const si of fromProps) deedsNow.owners[si] = toP;
+    for (const si of toProps) deedsNow.owners[si] = fromP;
+
+    setP(arr);
+    setD(deedsNow);
+    GameSound.playCashRegister();
+    fireVictoryConfetti();
+
+    const fromNames = fromProps.map((i) => SPACES[i].name).join(", ");
+    const toNames = toProps.map((i) => SPACES[i].name).join(", ");
+    addLog(
+      `🤝 DEAL CLOSED: ${P[fromP].short} traded [${fromNames || "no lands"}${fromCash > 0 ? ` + ${money(fromCash)}` : ""}] with ${P[toP].short} for [${toNames || "no lands"}${toCash > 0 ? ` + ${money(toCash)}` : ""}]!`
+    );
+  };
+
+  const handleProposeTrade = () => {
+    const result = evaluateTradeProposal(
+      tradeTarget,
+      myOfferedProps,
+      theirRequestedProps,
+      myOfferedCash,
+      theirRequestedCash
+    );
+    setTradeFeedback({ message: result.message, type: result.type });
+
+    if (result.accepted) {
+      executeTrade(
+        0,
+        tradeTarget,
+        myOfferedProps,
+        theirRequestedProps,
+        myOfferedCash,
+        theirRequestedCash
+      );
+      setTimeout(() => {
+        setTradeOpen(false);
+        setMyOfferedProps([]);
+        setTheirRequestedProps([]);
+        setMyOfferedCash(0);
+        setTheirRequestedCash(0);
+        setTradeFeedback(null);
+      }, 1400);
+    }
+  };
+
+  /* ── AI Initiated Trade Proposal ── */
+  const checkAiProposeTrade = (aiId: number) => {
+    if (incomingTrade !== null) return;
+    const aiPl = playersRef.current[aiId];
+    if (aiPl.cash < 250) return;
+
+    // Look for a color group where AI owns 1 or 2 streets and Player 0 owns the missing street
+    for (const [group, total] of Object.entries(GROUP_COUNT)) {
+      const g = group as GroupKey;
+      const groupSpaces = SPACES.map((s, idx) => ({ ...s, idx })).filter((s) => s.group === g && s.type === "street");
+      const aiOwned = groupSpaces.filter((s) => deedsRef.current.owners[s.idx] === aiId);
+      const humanOwned = groupSpaces.filter((s) => deedsRef.current.owners[s.idx] === 0);
+
+      if (aiOwned.length >= 1 && humanOwned.length === 1 && aiOwned.length + humanOwned.length === total) {
+        // AI found an opportunity to complete monopoly!
+        const targetSpace = humanOwned[0];
+        const offerCash = Math.min(Math.floor(aiPl.cash * 0.45), (targetSpace.price ?? 100) * 1.5);
+        
+        // Find if AI has an extra single street or rail it doesn't need
+        const extraProp = SPACES.findIndex((s, idx) => {
+          if (deedsRef.current.owners[idx] !== aiId) return false;
+          if (s.group === g) return false;
+          if (s.group && ownsGroup(aiId, s.group)) return false;
+          return true;
+        });
+
+        const offeredProps = extraProp !== -1 ? [extraProp] : [];
+        setIncomingTrade({
+          fromPlayer: aiId,
+          offeredProps,
+          requestedProps: [targetSpace.idx],
+          offeredCash: Math.round(offerCash),
+          requestedCash: 0,
+        });
+        GameSound.playCashRegister();
+        addLog(`🤝 ${P[aiId].short} wants to make a deal with you for ${targetSpace.name}!`);
+        break;
+      }
+    }
+  };
+
   /* ── AI automation ── */
   useEffect(() => {
     if (winner !== null || rolling || phase === "moving") return;
@@ -772,7 +1036,6 @@ export default function MonopolyTycoon() {
         const cash = playersRef.current[p].cash;
         t = setTimeout(() => (cash >= 150 ? jailPay() : jailTry()), 600);
       }
-      // "action" (buying) is resolved inline with its own timer
     }
     return () => {
       if (t) clearTimeout(t);
@@ -806,6 +1069,9 @@ export default function MonopolyTycoon() {
     setCard(null);
     setWinner(null);
     setSelected(null);
+    setInspectSpace(null);
+    setTradeOpen(false);
+    setIncomingTrade(null);
     doubleChain.current = 0;
     setLog(["New game! Roll the dice to start your empire."]);
   };
@@ -846,7 +1112,6 @@ export default function MonopolyTycoon() {
               {sp.name.toUpperCase()}
             </span>
           </div>
-          {/* small colourful stud */}
           <div className="absolute bottom-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-white/30" />
         </div>
       );
@@ -876,7 +1141,7 @@ export default function MonopolyTycoon() {
           owner !== null && owner !== undefined ? ` — owned by ${P[owner].short}` : ""
         }`}
       >
-        {/* colour band (always on the edge nearest the centre) */}
+        {/* colour band */}
         <div
           className="absolute inset-x-0 top-0 flex items-center justify-center"
           style={{ height: "24%", backgroundColor: bandColor }}
@@ -935,10 +1200,10 @@ export default function MonopolyTycoon() {
     deeds.levels[selected] < 5 &&
     players[0].cash >= (selectedSpace.house ?? Infinity);
 
-
   return (
     <div ref={containerRef} className="w-full select-none">
       <NetBar gameTitle="Monopoly Empire" net={net} />
+
       {/* Header */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#213026] bg-[#080e0b] p-3.5 sm:p-4">
         <div>
@@ -950,11 +1215,21 @@ export default function MonopolyTycoon() {
             </span>
           </h2>
           <p className="mt-0.5 text-xs text-[#9baaa1]">
-            Classic 40-property board · buy, build, collect rent · bankrupt the bots!
+            Classic 40-space board · Buy, sell, trade lands, negotiate deals &amp; bankrupt rivals!
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* Trade / Deal Modal Trigger Button */}
+          <button
+            type="button"
+            onClick={() => setTradeOpen(true)}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-[#3cff5f]/50 bg-[#102a16] px-3.5 py-1.5 text-xs font-bold text-[#3cff5f] shadow-[0_0_15px_rgba(60,255,95,0.25)] hover:bg-[#163b20] transition-all"
+          >
+            <Handshake className="h-4 w-4" />
+            <span>Trade / Deals</span>
+          </button>
+
           {/* Turbo AI toggle */}
           <button
             type="button"
@@ -966,7 +1241,7 @@ export default function MonopolyTycoon() {
             }`}
           >
             <Zap className="h-3.5 w-3.5" />
-            <span>{fastAi ? "Turbo AI (Fast)" : "Normal Speed"}</span>
+            <span>{fastAi ? "Turbo AI" : "Normal Speed"}</span>
           </button>
 
           {/* Sound Mute Toggle */}
@@ -1104,7 +1379,7 @@ export default function MonopolyTycoon() {
                 </div>
 
                 <div className="absolute bottom-2 left-0 right-0 text-center text-[6px] text-[#9a917d] sm:text-[8px]">
-                  Buy · Build · Collect rent · Bankrupt your rivals
+                  Buy · Sell to Bank · Trade &amp; Deal with AI · Bankrupt rivals
                 </div>
 
                 {/* drawn card overlay */}
@@ -1183,9 +1458,8 @@ export default function MonopolyTycoon() {
             />
           </div>
 
-          {/* hint */}
           <p className="mt-2 text-center text-[10px] text-[#62776a]">
-            Tip: click any property tile to inspect it{phase === "idle" && turnIsHuman ? " and build houses on it" : ""}.
+            Tip: click any property tile to inspect, build, or sell it back to the Bank.
           </p>
         </div>
 
@@ -1287,7 +1561,7 @@ export default function MonopolyTycoon() {
             </div>
           )}
 
-          {/* selected property */}
+          {/* selected property with Build & Sell options */}
           {selectedSpace && (
             <div className="rounded-2xl border border-[#213026] bg-[#080e0b] p-4">
               <div className="flex items-center justify-between">
@@ -1353,6 +1627,8 @@ export default function MonopolyTycoon() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Build Action */}
                   <button
                     type="button"
                     disabled={!canBuild}
@@ -1363,19 +1639,52 @@ export default function MonopolyTycoon() {
                       ? `Build ${deeds.levels[selected!] >= 4 ? "Hotel" : "House"} — ${money(selectedSpace.house ?? 0)}`
                       : "Fully built (Hotel)"}
                   </button>
+
+                  {/* Sell House Button */}
+                  {selOwner === 0 && deeds.levels[selected!] > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => sellHouse(0, selected!)}
+                      className="mt-2 w-full cursor-pointer rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-500/20 transition-all"
+                    >
+                      Sell 1 House (+{money(Math.floor((selectedSpace.house ?? 0) * 0.5))})
+                    </button>
+                  )}
+
+                  {/* Sell Property to Bank Button */}
+                  {selOwner === 0 && deeds.levels[selected!] === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => sellPropertyToBank(0, selected!)}
+                      className="mt-2 w-full cursor-pointer rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-xs font-bold text-red-300 hover:bg-red-500/20 transition-all"
+                    >
+                      Sell to Bank (+{money(Math.floor((selectedSpace.price ?? 100) * 0.6))})
+                    </button>
+                  )}
                 </>
               )}
               {(selectedSpace.type === "rail" || selectedSpace.type === "utility") && (
-                <p className="mt-2 text-[10px] leading-relaxed text-[#9baaa1]">
-                  {selectedSpace.type === "rail"
-                    ? "Rent: $25 / $50 / $100 / $200 based on railroad count owned."
-                    : "Rent: 4× dice — 10× dice if both utilities owned."}
-                </p>
+                <>
+                  <p className="mt-2 text-[10px] leading-relaxed text-[#9baaa1]">
+                    {selectedSpace.type === "rail"
+                      ? "Rent: $25 / $50 / $100 / $200 based on railroad count owned."
+                      : "Rent: 4× dice — 10× dice if both utilities owned."}
+                  </p>
+                  {selOwner === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => sellPropertyToBank(0, selected!)}
+                      className="mt-2 w-full cursor-pointer rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-xs font-bold text-red-300 hover:bg-red-500/20 transition-all"
+                    >
+                      Sell to Bank (+{money(Math.floor((selectedSpace.price ?? 100) * 0.6))})
+                    </button>
+                  )}
+                </>
               )}
             </div>
           )}
 
-          {/* players */}
+          {/* players overview */}
           <div className="divide-y divide-[#1a2620] rounded-2xl border border-[#213026] bg-[#080e0b]">
             {P.map((style, p) => {
               const pl = players[p];
@@ -1409,6 +1718,18 @@ export default function MonopolyTycoon() {
                       {money(pl.cash)} · {propsOwned} props · lvl {deeds.levels.filter((_, i) => deeds.owners[i] === p).reduce((a, b) => a + b, 0)}
                     </div>
                   </div>
+                  {p !== 0 && !pl.bankrupt && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTradeTarget(p);
+                        setTradeOpen(true);
+                      }}
+                      className="px-2 py-1 text-[10px] font-bold rounded-lg border border-[#2a5234] bg-[#102a16] text-[#3cff5f] hover:bg-[#163b20] transition-all"
+                    >
+                      Trade
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -1434,6 +1755,412 @@ export default function MonopolyTycoon() {
           </div>
         </div>
       </div>
+
+      {/* ── Trade & Deal Negotiation Modal (User Requested) ── */}
+      {tradeOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-2xl overflow-hidden rounded-3xl border-2 border-[#3cff5f]/40 bg-[#0c1510] shadow-2xl flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-[#213026] bg-[#101b14] p-4 sm:p-5">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 rounded-xl bg-[#14281c] text-[#3cff5f] border border-[#2a5234]">
+                  <Handshake className="h-5 w-5" />
+                </span>
+                <div>
+                  <h3 className="text-base font-bold text-[#e7eee9]">
+                    Empire Trade &amp; Deal Center
+                  </h3>
+                  <p className="text-xs text-[#8ea396]">
+                    Trade properties, offer money, and make deals with rival players
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setTradeOpen(false);
+                  setTradeFeedback(null);
+                }}
+                className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-[#8ea396] hover:text-white cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Target Opponent Tabs */}
+            <div className="p-4 border-b border-[#213026] bg-[#08100c] flex items-center gap-2 overflow-x-auto">
+              <span className="text-xs font-semibold text-[#8ea396] mr-2">Trade With:</span>
+              {[1, 2, 3].map((pid) => {
+                const opp = players[pid];
+                const propsCount = deeds.owners.filter((o) => o === pid).length;
+                return (
+                  <button
+                    key={pid}
+                    type="button"
+                    disabled={opp.bankrupt}
+                    onClick={() => {
+                      setTradeTarget(pid);
+                      setTheirRequestedProps([]);
+                      setTheirRequestedCash(0);
+                      setTradeFeedback(null);
+                    }}
+                    className={`flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${
+                      tradeTarget === pid
+                        ? "bg-[#3cff5f] text-[#050a08] shadow-[0_0_15px_rgba(60,255,95,0.3)]"
+                        : "border border-[#213026] bg-[#101b14] text-[#c0d0c6] hover:bg-[#16271c]"
+                    } ${opp.bankrupt ? "opacity-30 cursor-not-allowed" : "cursor-pointer"}`}
+                  >
+                    <span
+                      className="h-2.5 w-2.5 rounded-full"
+                      style={{ backgroundColor: P[pid].hex }}
+                    />
+                    <span>{P[pid].name}</span>
+                    <span className="font-mono text-[10px] opacity-80">
+                      ({money(opp.cash)} · {propsCount} lands)
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Trade Floor: You vs Opponent */}
+            <div className="p-4 sm:p-5 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-5 flex-1">
+              {/* Left Column: Your Offer (Red) */}
+              <div className="rounded-2xl border border-[#213026] bg-[#08100c] p-4 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between pb-2 border-b border-[#1c2a22] mb-3">
+                    <span className="text-xs font-bold text-red-400 flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-red-500" />
+                      Your Offer (Red)
+                    </span>
+                    <span className="font-mono text-xs text-[#3cff5f] font-bold">
+                      Bal: {money(players[0].cash)}
+                    </span>
+                  </div>
+
+                  {/* Cash Offer Slider */}
+                  <div className="mb-4 rounded-xl border border-[#1a2920] bg-[#0c1611] p-3">
+                    <div className="flex justify-between text-xs text-[#c0d0c6] mb-1">
+                      <span>Add Money to Offer:</span>
+                      <span className="font-mono font-bold text-[#3cff5f]">{money(myOfferedCash)}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max={players[0].cash}
+                      step="10"
+                      value={myOfferedCash}
+                      onChange={(e) => setMyOfferedCash(parseInt(e.target.value))}
+                      className="w-full accent-[#3cff5f] h-1.5 bg-[#1a2a20] rounded-lg cursor-pointer"
+                    />
+                    <div className="flex gap-1.5 mt-2">
+                      <button
+                        type="button"
+                        onClick={() => setMyOfferedCash(Math.min(players[0].cash, myOfferedCash + 50))}
+                        className="px-2 py-0.5 rounded text-[10px] bg-[#14261c] text-[#3cff5f] border border-[#2a5234]"
+                      >
+                        +$50
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMyOfferedCash(Math.min(players[0].cash, myOfferedCash + 100))}
+                        className="px-2 py-0.5 rounded text-[10px] bg-[#14261c] text-[#3cff5f] border border-[#2a5234]"
+                      >
+                        +$100
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMyOfferedCash(0)}
+                        className="px-2 py-0.5 rounded text-[10px] bg-[#14261c] text-[#8ea396] border border-[#213026]"
+                      >
+                        $0
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Your Owned Properties */}
+                  <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+                    <span className="text-[11px] font-semibold text-[#8ea396] block mb-1">
+                      Select Lands to Give:
+                    </span>
+                    {SPACES.map((sp, idx) => {
+                      if (deeds.owners[idx] !== 0) return null;
+                      const isSelected = myOfferedProps.includes(idx);
+                      const bandColor =
+                        sp.type === "street" && sp.group
+                          ? GROUP_META[sp.group]
+                          : sp.type === "rail"
+                          ? GROUP_META.rail
+                          : GROUP_META.utility;
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => {
+                            setMyOfferedProps((prev) =>
+                              prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx]
+                            );
+                          }}
+                          className={`flex items-center justify-between p-2 rounded-xl border text-xs cursor-pointer transition-all ${
+                            isSelected
+                              ? "border-[#3cff5f] bg-[#14281c] text-[#e7eee9]"
+                              : "border-[#1c2a22] bg-[#0c1611] text-[#9baaa1] hover:bg-[#122018]"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="w-2.5 h-2.5 rounded-full"
+                              style={{ backgroundColor: bandColor }}
+                            />
+                            <span className="font-semibold">{sp.name}</span>
+                          </div>
+                          <span className="font-mono text-[10px] text-[#3cff5f]">${sp.price}</span>
+                        </div>
+                      );
+                    })}
+                    {deeds.owners.filter((o) => o === 0).length === 0 && (
+                      <p className="text-[11px] text-[#62776a] italic py-2">
+                        You do not own any properties yet.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Opponent's Assets (Requested) */}
+              <div className="rounded-2xl border border-[#213026] bg-[#08100c] p-4 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between pb-2 border-b border-[#1c2a22] mb-3">
+                    <span
+                      className="text-xs font-bold flex items-center gap-1.5"
+                      style={{ color: P[tradeTarget].hex }}
+                    >
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: P[tradeTarget].hex }}
+                      />
+                      Demand from {P[tradeTarget].short}
+                    </span>
+                    <span className="font-mono text-xs text-[#3cff5f] font-bold">
+                      Bal: {money(players[tradeTarget].cash)}
+                    </span>
+                  </div>
+
+                  {/* Cash Request Slider */}
+                  <div className="mb-4 rounded-xl border border-[#1a2920] bg-[#0c1611] p-3">
+                    <div className="flex justify-between text-xs text-[#c0d0c6] mb-1">
+                      <span>Demand Money from Them:</span>
+                      <span className="font-mono font-bold text-[#3cff5f]">{money(theirRequestedCash)}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max={players[tradeTarget].cash}
+                      step="10"
+                      value={theirRequestedCash}
+                      onChange={(e) => setTheirRequestedCash(parseInt(e.target.value))}
+                      className="w-full accent-[#3cff5f] h-1.5 bg-[#1a2a20] rounded-lg cursor-pointer"
+                    />
+                    <div className="flex gap-1.5 mt-2">
+                      <button
+                        type="button"
+                        onClick={() => setTheirRequestedCash(Math.min(players[tradeTarget].cash, theirRequestedCash + 50))}
+                        className="px-2 py-0.5 rounded text-[10px] bg-[#14261c] text-[#3cff5f] border border-[#2a5234]"
+                      >
+                        +$50
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTheirRequestedCash(Math.min(players[tradeTarget].cash, theirRequestedCash + 100))}
+                        className="px-2 py-0.5 rounded text-[10px] bg-[#14261c] text-[#3cff5f] border border-[#2a5234]"
+                      >
+                        +$100
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTheirRequestedCash(0)}
+                        className="px-2 py-0.5 rounded text-[10px] bg-[#14261c] text-[#8ea396] border border-[#213026]"
+                      >
+                        $0
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Opponent's Owned Properties */}
+                  <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+                    <span className="text-[11px] font-semibold text-[#8ea396] block mb-1">
+                      Select Lands to Take:
+                    </span>
+                    {SPACES.map((sp, idx) => {
+                      if (deeds.owners[idx] !== tradeTarget) return null;
+                      const isSelected = theirRequestedProps.includes(idx);
+                      const bandColor =
+                        sp.type === "street" && sp.group
+                          ? GROUP_META[sp.group]
+                          : sp.type === "rail"
+                          ? GROUP_META.rail
+                          : GROUP_META.utility;
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => {
+                            setTheirRequestedProps((prev) =>
+                              prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx]
+                            );
+                          }}
+                          className={`flex items-center justify-between p-2 rounded-xl border text-xs cursor-pointer transition-all ${
+                            isSelected
+                              ? "border-[#3cff5f] bg-[#14281c] text-[#e7eee9]"
+                              : "border-[#1c2a22] bg-[#0c1611] text-[#9baaa1] hover:bg-[#122018]"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="w-2.5 h-2.5 rounded-full"
+                              style={{ backgroundColor: bandColor }}
+                            />
+                            <span className="font-semibold">{sp.name}</span>
+                          </div>
+                          <span className="font-mono text-[10px] text-[#3cff5f]">${sp.price}</span>
+                        </div>
+                      );
+                    })}
+                    {deeds.owners.filter((o) => o === tradeTarget).length === 0 && (
+                      <p className="text-[11px] text-[#62776a] italic py-2">
+                        {P[tradeTarget].short} does not own any properties yet.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Trade Feedback Dialogue */}
+            {tradeFeedback && (
+              <div
+                className={`mx-5 mb-2 p-3 rounded-xl border text-xs flex items-center gap-2 ${
+                  tradeFeedback.type === "ok"
+                    ? "border-[#3cff5f]/50 bg-[#102a16] text-[#3cff5f]"
+                    : tradeFeedback.type === "warn"
+                    ? "border-amber-500/50 bg-amber-500/10 text-amber-300"
+                    : "border-red-500/50 bg-red-500/10 text-red-300"
+                }`}
+              >
+                {tradeFeedback.type === "ok" ? (
+                  <Check className="h-4 w-4 shrink-0" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                )}
+                <span>{tradeFeedback.message}</span>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="p-4 sm:p-5 border-t border-[#213026] bg-[#0a120e] flex flex-wrap items-center justify-between gap-3">
+              <div className="text-xs text-[#8ea396]">
+                Offer: <span className="text-[#e7eee9] font-bold">{myOfferedProps.length} lands + {money(myOfferedCash)}</span> ➔ Demand: <span className="text-[#e7eee9] font-bold">{theirRequestedProps.length} lands + {money(theirRequestedCash)}</span>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMyOfferedProps([]);
+                    setTheirRequestedProps([]);
+                    setMyOfferedCash(0);
+                    setTheirRequestedCash(0);
+                    setTradeFeedback(null);
+                  }}
+                  className="px-3 py-2 rounded-xl border border-[#213026] bg-[#0c1510] text-xs text-[#9baaa1] hover:text-white"
+                >
+                  Clear
+                </button>
+                <button
+                  type="button"
+                  onClick={handleProposeTrade}
+                  className="px-5 py-2 rounded-xl bg-[#3cff5f] text-xs font-black text-[#050a08] shadow-[0_0_15px_rgba(60,255,95,0.4)] hover:bg-[#52ff71] transition-all flex items-center gap-1.5"
+                >
+                  <Handshake className="h-4 w-4" />
+                  <span>Propose Deal 🤝</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Incoming AI Trade Proposal Modal ── */}
+      {incomingTrade && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md overflow-hidden rounded-3xl border-2 border-amber-400/60 bg-[#0c1510] shadow-2xl p-6 text-center">
+            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#102a16] border border-[#2a5234] text-[#3cff5f]">
+              <Handshake className="h-7 w-7" />
+            </div>
+
+            <h3 className="text-lg font-black text-[#e7eee9]">
+              Trade Offer from {P[incomingTrade.fromPlayer].name}!
+            </h3>
+            <p className="mt-1 text-xs text-[#9baaa1]">
+              They want to make a deal to exchange properties:
+            </p>
+
+            <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-left">
+              <div className="rounded-xl border border-[#213026] bg-[#08100c] p-3">
+                <span className="font-bold text-[#3cff5f] block mb-1">They Offer You:</span>
+                <p className="font-mono text-sm text-[#e7eee9]">
+                  {incomingTrade.offeredProps.map((i) => SPACES[i].name).join(", ") || "No lands"}
+                </p>
+                {incomingTrade.offeredCash > 0 && (
+                  <span className="font-mono text-xs text-[#3cff5f] block mt-1 font-bold">
+                    + {money(incomingTrade.offeredCash)} Cash
+                  </span>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-[#213026] bg-[#08100c] p-3">
+                <span className="font-bold text-amber-400 block mb-1">In Exchange For:</span>
+                <p className="font-mono text-sm text-[#e7eee9]">
+                  {incomingTrade.requestedProps.map((i) => SPACES[i].name).join(", ")}
+                </p>
+                {incomingTrade.requestedCash > 0 && (
+                  <span className="font-mono text-xs text-amber-400 block mt-1 font-bold">
+                    + {money(incomingTrade.requestedCash)} Cash
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  executeTrade(
+                    incomingTrade.fromPlayer,
+                    0,
+                    incomingTrade.offeredProps,
+                    incomingTrade.requestedProps,
+                    incomingTrade.offeredCash,
+                    incomingTrade.requestedCash
+                  );
+                  setIncomingTrade(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-[#3cff5f] text-xs font-black text-[#050a08] shadow-[0_0_15px_rgba(60,255,95,0.4)] hover:bg-[#52ff71] transition-all"
+              >
+                Accept Deal 🤝
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  addLog(`❌ You rejected ${P[incomingTrade.fromPlayer].short}'s trade offer.`);
+                  setIncomingTrade(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl border border-white/15 bg-[#080e0b] text-xs font-bold text-[#9baaa1] hover:text-white transition-all"
+              >
+                Decline ❌
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Winner overlay */}
       {winner !== null && (
@@ -1461,6 +2188,7 @@ export default function MonopolyTycoon() {
           </div>
         </div>
       )}
+
       {/* Title Deed Inspection Modal */}
       {inspectSpace !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-in fade-in duration-200">
@@ -1546,7 +2274,7 @@ export default function MonopolyTycoon() {
 
                   {sp.house && (
                     <div className="flex justify-between border-t border-[#213026] pt-1.5 text-[11px]">
-                      <span className="text-[#9baaa1]">House & Hotel Cost:</span>
+                      <span className="text-[#9baaa1]">House &amp; Hotel Cost:</span>
                       <span className="font-mono text-[#3cff5f]">{money(sp.house)} each</span>
                     </div>
                   )}
@@ -1561,11 +2289,48 @@ export default function MonopolyTycoon() {
                   </div>
                 </div>
 
-                <div className="p-3 bg-[#080e0b] border-t border-[#213026]">
+                {/* Direct Actions in Modal (Sell House / Sell Property / Build) */}
+                <div className="p-3 bg-[#080e0b] border-t border-[#213026] space-y-2">
+                  {owner === 0 && lvl > 0 && sp.house && (
+                    <button
+                      type="button"
+                      onClick={() => sellHouse(0, inspectSpace)}
+                      className="w-full py-2 rounded-xl bg-amber-500/10 border border-amber-500/40 text-xs font-bold text-amber-300 hover:bg-amber-500/20 cursor-pointer"
+                    >
+                      Sell 1 House (+{money(Math.floor(sp.house * 0.5))})
+                    </button>
+                  )}
+
+                  {owner === 0 && lvl === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => sellPropertyToBank(0, inspectSpace)}
+                      className="w-full py-2 rounded-xl bg-red-500/10 border border-red-500/40 text-xs font-bold text-red-300 hover:bg-red-500/20 cursor-pointer"
+                    >
+                      Sell Property to Bank (+{money(Math.floor((sp.price ?? 100) * 0.6))})
+                    </button>
+                  )}
+
+                  {owner !== null && owner !== 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTradeTarget(owner);
+                        setTheirRequestedProps([inspectSpace]);
+                        setTradeOpen(true);
+                        setInspectSpace(null);
+                      }}
+                      className="w-full py-2 rounded-xl bg-[#102a16] border border-[#2a5234] text-xs font-bold text-[#3cff5f] hover:bg-[#16381e] cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <Handshake className="h-3.5 w-3.5" />
+                      <span>Trade with {P[owner].short} for this Land</span>
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     onClick={() => setInspectSpace(null)}
-                    className="w-full py-2 rounded-xl bg-[#102a16] border border-[#2a5234] text-xs font-bold text-[#3cff5f] hover:bg-[#16381e] cursor-pointer"
+                    className="w-full py-1.5 rounded-xl border border-white/10 text-xs text-[#8ea396] hover:text-white cursor-pointer"
                   >
                     Close Deed
                   </button>
