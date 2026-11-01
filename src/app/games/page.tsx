@@ -15,6 +15,23 @@ import {
   Zap,
   Bot,
 } from "lucide-react";
+import {
+  LudoThumbnail,
+  MonopolyThumbnail,
+  ChessThumbnail,
+  CarromThumbnail,
+  UnoThumbnail,
+  ArcadeThumbnail,
+} from "@/components/games/GameThumbnails";
+
+const THUMBNAILS: Record<string, React.ReactNode> = {
+  ludo: <LudoThumbnail />,
+  monopoly: <MonopolyThumbnail />,
+  chess: <ChessThumbnail />,
+  carrom: <CarromThumbnail />,
+  uno: <UnoThumbnail />,
+  tictactoe: <ArcadeThumbnail />,
+};
 
 export const metadata: Metadata = {
   title: "Online Multiplayer Games Arena — Play Ludo, Monopoly & Board Games Free | CompX Orbit",
@@ -238,13 +255,11 @@ export default function GamesHubPage() {
             <span className="text-xs font-mono text-[#9baaa1]">6 Multiplayer Titles</span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
             {FEATURED_GAMES.map((game) => (
               <div
                 key={game.id}
-                className={`group relative rounded-3xl border border-[#213026] bg-[#0c1510] hover:border-[#3cff5f]/60 p-6 sm:p-8 transition-all duration-300 flex flex-col justify-between overflow-hidden shadow-xl hover:shadow-[#3cff5f]/10 ${
-                  game.isLive ? "hover:-translate-y-1" : "opacity-90"
-                }`}
+                className="group relative rounded-3xl border border-[#213026] bg-[#0c1510] hover:border-[#3cff5f]/60 p-5 sm:p-6 transition-all duration-300 flex flex-col justify-between overflow-hidden shadow-xl hover:shadow-[#3cff5f]/15 hover:-translate-y-1.5"
               >
                 {/* Background Accent Gradient */}
                 <div
@@ -252,24 +267,31 @@ export default function GamesHubPage() {
                 />
 
                 <div className="relative z-10 space-y-4">
-                  {/* Top Tags */}
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-3xl">{game.icon}</span>
-                    <span
-                      className={`rounded-full px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-wider border ${game.badgeColor}`}
-                    >
-                      {game.badge}
-                    </span>
-                  </div>
+                  {/* Visual Eye-Catching Showcase Thumbnail Banner */}
+                  <Link href={game.href} className="block relative overflow-hidden rounded-2xl cursor-pointer shadow-md">
+                    {THUMBNAILS[game.id]}
+                  </Link>
 
+                  {/* Title & Metadata */}
                   <div>
-                    <span className="text-xs font-mono text-[#9baaa1] uppercase tracking-wider">
-                      {game.category} • {game.players}
-                    </span>
-                    <h3 className="text-2xl font-black text-white mt-1 group-hover:text-[#3cff5f] transition-colors">
-                      {game.title}
-                    </h3>
-                    <p className="text-xs text-[#3cff5f] font-medium mt-0.5 mb-2">
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span className="text-[11px] font-mono text-[#9baaa1] uppercase tracking-wider">
+                        {game.category} • {game.players}
+                      </span>
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider border ${game.badgeColor}`}
+                      >
+                        {game.badge}
+                      </span>
+                    </div>
+
+                    <Link href={game.href} className="block group-hover:text-[#3cff5f] transition-colors">
+                      <h3 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
+                        <span>{game.title}</span>
+                      </h3>
+                    </Link>
+
+                    <p className="text-xs text-[#3cff5f] font-semibold mt-0.5 mb-2">
                       {game.bnTitle}
                     </p>
                     <p className="text-xs sm:text-sm text-[#9baaa1] leading-relaxed">
@@ -278,26 +300,25 @@ export default function GamesHubPage() {
                   </div>
                 </div>
 
-                {/* Bottom Action */}
-                <div className="relative z-10 pt-6 mt-6 border-t border-[#1f2d24] flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs text-[#62776a] font-mono">
+                {/* Bottom Action Bar */}
+                <div className="relative z-10 pt-5 mt-5 border-t border-[#1f2d24] flex items-center justify-between gap-3">
+                  <Link
+                    href={`${game.href}?mode=room`}
+                    className="inline-flex items-center gap-1.5 text-xs font-mono text-[#9baaa1] hover:text-[#3cff5f] transition-colors cursor-pointer"
+                    title="Create Private Room with Code"
+                  >
                     <Users className="h-3.5 w-3.5 text-[#3cff5f]" />
-                    <span>Free Room Sharing</span>
-                  </div>
+                    <span>Create Room</span>
+                  </Link>
 
-                  {game.isLive ? (
-                    <Link
-                      href={game.href}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-[#3cff5f] text-[#050a08] px-4 py-2 text-xs font-bold hover:bg-[#52ff71] transition-all shadow-md shadow-[#3cff5f]/20"
-                    >
-                      <span>Play Now</span>
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </Link>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-[#080e0b] text-[#9baaa1] px-4 py-2 text-xs font-bold">
-                      <span>In Development</span>
-                    </span>
-                  )}
+                  <Link
+                    href={game.href}
+                    className="inline-flex items-center gap-2 rounded-2xl bg-[#3cff5f] text-[#050a08] px-5 py-2.5 text-xs font-black hover:bg-[#52ff71] transition-all shadow-md shadow-[#3cff5f]/25 cursor-pointer"
+                  >
+                    <Play className="h-3.5 w-3.5 fill-current" />
+                    <span>Play Match</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
                 </div>
               </div>
             ))}
