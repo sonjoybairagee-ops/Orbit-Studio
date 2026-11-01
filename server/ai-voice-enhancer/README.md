@@ -4,7 +4,34 @@ This AI microservice runs real-time deep neural voice enhancement and noise erad
 
 ---
 
-## 🚀 Option 1: Free Cloud Deployment on Hugging Face Spaces (Recommended — 0$ Cost)
+## ⚡ Option 1: 100% Serverless GPU Deployment on Modal.com (Scale-to-Zero, $0 Idle Cost)
+
+Modal allows running PyTorch + GPU completely serverless. It scales to **0 instances** when nobody is using it ($0 cost), and spins up automatically in milliseconds when an audio file arrives!
+
+### 3-Step Setup:
+1. Install Modal CLI:
+   ```bash
+   pip install modal
+   ```
+2. Authenticate (free account gives $30/month free credits):
+   ```bash
+   modal setup
+   ```
+3. Deploy the serverless function:
+   ```bash
+   modal deploy modal_app.py
+   ```
+4. Modal will output a permanent HTTPS endpoint URL:
+   `https://<your-username>--orbit-ai-voice-enhancer-process-audio.modal.run`
+5. In your Vercel Environment Variables (or Next.js `.env.local`), add:
+   ```env
+   AI_VOICE_ENHANCE_URL=https://<your-username>--orbit-ai-voice-enhancer-process-audio.modal.run
+   ```
+6. Done! Your site now runs 100% serverless Adobe Podcast AI!
+
+---
+
+## 🚀 Option 2: Free Cloud Deployment on Hugging Face Spaces (0$ Cost)
 
 1. Create a free account at [huggingface.co](https://huggingface.co).
 2. Click **New Space** -> Choose **Docker** -> Select **Blank**.
@@ -37,3 +64,4 @@ In Next.js `.env.local`:
 ```env
 AI_VOICE_ENHANCE_URL=http://localhost:7860
 ```
+

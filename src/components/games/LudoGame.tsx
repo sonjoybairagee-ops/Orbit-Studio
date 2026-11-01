@@ -585,18 +585,32 @@ export default function LudoGame() {
                       backgroundColor: style.hex,
                     }}
                   >
-                    <div className="w-full h-full grid grid-cols-2 gap-4 bg-white rounded-md p-2">
-                      {YARD_SLOTS.map((_, slot) => (
-                        <div
-                          key={slot}
-                          className="rounded-full flex items-center justify-center"
-                          style={{
-                            backgroundColor: `${style.hex}22`,
-                            border: `2px solid ${style.hex}55`,
-                          }}
-                        />
-                      ))}
-                    </div>
+                    {(() => {
+                      // Slot circles must sit exactly under the token overlay,
+                      // which positions tokens in board-cell coordinates.
+                      const PAD = 0.07 * 6; // 7% padding expressed in cell units
+                      const panel = 6 - PAD * 2;
+                      const toPct = (v: number) => (((v - PAD) / panel) * 100).toFixed(3) + "%";
+                      return (
+                        <div className="w-full h-full bg-white rounded-md relative">
+                          {YARD_SLOTS.map((slot) => (
+                            <div
+                              key={`${p}-${slot[0]}-${slot[1]}`}
+                              className="absolute rounded-full"
+                              style={{
+                                left: toPct(slot[1]),
+                                top: toPct(slot[0]),
+                                width: toPct(0.95),
+                                aspectRatio: "1 / 1",
+                                transform: "translate(-50%, -50%)",
+                                backgroundColor: `${style.hex}14`,
+                                border: `2px solid ${style.hex}33`,
+                              }}
+                            />
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
                 );
               })}
