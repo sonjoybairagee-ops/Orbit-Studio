@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { RotateCcw, Trophy, Play, Bot, User, SkipForward } from "lucide-react";
+import { RotateCcw, Trophy, Play, Bot, User, SkipForward, Volume2, VolumeX, Maximize2, Minimize2, Users, Flame } from "lucide-react";
+import { GameSound, fireVictoryConfetti } from "./GameAudio";
 
 /* ───────────────────────────────────────────────────────────────────────────
    UNO Blast — the classic colour-matching card game, you vs 3 AI bots.
@@ -95,6 +96,24 @@ type Round = ReturnType<typeof newRound>;
 
 export default function UnoBlast() {
   const [game, setGame] = useState<Round>(() => deal());
+  const [isMuted, setIsMuted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [gameMode, setGameMode] = useState<"ai" | "pass_play">("ai");
+  const [unoCalled, setUnoCalled] = useState<Record<number, boolean>>({});
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsMuted(GameSound.getMuted());
+  }, []);
+
+  const toggleMute = () => setIsMuted(GameSound.toggleMute());
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+    } else {
+      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+    }
+  };
 
   const gameRef = useRef(game);
   gameRef.current = game;
@@ -147,6 +166,7 @@ export default function UnoBlast() {
     if (hi === -1) return;
     const card = g.hands[p][hi];
     if (!playable(card, g.top!, g.color)) return;
+    GameSound.playCardSwoosh();
 
     g.hands[p] = g.hands[p].filter((c) => c.id !== cardId);
     g.top = card;
@@ -160,6 +180,8 @@ export default function UnoBlast() {
     // win check
     if (g.hands[p].length === 0) {
       g.over = p;
+      GameSound.playVictory();
+      fireVictoryConfetti();
       log(g, `🎉 ${P[p].short} wins the round!`);
       apply(g);
       return;
@@ -167,6 +189,7 @@ export default function UnoBlast() {
 
     let pauseTurn = false;
 
+    GameSound.playNeonMark(p === 0);
     if (card.value === "skip") {
       log(g, `${P[nextIndex(g, p)].short} gets skipped!`);
       pauseTurn = true;
@@ -199,6 +222,7 @@ export default function UnoBlast() {
     const g = gameRef.current;
     if (g.over !== null) return;
     drawCards(g, p, 1);
+    GameSound.playCardSwoosh();
     const drawn = g.hands[p][g.hands[p].length - 1];
     log(g, `${P[p].short} draws a card.`);
     if (playable(drawn, g.top!, g.color)) {

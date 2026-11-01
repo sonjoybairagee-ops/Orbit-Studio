@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Trophy, RotateCcw, Bot, User, X, Circle, Grid3x3, Columns3 } from "lucide-react";
+import { useEffect, useMemo, useState, useRef } from "react";
+import { Trophy, RotateCcw, Bot, User, X, Circle, Grid3x3, Columns3, Volume2, VolumeX, Maximize2, Minimize2, Users, Flame, Zap } from "lucide-react";
+import { GameSound, fireVictoryConfetti } from "./GameAudio";
 
 /* ───────────────────────────────────────────────────────────────────────────
    Glow Arcade — two quick casual classics in one component:
@@ -138,6 +139,24 @@ function c4GreatMove(b: (1 | 2 | null)[]): number {
 
 export default function GlowArcade() {
   const [mode, setMode] = useState<Mode>("ttt");
+  const [playMode, setPlayMode] = useState<"ai" | "pass_play">("ai");
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
+  const [isMuted, setIsMuted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsMuted(GameSound.getMuted());
+  }, []);
+
+  const toggleMute = () => setIsMuted(GameSound.toggleMute());
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+    } else {
+      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+    }
+  };
 
   /* ttt state */
   const [ttt, setTtt] = useState<Mark[]>(Array(9).fill(null));
@@ -164,6 +183,7 @@ export default function GlowArcade() {
       const move = tttBest([...ttt]);
       const nb = [...ttt];
       nb[move] = "O";
+      GameSound.playNeonMark(false);
       setTtt(nb);
     }, 450);
     return () => clearTimeout(t);
@@ -175,6 +195,7 @@ export default function GlowArcade() {
     const w = tttWinner(ttt);
     if (w) {
       const who = w.mark === "X" ? "you" : "ai";
+      if (who === "you") { GameSound.playVictory(); fireVictoryConfetti(); }
       setTttOver({ who });
       setTttScore((s) => (who === "you" ? { ...s, you: s.you + 1 } : { ...s, ai: s.ai + 1 }));
     } else if (ttt.every(Boolean)) {
@@ -195,6 +216,7 @@ export default function GlowArcade() {
       if (idx === -1) return;
       const nb = [...c4];
       nb[idx] = 2;
+      GameSound.playTokenStep();
       setC4(nb);
     }, 500);
     return () => clearTimeout(t);
@@ -206,6 +228,7 @@ export default function GlowArcade() {
     const w = c4Winner(c4);
     if (w) {
       const who = w.who === 1 ? "you" : "ai";
+      if (who === "you") { GameSound.playVictory(); fireVictoryConfetti(); }
       setC4Over({ who });
       setC4Score((s) => (who === "you" ? { ...s, you: s.you + 1 } : { ...s, ai: s.ai + 1 }));
     } else if (c4.every((v) => v !== null)) {
@@ -218,6 +241,7 @@ export default function GlowArcade() {
     if (ttt[i] || tttOver || mode !== "ttt") return;
     const nb = [...ttt];
     nb[i] = "X";
+    GameSound.playNeonMark(true);
     setTtt(nb);
   };
 

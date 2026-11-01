@@ -10,7 +10,14 @@ import {
   Star,
   Crown,
   Play,
+  Volume2,
+  VolumeX,
+  Maximize2,
+  Minimize2,
+  Users,
+  Swords,
 } from "lucide-react";
+import { GameSound, fireVictoryConfetti } from "./GameAudio";
 
 /* ────────────────────────────────────────────────────────────────────────────
    Ludo Engine — classic 15×15 board, full traditional rules
@@ -227,6 +234,28 @@ export default function LudoGame() {
   const [message, setMessage] = useState("Roll a 6 to launch your first token!");
   const [lastMoved, setLastMoved] = useState<string | null>(null);
 
+  // New audio, fullscreen, and game mode state
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [playMode, setPlayMode] = useState<"ai_4" | "pass_4" | "duel_2">("ai_4");
+
+  useEffect(() => {
+    setIsMuted(GameSound.getMuted());
+  }, []);
+
+  const toggleMute = () => {
+    setIsMuted(GameSound.toggleMute());
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+    } else {
+      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+    }
+  };
+
   const rollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -333,17 +362,23 @@ export default function LudoGame() {
 
       if (finishedCount === 4) {
         setWinner(p);
+        GameSound.playVictory();
+        fireVictoryConfetti();
         setMessage(`🏆 ${pieceName} wins! All four tokens are home.`);
       } else if (captured > 0) {
+        GameSound.playCapture();
         setMessage(
           `${pieceName} captured ${P[capturedAt].name}'s token — back to the yard! Bonus roll earned.`
         );
-      } else if (to === TOTAL_STEPS) {
-        setMessage(`${pieceName} token made it home! Bonus roll earned.`);
-      } else if (from === -1) {
-        setMessage(`${pieceName} launched a new token onto the board.`);
-      } else if (d === 6) {
-        setMessage(`${pieceName} rolled a 6 — extra roll!`);
+      } else {
+        GameSound.playTokenStep();
+        if (to === TOTAL_STEPS) {
+          setMessage(`${pieceName} token made it home! Bonus roll earned.`);
+        } else if (from === -1) {
+          setMessage(`${pieceName} launched a new token onto the board.`);
+        } else if (d === 6) {
+          setMessage(`${pieceName} rolled a 6 — extra roll!`);
+        }
       }
 
       setTokens(t);
@@ -356,11 +391,12 @@ export default function LudoGame() {
       if (extra) {
         // Same player rolls again (dice cleared above)
       } else {
-        setTurn(((turn + 1) % 4));
+        const next = playMode === "duel_2" ? (turn === 0 ? 2 : 0) : (turn + 1) % 4;
+        setTurn(next);
         setSixChain(0);
       }
     },
-    [tokens, turn, isSafeRing]
+    [tokens, turn, isSafeRing, playMode]
   );
 
   const nextTurnNoMoves = useCallback(() => {
@@ -368,12 +404,14 @@ export default function LudoGame() {
     setPhase("idle");
     setDice(null);
     setSixChain(0);
-    setTurn((t) => (t + 1) % 4);
-  }, [turn, dice]);
+    const next = playMode === "duel_2" ? (turn === 0 ? 2 : 0) : (turn + 1) % 4;
+    setTurn(next);
+  }, [turn, dice, playMode]);
 
   /* ── Rolling ── */
   const rollDie = useCallback(() => {
     if (rolling || dice !== null || phase !== "idle" || winner !== null) return;
+    GameSound.playDiceRoll();
     setRolling(true);
     const final = 1 + Math.floor(Math.random() * 6);
     let ticks = 0;
@@ -396,7 +434,8 @@ export default function LudoGame() {
           setSixChain(0);
           setPhase("idle");
           setDice(null);
-          setTurn((t) => (t + 1) % 4);
+          const next = playMode === "duel_2" ? (turn === 0 ? 2 : 0) : (turn + 1) % 4;
+          setTurn(next);
           return;
         }
 
@@ -411,13 +450,14 @@ export default function LudoGame() {
           setPhase("idle");
           setDice(null);
           setSixChain(0);
-          addTimer(setTimeout(() => setTurn((t) => (t + 1) % 4), 1000));
+          const next = playMode === "duel_2" ? (turn === 0 ? 2 : 0) : (turn + 1) % 4;
+          addTimer(setTimeout(() => setTurn(next), 1000));
         } else {
           setPhase("choose");
         }
       }
     }, 70) as unknown as ReturnType<typeof setTimeout>;
-  }, [rolling, dice, phase, winner, sixChain, turn, tokens, canMove]);
+  }, [rolling, dice, phase, winner, sixChain, turn, tokens, canMove, playMode]);
 
   /* ── AI brain ── */
   const aiPick = useCallback(
@@ -475,8 +515,10 @@ export default function LudoGame() {
   );
 
   /* ── Human roll handler ── */
+  const isCurrentHuman = playMode === "pass_4" || turn === 0;
+
   const handleRollClick = () => {
-    if (turn !== 0) return;
+    if (!isCurrentHuman) return;
     rollDie();
   };
 
@@ -485,7 +527,9 @@ export default function LudoGame() {
     if (winner !== null || rolling) return;
     let t: ReturnType<typeof setTimeout> | null = null;
 
-    if (turn !== 0) {
+    const isBot = playMode === "pass_4" ? false : turn !== 0;
+
+    if (isBot) {
       if (phase === "idle" && dice === null) {
         t = setTimeout(() => rollDie(), 850);
       } else if (phase === "choose" && dice !== null && movablePieces.length > 0) {
@@ -498,7 +542,7 @@ export default function LudoGame() {
       if (t) clearTimeout(t);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [turn, phase, dice, rolling, winner, movablePieces.length]);
+  }, [turn, phase, dice, movablePieces.length, winner, rolling, playMode]);
 
   /* ── Geometry ── */
   const pct = (v: number) => (v / 15) * 100;
@@ -602,30 +646,115 @@ export default function LudoGame() {
   };
 
   const turnLabel =
-    turn === 0 ? "Your Turn (Red)" : `AI ${P[turn].name}'s Turn`;
+    playMode === "pass_4"
+      ? `${P[turn].name}'s Turn (Player ${turn + 1})`
+      : turn === 0
+      ? "Your Turn (Red)"
+      : `AI ${P[turn].name}'s Turn`;
 
   return (
-    <div className="w-full">
+    <div ref={containerRef} className="w-full select-none">
       {/* Header row */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#213026] bg-[#080e0b] p-3.5 sm:p-4">
         <div>
-          <h2 className="text-base sm:text-lg font-bold text-[#e7eee9] flex items-center gap-2">
+          <h2 className="flex items-center gap-2 text-base font-bold text-[#e7eee9] sm:text-lg">
             <Dices className="h-5 w-5 text-[#3cff5f]" />
-            <span>Classic Ludo — 4 Player Board</span>
-            <span className="rounded-full bg-[#102a16] border border-[#2a5234] px-2.5 py-0.5 text-[10px] text-[#3cff5f] font-mono">
-              You = Red
+            <span>Classic Ludo Championship</span>
+            <span
+              className="rounded-full border px-2.5 py-0.5 font-mono text-[10px] font-bold"
+              style={{
+                borderColor: `${P[turn].hex}66`,
+                backgroundColor: `${P[turn].hex}18`,
+                color: P[turn].hex,
+              }}
+            >
+              {P[turn].name} Active
             </span>
           </h2>
-          <p className="text-xs text-[#9baaa1] mt-0.5">{turnLabel} · {message}</p>
+          <p className="mt-0.5 text-xs text-[#9baaa1]">
+            {turnLabel} · {message}
+          </p>
         </div>
-        <button
-          type="button"
-          onClick={resetGame}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-[#102a16] px-3.5 py-2 text-xs font-semibold text-[#3cff5f] border border-[#2a5234] hover:bg-[#16381e] transition-colors cursor-pointer"
-        >
-          <RotateCcw className="h-3.5 w-3.5" />
-          <span>Restart</span>
-        </button>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Mode Selector */}
+          <div className="inline-flex rounded-xl border border-[#213026] bg-[#0c1510] p-1 text-xs">
+            <button
+              type="button"
+              onClick={() => {
+                setPlayMode("ai_4");
+                resetGame();
+              }}
+              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 font-semibold transition-all cursor-pointer ${
+                playMode === "ai_4"
+                  ? "bg-[#3cff5f] text-[#050a08]"
+                  : "text-[#9baaa1] hover:text-[#e7eee9]"
+              }`}
+            >
+              <Bot className="h-3.5 w-3.5" />
+              <span>vs AI</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPlayMode("pass_4");
+                resetGame();
+              }}
+              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 font-semibold transition-all cursor-pointer ${
+                playMode === "pass_4"
+                  ? "bg-[#3cff5f] text-[#050a08]"
+                  : "text-[#9baaa1] hover:text-[#e7eee9]"
+              }`}
+            >
+              <Users className="h-3.5 w-3.5" />
+              <span>Pass & Play</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPlayMode("duel_2");
+                resetGame();
+              }}
+              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 font-semibold transition-all cursor-pointer ${
+                playMode === "duel_2"
+                  ? "bg-[#3cff5f] text-[#050a08]"
+                  : "text-[#9baaa1] hover:text-[#e7eee9]"
+              }`}
+            >
+              <Swords className="h-3.5 w-3.5" />
+              <span>1v1 Duel</span>
+            </button>
+          </div>
+
+          {/* Sound Mute Toggle */}
+          <button
+            type="button"
+            onClick={toggleMute}
+            className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#213026] bg-[#0c1510] text-[#9baaa1] hover:text-[#e7eee9] transition-colors cursor-pointer"
+            title={isMuted ? "Unmute Sound" : "Mute Sound"}
+          >
+            {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4 text-[#3cff5f]" />}
+          </button>
+
+          {/* Fullscreen Toggle */}
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#213026] bg-[#0c1510] text-[#9baaa1] hover:text-[#e7eee9] transition-colors cursor-pointer"
+            title="Toggle Fullscreen"
+          >
+            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </button>
+
+          <button
+            type="button"
+            onClick={resetGame}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-[#2a5234] bg-[#102a16] px-3.5 py-2 text-xs font-semibold text-[#3cff5f] transition-colors hover:bg-[#16381e]"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Restart</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-6 items-start">
@@ -791,7 +920,7 @@ export default function LudoGame() {
                 const size = (1.15 * scale * 100) / 15;
                 const isMovable =
                   tok.p === turn && dice !== null && movablePieces.includes(tok.piece) && tokens[tok.p][tok.piece] !== TOTAL_STEPS;
-                const clickable = isMovable && turn === 0;
+                const clickable = isMovable && isCurrentHuman;
                 return (
                   <button
                     type="button"
@@ -838,11 +967,17 @@ export default function LudoGame() {
             <button
               type="button"
               onClick={handleRollClick}
-              disabled={turn !== 0 || rolling || dice !== null || phase !== "idle" || winner !== null}
+              disabled={!isCurrentHuman || rolling || dice !== null || phase !== "idle" || winner !== null}
               className="inline-flex items-center gap-2 rounded-2xl bg-[#3cff5f] px-6 py-3 text-sm font-bold text-[#050a08] hover:bg-[#48ff69] transition-all shadow-lg shadow-[#3cff5f]/20 disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
             >
               <Dices className={`h-5 w-5 ${rolling ? "animate-spin" : ""}`} />
-              <span>{rolling ? "Rolling…" : turn === 0 ? "Roll Dice" : "AI is thinking…"}</span>
+              <span>
+                {rolling
+                  ? "Rolling…"
+                  : isCurrentHuman
+                  ? `Roll Dice (${P[turn].name})`
+                  : `AI ${P[turn].name} is thinking…`}
+              </span>
             </button>
           </div>
         </div>

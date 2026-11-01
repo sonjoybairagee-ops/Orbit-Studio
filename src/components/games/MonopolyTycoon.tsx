@@ -11,7 +11,14 @@ import {
   Car,
   Siren,
   Play,
+  Volume2,
+  VolumeX,
+  Maximize2,
+  Minimize2,
+  Zap,
+  X,
 } from "lucide-react";
+import { GameSound, fireVictoryConfetti } from "./GameAudio";
 import { DiceCube, Pawn } from "./GameTokens";
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -230,6 +237,24 @@ export default function MonopolyTycoon() {
   const [card, setCard] = useState<{ kind: string; text: string } | null>(null);
   const [winner, setWinner] = useState<number | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
+  const [inspectSpace, setInspectSpace] = useState<number | null>(null);
+  const [fastAi, setFastAi] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsMuted(GameSound.getMuted());
+  }, []);
+
+  const toggleMute = () => setIsMuted(GameSound.toggleMute());
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+    } else {
+      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+    }
+  };
   const [log, setLog] = useState<string[]>([
     "Welcome to Empire City! Roll the dice to start.",
   ]);
@@ -277,6 +302,8 @@ export default function MonopolyTycoon() {
     const alive = aliveAfter();
     if (alive.length === 1 && winner === null) {
       setWinner(alive[0].id);
+      GameSound.playVictory();
+      fireVictoryConfetti();
       setLog((l) => [`${P[alive[0].id].short} owns Empire City! 🏆`, ...l]);
     }
   };
@@ -403,7 +430,8 @@ export default function MonopolyTycoon() {
       const arr = snapPlayers();
       arr[p].pos = pos;
       setP(arr);
-      timers.current.push(setTimeout(tick, 170));
+      GameSound.playTokenStep();
+      timers.current.push(setTimeout(tick, fastAi && P[p].bot ? 85 : 170));
     };
     tick();
   };
@@ -505,6 +533,7 @@ export default function MonopolyTycoon() {
     deedsNow.owners[si] = p;
     setP(arr);
     setD(deedsNow);
+    GameSound.playCashRegister();
     addLog(`🎩 ${P[p].short} bought ${sp.name} for ${money(sp.price!)}.`);
     setPendingBuy(null);
     setPhase("idle");
@@ -536,7 +565,10 @@ export default function MonopolyTycoon() {
           const rent = rentFor(pos, owner, a + b);
           addLog(`🏠 ${P[p].short} ${p === 0 ? "pay" : "pays"} ${money(rent)} rent to ${P[owner].short} (${sp.name}).`);
           const ok = payMoney(p, rent, owner, false);
-          if (ok) finishLanding(p, dbl);
+          if (ok) {
+            GameSound.playCashRegister();
+            finishLanding(p, dbl);
+          }
         }
         break;
       }
@@ -556,6 +588,7 @@ export default function MonopolyTycoon() {
           const arr = snapPlayers();
           arr[p].cash += pot;
           setP(arr);
+          GameSound.playCashRegister();
           addLog(`🚗 ${P[p].short} landed on Free Parking — wins the pot of ${money(pot)}!`);
           setPot(0);
         } else {
@@ -581,6 +614,7 @@ export default function MonopolyTycoon() {
 
   /* ── rolling ── */
   const spinThen = (onFinal: (a: number, b: number) => void) => {
+    GameSound.playDiceRoll();
     setRolling(true);
     const fa = 1 + Math.floor(Math.random() * 6);
     const fb = 1 + Math.floor(Math.random() * 6);
@@ -834,7 +868,7 @@ export default function MonopolyTycoon() {
       <div
         className="absolute inset-0 cursor-pointer hover:bg-[#00000008] transition-colors"
         style={{ transform: `rotate(${rotation[side]}deg)` }}
-        onClick={() => setSelected(i)}
+        onClick={() => { setSelected(i); setInspectSpace(i); }}
         title={`${sp.name}${sp.price ? ` — ${money(sp.price)}` : ""}${
           owner !== null && owner !== undefined ? ` — owned by ${P[owner].short}` : ""
         }`}
@@ -900,9 +934,9 @@ export default function MonopolyTycoon() {
 
 
   return (
-    <div className="w-full">
+    <div ref={containerRef} className="w-full select-none">
       {/* Header */}
-      <div className="mb-5 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#213026] bg-[#080e0b] p-3.5 sm:p-4">
         <div>
           <h2 className="flex items-center gap-2 text-base font-bold text-[#e7eee9] sm:text-lg">
             <span className="text-xl">🎩</span>
@@ -915,14 +949,51 @@ export default function MonopolyTycoon() {
             Classic 40-property board · buy, build, collect rent · bankrupt the bots!
           </p>
         </div>
-        <button
-          type="button"
-          onClick={resetGame}
-          className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-[#2a5234] bg-[#102a16] px-3.5 py-2 text-xs font-semibold text-[#3cff5f] transition-colors hover:bg-[#16381e]"
-        >
-          <RotateCcw className="h-3.5 w-3.5" />
-          <span>New Game</span>
-        </button>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Turbo AI toggle */}
+          <button
+            type="button"
+            onClick={() => setFastAi(!fastAi)}
+            className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+              fastAi
+                ? "border-[#3cff5f]/50 bg-[#102a16] text-[#3cff5f]"
+                : "border-[#213026] bg-[#0c1510] text-[#9baaa1] hover:text-[#e7eee9]"
+            }`}
+          >
+            <Zap className="h-3.5 w-3.5" />
+            <span>{fastAi ? "Turbo AI (Fast)" : "Normal Speed"}</span>
+          </button>
+
+          {/* Sound Mute Toggle */}
+          <button
+            type="button"
+            onClick={toggleMute}
+            className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#213026] bg-[#0c1510] text-[#9baaa1] hover:text-[#e7eee9] transition-colors cursor-pointer"
+            title={isMuted ? "Unmute Sound" : "Mute Sound"}
+          >
+            {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4 text-[#3cff5f]" />}
+          </button>
+
+          {/* Fullscreen Toggle */}
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#213026] bg-[#0c1510] text-[#9baaa1] hover:text-[#e7eee9] transition-colors cursor-pointer"
+            title="Toggle Fullscreen"
+          >
+            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </button>
+
+          <button
+            type="button"
+            onClick={resetGame}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-[#2a5234] bg-[#102a16] px-3.5 py-1.5 text-xs font-semibold text-[#3cff5f] transition-colors hover:bg-[#16381e]"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">New Game</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -1384,6 +1455,120 @@ export default function MonopolyTycoon() {
               <span>Play Again</span>
             </button>
           </div>
+        </div>
+      )}
+      {/* Title Deed Inspection Modal */}
+      {inspectSpace !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          {(() => {
+            const sp = SPACES[inspectSpace];
+            const owner = deeds.owners[inspectSpace];
+            const lvl = deeds.levels[inspectSpace];
+            const bandColor =
+              sp.type === "street" && sp.group
+                ? GROUP_META[sp.group]
+                : sp.type === "rail"
+                ? GROUP_META.rail
+                : sp.type === "utility"
+                ? GROUP_META.utility
+                : "#213026";
+            return (
+              <div className="relative w-full max-w-xs overflow-hidden rounded-2xl border-2 border-[#3cff5f]/30 bg-[#0c1510] shadow-2xl">
+                {/* Header Band */}
+                <div
+                  className="p-4 text-center text-white relative"
+                  style={{ backgroundColor: bandColor }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setInspectSpace(null)}
+                    className="absolute top-2 right-2 p-1 rounded-full bg-black/30 hover:bg-black/50 text-white cursor-pointer"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                  <span className="text-[10px] font-mono uppercase tracking-widest opacity-80 block">
+                    Title Deed
+                  </span>
+                  <h3 className="text-base font-black uppercase tracking-tight">
+                    {sp.name}
+                  </h3>
+                </div>
+
+                {/* Deed Details */}
+                <div className="p-4 text-xs space-y-2.5 text-[#e7eee9]">
+                  {sp.price && (
+                    <div className="flex justify-between border-b border-[#213026] pb-1.5">
+                      <span className="text-[#9baaa1]">Purchase Price:</span>
+                      <span className="font-mono font-bold text-[#3cff5f]">{money(sp.price)}</span>
+                    </div>
+                  )}
+
+                  {sp.base !== undefined && (
+                    <div className="space-y-1 text-[11px] font-mono">
+                      <div className="flex justify-between">
+                        <span className="text-[#9baaa1]">Base Rent:</span>
+                        <span>{money(sp.base)}</span>
+                      </div>
+                      <div className="flex justify-between text-[#3cff5f]">
+                        <span>Full Color Group:</span>
+                        <span>{money(sp.base * 2)}</span>
+                      </div>
+                      {sp.ladder && (
+                        <>
+                          <div className="flex justify-between text-[#9baaa1]">
+                            <span>With 1 House:</span>
+                            <span>{money(sp.ladder[0])}</span>
+                          </div>
+                          <div className="flex justify-between text-[#9baaa1]">
+                            <span>With 2 Houses:</span>
+                            <span>{money(sp.ladder[1])}</span>
+                          </div>
+                          <div className="flex justify-between text-[#9baaa1]">
+                            <span>With 3 Houses:</span>
+                            <span>{money(sp.ladder[2])}</span>
+                          </div>
+                          <div className="flex justify-between text-[#9baaa1]">
+                            <span>With 4 Houses:</span>
+                            <span>{money(sp.ladder[3])}</span>
+                          </div>
+                          <div className="flex justify-between text-amber-400 font-bold">
+                            <span>With HOTEL:</span>
+                            <span>{money(sp.ladder[4])}</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {sp.house && (
+                    <div className="flex justify-between border-t border-[#213026] pt-1.5 text-[11px]">
+                      <span className="text-[#9baaa1]">House & Hotel Cost:</span>
+                      <span className="font-mono text-[#3cff5f]">{money(sp.house)} each</span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between border-t border-[#213026] pt-1.5 text-[11px]">
+                    <span className="text-[#9baaa1]">Current Status:</span>
+                    <span className="font-bold">
+                      {owner === null
+                        ? "Unowned"
+                        : `Owned by ${P[owner].short} (${lvl === 5 ? "Hotel" : `${lvl} Houses`})`}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-[#080e0b] border-t border-[#213026]">
+                  <button
+                    type="button"
+                    onClick={() => setInspectSpace(null)}
+                    className="w-full py-2 rounded-xl bg-[#102a16] border border-[#2a5234] text-xs font-bold text-[#3cff5f] hover:bg-[#16381e] cursor-pointer"
+                  >
+                    Close Deed
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>
