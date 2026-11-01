@@ -76,6 +76,145 @@ type Tokens = number[][]; // [player][piece] → -1 yard | 0..56 step
 const initialTokens = (): Tokens =>
   [0, 1, 2, 3].map(() => [-1, -1, -1, -1]);
 
+/* ── Realistic 3D pawn (classic ludo token shape) ── */
+function Pawn({ p, highlight }: { p: number; highlight?: boolean }) {
+  const c = P[p];
+  const gid = `pawn-grad-${p}`;
+  const sid = `pawn-stem-${p}`;
+  return (
+    <svg
+      viewBox="0 0 100 110"
+      className="h-full w-full overflow-visible"
+      style={{
+        filter: highlight
+          ? `drop-shadow(0 0 6px ${c.glow}) drop-shadow(0 5px 5px rgba(0,0,0,0.45))`
+          : "drop-shadow(0 4px 4px rgba(0,0,0,0.45))",
+      }}
+    >
+      <defs>
+        <radialGradient id={gid} cx="35%" cy="28%" r="80%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.85" />
+          <stop offset="22%" stopColor={c.hex} />
+          <stop offset="100%" stopColor={c.dark} />
+        </radialGradient>
+        <linearGradient id={sid} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor={c.dark} />
+          <stop offset="35%" stopColor={c.hex} />
+          <stop offset="60%" stopColor={c.hex} />
+          <stop offset="100%" stopColor={c.dark} />
+        </linearGradient>
+      </defs>
+      {/* contact shadow */}
+      <ellipse cx="50" cy="104" rx="24" ry="5.5" fill="#000000" opacity="0.3" />
+      {/* flared base */}
+      <path
+        d="M22 96 Q28 84 38 78 L62 78 Q72 84 78 96 Q78 102 70 102 L30 102 Q22 102 22 96 Z"
+        fill={`url(#${gid})`}
+        stroke={c.dark}
+        strokeWidth="2.5"
+      />
+      {/* neck / stem */}
+      <path
+        d="M38 78 Q46 60 47 48 L53 48 Q54 60 62 78 Z"
+        fill={`url(#${sid})`}
+        stroke={c.dark}
+        strokeWidth="2"
+      />
+      {/* collar */}
+      <ellipse cx="50" cy="78" rx="17" ry="5" fill={c.hex} opacity="0.9" />
+      {/* head sphere */}
+      <circle cx="50" cy="32" r="24" fill={`url(#${gid})`} stroke={c.dark} strokeWidth="2.5" />
+      {/* specular highlight */}
+      <ellipse cx="42" cy="24" rx="8" ry="5.5" fill="#ffffff" opacity="0.7" transform="rotate(-20 42 24)" />
+      <ellipse cx="55" cy="90" rx="10" ry="3" fill="#ffffff" opacity="0.35" />
+    </svg>
+  );
+}
+
+/* ── 3D tumbling dice cube ── */
+const CUBE_FACE: Record<number, string> = {
+  1: "rotateX(0deg) rotateY(0deg)",
+  2: "rotateY(-90deg)",
+  3: "rotateX(-90deg)",
+  4: "rotateX(90deg)",
+  5: "rotateY(90deg)",
+  6: "rotateY(180deg)",
+};
+const CUBE_FACES: { face: number; style: React.CSSProperties }[] = [
+  { face: 1, style: { transform: "translateZ(var(--hz))" } },
+  { face: 6, style: { transform: "rotateY(180deg) translateZ(var(--hz))" } },
+  { face: 2, style: { transform: "rotateY(90deg) translateZ(var(--hz))" } },
+  { face: 5, style: { transform: "rotateY(-90deg) translateZ(var(--hz))" } },
+  { face: 3, style: { transform: "rotateX(90deg) translateZ(var(--hz))" } },
+  { face: 4, style: { transform: "rotateX(-90deg) translateZ(var(--hz))" } },
+];
+
+function DiceCube({ value, size, color, rolling }: { value: number; size: number; color: string; rolling: boolean }) {
+  const half = size / 2;
+  const pips: Record<number, [number, number][]> = {
+    1: [[1, 1]],
+    2: [[0, 0], [2, 2]],
+    3: [[0, 0], [1, 1], [2, 2]],
+    4: [[0, 0], [0, 2], [2, 0], [2, 2]],
+    5: [[0, 0], [0, 2], [1, 1], [2, 0], [2, 2]],
+    6: [[0, 0], [0, 1], [0, 2], [2, 0], [2, 1], [2, 2]],
+  };
+  return (
+    <div style={{ width: size, height: size, perspective: size * 4.5 }}>
+      <div
+        className="relative"
+        style={{
+          width: size,
+          height: size,
+          transformStyle: "preserve-3d",
+          "--hz": `${half}px`,
+          transform: `rotateX(-14deg) rotateY(-18deg) ${CUBE_FACE[value] ?? ""}`,
+          transition: rolling
+            ? "transform 0.18s linear"
+            : "transform 0.9s cubic-bezier(0.18, 0.85, 0.28, 1.12)",
+        } as React.CSSProperties}
+      >
+        {CUBE_FACES.map(({ face, style }) => (
+          <div
+            key={face}
+            className="absolute inset-0 rounded-xl"
+            style={{
+              ...style,
+              backfaceVisibility: "hidden",
+              background:
+                "linear-gradient(145deg, #ffffff 0%, #f4f6f4 55%, #dfe5df 100%)",
+              boxShadow: `inset 0 0 10px rgba(0,0,0,0.10), inset 0 ${half * 0.12}px ${half * 0.18}px rgba(255,255,255,0.9), 0 0 1px rgba(0,0,0,0.3)`,
+              border: "1px solid rgba(0,0,0,0.15)",
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gridTemplateRows: "repeat(3, 1fr)",
+              padding: size * 0.14,
+            }}
+          >
+            {(pips[face] ?? []).map(([r, c], i) => (
+              <div
+                key={i}
+                className="flex items-center justify-center"
+                style={{ gridColumn: c + 1, gridRow: r + 1 }}
+              >
+                <div
+                  className="rounded-full"
+                  style={{
+                    width: "72%",
+                    aspectRatio: "1",
+                    background: `radial-gradient(circle at 38% 32%, ${color}cc 0%, ${color} 55%, ${color}dd 100%)`,
+                    boxShadow: "inset 0 1.5px 2.5px rgba(255,255,255,0.55), 0 1px 1.5px rgba(0,0,0,0.25)",
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function LudoGame() {
   const [tokens, setTokens] = useState<Tokens>(initialTokens);
   const [turn, setTurn] = useState(0);
@@ -462,33 +601,6 @@ export default function LudoGame() {
     return -1;
   };
 
-  const diceFaces: Record<number, number[]> = {
-    1: [4],
-    2: [0, 8],
-    3: [0, 4, 8],
-    4: [0, 2, 6, 8],
-    5: [0, 2, 4, 6, 8],
-    6: [0, 2, 3, 5, 6, 8],
-  };
-
-  const renderDice = (value: number, sizePx: number, color: string) => (
-    <div
-      className="grid grid-cols-3 grid-rows-3 gap-[8%] rounded-2xl bg-white border border-[#2a3a30] p-[12%] shadow-lg"
-      style={{ width: sizePx, height: sizePx }}
-    >
-      {Array.from({ length: 9 }).map((_, idx) => (
-        <div key={idx} className="flex items-center justify-center">
-          {diceFaces[value].includes(idx) && (
-            <div
-              className="rounded-full w-full h-full"
-              style={{ backgroundColor: color, aspectRatio: "1" }}
-            />
-          )}
-        </div>
-      ))}
-    </div>
-  );
-
   const turnLabel =
     turn === 0 ? "Your Turn (Red)" : `AI ${P[turn].name}'s Turn`;
 
@@ -520,8 +632,8 @@ export default function LudoGame() {
         {/* ── Board ── */}
         <div className="relative w-full max-w-[560px] mx-auto">
           <div
-            className="relative w-full rounded-2xl border-4 border-[#1d2b23] bg-white shadow-2xl overflow-hidden"
-            style={{ aspectRatio: "1 / 1" }}
+            className="relative w-full rounded-2xl border-4 border-[#16211b] bg-[#0c1510] shadow-2xl overflow-hidden"
+            style={{ aspectRatio: "1 / 1", boxShadow: "0 18px 45px rgba(0,0,0,0.6), 0 0 0 1px rgba(60,255,95,0.12)" }}
           >
             {/* Track cells */}
             <div
@@ -547,25 +659,36 @@ export default function LudoGame() {
                 const sp = startCellPlayer(r, c);
                 const stp = starCellPlayer(r, c);
                 let bg = "#ffffff";
+                let shadow =
+                  "inset 0 1.5px 0 rgba(255,255,255,0.8), inset 0 -2px 3px rgba(0,0,0,0.10)";
                 let content = null;
                 if (sp >= 0) {
-                  bg = P[sp].hex;
+                  bg = `linear-gradient(155deg, ${P[sp].hex} 0%, ${P[sp].dark} 100%)`;
+                  shadow =
+                    "inset 0 2px 0 rgba(255,255,255,0.35), inset 0 -3px 5px rgba(0,0,0,0.30)";
                 } else if (stp >= 0) {
                   content = (
                     <Star
                       className="h-[70%] w-[70%] absolute inset-0 m-auto fill-current"
-                      style={{ color: P[stp].hex }}
+                      style={{ color: P[stp].hex, filter: `drop-shadow(0 1px 1px rgba(0,0,0,0.35))` }}
                     />
                   );
                 } else if (homeP >= 0) {
-                  bg = P[homeP].hex;
+                  bg = `linear-gradient(180deg, ${P[homeP].hex} 0%, ${P[homeP].dark} 130%)`;
+                  shadow =
+                    "inset 0 2px 0 rgba(255,255,255,0.30), inset 0 -3px 5px rgba(0,0,0,0.25)";
                 }
 
                 return (
                   <div
                     key={idx}
-                    className="relative border border-[#d4d4d4]"
-                    style={{ backgroundColor: bg, gridColumn: c + 1, gridRow: r + 1 }}
+                    className="relative border border-[#c9cbc8]"
+                    style={{
+                      background: bg,
+                      gridColumn: c + 1,
+                      gridRow: r + 1,
+                      boxShadow: shadow,
+                    }}
                   >
                     {content}
                   </div>
@@ -592,7 +715,15 @@ export default function LudoGame() {
                       const panel = 6 - PAD * 2;
                       const toPct = (v: number) => (((v - PAD) / panel) * 100).toFixed(3) + "%";
                       return (
-                        <div className="w-full h-full bg-white rounded-md relative">
+                        <div
+                          className="w-full h-full rounded-md relative"
+                          style={{
+                            background:
+                              "linear-gradient(150deg, #ffffff 0%, #f5f7f5 60%, #e3e7e3 100%)",
+                            boxShadow:
+                              "inset 0 3px 6px rgba(0,0,0,0.22), inset 0 -2px 5px rgba(255,255,255,0.85)",
+                          }}
+                        >
                           {YARD_SLOTS.map((slot) => (
                             <div
                               key={`${p}-${slot[0]}-${slot[1]}`}
@@ -603,8 +734,10 @@ export default function LudoGame() {
                                 width: toPct(0.95),
                                 aspectRatio: "1 / 1",
                                 transform: "translate(-50%, -50%)",
-                                backgroundColor: `${style.hex}14`,
-                                border: `2px solid ${style.hex}33`,
+                                background: `radial-gradient(circle at 45% 40%, ${style.hex}0f 0%, ${style.hex}1f 65%, ${style.hex}30 100%)`,
+                                border: `2px solid ${style.hex}44`,
+                                boxShadow:
+                                  "inset 0 5px 8px rgba(0,0,0,0.16), inset 0 -2px 4px rgba(255,255,255,0.7)",
                               }}
                             />
                           ))}
@@ -636,8 +769,16 @@ export default function LudoGame() {
                   className="absolute inset-0"
                   style={{ background: P[3].hex, clipPath: "polygon(0 100%, 50% 50%, 100% 100%)" }}
                 />
-                <div className="absolute inset-[28%] rounded-full bg-white shadow-inner flex items-center justify-center">
-                  <Crown className="h-1/2 w-1/2 text-[#0c1510]/70" />
+                <div
+                  className="absolute inset-[28%] rounded-full flex items-center justify-center"
+                  style={{
+                    background:
+                      "radial-gradient(circle at 38% 30%, #ffffff 0%, #f2f4f2 55%, #d9ddd9 100%)",
+                    boxShadow:
+                      "inset 0 4px 8px rgba(0,0,0,0.28), inset 0 -3px 6px rgba(255,255,255,0.85), 0 3px 6px rgba(0,0,0,0.25)",
+                  }}
+                >
+                  <Crown className="h-1/2 w-1/2 m-auto text-[#a16207]" style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.3))" }} />
                 </div>
               </div>
             </div>
@@ -647,7 +788,7 @@ export default function LudoGame() {
               group.map((tok, si) => {
                 const off = OFFSETS[group.length - 1][Math.min(si, 3)];
                 const scale = group.length > 1 ? 0.62 : 1;
-                const size = (0.95 * scale * 100) / 15;
+                const size = (1.15 * scale * 100) / 15;
                 const isMovable =
                   tok.p === turn && dice !== null && movablePieces.includes(tok.piece) && tokens[tok.p][tok.piece] !== TOTAL_STEPS;
                 const clickable = isMovable && turn === 0;
@@ -655,8 +796,8 @@ export default function LudoGame() {
                   <button
                     type="button"
                     key={`${tok.p}-${tok.piece}`}
-                    className={`absolute rounded-full transition-all duration-300 ease-out ${
-                      isMovable ? "cursor-pointer animate-pulse" : "cursor-default"
+                    className={`absolute transition-all duration-300 ease-out ${
+                      isMovable ? "cursor-pointer hover:brightness-110" : "cursor-default"
                     }`}
                     style={{
                       left: `${pct(tok.xy[1] + off[1])}%`,
@@ -665,11 +806,7 @@ export default function LudoGame() {
                       height: `${size}%`,
                       transform: "translate(-50%, -50%)",
                       zIndex: isMovable ? 30 : 20,
-                      background: `radial-gradient(circle at 32% 30%, #ffffff88 0%, transparent 40%), radial-gradient(circle at 50% 62%, ${P[tok.p].dark} 0%, ${P[tok.p].hex} 55%)`,
-                      border: `2px solid ${isMovable ? "#ffffff" : P[tok.p].dark}`,
-                      boxShadow: isMovable
-                        ? `0 0 0 3px ${P[tok.p].glow}66, 0 4px 10px rgba(0,0,0,0.55)`
-                        : "0 3px 7px rgba(0,0,0,0.5)",
+                      filter: "none",
                     }}
                     onClick={() => {
                       if (clickable && !rolling && dice !== null) {
@@ -677,10 +814,23 @@ export default function LudoGame() {
                       }
                     }}
                     aria-label={`${P[tok.p].name} token ${tok.piece + 1}`}
-                  />
+                  >
+                    <Pawn p={tok.p} highlight={isMovable} />
+                  </button>
                 );
               })
             )}
+
+            {/* Glass gloss over the whole board surface */}
+            <div
+              className="absolute inset-0 pointer-events-none rounded-lg"
+              style={{
+                zIndex: 40,
+                background:
+                  "linear-gradient(125deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.05) 28%, transparent 45%, transparent 78%, rgba(0,0,0,0.06) 100%)",
+                boxShadow: "inset 0 2px 14px rgba(0,0,0,0.10)",
+              }}
+            />
           </div>
 
           {/* Roll button under board */}
@@ -705,7 +855,7 @@ export default function LudoGame() {
               {rolling ? "Rolling" : dice ? "Last Roll" : "Dice"}
             </span>
             <div className={rolling ? "animate-bounce" : ""}>
-              {renderDice(rolling ? rollFace : dice ?? rollFace, 72, P[turn].hex)}
+              <DiceCube value={rolling ? rollFace : dice ?? rollFace} size={74} color={P[turn].hex} rolling={rolling} />
             </div>
             <div className="text-center">
               <div
