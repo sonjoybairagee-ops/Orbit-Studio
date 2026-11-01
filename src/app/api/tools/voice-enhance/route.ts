@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60; // Allow up to 60s for deep neural AI models
 
-// Default fallback to active Cloudflare tunnel if not explicitly specified in env
-const DEFAULT_AI_URL = "https://logan-enters-restore-ste.trycloudflare.com";
+// Default fallback to active Cloudflare tunnel if explicitly specified in env
+const DEFAULT_AI_URL = "";
 
 // Check if AI service is configured and reachable
 export async function GET(req: NextRequest) {
