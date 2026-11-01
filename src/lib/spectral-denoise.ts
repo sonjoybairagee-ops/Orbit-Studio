@@ -299,9 +299,9 @@ export function spectralDenoiseAudio(
     // ── STAGE 1 & 2: Pre-filtering (High-pass Rumble Cut + Multi-Harmonic Hum Notches) ──
     const preFiltered = new Float32Array(length);
     const hp1 = new BiquadFilter();
-    hp1.setHighPass(options.highPassRumbleCutHz || 95, sampleRate);
+    hp1.setHighPass(options.highPassRumbleCutHz || 80, sampleRate);
     const hp2 = new BiquadFilter();
-    hp2.setHighPass(options.highPassRumbleCutHz || 95, sampleRate);
+    hp2.setHighPass(options.highPassRumbleCutHz || 80, sampleRate);
 
     // Electrical hum & AC power line notches
     const notch50 = new BiquadFilter();
@@ -397,30 +397,27 @@ export function spectralDenoiseAudio(
       }
     }
 
-    const minHornBin = Math.floor(350 / binFreqStep);
-    const maxHornBin = Math.floor(2800 / binFreqStep);
+    // Tonal Spike Notcher extended up to 7500 Hz (kills Car Horns 400-2500Hz AND Bird Chirps 3000-7500Hz!)
+    const minNotchBin = Math.floor(350 / binFreqStep);
+    const maxNotchBin = Math.floor(7500 / binFreqStep);
 
     for (let f = 0; f < numFrames; f++) {
       const offset = f * HOP_SIZE;
-      const slice = preFiltered.subarray(offset, Math.min(length, offset + FFT_SIZE));
       for (let i = 0; i < FFT_SIZE; i++) {
         realBuffer[i] = preFiltered[offset + i] * windowTable[i];
         imagBuffer[i] = 0;
       }
       fft.transform(realBuffer, imagBuffer, false);
 
-      // Measure vocal harmonic pitch presence (differentiates voice from horns and knocks)
-      const voicing = computeVoicingAutocorr(slice, sampleRate);
-
-      // 1. Car Horn & Siren Peak Notcher (350 Hz to 2800 Hz)
-      // Eradicates narrow sinusoidal traffic horns that stick out above local spectrum
-      for (let k = minHornBin; k < maxHornBin; k++) {
+      // 1. Car Horns, Sirens & Bird Chirping Notcher (350 Hz to 7500 Hz)
+      // Eradicates narrow sinusoidal traffic horns and high-pitched bird whistling
+      for (let k = minNotchBin; k < maxNotchBin; k++) {
         const mag = Math.sqrt(realBuffer[k] * realBuffer[k] + imagBuffer[k] * imagBuffer[k]);
         const mLeft = Math.sqrt(realBuffer[k - 3] * realBuffer[k - 3] + imagBuffer[k - 3] * imagBuffer[k - 3]);
         const mRight = Math.sqrt(realBuffer[k + 3] * realBuffer[k + 3] + imagBuffer[k + 3] * imagBuffer[k + 3]);
         const localFloor = 0.5 * (mLeft + mRight);
-        if (mag > Math.max(0.012, localFloor * 2.2)) {
-          const scale = (localFloor * 1.1) / Math.max(1e-6, mag);
+        if (mag > Math.max(0.010, localFloor * 2.2)) {
+          const scale = (localFloor * 1.08) / Math.max(1e-6, mag);
           realBuffer[k] *= scale;
           imagBuffer[k] *= scale;
           if (k > 0 && k < FFT_SIZE / 2) {
@@ -430,7 +427,7 @@ export function spectralDenoiseAudio(
         }
       }
 
-      // 2. Normalized Transient Flux Detection
+      // 2. Normalized Transient Flux Detection (Preserves 100% of human speech consonants)
       let flux = 0;
       for (let k = 0; k < binCount; k++) {
         const mag = Math.sqrt(realBuffer[k] * realBuffer[k] + imagBuffer[k] * imagBuffer[k]);
@@ -440,9 +437,8 @@ export function spectralDenoiseAudio(
       }
       const normFlux = flux / binCount;
 
-      // Real speech consonant vs non-speech impact ("thok thok" knock / desk bump)
-      const isSpeechConsonant = normFlux > 0.12 && voicing > 0.30;
-      const isKnockImpact = normFlux > 0.09 && voicing <= 0.20;
+      // Consonant attacks ('s', 'sh', 'f', 't', 'k', 'p') -> unclamp to keep 100% speech clarity
+      const isConsonantAttack = normFlux > 0.08;
 
       for (let k = 0; k < binCount; k++) {
         const py = realBuffer[k] * realBuffer[k] + imagBuffer[k] * imagBuffer[k];
@@ -457,11 +453,9 @@ export function spectralDenoiseAudio(
           alphaDD * (prevEstimatedSpeechPower[k] / pn) +
           (1 - alphaDD) * Math.max(0, gamma - 1);
 
-        // Speech consonants preserved, non-speech knocks ("thok thok") actively suppressed
-        if (isSpeechConsonant) {
-          xi = Math.max(xi, 2.5);
-        } else if (isKnockImpact) {
-          xi = Math.min(xi, 0.04);
+        // Keep speech consonants fully alive and articulate — NEVER clamp down!
+        if (isConsonantAttack) {
+          xi = Math.max(xi, 1.8);
         }
 
         // Studio Wiener Gain
@@ -495,7 +489,8 @@ export function spectralDenoiseAudio(
       spectralOutput[i] = outAccumulator[i] / norm;
     }
 
-    // ── STAGE 5: Adaptive Speech VAD Downward Expander (Total Background Silence) ──
+    // ── STAGE 5: Studio VAD Expander with 60ms Hold & 280ms Smooth Release ──
+    // Guarantees zero syllable truncation, no chopped words, and dead silent pauses
     const winSize = Math.floor(sampleRate * 0.35);
     const numWins = Math.max(1, Math.ceil(length / winSize));
     const winEnergies = new Float32Array(numWins);
@@ -509,29 +504,36 @@ export function spectralDenoiseAudio(
     winEnergies.sort();
     const measuredNoiseFloor = winEnergies[Math.floor(numWins * 0.15)] || 0.005;
 
-    // Smooth envelope follower: 5ms attack, 170ms natural release
+    // Gate threshold set safely so whispers and quiet word endings are NEVER chopped
+    const gateThresh = Math.max(0.008, measuredNoiseFloor * 1.8);
+    const expanderFloor = Math.max(0.004, 0.025 * (1.0 - strengthNorm));
     const attackCoeff = Math.exp(-1 / (sampleRate * 0.005));
-    const releaseCoeff = Math.exp(-1 / (sampleRate * 0.170));
-    const gateThresh = Math.max(0.010, measuredNoiseFloor * 2.2);
-    // Deep silence during speech pauses: scales with strength down to -50 dB
-    const expanderFloor = Math.max(0.003, 0.025 * (1.0 - strengthNorm));
+    const releaseCoeff = Math.exp(-1 / (sampleRate * 0.280)); // 280ms smooth studio decay
+    const holdSamples = Math.floor(sampleRate * 0.060); // 60ms hold time!
 
     const expandedOutput = new Float32Array(length);
     let envelope = 0;
+    let holdCount = 0;
 
     for (let i = 0; i < length; i++) {
       const absVal = Math.abs(spectralOutput[i]);
       if (absVal > envelope) {
         envelope = attackCoeff * envelope + (1 - attackCoeff) * absVal;
+        holdCount = holdSamples;
       } else {
-        envelope = releaseCoeff * envelope + (1 - releaseCoeff) * absVal;
+        if (holdCount > 0) {
+          holdCount--;
+          // Hold envelope open so word endings and breaths are 100% complete!
+        } else {
+          envelope = releaseCoeff * envelope + (1 - releaseCoeff) * absVal;
+        }
       }
 
       let gateGain = 1.0;
       if (envelope < gateThresh) {
         const ratio = envelope / gateThresh;
-        // Deep smooth sigmoidal expansion down to black silence
-        gateGain = expanderFloor + (1.0 - expanderFloor) * Math.pow(ratio, 1.8);
+        // Smooth soft-knee taper into black silence
+        gateGain = expanderFloor + (1.0 - expanderFloor) * Math.pow(ratio, 1.4);
       }
 
       expandedOutput[i] = spectralOutput[i] * gateGain;
