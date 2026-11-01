@@ -221,6 +221,25 @@ class BiquadFilter {
   }
 }
 
+// ─── Pitch Autocorrelation for Voicing Detection (Separates Speech from Knocks & Horns) ──
+function computeVoicingAutocorr(slice: Float32Array, sampleRate: number): number {
+  const minLag = Math.floor(sampleRate / 300); // ~160 samples (300 Hz)
+  const maxLag = Math.floor(sampleRate / 85);  // ~564 samples (85 Hz)
+  let energy = 0;
+  for (let i = 0; i < slice.length; i++) energy += slice[i] * slice[i];
+  if (energy < 1e-4) return 0;
+  let maxCorr = 0;
+  for (let lag = minLag; lag <= maxLag; lag++) {
+    let corr = 0;
+    for (let i = 0; i < slice.length - lag; i++) {
+      corr += slice[i] * slice[i + lag];
+    }
+    const nCorr = corr / energy;
+    if (nCorr > maxCorr) maxCorr = nCorr;
+  }
+  return maxCorr;
+}
+
 // ─── Main Spectral Denoising & Studio Voice Enhancement Function ─────────────
 export function spectralDenoiseAudio(
   buffer: AudioBuffer,
@@ -280,9 +299,9 @@ export function spectralDenoiseAudio(
     // ── STAGE 1 & 2: Pre-filtering (High-pass Rumble Cut + Multi-Harmonic Hum Notches) ──
     const preFiltered = new Float32Array(length);
     const hp1 = new BiquadFilter();
-    hp1.setHighPass(options.highPassRumbleCutHz || 80, sampleRate);
+    hp1.setHighPass(options.highPassRumbleCutHz || 95, sampleRate);
     const hp2 = new BiquadFilter();
-    hp2.setHighPass(options.highPassRumbleCutHz || 80, sampleRate);
+    hp2.setHighPass(options.highPassRumbleCutHz || 95, sampleRate);
 
     // Electrical hum & AC power line notches
     const notch50 = new BiquadFilter();
@@ -378,15 +397,40 @@ export function spectralDenoiseAudio(
       }
     }
 
+    const minHornBin = Math.floor(350 / binFreqStep);
+    const maxHornBin = Math.floor(2800 / binFreqStep);
+
     for (let f = 0; f < numFrames; f++) {
       const offset = f * HOP_SIZE;
+      const slice = preFiltered.subarray(offset, Math.min(length, offset + FFT_SIZE));
       for (let i = 0; i < FFT_SIZE; i++) {
         realBuffer[i] = preFiltered[offset + i] * windowTable[i];
         imagBuffer[i] = 0;
       }
       fft.transform(realBuffer, imagBuffer, false);
 
-      // Spectral flux transient detector (preserves sharp attacks of consonants and plosives)
+      // Measure vocal harmonic pitch presence (differentiates voice from horns and knocks)
+      const voicing = computeVoicingAutocorr(slice, sampleRate);
+
+      // 1. Car Horn & Siren Peak Notcher (350 Hz to 2800 Hz)
+      // Eradicates narrow sinusoidal traffic horns that stick out above local spectrum
+      for (let k = minHornBin; k < maxHornBin; k++) {
+        const mag = Math.sqrt(realBuffer[k] * realBuffer[k] + imagBuffer[k] * imagBuffer[k]);
+        const mLeft = Math.sqrt(realBuffer[k - 3] * realBuffer[k - 3] + imagBuffer[k - 3] * imagBuffer[k - 3]);
+        const mRight = Math.sqrt(realBuffer[k + 3] * realBuffer[k + 3] + imagBuffer[k + 3] * imagBuffer[k + 3]);
+        const localFloor = 0.5 * (mLeft + mRight);
+        if (mag > Math.max(0.012, localFloor * 2.2)) {
+          const scale = (localFloor * 1.1) / Math.max(1e-6, mag);
+          realBuffer[k] *= scale;
+          imagBuffer[k] *= scale;
+          if (k > 0 && k < FFT_SIZE / 2) {
+            realBuffer[FFT_SIZE - k] = realBuffer[k];
+            imagBuffer[FFT_SIZE - k] = -imagBuffer[k];
+          }
+        }
+      }
+
+      // 2. Normalized Transient Flux Detection
       let flux = 0;
       for (let k = 0; k < binCount; k++) {
         const mag = Math.sqrt(realBuffer[k] * realBuffer[k] + imagBuffer[k] * imagBuffer[k]);
@@ -394,7 +438,11 @@ export function spectralDenoiseAudio(
         if (diff > 0) flux += diff;
         prevFrameMag[k] = mag;
       }
-      const isTransient = flux > 1.25;
+      const normFlux = flux / binCount;
+
+      // Real speech consonant vs non-speech impact ("thok thok" knock / desk bump)
+      const isSpeechConsonant = normFlux > 0.12 && voicing > 0.30;
+      const isKnockImpact = normFlux > 0.09 && voicing <= 0.20;
 
       for (let k = 0; k < binCount; k++) {
         const py = realBuffer[k] * realBuffer[k] + imagBuffer[k] * imagBuffer[k];
@@ -409,9 +457,11 @@ export function spectralDenoiseAudio(
           alphaDD * (prevEstimatedSpeechPower[k] / pn) +
           (1 - alphaDD) * Math.max(0, gamma - 1);
 
-        // Instantly unclamp on speech transients to protect plosives & consonants
-        if (isTransient) {
-          xi = Math.max(xi, 2.2);
+        // Speech consonants preserved, non-speech knocks ("thok thok") actively suppressed
+        if (isSpeechConsonant) {
+          xi = Math.max(xi, 2.5);
+        } else if (isKnockImpact) {
+          xi = Math.min(xi, 0.04);
         }
 
         // Studio Wiener Gain

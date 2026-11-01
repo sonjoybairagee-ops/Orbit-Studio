@@ -43,19 +43,19 @@ const PRESETS: Record<PresetType, PresetConfig> = {
     id: "studio",
     name: "Adobe Podcast AI (Broadcast Studio)",
     badge: "Recommended",
-    desc: "Cuts 100% room & AC fan noise, gives warm deep chest resonance, and auto-levels voice to loud broadcast punch.",
+    desc: "Cuts 100% room & AC fan noise, car horns, desk thumps & knocks, giving warm chest resonance and studio punch.",
     noiseReduction: 92,
     clarityBoost: 78,
     warmthBoost: 75,
     roomDeMuffle: 65,
-    highPassFreq: 85,
+    highPassFreq: 95,
     broadcastLeveling: true,
   },
   "noise-cut": {
     id: "noise-cut",
-    name: "Max Fan & AC Noise Eradicator",
-    badge: "Heavy AC / Fans",
-    desc: "Ultra-deep multi-band spectral suppression for loud ceiling fans, high HVAC airflow, or outdoor background.",
+    name: "Max Fan, Horn & Thump Eradicator",
+    badge: "Traffic / Horns / AC",
+    desc: "Ultra-deep suppression for loud vehicle horns, desk thumps, knocks, heavy ceiling fans, and street background.",
     noiseReduction: 99,
     clarityBoost: 60,
     warmthBoost: 45,
@@ -108,7 +108,7 @@ export default function VoiceEnhancerTool() {
   const [clarityBoost, setClarityBoost] = useState<number>(78);
   const [warmthBoost, setWarmthBoost] = useState<number>(75);
   const [roomDeMuffle, setRoomDeMuffle] = useState<number>(65);
-  const [highPassFreq, setHighPassFreq] = useState<number>(85);
+  const [highPassFreq, setHighPassFreq] = useState<number>(95);
   const [broadcastLeveling, setBroadcastLeveling] = useState<boolean>(true);
   const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
 
