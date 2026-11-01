@@ -19,7 +19,7 @@ import {
   Flame,
 } from "lucide-react";
 import { encodeWav } from "@/lib/audio-file-utils";
-import { spectralDenoiseAudio } from "@/lib/spectral-denoise";
+import { spectralDenoiseAudio, getSharedAudioContext } from "@/lib/spectral-denoise";
 
 type PresetType = "studio" | "noise-cut" | "clarity" | "custom";
 
@@ -256,10 +256,7 @@ export default function VoiceEnhancerTool() {
 
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const AudioCtx =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      const audioCtx = new AudioCtx();
+      const audioCtx = getSharedAudioContext();
       const decodedBuffer = await audioCtx.decodeAudioData(arrayBuffer);
       rawAudioBufferRef.current = decodedBuffer;
       setDuration(decodedBuffer.duration);
@@ -368,10 +365,7 @@ export default function VoiceEnhancerTool() {
     setError("");
 
     try {
-      const AudioCtx =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      const ctx = new AudioCtx();
+      const ctx = getSharedAudioContext();
       const sampleRate = ctx.sampleRate;
       const durationSec = 6.0;
       const numFrames = sampleRate * durationSec;

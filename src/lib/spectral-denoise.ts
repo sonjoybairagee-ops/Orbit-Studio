@@ -5,14 +5,20 @@
  * Architecture:
  * 1. Dual-stage Butterworth Highpass filter (eliminates sub-bass desk rumble & HVAC vibrations)
  * 2. Harmonic Notch Filters (eradicates 50Hz, 60Hz, 100Hz, 120Hz, 180Hz power-line hum & fan whine)
- * 3. Multi-Band Minimum Statistics Noise Profiling & Over-subtracted Wiener Spectral Gating
- * 4. Adaptive Speech VAD Downward Expander (wipes out residual hiss/hum during speech pauses down to -70dB)
+ * 3. Per-Bin Minimum-Statistics Noise Profiling (robust even with continuous speech)
+ *    + Over-subtracted Wiener Spectral Gating
+ * 4. Adaptive Speech VAD Downward Expander (wipes out residual hiss/hum during speech pauses)
+ *    - Threshold derived from the RESIDUAL (post-denoise) noise floor so it never eats speech
  * 5. Studio Vocal Enhancer (Adobe Podcast Style):
  *    - Warm Chest Resonance / Proximity Boost (180 Hz - 230 Hz)
  *    - Boxy Room Resonance Notch (450 Hz - 550 Hz)
  *    - Speech Articulation & Consonant Presence (2.8 kHz - 4.5 kHz)
  *    - Silky High-End Condenser Air (10 kHz - 14 kHz)
- * 6. Dynamic Broadcast Vocal Leveler & Transparent Soft-Clip Limiter
+ * 6. Dynamic Broadcast Vocal Leveler (true upward compression + makeup gain)
+ *    & Transparent Soft-Clip Limiter
+ *
+ * A single shared AudioContext singleton is used for buffer allocation to avoid
+ * hitting the browser's AudioContext instantiation limit.
  */
 
 export interface DenoiseOptions {
@@ -22,6 +28,27 @@ export interface DenoiseOptions {
   warmthBoost?: number; // 0 to 100 (adds rich chest resonance / proximity)
   roomDeMuffle?: number; // 0 to 100 (cuts boxy room resonance)
   broadcastLeveling?: boolean; // auto-levels speech volume to studio broadcast standard
+}
+
+// ─── Shared AudioContext Singleton (avoids browser context instantiation limit) ──
+let sharedAudioCtx: AudioContext | null = null;
+
+export function getSharedAudioContext(): AudioContext {
+  if (typeof window === "undefined") {
+    throw new Error("Web Audio API requires a browser environment");
+  }
+  const win = window as unknown as {
+    AudioContext?: typeof AudioContext;
+    webkitAudioContext?: typeof AudioContext;
+  };
+  const Ctor = win.AudioContext || win.webkitAudioContext;
+  if (!Ctor) {
+    throw new Error("Web Audio API not supported in current environment");
+  }
+  if (!sharedAudioCtx || sharedAudioCtx.state === "closed") {
+    sharedAudioCtx = new Ctor();
+  }
+  return sharedAudioCtx;
 }
 
 // ─── Fast In-Place Cooley-Tukey Radix-2 FFT ──────────────────────────────────
@@ -207,19 +234,9 @@ export function spectralDenoiseAudio(
   const numChannels = buffer.numberOfChannels;
   const length = buffer.length;
 
-  const AudioCtx =
-    typeof window !== "undefined"
-      ? window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-      : null;
-
-  let outBuffer: AudioBuffer;
-  if (AudioCtx) {
-    const ctx = new AudioCtx();
-    outBuffer = ctx.createBuffer(numChannels, length, sampleRate);
-  } else {
-    throw new Error("Web Audio API not supported in current environment");
-  }
+  // Shared context — never create a fresh AudioContext per call (browser limit!)
+  const ctx = getSharedAudioContext();
+  const outBuffer = ctx.createBuffer(numChannels, length, sampleRate);
 
   const FFT_SIZE = 1024;
   const HOP_SIZE = 256; // 75% overlap for artifact-free overlap-add
@@ -241,10 +258,11 @@ export function spectralDenoiseAudio(
 
   // Normalized parameters
   const strengthNorm = Math.max(0.1, Math.min(1.0, options.noiseReductionStrength / 100));
-  // Oversubtraction factor: scales up to 5.2 for heavy fan & AC noise
-  const oversubtraction = 1.6 + strengthNorm * 3.6;
-  // Floor gain: lower floor down to 0.0005 for clean black background
-  const gainFloor = Math.max(0.0005, 0.025 * Math.pow(1.0 - strengthNorm, 2));
+  // Oversubtraction factor: scales up for heavy fan & AC noise (bounded so it
+  // never devours voice energy when speech and noise share frequency bins)
+  const oversubtraction = 1.45 + strengthNorm * 2.3;
+  // Floor gain: lower floor down to 0.001 for a clean black background
+  const gainFloor = Math.max(0.001, 0.03 * Math.pow(1.0 - strengthNorm, 2));
 
   // Enhancement parameters
   const clarityNorm = Math.max(0, Math.min(1.0, options.vocalClarityBoost / 100));
@@ -252,14 +270,24 @@ export function spectralDenoiseAudio(
   const deMuffleNorm = Math.max(0, Math.min(1.0, (options.roomDeMuffle ?? 60) / 100));
   const enableBroadcastLeveling = options.broadcastLeveling !== false;
 
+  // Per-channel residual (post-denoise) noise RMS, used by the gate + leveler
+  const residualNoiseRmsArr = new Float32Array(numChannels);
+
   for (let ch = 0; ch < numChannels; ch++) {
     const inData = buffer.getChannelData(ch);
     const outData = outBuffer.getChannelData(ch);
 
     if (length < FFT_SIZE * 2) {
       outData.set(inData);
+      // Rough passthrough level estimate for the leveler stage
+      let e = 0;
+      for (let i = 0; i < length; i++) e += inData[i] * inData[i];
+      residualNoiseRmsArr[ch] = Math.sqrt(e / Math.max(1, length)) * gainFloor;
       continue;
     }
+
+    const realBuffer = new Float32Array(FFT_SIZE);
+    const imagBuffer = new Float32Array(FFT_SIZE);
 
     // ── STAGE 1 & 2: Pre-filtering (High-pass rumble cut + Hum notches) ──
     const preFiltered = new Float32Array(length);
@@ -292,11 +320,14 @@ export function spectralDenoiseAudio(
       preFiltered[i] = s;
     }
 
-    // ── STAGE 3: Multi-Band Noise Profile Estimation ──
-    const numFrames = Math.floor((length - FFT_SIZE) / HOP_SIZE);
+    // ── STAGE 3: Per-Bin Minimum-Statistics Noise Profile Estimation ──
+    // Classic percentile frame selection is kept to find candidate noise-only
+    // frames, BUT the profile is built from the per-bin MINIMUM magnitude
+    // across those frames instead of the average. Speech remnants pulse and
+    // fluctuate, so the minimum rejects them; stationary noise keeps its level.
+    // This is what makes the profile usable even with continuous speech.
+    const numFrames = Math.max(1, Math.floor((length - FFT_SIZE) / HOP_SIZE) + 1);
     const frameEnergies = new Float32Array(numFrames);
-    const realBuffer = new Float32Array(FFT_SIZE);
-    const imagBuffer = new Float32Array(FFT_SIZE);
 
     for (let f = 0; f < numFrames; f++) {
       const offset = f * HOP_SIZE;
@@ -308,47 +339,90 @@ export function spectralDenoiseAudio(
       frameEnergies[f] = energy;
     }
 
-    // Sort to accurately isolate true non-speech quiet segments
+    // Sort to isolate the true quietest frames (12th percentile)
     const sortedEnergies = frameEnergies.slice().sort();
-    // Target the quietest 8% to 15% frames (pure noise floor without speech)
-    const noiseThreshold = sortedEnergies[Math.floor(numFrames * 0.10)] || sortedEnergies[0];
+    const noiseThreshold = sortedEnergies[Math.floor(numFrames * 0.12)] || sortedEnergies[0];
 
-    const noiseProfile = new Float32Array(FFT_SIZE / 2 + 1);
+    const noiseFrameMask = new Uint8Array(numFrames);
     let noiseFrameCount = 0;
-    let baselineNoiseRms = 0;
-
     for (let f = 0; f < numFrames; f++) {
       if (frameEnergies[f] <= noiseThreshold * 1.35) {
-        const offset = f * HOP_SIZE;
-        for (let i = 0; i < FFT_SIZE; i++) {
-          realBuffer[i] = preFiltered[offset + i] * windowTable[i];
-          imagBuffer[i] = 0;
-        }
-        fft.transform(realBuffer, imagBuffer, false);
-
-        for (let k = 0; k <= FFT_SIZE / 2; k++) {
-          const mag = Math.sqrt(realBuffer[k] * realBuffer[k] + imagBuffer[k] * imagBuffer[k]);
-          noiseProfile[k] += mag;
-        }
+        noiseFrameMask[f] = 1;
         noiseFrameCount++;
-        baselineNoiseRms += frameEnergies[f];
       }
     }
 
-    if (noiseFrameCount > 0) {
-      for (let k = 0; k <= FFT_SIZE / 2; k++) {
-        noiseProfile[k] /= noiseFrameCount;
+    const binCount = FFT_SIZE / 2 + 1;
+    const minMagProfile = new Float32Array(binCount).fill(Infinity);
+    const avgAccum = new Float32Array(binCount);
+    const perBinMags =
+      noiseFrameCount >= 16
+        ? new Float32Array(binCount * noiseFrameCount)
+        : null;
+    let noiseEnergySum = 0;
+    let noiseOrdinal = 0;
+
+    for (let f = 0; f < numFrames; f++) {
+      if (!noiseFrameMask[f]) continue;
+      const offset = f * HOP_SIZE;
+      noiseEnergySum += frameEnergies[f];
+      for (let i = 0; i < FFT_SIZE; i++) {
+        realBuffer[i] = preFiltered[offset + i] * windowTable[i];
+        imagBuffer[i] = 0;
       }
-      baselineNoiseRms = Math.sqrt(baselineNoiseRms / (noiseFrameCount * FFT_SIZE));
-    } else {
-      for (let k = 0; k <= FFT_SIZE / 2; k++) {
+      fft.transform(realBuffer, imagBuffer, false);
+
+      if (perBinMags) {
+        for (let k = 0; k < binCount; k++) {
+          const mag = Math.sqrt(
+            realBuffer[k] * realBuffer[k] + imagBuffer[k] * imagBuffer[k]
+          );
+          if (mag < minMagProfile[k]) minMagProfile[k] = mag;
+          avgAccum[k] += mag;
+          perBinMags[noiseOrdinal * binCount + k] = mag;
+        }
+        noiseOrdinal++;
+        continue;
+      }
+
+      for (let k = 0; k < binCount; k++) {
+        const mag = Math.sqrt(
+          realBuffer[k] * realBuffer[k] + imagBuffer[k] * imagBuffer[k]
+        );
+        if (mag < minMagProfile[k]) minMagProfile[k] = mag;
+        avgAccum[k] += mag;
+      }
+    }
+
+    const noiseProfile = new Float32Array(binCount);
+    const baselineNoiseRms =
+      noiseFrameCount > 0
+        ? Math.sqrt(noiseEnergySum / (noiseFrameCount * FFT_SIZE))
+        : 0.015;
+
+    for (let k = 0; k < binCount; k++) {
+      if (perBinMags) {
+        // 25th percentile of magnitudes across noise-only frames, with a bias
+        // correction, gives the true stationary noise level. Speech remnants
+        // pulse above it (rejected), noise itself sits right around it.
+        const col = perBinMags.subarray(k * noiseFrameCount, (k + 1) * noiseFrameCount);
+        col.sort();
+        let est = col[Math.floor(noiseFrameCount * 0.25)] * 1.7;
+        noiseProfile[k] = Math.max(0.0005, est);
+      } else if (noiseFrameCount > 0) {
+        noiseProfile[k] = Math.max(0.0005, avgAccum[k] / noiseFrameCount);
+      } else {
         noiseProfile[k] = 0.008;
       }
-      baselineNoiseRms = 0.015;
+    }
+
+    // Smooth the profile across neighbouring frequency bins to avoid musical noise
+    for (let k = 1; k < binCount - 1; k++) {
+      noiseProfile[k] = (noiseProfile[k - 1] + noiseProfile[k] + noiseProfile[k + 1]) / 3;
     }
 
     // ── STAGE 4: Spectral Wiener Gating with Temporal Smoothing ──
-    const prevGains = new Float32Array(FFT_SIZE / 2 + 1);
+    const prevGains = new Float32Array(binCount);
     prevGains.fill(gainFloor);
 
     const outAccumulator = new Float32Array(length + FFT_SIZE);
@@ -362,7 +436,7 @@ export function spectralDenoiseAudio(
 
       fft.transform(realBuffer, imagBuffer, false);
 
-      for (let k = 0; k <= FFT_SIZE / 2; k++) {
+      for (let k = 0; k < binCount; k++) {
         const real = realBuffer[k];
         const imag = imagBuffer[k];
         const mag = Math.sqrt(real * real + imag * imag);
@@ -371,17 +445,14 @@ export function spectralDenoiseAudio(
         let instantGain = gainFloor;
 
         if (mag > 1e-6) {
-          // Smooth Wiener Spectral Subtraction curve
           const snrRatio = (mag - noiseMag) / mag;
           if (snrRatio > 0) {
-            // Sigmoid transition prevents harsh musical noise artifacts
-            instantGain = Math.max(gainFloor, Math.pow(snrRatio, 1.25));
-          } else {
-            instantGain = gainFloor;
+            // Exponent keeps the transition soft but preserves voice harmonics
+            instantGain = Math.max(gainFloor, Math.pow(snrRatio, 1.2));
           }
         }
 
-        // Temporal Smoothing (Attack: 0.50, Release: 0.85)
+        // Temporal Smoothing (fast attack, slower release)
         const smoothedGain =
           instantGain > prevGains[k]
             ? 0.50 * instantGain + 0.50 * prevGains[k]
@@ -411,11 +482,31 @@ export function spectralDenoiseAudio(
       spectralOutput[i] = outAccumulator[i] / norm;
     }
 
+    // ── Measure the RESIDUAL noise floor of the denoised signal ──
+    // The gate must be thresholded against the level of the noise that is
+    // actually left AFTER spectral gating — not the raw input noise level —
+    // otherwise quiet speech gets chopped off.
+    let resSum = 0;
+    let resCount = 0;
+    for (let f = 0; f < numFrames; f++) {
+      if (!noiseFrameMask[f]) continue;
+      const offset = f * HOP_SIZE;
+      for (let i = 0; i < FFT_SIZE; i++) {
+        const idx = offset + i;
+        if (idx >= length) break;
+        resSum += spectralOutput[idx] * spectralOutput[idx];
+        resCount++;
+      }
+    }
+    residualNoiseRmsArr[ch] =
+      resCount > 0
+        ? Math.sqrt(resSum / resCount)
+        : baselineNoiseRms * gainFloor;
+
     // ── STAGE 5: Adaptive Downward Speech Gate (Total Pause Silence) ──
-    // Ensures when speaker stops talking, all background room sound drops to -70dB
-    const gateThresh = Math.max(0.008, baselineNoiseRms * (1.3 + strengthNorm * 0.9));
-    const attackCoeff = Math.exp(-1 / (sampleRate * 0.004)); // 4ms attack (preserves sharp consonants)
-    const releaseCoeff = Math.exp(-1 / (sampleRate * 0.120)); // 120ms release (natural vocal trail)
+    const gateThresh = Math.max(0.010, residualNoiseRmsArr[ch] * 2.2);
+    const attackCoeff = Math.exp(-1 / (sampleRate * 0.008)); // 8ms attack (preserves consonants)
+    const releaseCoeff = Math.exp(-1 / (sampleRate * 0.300)); // 300ms release (natural decay)
 
     const gatedOutput = new Float32Array(length);
     let envelope = 0;
@@ -431,7 +522,7 @@ export function spectralDenoiseAudio(
       if (envelope < gateThresh) {
         const ratio = envelope / gateThresh;
         // Deep sigmoid expansion down to zero
-        gateGain = Math.max(0.0001, Math.pow(ratio, 2.5));
+        gateGain = Math.max(0.0003, Math.pow(ratio, 2.2));
       }
 
       gatedOutput[i] = spectralOutput[i] * gateGain;
@@ -468,37 +559,83 @@ export function spectralDenoiseAudio(
     }
   }
 
-  // ── STAGE 7: Dynamic Broadcast Vocal Leveler & Soft Limiter ──
-  // Auto-levels speech to loud, clear studio broadcast loudness (-14 LUFS / ~ -1dB TruePeak)
+  // ── STAGE 7: Dynamic Broadcast Vocal Leveler (True Upward Compression) ──
+  // Brings quiet speech up to broadcast loudness block-by-block, while never
+  // boosting the (already-near-silent) pauses. Static makeup gain targets the
+  // median active-speech RMS; a smooth per-block compressor evens out words.
   if (enableBroadcastLeveling) {
-    // Measure speech active RMS
-    let sumSquares = 0;
-    let activeSampleCount = 0;
-    const channel0 = outBuffer.getChannelData(0);
+    let avgResidual = 0;
+    for (let ch = 0; ch < numChannels; ch++) avgResidual += residualNoiseRmsArr[ch];
+    avgResidual /= numChannels;
 
-    for (let i = 0; i < length; i++) {
-      const v = channel0[i];
-      if (Math.abs(v) > 0.02) {
-        sumSquares += v * v;
-        activeSampleCount++;
+    const speechTh = Math.max(0.012, avgResidual * 3.0);
+    const blockSize = 1024; // ~21 ms blocks
+    const numBlocks = Math.floor(length / blockSize);
+
+    if (numBlocks > 2) {
+      const detectData = outBuffer.getChannelData(0);
+      const blockRms = new Float64Array(numBlocks);
+      for (let b = 0; b < numBlocks; b++) {
+        let s = 0;
+        const start = b * blockSize;
+        for (let i = 0; i < blockSize; i++) {
+          const v = detectData[start + i];
+          s += v * v;
+        }
+        blockRms[b] = Math.sqrt(s / blockSize);
       }
-    }
 
-    const speechRms = activeSampleCount > 0 ? Math.sqrt(sumSquares / activeSampleCount) : 0.05;
-    // Target active speech RMS: ~0.18 (broadcast punch)
-    const targetRms = 0.18;
-    let autoGain = Math.min(4.5, Math.max(1.0, targetRms / (speechRms + 1e-4)));
+      // Median RMS across speech-active blocks → makeup gain target
+      const speechBlocks: number[] = [];
+      for (let b = 0; b < numBlocks; b++) {
+        if (blockRms[b] > speechTh) speechBlocks.push(blockRms[b]);
+      }
 
-    // Prevent excessive boost if input is already loud
-    for (let ch = 0; ch < numChannels; ch++) {
-      const data = outBuffer.getChannelData(ch);
-      for (let i = 0; i < length; i++) {
-        data[i] *= autoGain;
+      const targetRms = 0.16; // broadcast speech RMS target
+      let staticGain = 1.0;
+      if (speechBlocks.length > 0) {
+        speechBlocks.sort((a, b) => a - b);
+        const median =
+          speechBlocks.length % 2 === 0
+            ? speechBlocks[speechBlocks.length / 2 - 1]
+            : speechBlocks[Math.floor(speechBlocks.length / 2)];
+        if (median > 1e-5) {
+          staticGain = Math.min(4.0, Math.max(1.0, targetRms / median));
+        }
+      }
+
+      // Smooth per-block compressor gains: fast-follow speech, never boost pauses
+      const blockGains = new Float64Array(numBlocks);
+      let prev = 1.0;
+      for (let b = 0; b < numBlocks; b++) {
+        const r = blockRms[b];
+        let target = 1.0;
+        if (r > speechTh) {
+          const g = targetRms / r;
+          target = Math.min(staticGain, Math.max(1.0, g));
+        }
+        const speed = target > prev ? 0.4 : 0.08; // attack ~50ms, release ~250ms
+        const cur = prev + (target - prev) * speed;
+        blockGains[b] = cur;
+        prev = cur;
+      }
+
+      // Apply gains to every channel with linear interpolation between blocks
+      for (let ch = 0; ch < numChannels; ch++) {
+        const data = outBuffer.getChannelData(ch);
+        for (let i = 0; i < length; i++) {
+          const pos = i / blockSize;
+          const b = Math.floor(pos);
+          if (b >= numBlocks) break;
+          const frac = pos - b;
+          const next = b + 1 < numBlocks ? blockGains[b + 1] : blockGains[b];
+          data[i] *= blockGains[b] + (next - blockGains[b]) * frac;
+        }
       }
     }
   }
 
-  // Final Transparent Soft Limiter (tanh saturation to eliminate all digital clipping)
+  // Final peak management + Transparent Soft Limiter (tanh saturation)
   for (let ch = 0; ch < numChannels; ch++) {
     const data = outBuffer.getChannelData(ch);
     for (let i = 0; i < length; i++) {

@@ -11,6 +11,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // Homepage & Core Hubs
     ["", 1.0, "daily"],
     ["/tools", 0.95, "daily"],
+    ["/games", 0.95, "daily"],
+    ["/games/ludo", 0.9, "daily"],
 
     // All 13 Tool Category Landing Hubs
     ["/downloader-tools", 0.9, "daily"],

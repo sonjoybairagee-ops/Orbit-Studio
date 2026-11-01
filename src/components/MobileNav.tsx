@@ -8,6 +8,7 @@ const LINKS = [
   ["/#features", "Features"],
   ["/tutorials", "Tutorials"],
   ["/tools", "Free Tools"],
+  ["/games", "Play Games"],
   ["/pricing", "Pricing"],
   ["/contact", "Contact"],
   ["/about", "About"],
