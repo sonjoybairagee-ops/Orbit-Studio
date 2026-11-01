@@ -109,6 +109,7 @@ export default function VoiceEnhancerTool() {
   const [highPassFreq, setHighPassFreq] = useState<number>(90);
   const [broadcastLeveling, setBroadcastLeveling] = useState<boolean>(true);
   const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
+  const [engineMode, setEngineMode] = useState<"ai" | "dsp">("ai");
 
   // Processing state
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
@@ -251,9 +252,47 @@ export default function VoiceEnhancerTool() {
 
   const loadAndEnhanceAudio = async (file: File) => {
     setIsProcessing(true);
-    setProgressMsg("Decoding audio waveform...");
     setError("");
 
+    // Try AI Deep Neural Engine (DeepFilter + Resemble Enhance) first if selected
+    if (engineMode === "ai") {
+      setProgressMsg("Sending to AI Neural Model (DeepFilterNet + Resemble Enhance)...");
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("mode", "both");
+        fd.append("atten_db", "100");
+        fd.append("denoise_strength", "0.8");
+
+        const res = await fetch("/api/tools/voice-enhance", {
+          method: "POST",
+          body: fd,
+        });
+
+        if (res.ok) {
+          const blob = await res.blob();
+          if (enhancedAudioUrl) URL.revokeObjectURL(enhancedAudioUrl);
+          const newUrl = URL.createObjectURL(blob);
+          setEnhancedAudioUrl(newUrl);
+
+          // Decode for duration
+          const arrayBuffer = await file.arrayBuffer();
+          const audioCtx = getSharedAudioContext();
+          const decodedBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+          rawAudioBufferRef.current = decodedBuffer;
+          setDuration(decodedBuffer.duration);
+
+          setIsProcessing(false);
+          setProgressMsg("Enhanced with Deep Neural AI (Adobe Podcast Level)!");
+          return;
+        }
+      } catch (e) {
+        console.warn("AI Backend unavailable, switching to Client DSP:", e);
+      }
+    }
+
+    // Fallback or In-Browser Turbo Mode
+    setProgressMsg("Processing with In-Browser Turbo Audio Engine...");
     try {
       const arrayBuffer = await file.arrayBuffer();
       const audioCtx = getSharedAudioContext();
@@ -492,6 +531,45 @@ export default function VoiceEnhancerTool() {
             >
               <Sparkles className="h-3.5 w-3.5" />
               <span>Try Sample with AC Noise</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Processing Engine Switcher */}
+        <div className="mt-5 pt-4 border-t border-[#213026] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="text-xs">
+            <span className="font-bold text-[#e7eee9] block">Processing Engine Mode:</span>
+            <span className="text-[11px] text-[#9baaa1]">
+              {engineMode === "ai"
+                ? "🧠 AI Neural Studio (DeepFilterNet + Resemble Enhance Model)"
+                : "⚡ In-Browser Turbo Engine (Client DSP • 100% Private & Instant)"}
+            </span>
+          </div>
+
+          <div className="inline-flex rounded-2xl border border-[#213026] bg-[#080e0b] p-1 text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => setEngineMode("ai")}
+              className={`flex items-center gap-1.5 rounded-xl px-4 py-2 transition-all cursor-pointer ${
+                engineMode === "ai"
+                  ? "bg-[#3cff5f] text-[#050a08] font-bold shadow-md shadow-[#3cff5f]/20"
+                  : "text-[#9baaa1] hover:text-[#e7eee9]"
+              }`}
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>AI Neural Studio</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setEngineMode("dsp")}
+              className={`flex items-center gap-1.5 rounded-xl px-4 py-2 transition-all cursor-pointer ${
+                engineMode === "dsp"
+                  ? "bg-[#3cff5f] text-[#050a08] font-bold shadow-md shadow-[#3cff5f]/20"
+                  : "text-[#9baaa1] hover:text-[#e7eee9]"
+              }`}
+            >
+              <Zap className="h-3.5 w-3.5" />
+              <span>In-Browser Turbo</span>
             </button>
           </div>
         </div>
