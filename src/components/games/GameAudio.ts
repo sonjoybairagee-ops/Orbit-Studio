@@ -268,6 +268,83 @@ export const GameSound = {
       osc.stop(ctx.currentTime + delay + 0.56);
     });
   },
+
+  // UNO! declaration shout fanfare
+  playUnoShout: () => {
+    if (GameSound.getMuted()) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    // Rapid ascending brass fanfare C5 -> E5 -> G5 -> C6
+    const freqs = [523.25, 659.25, 783.99, 1046.5];
+    freqs.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const time = ctx.currentTime + idx * 0.07;
+
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(freq, time);
+
+      gain.gain.setValueAtTime(0.26, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.35);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(time);
+      osc.stop(time + 0.36);
+    });
+  },
+
+  // UNO! Catch Penalty buzzer/alarm
+  playUnoCatch: () => {
+    if (GameSound.getMuted()) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    // Double alarm drop
+    [0, 0.12].forEach((delay) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const time = ctx.currentTime + delay;
+
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(700, time);
+      osc.frequency.exponentialRampToValueAtTime(180, time + 0.1);
+
+      gain.gain.setValueAtTime(0.3, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.11);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(time);
+      osc.stop(time + 0.12);
+    });
+  },
+
+  // Turn timer countdown tick
+  playTimerTick: () => {
+    if (GameSound.getMuted()) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(1050, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(450, ctx.currentTime + 0.04);
+
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.05);
+  },
 };
 
 /**
