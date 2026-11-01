@@ -216,7 +216,7 @@ export default function UnoBlast() {
   const [settings, setSettings] = useState<GameSettings>({
     stacking: true,
     timerSec: 15,
-    theme: "studio",
+    theme: "casino",
   });
 
   const [isMuted, setIsMuted] = useState(false);
@@ -751,10 +751,10 @@ export default function UnoBlast() {
 
   if (!mounted) {
     return (
-      <div className="flex min-h-[580px] w-full items-center justify-center rounded-3xl border border-slate-300 bg-white/60 backdrop-blur-md dark:border-white/10 dark:bg-[#0c1611]/80 shadow-xl">
+      <div className="flex min-h-[580px] w-full items-center justify-center rounded-3xl border border-[#213026] bg-[#0c1510] shadow-2xl">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent dark:border-[#3cff5f]" />
-          <span className="font-black text-xs tracking-widest uppercase text-slate-500 dark:text-slate-400">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#3cff5f] border-t-transparent" />
+          <span className="font-black text-xs tracking-widest uppercase text-[#8ea396]">
             Shuffling 108 Cards & Loading Table...
           </span>
         </div>
@@ -765,30 +765,26 @@ export default function UnoBlast() {
   return (
     <div
       ref={containerRef}
-      className={`relative w-full select-none font-sans transition-colors duration-500 ${
-        isStudioTheme
-          ? "bg-gradient-to-br from-[#dfe6ee] via-[#ecf1f6] to-[#d4dee8] text-slate-800"
-          : "bg-gradient-to-br from-[#040f09] via-[#081a10] to-[#040d08] text-white"
-      }`}
+      className="relative w-full select-none font-sans rounded-3xl border-2 border-[#213026] bg-[#06100a] text-[#e7eee9] shadow-2xl overflow-hidden"
     >
       <NetBar gameTitle="UNO Online" net={net} />
 
-      {/* Top Navigation Header matching Image 1 */}
-      <div className="flex items-center justify-between border-b px-4 py-3 backdrop-blur-md sm:px-6 border-slate-300/60 dark:border-white/10">
+      {/* Top Navigation Header */}
+      <div className="flex items-center justify-between border-b border-[#213026] bg-[#0c1510]/95 px-4 py-3 backdrop-blur-md sm:px-6">
         {/* Left: Lobby toggle */}
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => setShowLobbySidebar(!showLobbySidebar)}
-            className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white/80 px-3 py-2 text-xs font-bold shadow-sm transition-all hover:bg-white dark:border-white/10 dark:bg-black/30 dark:text-white"
+            className="flex items-center gap-2 rounded-xl border border-[#213026] bg-[#101b14] px-3 py-2 text-xs font-bold text-[#8ea396] shadow-sm transition-all hover:bg-[#16271c] hover:text-[#3cff5f] hover:border-[#3cff5f]/40 cursor-pointer"
           >
             <Menu className="h-4 w-4" />
             <span className="hidden sm:inline">Lobby</span>
           </button>
 
           {/* Live Players Pill */}
-          <div className="flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+          <div className="flex items-center gap-2 rounded-full border border-[#2a5234] bg-[#102a16] px-3 py-1 text-xs font-bold text-[#3cff5f]">
+            <span className="h-2 w-2 rounded-full bg-[#3cff5f] animate-pulse" />
             <span>Live Players</span>
           </div>
         </div>
@@ -800,13 +796,13 @@ export default function UnoBlast() {
               className="font-black italic tracking-tighter text-amber-400 text-2xl sm:text-3xl drop-shadow-[0_3px_0_#b45309]"
               style={{
                 WebkitTextStroke: "1.5px black",
-                textShadow: "0 3px 0 #b45309, 0 4px 6px rgba(0,0,0,0.4)",
+                textShadow: "0 3px 0 #b45309, 0 4px 6px rgba(0,0,0,0.6)",
               }}
             >
               UNO
             </span>
           </div>
-          <span className="text-[10px] font-black tracking-widest uppercase text-slate-600 dark:text-slate-300 -mt-1">
+          <span className="text-[10px] font-black tracking-widest uppercase text-[#8ea396] -mt-1">
             ONLINE
           </span>
         </div>
@@ -816,7 +812,7 @@ export default function UnoBlast() {
           <button
             type="button"
             onClick={() => setShowRulesModal(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 bg-white/80 shadow-sm transition-all hover:bg-white dark:border-white/10 dark:bg-black/30 dark:text-white"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#213026] bg-[#101b14] text-[#8ea396] shadow-sm transition-all hover:bg-[#16271c] hover:text-[#3cff5f] hover:border-[#3cff5f]/40 cursor-pointer"
             title="Card Design Guide & Rules"
           >
             <Info className="h-4 w-4" />
@@ -825,8 +821,8 @@ export default function UnoBlast() {
           <button
             type="button"
             onClick={() => setShowSettingsModal(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 bg-white/80 shadow-sm transition-all hover:bg-white dark:border-white/10 dark:bg-black/30 dark:text-white"
-            title="Settings & Theme"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#213026] bg-[#101b14] text-[#8ea396] shadow-sm transition-all hover:bg-[#16271c] hover:text-[#3cff5f] hover:border-[#3cff5f]/40 cursor-pointer"
+            title="Settings & Rules"
           >
             <Settings className="h-4 w-4" />
           </button>
@@ -834,16 +830,16 @@ export default function UnoBlast() {
           <button
             type="button"
             onClick={toggleMute}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 bg-white/80 shadow-sm transition-all hover:bg-white dark:border-white/10 dark:bg-black/30 dark:text-white"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#213026] bg-[#101b14] text-[#8ea396] shadow-sm transition-all hover:bg-[#16271c] hover:text-white cursor-pointer"
             title={isMuted ? "Unmute" : "Mute"}
           >
-            {isMuted ? <VolumeX className="h-4 w-4 text-rose-500" /> : <Volume2 className="h-4 w-4" />}
+            {isMuted ? <VolumeX className="h-4 w-4 text-rose-400" /> : <Volume2 className="h-4 w-4" />}
           </button>
 
           <button
             type="button"
             onClick={toggleFullscreen}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 bg-white/80 shadow-sm transition-all hover:bg-white dark:border-white/10 dark:bg-black/30 dark:text-white"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#213026] bg-[#101b14] text-[#8ea396] shadow-sm transition-all hover:bg-[#16271c] hover:text-white cursor-pointer"
             title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
           >
             {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
@@ -853,22 +849,22 @@ export default function UnoBlast() {
 
       {/* Main Container: Sidebar + 3D Table Area */}
       <div className="relative flex flex-col lg:flex-row min-h-[640px] w-full p-2 sm:p-4 gap-4">
-        {/* ── LEFT LOBBY SIDEBAR (Matching Image 1) ── */}
+        {/* ── LEFT LOBBY SIDEBAR ── */}
         {showLobbySidebar && (
-          <aside className="w-full lg:w-64 shrink-0 rounded-3xl border border-slate-300/80 bg-white/80 p-4 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-[#0c1611]/90 transition-all animate-fadeIn">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10">
+          <aside className="w-full lg:w-64 shrink-0 rounded-3xl border border-[#213026] bg-[#0c1510]/95 p-4 shadow-xl backdrop-blur-md transition-all animate-fadeIn">
+            <div className="flex items-center justify-between pb-3 border-b border-[#1d2a21]">
               <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-blue-600 dark:text-[#3cff5f]" />
-                <h3 className="font-bold text-sm text-slate-800 dark:text-white">Lobby</h3>
+                <Users className="h-4 w-4 text-[#3cff5f]" />
+                <h3 className="font-bold text-sm text-[#e7eee9]">Lobby</h3>
               </div>
-              <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400">
-                {net.isNet ? "Live Room" : "Solo"}
+              <span className="font-mono text-[10px] text-[#3cff5f] bg-[#102a16] border border-[#2a5234] px-2 py-0.5 rounded-md">
+                {net.isNet ? "Live Room" : "Solo vs Bots"}
               </span>
             </div>
 
             {/* Team Info Slots */}
             <div className="mt-4">
-              <span className="text-[11px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">
+              <span className="text-[11px] font-bold tracking-wider uppercase text-[#8ea396]">
                 Team Info
               </span>
 
@@ -883,7 +879,7 @@ export default function UnoBlast() {
                       className="relative flex items-center justify-between rounded-xl p-2.5 shadow-sm transition-all font-semibold text-xs text-white"
                       style={{
                         backgroundColor: player.hex,
-                        boxShadow: isCurrentTurn ? `0 0 12px ${player.hex}99` : undefined,
+                        boxShadow: isCurrentTurn ? `0 0 14px ${player.hex}bb` : undefined,
                       }}
                     >
                       <div className="flex items-center gap-2">
@@ -894,7 +890,7 @@ export default function UnoBlast() {
                           {player.short} {player.role === "Host" ? "(Host)" : ""}
                         </span>
                       </div>
-                      <span className="font-mono text-[11px] bg-black/25 px-2 py-0.5 rounded-md">
+                      <span className="font-mono text-[11px] bg-black/35 px-2 py-0.5 rounded-md">
                         {g.hands[idx].length} Cards
                       </span>
                     </div>
@@ -902,7 +898,7 @@ export default function UnoBlast() {
                 })}
               </div>
 
-              {/* Invite Team Pill Button (Image 1) */}
+              {/* Invite Team Button */}
               <button
                 type="button"
                 onClick={handleCopyInvite}
@@ -913,9 +909,9 @@ export default function UnoBlast() {
               </button>
             </div>
 
-            {/* Join Team Section (Image 1) */}
-            <div className="mt-5 pt-4 border-t border-slate-200 dark:border-white/10">
-              <span className="text-[11px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">
+            {/* Join Team Section */}
+            <div className="mt-5 pt-4 border-t border-[#1d2a21]">
+              <span className="text-[11px] font-bold tracking-wider uppercase text-[#8ea396]">
                 Join Team
               </span>
 
@@ -925,11 +921,11 @@ export default function UnoBlast() {
                   placeholder="#ROOM CODE"
                   value={joinCodeInput}
                   onChange={(e) => setJoinCodeInput(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-mono uppercase text-slate-800 placeholder:text-slate-400 shadow-inner focus:outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/40 dark:text-white"
+                  className="w-full rounded-xl border border-[#213026] bg-[#080e0b] px-3 py-1.5 text-xs font-mono uppercase text-white placeholder:text-[#526459] shadow-inner focus:outline-none focus:border-[#3cff5f]"
                 />
                 <button
                   type="submit"
-                  className="rounded-xl bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-xs font-bold text-white shadow-md transition-all active:scale-95"
+                  className="rounded-xl bg-[#102a16] border border-[#2a5234] hover:bg-[#16381e] px-3 py-1.5 text-xs font-bold text-[#3cff5f] shadow-md transition-all active:scale-95 cursor-pointer"
                 >
                   Join
                 </button>
@@ -937,29 +933,25 @@ export default function UnoBlast() {
             </div>
 
             {/* In-Game Logs ticker */}
-            <div className="mt-5 rounded-2xl bg-slate-100 dark:bg-black/30 p-3 border border-slate-200 dark:border-white/5">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+            <div className="mt-5 rounded-2xl bg-[#080e0b] p-3 border border-[#1d2a21]">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-[#3cff5f] mb-1">
                 Game Feed
               </div>
-              <p className="text-[11px] leading-relaxed text-slate-700 dark:text-slate-300 font-medium">
+              <p className="text-[11px] leading-relaxed text-[#8ea396] font-medium">
                 {g.log[0]}
               </p>
             </div>
           </aside>
         )}
 
-        {/* ── MAIN 3D TABLE ARENA (Matching Image 1) ── */}
-        <main className="relative flex-1 flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-300/80 bg-gradient-to-b from-white/90 via-[#f4f7fb]/80 to-[#e5ecf3]/90 p-4 shadow-2xl backdrop-blur-md dark:border-white/10 dark:from-[#0a1a12] dark:via-[#06120b] dark:to-[#030906]">
-          {/* 3D Pearl / Casino Table Surface */}
+        {/* ── MAIN 3D TABLE ARENA ── */}
+        <main className="relative flex-1 flex flex-col justify-between overflow-hidden rounded-3xl border border-[#213026] bg-gradient-to-b from-[#08120c] via-[#050e09] to-[#040a07] p-4 shadow-2xl backdrop-blur-md">
+          {/* 3D Dark Emerald Table Surface */}
           <div
-            className={`pointer-events-none absolute inset-6 sm:inset-10 rounded-[60px] border-4 sm:border-8 transition-all duration-700 ${
-              isStudioTheme
-                ? "border-slate-200/90 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.95)_0%,rgba(226,232,240,0.8)_100%)] shadow-[0_20px_50px_rgba(0,0,0,0.12),inset_0_2px_4px_rgba(255,255,255,1)]"
-                : "border-[#1b3b28] bg-[radial-gradient(ellipse_at_center,rgba(16,74,38,0.5)_0%,rgba(3,15,8,0.9)_100%)] shadow-[0_20px_50px_rgba(0,0,0,0.6),inset_0_2px_4px_rgba(255,255,255,0.15)]"
-            }`}
+            className="pointer-events-none absolute inset-6 sm:inset-10 rounded-[60px] border-4 sm:border-8 border-[#1a3a25] bg-[radial-gradient(ellipse_at_center,rgba(16,74,38,0.55)_0%,rgba(4,18,10,0.95)_100%)] shadow-[0_25px_60px_rgba(0,0,0,0.7),inset_0_2px_4px_rgba(255,255,255,0.1)] transition-all duration-700"
           />
 
-          {/* ── TOP: Player 4 / North Opponent ── */}
+          {/* ── TOP: Player 3 / North Opponent ── */}
           <div className="relative z-10 flex justify-center">
             <PlayerAvatarFrame
               player={P[seatNorth]}
@@ -987,25 +979,25 @@ export default function UnoBlast() {
               />
             </div>
 
-            {/* ── CENTER TABLE: 3D Draw Deck & Discard Card (Image 1) ── */}
+            {/* ── CENTER TABLE: 3D Draw Deck & Discard Card ── */}
             <div className="relative flex flex-col items-center justify-center">
               {/* Rotating Direction Rings */}
               <div
-                className={`absolute h-52 w-52 sm:h-64 sm:w-64 rounded-full border-2 border-dashed border-blue-500/20 dark:border-[#3cff5f]/25 transition-transform duration-1000 ${
+                className={`absolute h-52 w-52 sm:h-64 sm:w-64 rounded-full border-2 border-dashed border-[#3cff5f]/30 transition-transform duration-1000 ${
                   g.dir === 1 ? "animate-[spin_18s_linear_infinite]" : "animate-[spin_18s_linear_infinite_reverse]"
                 }`}
               >
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-black text-blue-500 dark:text-[#3cff5f]">
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-black text-[#3cff5f] drop-shadow-[0_0_8px_#3cff5f]">
                   {g.dir === 1 ? "▶" : "◀"}
                 </span>
-                <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-xs font-black text-blue-500 dark:text-[#3cff5f]">
+                <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-xs font-black text-[#3cff5f] drop-shadow-[0_0_8px_#3cff5f]">
                   {g.dir === 1 ? "◀" : "▶"}
                 </span>
               </div>
 
               {/* Central Card Spread: 3D Draw Pile & Discard Pile */}
               <div className="relative z-10 flex items-center gap-4 sm:gap-7">
-                {/* 3D DRAW DECK (Classic UNO Sunburst Back) */}
+                {/* 3D DRAW DECK */}
                 <div className="flex flex-col items-center gap-1.5">
                   <button
                     type="button"
@@ -1026,39 +1018,39 @@ export default function UnoBlast() {
                     title="Click to draw card"
                   >
                     {/* 3D Layer Stack under the deck */}
-                    <div className="absolute -bottom-1 -right-1 h-full w-full rounded-2xl border border-slate-300 bg-white shadow-md -z-10 dark:border-white/20 dark:bg-slate-800" />
-                    <div className="absolute -bottom-2 -right-2 h-full w-full rounded-2xl border border-slate-300 bg-white shadow-md -z-20 dark:border-white/20 dark:bg-slate-900" />
+                    <div className="absolute -bottom-1 -right-1 h-full w-full rounded-2xl border border-white/10 bg-[#0a0a0c] shadow-md -z-10" />
+                    <div className="absolute -bottom-2 -right-2 h-full w-full rounded-2xl border border-white/5 bg-[#050507] shadow-md -z-20" />
 
                     <UnoCardView isBack={true} />
                   </button>
 
-                  <span className="font-mono text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                  <span className="font-mono text-[10px] font-bold text-[#8ea396]">
                     Deck ({g.deck.length})
                   </span>
                 </div>
 
-                {/* DISCARD PILE (Top Face-Up Card) */}
+                {/* DISCARD PILE */}
                 <div className="flex flex-col items-center gap-1.5">
                   {g.top ? (
                     <div
                       className="transition-all duration-300 drop-shadow-2xl"
                       style={{
                         transform: "rotate(3deg)",
-                        filter: `drop-shadow(0 12px 20px ${COLOR_HEX[g.color]}66)`,
+                        filter: `drop-shadow(0 12px 24px ${COLOR_HEX[g.color]}88)`,
                       }}
                     >
                       <UnoCardView card={g.top} />
                     </div>
                   ) : (
-                    <div className="h-36 w-24 rounded-2xl border-2 border-dashed border-slate-400/40" />
+                    <div className="h-36 w-24 rounded-2xl border-2 border-dashed border-white/20" />
                   )}
 
-                  <div className="flex items-center gap-1 text-[10px] font-bold uppercase text-slate-600 dark:text-slate-300">
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-[#e7eee9]">
                     <span
                       className="h-2 w-2 rounded-full"
                       style={{
                         backgroundColor: COLOR_HEX[g.color],
-                        boxShadow: `0 0 6px ${COLOR_HEX[g.color]}`,
+                        boxShadow: `0 0 8px ${COLOR_HEX[g.color]}`,
                       }}
                     />
                     <span>{COLOR_NAME_BN[g.color]}</span>
@@ -1072,8 +1064,8 @@ export default function UnoBlast() {
                   <div
                     className={`flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-xs font-black shadow-sm ${
                       g.timeLeft <= 4
-                        ? "animate-pulse border-rose-500 bg-rose-500 text-white shadow-rose-500/50"
-                        : "border-slate-300 bg-white text-slate-800 dark:border-white/10 dark:bg-black/50 dark:text-white"
+                        ? "animate-pulse border-rose-500 bg-rose-600 text-white shadow-rose-500/50"
+                        : "border-[#2a5234] bg-[#102a16] text-[#3cff5f]"
                     }`}
                   >
                     <Clock className="h-3.5 w-3.5" />
@@ -1090,7 +1082,7 @@ export default function UnoBlast() {
               </div>
             </div>
 
-            {/* Player 3 (Right) */}
+            {/* Player 4 (Right) */}
             <div className="flex flex-col items-center">
               <PlayerAvatarFrame
                 player={P[seatEast]}
@@ -1104,7 +1096,7 @@ export default function UnoBlast() {
             </div>
           </div>
 
-          {/* ── BOTTOM: LOCAL PLAYER HAND (Dynamic 3D Arc-Fanned Hand) ── */}
+          {/* ── BOTTOM: LOCAL PLAYER HAND ── */}
           <div className="relative z-10 flex flex-col items-center">
             {/* Quick Actions Row */}
             <div className="mb-2 flex items-center gap-2">
@@ -1134,7 +1126,7 @@ export default function UnoBlast() {
                 <button
                   type="button"
                   onClick={() => doPass(mySeat)}
-                  className="flex cursor-pointer items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-100 dark:border-white/10 dark:bg-black/40 dark:text-white"
+                  className="flex cursor-pointer items-center gap-1 rounded-full border border-amber-400/40 bg-amber-400/10 px-3 py-1 text-xs font-bold text-amber-300 shadow-sm hover:bg-amber-400/20"
                 >
                   <SkipForward className="h-3.5 w-3.5" />
                   <span>Pass Turn</span>
@@ -1142,14 +1134,13 @@ export default function UnoBlast() {
               )}
             </div>
 
-            {/* 3D Arc Fanned Hand (Matching Image 1 & 2) */}
+            {/* 3D Arc Fanned Hand */}
             <div className="relative flex justify-center items-end h-40 sm:h-44 w-full max-w-2xl px-4 overflow-x-auto overflow-y-visible pb-2 pt-6">
               {myHand.length === 0 ? (
-                <div className="text-xs font-bold text-slate-500 py-6">No cards left!</div>
+                <div className="text-xs font-bold text-[#8ea396] py-6">No cards left!</div>
               ) : (
                 myHand.map((c, i) => {
                   const playable = isPlayable(c, g.top!, g.color, g.stackedDraw, g.stackedType);
-                  // Calculate dynamic arc rotation based on card index
                   const total = myHand.length;
                   const middle = (total - 1) / 2;
                   const rotDeg = total > 1 ? (i - middle) * Math.min(6, 24 / total) : 0;
@@ -1172,7 +1163,7 @@ export default function UnoBlast() {
                         className={`group cursor-pointer transition-all duration-200 ${
                           playable && isMyTurn
                             ? "hover:-translate-y-8 hover:scale-110 hover:z-50 active:scale-95"
-                            : "cursor-not-allowed opacity-55 grayscale-[0.25]"
+                            : "cursor-not-allowed opacity-50 grayscale-[0.3]"
                         }`}
                       >
                         <UnoCardView card={c} isPlayable={playable && isMyTurn} />
@@ -1183,7 +1174,7 @@ export default function UnoBlast() {
               )}
             </div>
 
-            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1">
+            <span className="text-[10px] font-bold text-[#8ea396] mt-1">
               Your Hand · {myHand.length} Cards ·{" "}
               {isMyTurn ? "Your turn to play a matching card!" : "Waiting for opponent's turn..."}
             </span>
@@ -1194,39 +1185,39 @@ export default function UnoBlast() {
       {/* ── MODAL: Wild Color Selection Dial ── */}
       {wildPickerCard && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-fadeIn">
-          <div className="relative w-full max-w-sm rounded-3xl border border-slate-300 bg-white p-6 text-center shadow-2xl dark:border-white/10 dark:bg-[#0c1611]">
-            <h3 className="text-lg font-black text-slate-900 dark:text-white">Choose Next Color</h3>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          <div className="relative w-full max-w-sm rounded-3xl border-2 border-[#213026] bg-[#0c1510] p-6 text-center shadow-2xl">
+            <h3 className="text-lg font-black text-[#e7eee9]">Choose Next Color</h3>
+            <p className="mt-1 text-xs text-[#8ea396]">
               Pick the color you want to switch the discard pile to:
             </p>
 
             {/* 4-Quadrant Color Dial (Image 2) */}
-            <div className="relative mx-auto my-6 grid h-52 w-52 grid-cols-2 gap-2 overflow-hidden rounded-full border-4 border-slate-300 p-2 shadow-2xl dark:border-white/10">
+            <div className="relative mx-auto my-6 grid h-52 w-52 grid-cols-2 gap-2 overflow-hidden rounded-full border-4 border-[#213026] p-2 shadow-2xl">
               <button
                 type="button"
                 onClick={() => selectWildColor("blue")}
-                className="flex items-center justify-center rounded-tl-full bg-[#0063b1] text-white font-black text-sm shadow-inner hover:scale-105 hover:brightness-125"
+                className="flex items-center justify-center rounded-tl-full bg-[#0063b1] text-white font-black text-sm shadow-inner hover:scale-105 hover:brightness-125 cursor-pointer"
               >
                 BLUE
               </button>
               <button
                 type="button"
                 onClick={() => selectWildColor("green")}
-                className="flex items-center justify-center rounded-tr-full bg-[#16a34a] text-white font-black text-sm shadow-inner hover:scale-105 hover:brightness-125"
+                className="flex items-center justify-center rounded-tr-full bg-[#16a34a] text-white font-black text-sm shadow-inner hover:scale-105 hover:brightness-125 cursor-pointer"
               >
                 GREEN
               </button>
               <button
                 type="button"
                 onClick={() => selectWildColor("red")}
-                className="flex items-center justify-center rounded-bl-full bg-[#dc2626] text-white font-black text-sm shadow-inner hover:scale-105 hover:brightness-125"
+                className="flex items-center justify-center rounded-bl-full bg-[#dc2626] text-white font-black text-sm shadow-inner hover:scale-105 hover:brightness-125 cursor-pointer"
               >
                 RED
               </button>
               <button
                 type="button"
                 onClick={() => selectWildColor("yellow")}
-                className="flex items-center justify-center rounded-br-full bg-[#eab308] text-black font-black text-sm shadow-inner hover:scale-105 hover:brightness-125"
+                className="flex items-center justify-center rounded-br-full bg-[#eab308] text-black font-black text-sm shadow-inner hover:scale-105 hover:brightness-125 cursor-pointer"
               >
                 YELLOW
               </button>
@@ -1239,7 +1230,7 @@ export default function UnoBlast() {
             <button
               type="button"
               onClick={() => setWildPickerCard(null)}
-              className="rounded-xl border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:border-white/10 dark:text-slate-300 dark:hover:bg-black/30"
+              className="rounded-xl border border-[#213026] bg-[#101b14] px-4 py-2 text-xs font-semibold text-[#8ea396] hover:text-white cursor-pointer"
             >
               Cancel
             </button>
@@ -1250,15 +1241,15 @@ export default function UnoBlast() {
       {/* ── MODAL: Round Winner Celebration ── */}
       {g.over !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-sm rounded-3xl border border-slate-300 bg-white p-8 text-center shadow-2xl dark:border-white/10 dark:bg-[#0c1611]">
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full border-2 border-amber-400 bg-amber-100 shadow-xl dark:bg-amber-950/40">
-              <Trophy className="h-10 w-10 text-amber-500" />
+          <div className="w-full max-w-sm rounded-3xl border-2 border-[#3cff5f]/50 bg-[#0c1510] p-8 text-center shadow-2xl">
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full border-2 border-[#3cff5f] bg-[#102a16] shadow-xl">
+              <Trophy className="h-10 w-10 text-[#3cff5f]" />
             </div>
 
-            <h3 className="text-2xl font-black text-slate-900 dark:text-white">
+            <h3 className="text-2xl font-black text-[#e7eee9]">
               {g.over === mySeat ? "Victory! You Won!" : `${P[g.over]?.short} Wins!`}
             </h3>
-            <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">
+            <p className="mt-2 text-xs text-[#8ea396]">
               {g.over === mySeat
                 ? "Brilliant play! You emptied your hand first and conquered UNO Online!"
                 : "Better luck next deal! Match colors and counter attacks faster!"}
@@ -1267,7 +1258,7 @@ export default function UnoBlast() {
             <button
               type="button"
               onClick={resetRound}
-              className="mt-6 inline-flex cursor-pointer items-center gap-2 rounded-2xl bg-amber-400 px-6 py-3 text-sm font-black text-black shadow-lg shadow-amber-500/20 hover:bg-amber-500 hover:scale-105 active:scale-95"
+              className="mt-6 inline-flex cursor-pointer items-center gap-2 rounded-2xl bg-[#3cff5f] px-6 py-3 text-sm font-black text-black shadow-lg shadow-[#3cff5f]/30 hover:bg-[#52ff71] hover:scale-105 active:scale-95"
             >
               <Play className="h-4 w-4 fill-black" />
               <span>Deal Again</span>
@@ -1279,62 +1270,28 @@ export default function UnoBlast() {
       {/* ── MODAL: Settings ── */}
       {showSettingsModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-md rounded-3xl border border-slate-300 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-[#0c1611]">
-            <div className="mb-5 flex items-center justify-between border-b pb-3 border-slate-200 dark:border-white/10">
-              <h3 className="flex items-center gap-2 text-base font-bold text-slate-900 dark:text-white">
-                <Settings className="h-5 w-5 text-blue-600 dark:text-[#3cff5f]" />
+          <div className="w-full max-w-md rounded-3xl border-2 border-[#213026] bg-[#0c1510] p-6 shadow-2xl">
+            <div className="mb-5 flex items-center justify-between border-b pb-3 border-[#1d2a21]">
+              <h3 className="flex items-center gap-2 text-base font-bold text-[#e7eee9]">
+                <Settings className="h-5 w-5 text-[#3cff5f]" />
                 Game & Visual Settings
               </h3>
               <button
                 type="button"
                 onClick={() => setShowSettingsModal(false)}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10"
+                className="rounded-lg p-1 text-[#8ea396] hover:bg-[#14231b] hover:text-white cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <div className="space-y-4">
-              {/* Theme Selector */}
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 dark:border-white/10 dark:bg-black/30">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-white">Table Theme</div>
-                    <div className="text-[11px] text-slate-500">Switch 3D Studio vs Dark Felt Casino</div>
-                  </div>
-                  <div className="flex gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setSettings({ ...settings, theme: "studio" })}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
-                        settings.theme === "studio"
-                          ? "bg-blue-600 text-white shadow-sm"
-                          : "border border-slate-300 text-slate-600 dark:border-white/10 dark:text-slate-400"
-                      }`}
-                    >
-                      Studio 3D
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSettings({ ...settings, theme: "casino" })}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
-                        settings.theme === "casino"
-                          ? "bg-emerald-600 text-white shadow-sm"
-                          : "border border-slate-300 text-slate-600 dark:border-white/10 dark:text-slate-400"
-                      }`}
-                    >
-                      Emerald Felt
-                    </button>
-                  </div>
-                </div>
-              </div>
-
               {/* Turn Timer */}
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 dark:border-white/10 dark:bg-black/30">
+              <div className="rounded-xl border border-[#213026] bg-[#080e0b] p-3.5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-white">Turn Timer</div>
-                    <div className="text-[11px] text-slate-500">Seconds allowed per player move</div>
+                    <div className="text-xs font-bold text-[#e7eee9]">Turn Timer</div>
+                    <div className="text-[11px] text-[#8ea396]">Seconds allowed per player move</div>
                   </div>
                   <div className="flex gap-1.5">
                     {[15, 30, 0].map((sec) => (
@@ -1346,10 +1303,10 @@ export default function UnoBlast() {
                           setSettings(updated);
                           if (net.role === "host") net.send({ u: "settings", settings: updated });
                         }}
-                        className={`rounded-lg px-2.5 py-1 text-xs font-bold ${
+                        className={`rounded-lg px-2.5 py-1 text-xs font-bold cursor-pointer ${
                           settings.timerSec === sec
-                            ? "bg-blue-600 text-white shadow-sm"
-                            : "border border-slate-300 text-slate-600 dark:border-white/10 dark:text-slate-400"
+                            ? "bg-[#102a16] border border-[#2a5234] text-[#3cff5f]"
+                            : "border border-[#213026] bg-[#080e0b] text-[#8ea396] hover:text-white"
                         }`}
                       >
                         {sec === 0 ? "Off" : `${sec}s`}
@@ -1360,11 +1317,11 @@ export default function UnoBlast() {
               </div>
 
               {/* Stacking Rule */}
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 dark:border-white/10 dark:bg-black/30">
+              <div className="rounded-xl border border-[#213026] bg-[#080e0b] p-3.5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-white">+2 / +4 Stacking Rule</div>
-                    <div className="text-[11px] text-slate-500">Chain attack cards to multiply penalty</div>
+                    <div className="text-xs font-bold text-[#e7eee9]">+2 / +4 Stacking Rule</div>
+                    <div className="text-[11px] text-[#8ea396]">Chain attack cards to multiply penalty</div>
                   </div>
                   <button
                     type="button"
@@ -1373,10 +1330,10 @@ export default function UnoBlast() {
                       setSettings(updated);
                       if (net.role === "host") net.send({ u: "settings", settings: updated });
                     }}
-                    className={`rounded-xl px-3 py-1.5 text-xs font-bold ${
+                    className={`rounded-xl px-3 py-1.5 text-xs font-bold cursor-pointer ${
                       settings.stacking
-                        ? "bg-emerald-600 text-white shadow-sm"
-                        : "border border-slate-300 text-slate-600 dark:border-white/10 dark:text-slate-400"
+                        ? "bg-[#102a16] border border-[#2a5234] text-[#3cff5f]"
+                        : "border border-[#213026] bg-[#080e0b] text-[#8ea396]"
                     }`}
                   >
                     {settings.stacking ? "ENABLED" : "DISABLED"}
@@ -1389,7 +1346,7 @@ export default function UnoBlast() {
               <button
                 type="button"
                 onClick={() => setShowSettingsModal(false)}
-                className="rounded-xl bg-blue-600 hover:bg-blue-700 px-5 py-2 text-xs font-bold text-white shadow-md"
+                className="rounded-xl bg-[#3cff5f] hover:bg-[#52ff71] px-5 py-2 text-xs font-black text-black shadow-md cursor-pointer"
               >
                 Done
               </button>
@@ -1401,24 +1358,24 @@ export default function UnoBlast() {
       {/* ── MODAL: Card Design Guide & Official Rules (Image 2) ── */}
       {showRulesModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm animate-fadeIn">
-          <div className="custom-scrollbar max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-slate-300 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-[#0c1611]">
-            <div className="mb-4 flex items-center justify-between border-b pb-3 border-slate-200 dark:border-white/10">
-              <h3 className="flex items-center gap-2 text-base font-bold text-slate-900 dark:text-white">
-                <HelpCircle className="h-5 w-5 text-blue-600 dark:text-[#3cff5f]" />
+          <div className="custom-scrollbar max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-[#213026] bg-[#0c1510] p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between border-b pb-3 border-[#1d2a21]">
+              <h3 className="flex items-center gap-2 text-base font-bold text-[#e7eee9]">
+                <HelpCircle className="h-5 w-5 text-[#3cff5f]" />
                 Official Browser UNO Design Guide & Rules
               </h3>
               <button
                 type="button"
                 onClick={() => setShowRulesModal(false)}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10"
+                className="rounded-lg p-1 text-[#8ea396] hover:bg-[#14231b] hover:text-white cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="space-y-4 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 dark:border-white/10 dark:bg-black/30">
-                <h4 className="font-bold text-slate-900 dark:text-white mb-1">
+            <div className="space-y-4 text-xs leading-relaxed text-[#8ea396]">
+              <div className="rounded-xl border border-[#213026] bg-[#080e0b] p-3.5">
+                <h4 className="font-bold text-[#e7eee9] mb-1">
                   🎨 Official Custom Deck & Color Palette
                 </h4>
                 <div className="flex gap-2 my-2">
@@ -1436,24 +1393,24 @@ export default function UnoBlast() {
                   </span>
                 </div>
                 <p>
-                  Card structure: <b>Tilted White Oval Ellipse</b> with chunky varsity block numbers,
+                  Card structure: <b className="text-white">Tilted White Oval Ellipse</b> with chunky varsity block numbers,
                   matching corner indices, and classic 3D sunburst golden ray card back.
                 </p>
               </div>
 
-              <div className="rounded-xl border border-rose-300 bg-rose-50 p-3.5 dark:border-rose-900/40 dark:bg-rose-950/20">
-                <h4 className="font-bold text-rose-700 dark:text-rose-300 mb-1">
+              <div className="rounded-xl border border-rose-900/40 bg-rose-950/20 p-3.5">
+                <h4 className="font-bold text-rose-300 mb-1">
                   🔥 "UNO!" Shout & Penalty Catch Rule
                 </h4>
                 <p>
-                  When a player reaches <b>1 card</b>, they must press the <b>"SHOUT UNO! 🔥"</b> button.
+                  When a player reaches <b className="text-white">1 card</b>, they must press the <b className="text-white">"SHOUT UNO! 🔥"</b> button.
                   If they finish their turn without shouting UNO and another player clicks{" "}
-                  <b>"CATCH UNO 🚨"</b>, the offender must draw <b>+2 penalty cards</b>!
+                  <b className="text-white">"CATCH UNO 🚨"</b>, the offender must draw <b className="text-white">+2 penalty cards</b>!
                 </p>
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 dark:border-white/10 dark:bg-black/30">
-                <h4 className="font-bold text-slate-900 dark:text-white mb-1">
+              <div className="rounded-xl border border-[#213026] bg-[#080e0b] p-3.5">
+                <h4 className="font-bold text-[#e7eee9] mb-1">
                   🃏 108 Card Composition
                 </h4>
                 <ul className="list-disc pl-4 space-y-1">
@@ -1471,7 +1428,7 @@ export default function UnoBlast() {
               <button
                 type="button"
                 onClick={() => setShowRulesModal(false)}
-                className="rounded-xl bg-blue-600 hover:bg-blue-700 px-5 py-2 text-xs font-bold text-white shadow-md"
+                className="rounded-xl bg-[#3cff5f] hover:bg-[#52ff71] px-5 py-2 text-xs font-black text-black shadow-md cursor-pointer"
               >
                 Close
               </button>
@@ -1758,15 +1715,15 @@ function PlayerAvatarFrame({
 
   return (
     <div
-      className={`relative flex flex-col items-center rounded-2xl border bg-white p-2.5 shadow-md transition-all duration-300 dark:bg-[#0c1a12] ${
+      className={`relative flex flex-col items-center rounded-2xl border bg-[#0c1611]/95 p-2.5 shadow-xl backdrop-blur-md transition-all duration-300 ${
         isTurn
-          ? "border-blue-500 ring-4 ring-blue-500/20 scale-105 shadow-xl dark:border-[#3cff5f] dark:ring-[#3cff5f]/20"
-          : "border-slate-200 dark:border-white/10"
+          ? "border-[#3cff5f] ring-4 ring-[#3cff5f]/25 scale-105 shadow-[0_0_20px_rgba(60,255,95,0.25)]"
+          : "border-[#213026] hover:border-[#2a5234]"
       } min-w-[100px] sm:min-w-[120px]`}
     >
       {/* Thinking Status Pill */}
       {isTurn && (
-        <span className="absolute -top-2.5 rounded-full bg-blue-600 px-2 py-0.5 text-[8px] font-black text-white shadow dark:bg-[#3cff5f] dark:text-black">
+        <span className="absolute -top-2.5 rounded-full bg-[#3cff5f] px-2 py-0.5 text-[8px] font-black text-black shadow-md tracking-wider">
           THINKING...
         </span>
       )}
@@ -1783,17 +1740,17 @@ function PlayerAvatarFrame({
         className="relative flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl p-1 shadow-inner"
         style={{ backgroundColor: player.hex }}
       >
-        <div className="flex h-full w-full items-center justify-center rounded-xl bg-white/95 overflow-hidden">
+        <div className="flex h-full w-full items-center justify-center rounded-xl bg-[#080e0b] overflow-hidden">
           {renderAvatar()}
         </div>
       </div>
 
       {/* Name & Card Count Label */}
       <div className="mt-1.5 text-center">
-        <div className="text-xs font-bold text-slate-800 dark:text-white line-clamp-1">
+        <div className="text-xs font-bold text-[#e7eee9] line-clamp-1">
           {player.short}
         </div>
-        <div className="font-mono text-[10px] text-slate-500 dark:text-slate-400">
+        <div className="font-mono text-[10px] text-[#3cff5f] font-semibold">
           {cardCount} {cardCount === 1 ? "Card" : "Cards"}
         </div>
       </div>

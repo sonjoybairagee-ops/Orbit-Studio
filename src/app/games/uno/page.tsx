@@ -5,10 +5,10 @@ import { Gamepad2, HelpCircle, Sparkles } from "lucide-react";
 const UnoBlast = dynamic(() => import("@/components/games/UnoBlast"), {
   ssr: false,
   loading: () => (
-    <div className="flex min-h-[580px] w-full items-center justify-center rounded-3xl border border-slate-300 bg-white/60 backdrop-blur-md dark:border-white/10 dark:bg-[#0c1611]/80 shadow-xl">
+    <div className="flex min-h-[580px] w-full items-center justify-center rounded-3xl border border-[#213026] bg-[#0c1510] shadow-2xl">
       <div className="flex flex-col items-center gap-3">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent dark:border-[#3cff5f]" />
-        <span className="font-black text-xs tracking-widest uppercase text-slate-500 dark:text-slate-400">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#3cff5f] border-t-transparent" />
+        <span className="font-black text-xs tracking-widest uppercase text-[#8ea396]">
           Shuffling 108 Cards & Loading Table...
         </span>
       </div>
