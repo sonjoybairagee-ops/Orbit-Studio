@@ -208,6 +208,11 @@ export default function UnoBlast() {
   const net = useNetGame("cxgame-uno", 4);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [settings, setSettings] = useState<GameSettings>({
     stacking: true,
     timerSec: 15,
@@ -743,6 +748,19 @@ export default function UnoBlast() {
   const seatEast = (mySeat + 3) % 4;
 
   const isStudioTheme = settings.theme === "studio";
+
+  if (!mounted) {
+    return (
+      <div className="flex min-h-[580px] w-full items-center justify-center rounded-3xl border border-slate-300 bg-white/60 backdrop-blur-md dark:border-white/10 dark:bg-[#0c1611]/80 shadow-xl">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent dark:border-[#3cff5f]" />
+          <span className="font-black text-xs tracking-widest uppercase text-slate-500 dark:text-slate-400">
+            Shuffling 108 Cards & Loading Table...
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

@@ -29,6 +29,16 @@ import {
   Sparkles,
   Ticket,
   ChevronRight,
+  Users,
+  Share2,
+  Copy,
+  Crown,
+  MessageCircle,
+  Globe,
+  Wifi,
+  UserCheck,
+  UserX,
+  Link2,
 } from "lucide-react";
 import { GameSound, fireVictoryConfetti } from "./GameAudio";
 import { DiceCube, Pawn } from "./GameTokens";
@@ -284,6 +294,73 @@ export default function MonopolyTycoon() {
   // ── UX & Entry Screen State (Zero-friction) ─────────────────────────────────
   const [gameStarted, setGameStarted] = useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
+
+  // ── Multiplayer Lobby System State ──────────────────────────────────────────
+  const [lobbyTab, setLobbyTab] = useState<"create" | "join" | "solo">("create");
+  const [joinCodeInput, setJoinCodeInput] = useState("");
+  const [copiedLobby, setCopiedLobby] = useState<"code" | "link" | null>(null);
+
+  // Sync game start when host launches room
+  useEffect(() => {
+    net.onGameStart(() => {
+      setGameStarted(true);
+      GameSound.playDiceRoll();
+    });
+  }, [net]);
+
+  // Auto-detect invite link ?room=CODE
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const m = /[\?&]room=([A-Za-z0-9]{4,6})/.exec(window.location.search);
+      if (m) {
+        setJoinCodeInput(m[1].toUpperCase());
+        setLobbyTab("join");
+      }
+    }
+  }, []);
+
+  const handleStartLobbyGame = () => {
+    if (net.isHost) {
+      net.startGame();
+    }
+    setGameStarted(true);
+    GameSound.playDiceRoll();
+  };
+
+  const handleStartSoloGame = () => {
+    net.goSolo();
+    setGameStarted(true);
+    GameSound.playDiceRoll();
+  };
+
+  const copyLobby = async (what: "code" | "link") => {
+    const text =
+      what === "link"
+        ? `${window.location.origin}${window.location.pathname}?room=${net.code}`
+        : net.code;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedLobby(what);
+      setTimeout(() => setCopiedLobby(null), 2000);
+    } catch {
+      // fallback
+    }
+  };
+
+  const shareWhatsApp = () => {
+    const url = `${window.location.origin}${window.location.pathname}?room=${net.code}`;
+    const text = encodeURIComponent(
+      `🎲 Join my Monopoly Empire Tycoon game! Room Code: #${net.code}\nClick here to play: ${url}`
+    );
+    window.open(`https://api.whatsapp.com/send?text=${text}`, "_blank");
+  };
+
+  const handleJoinLobbyCode = (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = joinCodeInput.trim().replace(/^#/, "");
+    if (!clean) return;
+    net.guestJoin(clean);
+  };
 
   // ── Auction (নিলাম) State ───────────────────────────────────────────────────
   const [auction, setAuction] = useState<AuctionState | null>(null);
@@ -2118,64 +2195,345 @@ export default function MonopolyTycoon() {
         </div>
       </div>
 
-      {/* ── Instant Browser Entry Screen (Zero Friction Overlay) ── */}
+      {/* ── Official Multiplayer Lobby & Team Invite System Modal ── */}
       {!gameStarted && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border-2 border-[#3cff5f]/50 bg-[#0c1510] shadow-[0_0_50px_rgba(60,255,95,0.25)] p-6 sm:p-8 text-center">
-            {/* Top Glowing Stud */}
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#102a16] border border-[#2a5234] shadow-[0_0_20px_rgba(60,255,95,0.3)]">
-              <span className="text-3xl">🎩</span>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 sm:p-5 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="relative w-full max-w-2xl overflow-hidden rounded-3xl border-2 border-[#3cff5f]/50 bg-[#0c1510] shadow-[0_0_60px_rgba(60,255,95,0.25)] flex flex-col max-h-[92vh]">
+            {/* Top Lobby Header Bar */}
+            <div className="flex items-center justify-between border-b border-[#213026] bg-gradient-to-r from-[#102417] via-[#0c1a11] to-[#102417] px-5 py-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#102a16] border border-[#2a5234] shadow-[0_0_15px_rgba(60,255,95,0.4)]">
+                  <span className="text-2xl">🎩</span>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base sm:text-lg font-black uppercase text-[#e7eee9] tracking-wide">
+                      Monopoly Empire <span className="text-[#3cff5f]">Lobby</span>
+                    </h2>
+                    <span className="rounded-full border border-[#2a5234] bg-[#0c1e12] px-2.5 py-0.5 font-mono text-[10px] font-bold text-[#3cff5f]">
+                      {net.isNet ? (net.isHost ? "Host Room" : "Guest") : "Team Hub"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#8da194]">
+                    Create a team room, invite friends with room codes, or play solo vs AI bots!
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRulesOpen(true)}
+                  className="hidden sm:flex items-center gap-1.5 rounded-xl border border-[#213026] bg-[#080e0b] px-3 py-1.5 text-xs font-semibold text-[#8da194] hover:text-[#3cff5f] hover:border-[#3cff5f]/40 transition-all cursor-pointer"
+                >
+                  <BookOpen className="h-3.5 w-3.5" />
+                  <span>Rules</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={toggleMute}
+                  className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#213026] bg-[#080e0b] text-[#8da194] hover:text-white"
+                >
+                  {isMuted ? <VolumeX className="h-4 w-4 text-rose-400" /> : <Volume2 className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
 
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-[#102a16] px-3 py-1 text-[10px] font-semibold text-[#3cff5f] border border-[#2a4d33] mb-3">
-              <Sparkles className="h-3 w-3" />
-              <span>Instant 60 FPS Browser Game • Zero Download</span>
-            </div>
-
-            <h1 className="text-2xl sm:text-3xl font-black text-[#e7eee9] tracking-tight uppercase">
-              Monopoly Empire Tycoon
-            </h1>
-            <p className="mt-2 text-xs sm:text-sm text-[#9baaa1] leading-relaxed max-w-sm mx-auto">
-              Buy properties, complete color sets, run auctions, trade land with AI, and bankrupt your rivals to rule Empire City!
-            </p>
-
-            {/* Quick 3-Pill Summary */}
-            <div className="mt-6 grid grid-cols-3 gap-2.5 text-left text-xs">
-              <div className="rounded-xl border border-[#1d2a23] bg-[#08100c] p-2.5">
-                <span className="text-[10px] font-bold text-[#3cff5f] block">1. Start Cash</span>
-                <span className="font-mono text-xs text-[#e7eee9]">$1,500 bank roll</span>
-              </div>
-              <div className="rounded-xl border border-[#1d2a23] bg-[#08100c] p-2.5">
-                <span className="text-[10px] font-bold text-[#3cff5f] block">2. Pass 'GO'</span>
-                <span className="font-mono text-xs text-[#e7eee9]">+$200 salary</span>
-              </div>
-              <div className="rounded-xl border border-[#1d2a23] bg-[#08100c] p-2.5">
-                <span className="text-[10px] font-bold text-[#3cff5f] block">3. Auctions</span>
-                <span className="font-mono text-xs text-[#e7eee9]">Live bidding</span>
-              </div>
-            </div>
-
-            {/* Buttons */}
-            <div className="mt-8 flex flex-col sm:flex-row gap-3">
+            {/* Navigation Mode Tabs */}
+            <div className="grid grid-cols-3 border-b border-[#213026] bg-[#08100c] text-xs font-bold">
               <button
                 type="button"
-                onClick={() => {
-                  setGameStarted(true);
-                  GameSound.playDiceRoll();
-                }}
-                className="flex-1 py-3.5 rounded-2xl bg-[#3cff5f] text-sm font-black text-[#050a08] shadow-[0_0_25px_rgba(60,255,95,0.4)] hover:bg-[#52ff71] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                onClick={() => setLobbyTab("create")}
+                className={`flex items-center justify-center gap-2 py-3 transition-all cursor-pointer border-b-2 ${
+                  lobbyTab === "create"
+                    ? "border-[#3cff5f] bg-[#102417] text-[#3cff5f]"
+                    : "border-transparent text-[#7e9386] hover:text-[#e7eee9]"
+                }`}
               >
-                <Play className="h-4 w-4 fill-current" />
-                <span>Play Now (Roll Dice)</span>
+                <Crown className="h-4 w-4" />
+                <span>Create Team</span>
               </button>
 
               <button
                 type="button"
-                onClick={() => setRulesOpen(true)}
-                className="py-3.5 px-5 rounded-2xl border border-white/15 bg-[#101b14] text-xs font-bold text-[#c0d0c6] hover:text-white hover:bg-[#16271c] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                onClick={() => setLobbyTab("join")}
+                className={`flex items-center justify-center gap-2 py-3 transition-all cursor-pointer border-b-2 ${
+                  lobbyTab === "join"
+                    ? "border-[#3cff5f] bg-[#102417] text-[#3cff5f]"
+                    : "border-transparent text-[#7e9386] hover:text-[#e7eee9]"
+                }`}
               >
-                <BookOpen className="h-4 w-4" />
-                <span>View Rules</span>
+                <Users className="h-4 w-4" />
+                <span>Join with Code</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setLobbyTab("solo")}
+                className={`flex items-center justify-center gap-2 py-3 transition-all cursor-pointer border-b-2 ${
+                  lobbyTab === "solo"
+                    ? "border-[#3cff5f] bg-[#102417] text-[#3cff5f]"
+                    : "border-transparent text-[#7e9386] hover:text-[#e7eee9]"
+                }`}
+              >
+                <Bot className="h-4 w-4" />
+                <span>Solo vs 3 AI</span>
+              </button>
+            </div>
+
+            {/* Tab Contents */}
+            <div className="p-5 sm:p-6 overflow-y-auto space-y-5">
+              {/* TAB 1: CREATE TEAM & HOST ROOM */}
+              {lobbyTab === "create" && (
+                <div className="space-y-4">
+                  {!net.code || net.role !== "host" ? (
+                    <div className="rounded-2xl border border-[#213026] bg-[#08100c] p-6 text-center">
+                      <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[#102a16] border border-[#2a5234] text-[#3cff5f]">
+                        <Crown className="h-7 w-7" />
+                      </div>
+                      <h3 className="text-base font-bold text-[#e7eee9]">Create a Private Monopoly Room</h3>
+                      <p className="mt-1 text-xs text-[#8da194] max-w-md mx-auto">
+                        Generate a unique room code to invite your friends via direct link or WhatsApp. Empty seats will automatically be handled by intelligent AI bots!
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => net.hostStart()}
+                        className="mt-5 inline-flex cursor-pointer items-center gap-2 rounded-2xl bg-[#3cff5f] px-6 py-3 text-xs font-black text-black shadow-lg shadow-[#3cff5f]/30 hover:bg-[#52ff71] hover:scale-105 active:scale-95 transition-all"
+                      >
+                        <Crown className="h-4 w-4 fill-black" />
+                        <span>Create Team Room Now</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Room Code & Invite Link Share Card */}
+                      <div className="rounded-2xl border border-[#2a5234] bg-[#0c1f13] p-4">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                          <div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#3cff5f] block">
+                              Active Room Code
+                            </span>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="font-mono text-2xl font-black text-[#e7eee9] tracking-wider">
+                                #{net.code}
+                              </span>
+                              <span className="rounded-full bg-[#102a16] border border-[#2a5234] px-2 py-0.5 text-[9px] font-bold text-[#3cff5f]">
+                                LIVE
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Quick Share Buttons */}
+                          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                            <button
+                              type="button"
+                              onClick={() => copyLobby("code")}
+                              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 rounded-xl border border-[#213026] bg-[#080e0b] px-3.5 py-2 text-xs font-bold text-[#e7eee9] hover:bg-[#14231b] hover:border-[#3cff5f]/40 cursor-pointer"
+                            >
+                              <Copy className="h-3.5 w-3.5 text-[#3cff5f]" />
+                              <span>{copiedLobby === "code" ? "Copied! ✓" : "Copy Code"}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => copyLobby("link")}
+                              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 rounded-xl border border-[#213026] bg-[#080e0b] px-3.5 py-2 text-xs font-bold text-[#e7eee9] hover:bg-[#14231b] hover:border-[#3cff5f]/40 cursor-pointer"
+                            >
+                              <Link2 className="h-3.5 w-3.5 text-[#3cff5f]" />
+                              <span>{copiedLobby === "link" ? "Link Copied! ✓" : "Copy Link"}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={shareWhatsApp}
+                              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#25D366]/20 border border-[#25D366]/50 px-3.5 py-2 text-xs font-bold text-[#25D366] hover:bg-[#25D366]/30 cursor-pointer"
+                            >
+                              <MessageCircle className="h-3.5 w-3.5" />
+                              <span>WhatsApp</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Team Roster (4 Player Slots) */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-bold text-[#e7eee9]">Team Roster (4 Seats)</span>
+                          <span className="text-[11px] text-[#8da194]">Empty seats will play as smart AI Bots</span>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                          {[0, 1, 2, 3].map((seat) => {
+                            const p = net.players?.[seat];
+                            const defaultTokens = ["🎩 Top Hat", "🏎️ Racecar", "🚢 Battleship", "🎲 Thimble"];
+                            const defaultColors = ["#ef4444", "#22c55e", "#eab308", "#3b82f6"];
+                            const isHost = seat === 0;
+                            const isBot = !p || p.kind === "bot";
+
+                            return (
+                              <div
+                                key={seat}
+                                className={`rounded-xl border p-3 flex flex-col items-center text-center ${
+                                  isHost
+                                    ? "border-[#3cff5f]/50 bg-[#102a16]"
+                                    : "border-[#213026] bg-[#08100c]"
+                                }`}
+                              >
+                                <span className="text-xl mb-1">{defaultTokens[seat].split(" ")[0]}</span>
+                                <span className="text-xs font-bold text-[#e7eee9] line-clamp-1">
+                                  {isHost ? "You (Host)" : p?.name ? p.name : `AI Bot ${seat}`}
+                                </span>
+                                <span
+                                  className="text-[10px] font-semibold mt-0.5"
+                                  style={{ color: defaultColors[seat] }}
+                                >
+                                  {isHost ? "Host • Ready" : isBot ? "AI Tycoon" : p?.ready ? "Ready ✓" : "Waiting"}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Start Game Action */}
+                      <button
+                        type="button"
+                        onClick={handleStartLobbyGame}
+                        className="w-full py-4 rounded-2xl bg-[#3cff5f] text-sm font-black text-[#050a08] shadow-[0_0_30px_rgba(60,255,95,0.4)] hover:bg-[#52ff71] transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] active:scale-95"
+                      >
+                        <Play className="h-5 w-5 fill-current" />
+                        <span>Enter Monopoly City (Start Game)</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 2: JOIN WITH CODE */}
+              {lobbyTab === "join" && (
+                <div className="space-y-4">
+                  {net.role !== "guest" ? (
+                    <div className="rounded-2xl border border-[#213026] bg-[#08100c] p-6">
+                      <div className="text-center max-w-sm mx-auto">
+                        <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[#102a16] border border-[#2a5234] text-[#3cff5f]">
+                          <Users className="h-7 w-7" />
+                        </div>
+                        <h3 className="text-base font-bold text-[#e7eee9]">Join a Friend&apos;s Room</h3>
+                        <p className="mt-1 text-xs text-[#8da194]">
+                          Enter the 4 to 6-character room code shared by the host to connect.
+                        </p>
+
+                        <form onSubmit={handleJoinLobbyCode} className="mt-5 space-y-3">
+                          <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-mono font-bold text-lg text-[#3cff5f]">
+                              #
+                            </span>
+                            <input
+                              type="text"
+                              value={joinCodeInput}
+                              onChange={(e) => setJoinCodeInput(e.target.value)}
+                              placeholder="EMP48"
+                              maxLength={6}
+                              className="w-full rounded-2xl border border-[#213026] bg-[#0c1510] py-3.5 pl-9 pr-4 font-mono text-lg font-black uppercase text-white tracking-widest placeholder:text-[#526459] focus:border-[#3cff5f] focus:outline-none"
+                            />
+                          </div>
+
+                          <button
+                            type="submit"
+                            disabled={joinCodeInput.trim().length < 3}
+                            className="w-full py-3.5 rounded-2xl bg-[#3cff5f] text-xs font-black text-black shadow-lg shadow-[#3cff5f]/20 hover:bg-[#52ff71] disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                          >
+                            Join Game Team
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border border-[#2a5234] bg-[#0c1f13] p-5 text-center space-y-4">
+                      <div className="inline-flex items-center gap-2 rounded-full bg-[#102a16] border border-[#2a5234] px-3.5 py-1 text-xs font-bold text-[#3cff5f]">
+                        <Wifi className="h-4 w-4" />
+                        <span>Connected to Room #{net.code}</span>
+                      </div>
+
+                      <p className="text-xs text-[#8da194]">
+                        You are in the room as <b>{net.myName}</b> (Seat {net.seat + 1}). Waiting for the host to launch the game...
+                      </p>
+
+                      <div className="flex justify-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const cur = net.players?.find((p) => p.seat === net.seat);
+                            net.setReady(!cur?.ready);
+                          }}
+                          className="px-5 py-2.5 rounded-xl border border-[#3cff5f] bg-[#102a16] text-xs font-bold text-[#3cff5f] hover:bg-[#16381e] cursor-pointer"
+                        >
+                          Toggle Ready Status
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => net.goSolo()}
+                          className="px-5 py-2.5 rounded-xl border border-rose-500/40 bg-rose-950/20 text-xs font-bold text-rose-400 hover:bg-rose-900/30 cursor-pointer"
+                        >
+                          Leave Room
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 3: SOLO VS 3 AI */}
+              {lobbyTab === "solo" && (
+                <div className="rounded-2xl border border-[#213026] bg-[#08100c] p-6 text-center space-y-4">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#102a16] border border-[#2a5234] text-[#3cff5f]">
+                    <Bot className="h-7 w-7" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-[#e7eee9]">Quick Play: Solo vs 3 AI Rivals</h3>
+                    <p className="mt-1 text-xs text-[#8da194] max-w-md mx-auto">
+                      Jump straight into a 4-player game against intelligent AI Tycoon bots with $1,500 cash, live property auctions, mortgaging, and full trade negotiations!
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2.5 text-left text-xs max-w-md mx-auto pt-2">
+                    <div className="rounded-xl border border-[#1d2a23] bg-[#0c1510] p-2.5">
+                      <span className="text-[10px] font-bold text-[#3cff5f] block">1. Start Cash</span>
+                      <span className="font-mono text-xs text-[#e7eee9]">$1,500 bank roll</span>
+                    </div>
+                    <div className="rounded-xl border border-[#1d2a23] bg-[#0c1510] p-2.5">
+                      <span className="text-[10px] font-bold text-[#3cff5f] block">2. Pass 'GO'</span>
+                      <span className="font-mono text-xs text-[#e7eee9]">+$200 salary</span>
+                    </div>
+                    <div className="rounded-xl border border-[#1d2a23] bg-[#0c1510] p-2.5">
+                      <span className="text-[10px] font-bold text-[#3cff5f] block">3. Auctions</span>
+                      <span className="font-mono text-xs text-[#e7eee9]">Live bidding</span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleStartSoloGame}
+                    className="w-full max-w-md mx-auto py-3.5 rounded-2xl bg-[#3cff5f] text-sm font-black text-[#050a08] shadow-[0_0_25px_rgba(60,255,95,0.4)] hover:bg-[#52ff71] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Play className="h-4 w-4 fill-current" />
+                    <span>Play Solo Now (Roll Dice)</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Lobby Footer */}
+            <div className="border-t border-[#213026] bg-[#08100c] px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 text-xs text-[#6e8577]">
+              <span>💡 Official Monopoly: $1,500 Bankroll • $200 'GO' Salary • Live Property Auctions</span>
+              <button
+                type="button"
+                onClick={() => setRulesOpen(true)}
+                className="text-[#3cff5f] hover:underline flex items-center gap-1 font-semibold cursor-pointer"
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                <span>Read Full Official Rules (বাংলা ও English)</span>
               </button>
             </div>
           </div>
