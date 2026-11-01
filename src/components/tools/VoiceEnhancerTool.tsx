@@ -43,24 +43,24 @@ const PRESETS: Record<PresetType, PresetConfig> = {
     id: "studio",
     name: "Adobe Podcast AI (Broadcast Studio)",
     badge: "Recommended",
-    desc: "Cuts 100% room & AC hum, gives warm deep chest resonance, and auto-levels voice to loud broadcast punch.",
-    noiseReduction: 88,
+    desc: "Cuts 100% room & AC fan noise, gives warm deep chest resonance, and auto-levels voice to loud broadcast punch.",
+    noiseReduction: 92,
     clarityBoost: 78,
     warmthBoost: 75,
     roomDeMuffle: 65,
-    highPassFreq: 90,
+    highPassFreq: 85,
     broadcastLeveling: true,
   },
   "noise-cut": {
     id: "noise-cut",
     name: "Max Fan & AC Noise Eradicator",
     badge: "Heavy AC / Fans",
-    desc: "Maximum multi-band spectral suppression for loud air conditioners, noisy room fans, or outdoor background.",
-    noiseReduction: 98,
+    desc: "Ultra-deep multi-band spectral suppression for loud ceiling fans, high HVAC airflow, or outdoor background.",
+    noiseReduction: 99,
     clarityBoost: 60,
     warmthBoost: 45,
     roomDeMuffle: 70,
-    highPassFreq: 115,
+    highPassFreq: 110,
     broadcastLeveling: true,
   },
   clarity: {
@@ -68,7 +68,7 @@ const PRESETS: Record<PresetType, PresetConfig> = {
     name: "Crisp & Punchy YouTube Vocal",
     badge: "Air & Presence",
     desc: "Cuts boxy bedroom resonance and lifts presence and silky condenser air for punchy mobile listening.",
-    noiseReduction: 80,
+    noiseReduction: 88,
     clarityBoost: 90,
     warmthBoost: 50,
     roomDeMuffle: 80,
@@ -80,11 +80,11 @@ const PRESETS: Record<PresetType, PresetConfig> = {
     name: "Custom Studio EQ & Gate",
     badge: "Manual",
     desc: "Fine-tune individual noise cut, warmth, room de-muffle, and speech presence sliders.",
-    noiseReduction: 85,
+    noiseReduction: 90,
     clarityBoost: 75,
     warmthBoost: 65,
     roomDeMuffle: 60,
-    highPassFreq: 90,
+    highPassFreq: 85,
     broadcastLeveling: true,
   },
 };
@@ -104,11 +104,11 @@ export default function VoiceEnhancerTool() {
 
   // Settings & Presets
   const [selectedPreset, setSelectedPreset] = useState<PresetType>("studio");
-  const [noiseReduction, setNoiseReduction] = useState<number>(88);
+  const [noiseReduction, setNoiseReduction] = useState<number>(92);
   const [clarityBoost, setClarityBoost] = useState<number>(78);
   const [warmthBoost, setWarmthBoost] = useState<number>(75);
   const [roomDeMuffle, setRoomDeMuffle] = useState<number>(65);
-  const [highPassFreq, setHighPassFreq] = useState<number>(90);
+  const [highPassFreq, setHighPassFreq] = useState<number>(85);
   const [broadcastLeveling, setBroadcastLeveling] = useState<boolean>(true);
   const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
 

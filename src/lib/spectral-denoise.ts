@@ -254,11 +254,10 @@ export function spectralDenoiseAudio(
 
   // User-controlled parameters
   const strengthNorm = Math.max(0.1, Math.min(1.0, options.noiseReductionStrength / 100));
-  // Mild over-subtraction (1.05 to 1.30) — eliminates stationary noise without biting into speech
-  const oversubtraction = 1.05 + 0.25 * strengthNorm;
-  // Natural Studio Gain Floor: -26 dB to -20 dB (0.05 to 0.10)
-  // Ensures clean quiet background while preserving consonant tails & natural breath
-  const gainFloor = 0.05 + 0.05 * (1.0 - strengthNorm);
+  // Deep stationary noise suppression (1.30 to 2.25x scaling for heavy fans & AC)
+  const oversubtraction = 1.30 + 0.95 * strengthNorm;
+  // Adaptive Gain Floor: down to -38.4 dB (0.012) for ultra-clean backgrounds
+  const gainFloor = Math.max(0.012, 0.045 * (1.0 - strengthNorm * 0.75));
 
   // Studio Vocal EQ parameters
   const clarityNorm = Math.max(0, Math.min(1.0, options.vocalClarityBoost / 100));
@@ -446,28 +445,26 @@ export function spectralDenoiseAudio(
       spectralOutput[i] = outAccumulator[i] / norm;
     }
 
-    // ── STAGE 5: Gentle Downward Pause Expander (Silences Pauses Naturally) ──
-    // Estimate residual noise RMS on post-denoised signal
-    let resSum = 0;
-    let resCount = 0;
-    for (let f = 0; f < numFrames; f++) {
-      if (frameEnergies[f] <= noiseThreshold * 1.4) {
-        const offset = f * HOP_SIZE;
-        for (let i = 0; i < FFT_SIZE; i++) {
-          const idx = offset + i;
-          if (idx >= length) break;
-          resSum += spectralOutput[idx] * spectralOutput[idx];
-          resCount++;
-        }
-      }
+    // ── STAGE 5: Adaptive Speech VAD Downward Expander (Total Background Silence) ──
+    const winSize = Math.floor(sampleRate * 0.35);
+    const numWins = Math.max(1, Math.ceil(length / winSize));
+    const winEnergies = new Float32Array(numWins);
+    for (let w = 0; w < numWins; w++) {
+      const start = w * winSize;
+      const end = Math.min(length, start + winSize);
+      let sum = 0;
+      for (let i = start; i < end; i++) sum += spectralOutput[i] * spectralOutput[i];
+      winEnergies[w] = Math.sqrt(sum / (end - start));
     }
-    const residualNoiseRms = resCount > 0 ? Math.sqrt(resSum / resCount) : 0.005;
+    winEnergies.sort();
+    const measuredNoiseFloor = winEnergies[Math.floor(numWins * 0.15)] || 0.005;
 
-    // Smooth envelope follower: 6ms attack, 220ms natural release
-    const attackCoeff = Math.exp(-1 / (sampleRate * 0.006));
-    const releaseCoeff = Math.exp(-1 / (sampleRate * 0.220));
-    const gateThresh = Math.max(0.004, residualNoiseRms * 2.2);
-    const expanderFloor = 0.12; // Natural -18 dB pause reduction floor (never a harsh zero)
+    // Smooth envelope follower: 5ms attack, 170ms natural release
+    const attackCoeff = Math.exp(-1 / (sampleRate * 0.005));
+    const releaseCoeff = Math.exp(-1 / (sampleRate * 0.170));
+    const gateThresh = Math.max(0.010, measuredNoiseFloor * 2.2);
+    // Deep silence during speech pauses: scales with strength down to -50 dB
+    const expanderFloor = Math.max(0.003, 0.025 * (1.0 - strengthNorm));
 
     const expandedOutput = new Float32Array(length);
     let envelope = 0;
@@ -483,8 +480,8 @@ export function spectralDenoiseAudio(
       let gateGain = 1.0;
       if (envelope < gateThresh) {
         const ratio = envelope / gateThresh;
-        // Smooth soft-knee expansion
-        gateGain = expanderFloor + (1 - expanderFloor) * Math.pow(ratio, 1.4);
+        // Deep smooth sigmoidal expansion down to black silence
+        gateGain = expanderFloor + (1.0 - expanderFloor) * Math.pow(ratio, 1.8);
       }
 
       expandedOutput[i] = spectralOutput[i] * gateGain;
