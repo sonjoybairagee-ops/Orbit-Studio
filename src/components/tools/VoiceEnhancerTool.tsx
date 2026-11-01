@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Mic,
+  Square,
   Volume2,
   VolumeX,
   Play,
@@ -496,66 +497,108 @@ export default function VoiceEnhancerTool() {
     document.body.removeChild(link);
   };
 
-  // Generate realistic human speech recording with heavy audible fan/AC hum and hiss
+  // Live Microphone Recording state
+  const [isRecording, setIsRecording] = useState<boolean>(false);
+  const [recordingSeconds, setRecordingSeconds] = useState<number>(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startRecording = async () => {
+    try {
+      setError("");
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setError("Microphone access is not supported by your browser.");
+        return;
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
+      const mime =
+        typeof MediaRecorder !== "undefined" &&
+        MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+          ? "audio/webm;codecs=opus"
+          : "audio/webm";
+
+      const mr = new MediaRecorder(stream, { mimeType: mime });
+      mediaRecorderRef.current = mr;
+
+      mr.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      mr.onstop = async () => {
+        stream.getTracks().forEach((track) => track.stop());
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: mr.mimeType || "audio/webm",
+        });
+        const file = new File([audioBlob], `mic-recording-${Date.now()}.webm`, {
+          type: audioBlob.type,
+        });
+        setAudioFile(file);
+        setFileName("my-voice-recording.wav");
+        setIsPlaying(false);
+        setCurrentTime(0);
+
+        if (originalAudioUrl) URL.revokeObjectURL(originalAudioUrl);
+        if (enhancedAudioUrl) URL.revokeObjectURL(enhancedAudioUrl);
+        setEnhancedAudioUrl("");
+
+        const url = URL.createObjectURL(audioBlob);
+        setOriginalAudioUrl(url);
+
+        await loadAndEnhanceAudio(file);
+      };
+
+      mr.start(250);
+      setIsRecording(true);
+      setRecordingSeconds(0);
+      recordTimerRef.current = setInterval(() => {
+        setRecordingSeconds((s) => s + 1);
+      }, 1000);
+    } catch {
+      setError("Microphone permission denied or microphone not found.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      if (recordTimerRef.current) {
+        clearInterval(recordTimerRef.current);
+        recordTimerRef.current = null;
+      }
+    }
+  };
+
+  // Load authentic studio speech recording with loud fan/room noise
   const loadSampleRecording = async () => {
     setIsProcessing(true);
-    setProgressMsg("Generating sample voiceover with room fan & AC noise...");
+    setProgressMsg("Loading authentic human speech recording with heavy room noise...");
     setError("");
 
     try {
-      const ctx = getSharedAudioContext();
-      const sampleRate = ctx.sampleRate;
-      const durationSec = 6.0;
-      const numFrames = Math.floor(sampleRate * durationSec);
-      const buffer = ctx.createBuffer(1, numFrames, sampleRate);
-      const data = buffer.getChannelData(0);
+      const res = await fetch("/assets/audio/demo-noisy-speech.wav");
+      if (!res.ok) throw new Error("Could not fetch sample audio");
+      const blob = await res.blob();
+      const sampleFile = new File([blob], "demo-noisy-speech.wav", { type: "audio/wav" });
 
-      // Distinct room fan hum (60Hz & 180Hz) + AC airflow hiss
-      for (let i = 0; i < numFrames; i++) {
-        const t = i / sampleRate;
-
-        // Distinct fan motor hum (60Hz & 180Hz) + broadband AC air hiss
-        const hum = 0.12 * Math.sin(2 * Math.PI * 60 * t) + 0.07 * Math.sin(2 * Math.PI * 180 * t);
-        const hiss = 0.05 * (Math.random() * 2 - 1);
-
-        // Natural speech cadence
-        const isSpeaking = (t > 0.5 && t < 2.5) || (t > 3.2 && t < 5.5);
-        let voice = 0;
-        if (isSpeaking) {
-          const pitch = 140 + 5 * Math.sin(2 * Math.PI * 3.5 * t);
-          const env = Math.sin(Math.PI * ((t % 0.4) / 0.4));
-          voice =
-            Math.max(0, env) *
-            (0.38 * Math.sin(2 * Math.PI * pitch * t) +
-              0.26 * Math.sin(2 * Math.PI * pitch * 2 * t) +
-              0.19 * Math.sin(2 * Math.PI * pitch * 3 * t) +
-              0.14 * Math.sin(2 * Math.PI * 3200 * t));
-        }
-
-        data[i] = voice + hum + hiss;
-      }
-
-      const sampleBlob = encodeWav(buffer);
-      const url = URL.createObjectURL(sampleBlob);
-      setOriginalAudioUrl(url);
-      const sampleFile = new File([sampleBlob], "sample-noisy-voice.wav", { type: "audio/wav" });
       setAudioFile(sampleFile);
-      setFileName("sample-noisy-voice.wav");
-      rawAudioBufferRef.current = buffer;
-      setDuration(durationSec);
+      setFileName("demo-noisy-speech.wav");
+      setIsPlaying(false);
+      setCurrentTime(0);
 
-      const p = PRESETS[selectedPreset];
-      await processAudioBuffer(
-        buffer,
-        p.noiseReduction,
-        p.clarityBoost,
-        p.highPassFreq,
-        p.warmthBoost,
-        p.roomDeMuffle,
-        p.broadcastLeveling
-      );
-    } catch {
-      setError("Failed to create sample audio.");
+      if (originalAudioUrl) URL.revokeObjectURL(originalAudioUrl);
+      if (enhancedAudioUrl) URL.revokeObjectURL(enhancedAudioUrl);
+      setEnhancedAudioUrl("");
+
+      const url = URL.createObjectURL(blob);
+      setOriginalAudioUrl(url);
+
+      await loadAndEnhanceAudio(sampleFile);
+    } catch (e) {
+      console.error("Failed to load sample:", e);
+      setError("Could not load sample audio file.");
       setIsProcessing(false);
     }
   };
@@ -605,7 +648,7 @@ export default function VoiceEnhancerTool() {
             </p>
           </div>
 
-          {/* Upload Button */}
+          {/* Action Buttons: Record Mic, Upload Audio, Try Real Speech Sample */}
           <div className="flex flex-wrap items-center gap-2.5">
             <input
               ref={fileInputRef}
@@ -614,6 +657,32 @@ export default function VoiceEnhancerTool() {
               onChange={handleFileUpload}
               className="hidden"
             />
+
+            {/* Record Mic Button */}
+            {!isRecording ? (
+              <button
+                type="button"
+                onClick={startRecording}
+                className="inline-flex items-center gap-2 rounded-2xl bg-rose-500/15 border border-rose-500/40 px-4 py-3 text-xs sm:text-sm font-bold text-rose-300 hover:bg-rose-500/25 transition-all cursor-pointer shadow-md shadow-rose-500/10"
+              >
+                <span className="h-2.5 w-2.5 rounded-full bg-rose-500 animate-pulse" />
+                <Mic className="h-4 w-4 text-rose-400" />
+                <span>Record from Mic</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={stopRecording}
+                className="inline-flex items-center gap-2 rounded-2xl bg-rose-600 px-5 py-3 text-xs sm:text-sm font-bold text-white hover:bg-rose-500 transition-all cursor-pointer shadow-lg shadow-rose-600/30 animate-pulse"
+              >
+                <Square className="h-4 w-4 fill-white" />
+                <span>
+                  Stop &amp; Enhance (
+                  {String(Math.floor(recordingSeconds / 60)).padStart(2, "0")}:
+                  {String(recordingSeconds % 60).padStart(2, "0")})
+                </span>
+              </button>
+            )}
 
             <button
               type="button"
@@ -630,7 +699,7 @@ export default function VoiceEnhancerTool() {
               className="inline-flex items-center gap-1.5 rounded-2xl bg-[#102a16] px-3.5 py-3 text-xs font-semibold text-[#3cff5f] border border-[#2a5234] hover:bg-[#16381e] transition-colors cursor-pointer"
             >
               <Sparkles className="h-3.5 w-3.5" />
-              <span>Try Sample with AC Noise</span>
+              <span>Try Real Speech Sample</span>
             </button>
           </div>
         </div>
