@@ -24,7 +24,11 @@ import {
   Check,
   AlertCircle,
   HelpCircle,
-  Scale,
+  Gavel,
+  BookOpen,
+  Sparkles,
+  Ticket,
+  ChevronRight,
 } from "lucide-react";
 import { GameSound, fireVictoryConfetti } from "./GameAudio";
 import { DiceCube, Pawn } from "./GameTokens";
@@ -32,14 +36,15 @@ import NetBar from "./net/NetBar";
 import { useNetGame } from "./net/useNetGame";
 
 /* ────────────────────────────────────────────────────────────────────────────
-   Monopoly Empire Tycoon — full classic 40-space board, simplified house rules
-   - You (red pawn) vs 3 AI bots
-   - Buy properties, complete colour groups for double rent, build houses
-   - Sell houses or sell properties back to Bank for liquidation cash
-   - Trade & Deal with AI opponents: Swap lands, offer cash, negotiate deals
-   - Chance & Community Chest cards, income/luxury tax into the Free Parking pot
-   - Jail: pay $50 or roll doubles (3-turn limit), 3 doubles in a row → jail
-   - Last player standing wins.
+   Monopoly Empire Tycoon — Official Classic 40-Space Browser Edition
+   - Instant 60 FPS, Zero-Friction Browser Play
+   - 28 Classic Properties: 22 Street color sets, 4 Railroads, 2 Utilities
+   - Passing GO collects $200
+   - Live Property Auctions (নিলাম) when a player passes on buying
+   - Complete Color Groups (Monopolies) → Double Rent & Build 1-4 Houses & Hotels
+   - Official Mortgage (৫০% ঋণ) & Unmortgage (১০% ইন্টারেস্ট) system
+   - Trade & Deal negotiation: Exchange lands & make cash offers with AI rivals
+   - Jail: $50 fine, doubles within 3 rolls, or 'Get Out of Jail Free' card
 ──────────────────────────────────────────────────────────────────────────── */
 
 type GroupKey =
@@ -53,12 +58,12 @@ interface Space {
   name: string;
   type: SpaceType;
   price?: number;
-  base?: number;              // base rent
-  ladder?: number[];          // rent with 1..5 buildings
+  base?: number;
+  ladder?: number[];
   group?: GroupKey;
-  house?: number;             // cost per house/hotel level
+  house?: number;
   tax?: number;
-  icon?: string;              // emoji for non-street tiles
+  icon?: string;
 }
 
 const GROUP_META: Record<GroupKey | "rail" | "utility", string> = {
@@ -136,35 +141,36 @@ const GROUP_COUNT: Partial<Record<GroupKey, number>> = SPACES.reduce(
 
 interface GameCard {
   text: string;
-  effect: "money" | "jail" | "move";
-  amount?: number; // positive = collect, negative = pay
-  target?: number; // board index for moves
+  effect: "money" | "jail" | "move" | "jailfree";
+  amount?: number;
+  target?: number;
 }
 
 const CHANCE_CARDS: GameCard[] = [
-  { text: "Advance to GO — collect $200!", effect: "move", target: 0 },
+  { text: "Advance to GO — collect $200 salary!", effect: "move", target: 0 },
   { text: "Take a walk down to the Boardwalk!", effect: "move", target: 39 },
   { text: "Take a trip to the Reading Railroad!", effect: "move", target: 5 },
   { text: "Advance to Illinois Avenue!!", effect: "move", target: 24 },
   { text: "Take a trip to St. Charles Place!", effect: "move", target: 11 },
+  { text: "Get Out of Jail Free! This card is saved to your wallet.", effect: "jailfree" },
   { text: "Speeding fine — pay $15.", effect: "money", amount: -15 },
-  { text: "Your building loan matures — collect $50!", effect: "money", amount: 50 },
-  { text: "Win a beauty contest — collect $10!", effect: "money", amount: 10 },
-  { text: "Not so fast… GO TO JAIL!", effect: "jail" },
+  { text: "Building loan matures — collect $50!", effect: "money", amount: 50 },
+  { text: "Won a local contest — collect $20!", effect: "money", amount: 20 },
+  { text: "Go Directly to Jail! Do not pass GO.", effect: "jail" },
 ];
 
 const CHEST_CARDS: GameCard[] = [
   { text: "Bank error in your favour — collect $200!", effect: "money", amount: 200 },
   { text: "Doctor's fee — pay $50.", effect: "money", amount: -50 },
   { text: "Income tax refund — collect $20.", effect: "money", amount: 20 },
-  { text: "It's your birthday — collect $100!", effect: "money", amount: 100 },
+  { text: "Get Out of Jail Free! Saved to your inventory.", effect: "jailfree" },
+  { text: "It's your birthday — collect $100 from bank!", effect: "money", amount: 100 },
   { text: "Life insurance matures — collect $100.", effect: "money", amount: 100 },
-  { text: "Pay school fees of $100.", effect: "money", amount: -100 },
-  { text: "Advance to GO — collect $200.", effect: "move", target: 0 },
-  { text: "GO TO JAIL!", effect: "jail" },
+  { text: "Pay school tuition fees of $100.", effect: "money", amount: -100 },
+  { text: "Advance to GO — collect $200 salary.", effect: "move", target: 0 },
+  { text: "GO TO JAIL! Do not collect $200.", effect: "jail" },
 ];
 
-/* board geometry: 11×11 grid, index 0 = GO at bottom-right, clockwise */
 function rcOf(i: number): [number, number] {
   if (i === 0) return [10, 10];
   if (i < 10) return [10, 10 - i];
@@ -186,7 +192,6 @@ function sideOf(i: number): "bottom" | "left" | "top" | "right" | "corner" {
 
 const money = (n: number) => `$${n.toLocaleString()}`;
 
-/* ── token styling ── */
 const P = [
   { name: "You (Red)", short: "You", hex: "#ef4444", dark: "#b91c1c", glow: "#f87171", bot: false },
   { name: "AI Green", short: "Green", hex: "#22c55e", dark: "#15803d", glow: "#4ade80", bot: true },
@@ -202,11 +207,13 @@ interface Player {
   inJail: boolean;
   jailTurns: number;
   bankrupt: boolean;
+  jailCards: number; // Count of Get Out of Jail Free cards
 }
 
 interface Deeds {
   owners: (number | null)[];
   levels: number[];
+  mortgaged: boolean[]; // Official Mortgage status
 }
 
 interface IncomingTrade {
@@ -215,6 +222,15 @@ interface IncomingTrade {
   requestedProps: number[];
   offeredCash: number;
   requestedCash: number;
+}
+
+interface AuctionState {
+  spaceIndex: number;
+  currentBid: number;
+  highBidder: number | null;
+  activeBidders: number[]; // Player IDs still participating
+  currentTurnIdx: number;
+  dbl: boolean;
 }
 
 const START_CASH = 1500;
@@ -228,9 +244,10 @@ const initialPlayers = (): Player[] =>
     inJail: false,
     jailTurns: 0,
     bankrupt: false,
+    jailCards: 0,
   }));
 
-type Phase = "idle" | "moving" | "action" | "jail";
+type Phase = "idle" | "moving" | "action" | "jail" | "auction";
 
 const TOKEN_OFFSETS: [number, number][][] = [
   [[0, 0]],
@@ -245,6 +262,7 @@ export default function MonopolyTycoon() {
   const [deeds, setDeeds] = useState<Deeds>({
     owners: Array(40).fill(null) as (number | null)[],
     levels: Array(40).fill(0),
+    mortgaged: Array(40).fill(false),
   });
   const [turn, setTurn] = useState(0);
   const [dicePair, setDicePair] = useState<[number, number] | null>(null);
@@ -263,9 +281,16 @@ export default function MonopolyTycoon() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // ── UX & Entry Screen State (Zero-friction) ─────────────────────────────────
+  const [gameStarted, setGameStarted] = useState(false);
+  const [rulesOpen, setRulesOpen] = useState(false);
+
+  // ── Auction (নিলাম) State ───────────────────────────────────────────────────
+  const [auction, setAuction] = useState<AuctionState | null>(null);
+
   // ── Trade & Deal System State ──────────────────────────────────────────────
   const [tradeOpen, setTradeOpen] = useState(false);
-  const [tradeTarget, setTradeTarget] = useState<number>(1); // Default to AI Green
+  const [tradeTarget, setTradeTarget] = useState<number>(1);
   const [myOfferedProps, setMyOfferedProps] = useState<number[]>([]);
   const [theirRequestedProps, setTheirRequestedProps] = useState<number[]>([]);
   const [myOfferedCash, setMyOfferedCash] = useState<number>(0);
@@ -286,7 +311,7 @@ export default function MonopolyTycoon() {
     }
   };
   const [log, setLog] = useState<string[]>([
-    "Welcome to Empire City! Roll the dice to start.",
+    "Welcome to Empire City! Click Roll Dice to begin.",
   ]);
 
   const playersRef = useRef(players);
@@ -305,11 +330,11 @@ export default function MonopolyTycoon() {
     []
   );
 
-  /* clone helpers */
   const snapPlayers = () => playersRef.current.map((p) => ({ ...p }));
   const snapDeeds = () => ({
     owners: [...deedsRef.current.owners],
     levels: [...deedsRef.current.levels],
+    mortgaged: [...deedsRef.current.mortgaged],
   });
 
   const setP = (arr: Player[]) => {
@@ -349,7 +374,7 @@ export default function MonopolyTycoon() {
     setPhase("idle");
   };
 
-  /* ── rent computation ── */
+  /* ── rent computation with mortgage check ── */
   const ownsGroup = (ownerId: number, group: GroupKey) => {
     const { owners } = deedsRef.current;
     return SPACES.every(
@@ -358,6 +383,9 @@ export default function MonopolyTycoon() {
   };
 
   const rentFor = (si: number, owner: number, diceVal: number): number => {
+    // Mortgaged properties collect NO rent!
+    if (deedsRef.current.mortgaged[si]) return 0;
+
     const sp = SPACES[si];
     const { levels, owners } = deedsRef.current;
     if (sp.type === "street") {
@@ -368,13 +396,13 @@ export default function MonopolyTycoon() {
     if (sp.type === "rail") {
       let n = 0;
       owners.forEach((o, i) => {
-        if (o === owner && SPACES[i].type === "rail") n++;
+        if (o === owner && SPACES[i].type === "rail" && !deedsRef.current.mortgaged[i]) n++;
       });
       return [25, 50, 100, 200][Math.max(0, n - 1)];
     }
     let n = 0;
     owners.forEach((o, i) => {
-      if (o === owner && SPACES[i].type === "utility") n++;
+      if (o === owner && SPACES[i].type === "utility" && !deedsRef.current.mortgaged[i]) n++;
     });
     return n === 2 ? diceVal * 10 : diceVal * 4;
   };
@@ -385,10 +413,12 @@ export default function MonopolyTycoon() {
     amount: number,
     creditTo: number | null,
     toPot: boolean
-  ): boolean /* success — false means payer went bankrupt */ => {
+  ): boolean => {
     const arr = snapPlayers();
     const deedsNow = snapDeeds();
     let cash = arr[payer].cash;
+
+    // 1. Sell houses first if needed
     while (cash < amount) {
       let sold = false;
       for (let i = 39; i >= 0; i--) {
@@ -405,6 +435,25 @@ export default function MonopolyTycoon() {
       }
       if (!sold) break;
     }
+
+    // 2. Auto-mortgage properties if still needed
+    while (cash < amount) {
+      let mortgagedAny = false;
+      for (let i = 39; i >= 0; i--) {
+        if (
+          deedsNow.owners[i] === payer &&
+          deedsNow.levels[i] === 0 &&
+          !deedsNow.mortgaged[i]
+        ) {
+          deedsNow.mortgaged[i] = true;
+          cash += Math.floor((SPACES[i].price ?? 100) * 0.5);
+          mortgagedAny = true;
+          break;
+        }
+      }
+      if (!mortgagedAny) break;
+    }
+
     let bankrupt = false;
     if (cash >= amount) {
       cash -= amount;
@@ -422,13 +471,14 @@ export default function MonopolyTycoon() {
           else {
             deedsNow.owners[i] = null;
             deedsNow.levels[i] = 0;
+            deedsNow.mortgaged[i] = false;
           }
         }
       }
       addLog(
         creditTo !== null
-          ? `💥 ${P[payer].short} is bankrupt! ${P[creditTo].short} takes over their properties.`
-          : `💥 ${P[payer].short} is bankrupt!`
+          ? `💥 ${P[payer].short} is bankrupt! ${P[creditTo].short} inherits all assets.`
+          : `💥 ${P[payer].short} went bankrupt!`
       );
     }
     arr[payer].cash = cash;
@@ -489,7 +539,6 @@ export default function MonopolyTycoon() {
       advanceTurn(p);
       return;
     }
-    // bots may build one house or evaluate trade before ending their turn
     timers.current.push(
       setTimeout(() => {
         aiBuild(p);
@@ -530,6 +579,12 @@ export default function MonopolyTycoon() {
             const ok = payMoney(p, -c.amount!, null, true);
             if (ok) finishLanding(p, false);
           }
+        } else if (c.effect === "jailfree") {
+          const arr = snapPlayers();
+          arr[p].jailCards = (arr[p].jailCards || 0) + 1;
+          setP(arr);
+          addLog(`🎟️ ${P[p].short} saved a 'Get Out of Jail Free' card!`);
+          finishLanding(p, false);
         } else if (c.effect === "jail") {
           sendToJail(p, "Card says Go To Jail!");
         } else {
@@ -562,6 +617,7 @@ export default function MonopolyTycoon() {
     const deedsNow = snapDeeds();
     arr[p].cash -= sp.price!;
     deedsNow.owners[si] = p;
+    deedsNow.mortgaged[si] = false;
     setP(arr);
     setD(deedsNow);
     GameSound.playCashRegister();
@@ -571,11 +627,130 @@ export default function MonopolyTycoon() {
     finishLanding(p, dbl);
   };
 
+  /* ── Official Auction (নিলাম) Trigger ── */
   const passProperty = (p: number, si: number, dbl: boolean) => {
-    addLog(`${P[p].short} passed on ${SPACES[si].name}.`);
+    addLog(`${P[p].short} passed on buying ${SPACES[si].name}. Initiating AUCTION! 🔨`);
     setPendingBuy(null);
+    startAuction(si, dbl);
+  };
+
+  const startAuction = (si: number, dbl: boolean) => {
+    const eligibleBidders = playersRef.current
+      .filter((pl) => !pl.bankrupt && pl.cash >= 10)
+      .map((pl) => pl.id);
+
+    if (eligibleBidders.length <= 1) {
+      addLog("Not enough eligible players for auction.");
+      finishLanding(turn, dbl);
+      return;
+    }
+
+    setAuction({
+      spaceIndex: si,
+      currentBid: 10,
+      highBidder: null,
+      activeBidders: eligibleBidders,
+      currentTurnIdx: 0,
+      dbl,
+    });
+    setPhase("auction");
+    GameSound.playCashRegister();
+  };
+
+  /* ── Handle Auction Bid from Player or AI ── */
+  const submitAuctionBid = (bidderId: number, raiseAmount: number) => {
+    if (!auction) return;
+    const newBid = auction.currentBid + raiseAmount;
+    const bidderPl = playersRef.current[bidderId];
+
+    if (bidderPl.cash < newBid) {
+      addLog(`${P[bidderId].short} doesn't have enough cash to bid ${money(newBid)}.`);
+      return;
+    }
+
+    setAuction((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        currentBid: newBid,
+        highBidder: bidderId,
+      };
+    });
+    GameSound.playTokenStep();
+    addLog(`🔨 ${P[bidderId].short} bids ${money(newBid)} for ${SPACES[auction.spaceIndex].name}!`);
+    advanceAuctionTurn(bidderId, false);
+  };
+
+  const passAuctionBid = (bidderId: number) => {
+    if (!auction) return;
+    addLog(`🏳️ ${P[bidderId].short} passed on the auction.`);
+    advanceAuctionTurn(bidderId, true);
+  };
+
+  const advanceAuctionTurn = (lastBidderId: number, didPass: boolean) => {
+    if (!auction) return;
+    let active = [...auction.activeBidders];
+    if (didPass) {
+      active = active.filter((id) => id !== lastBidderId);
+    }
+
+    // Only 1 bidder left or 0?
+    if (active.length === 1 && auction.highBidder !== null) {
+      concludeAuction(auction.highBidder, auction.currentBid, auction.spaceIndex, auction.dbl);
+      return;
+    } else if (active.length === 0) {
+      addLog(`No bids placed on ${SPACES[auction.spaceIndex].name}. Remains unowned.`);
+      const dbl = auction.dbl;
+      setAuction(null);
+      setPhase("idle");
+      finishLanding(turn, dbl);
+      return;
+    }
+
+    // Move to next active bidder
+    const currentPos = active.indexOf(lastBidderId);
+    const nextIdx = (currentPos + 1) % active.length;
+    const nextBidder = active[nextIdx];
+
+    setAuction((prev) => (prev ? { ...prev, activeBidders: active, currentTurnIdx: nextBidder } : null));
+
+    // If next bidder is AI, evaluate bid
+    if (P[nextBidder].bot) {
+      timers.current.push(
+        setTimeout(() => {
+          aiAuctionDecision(nextBidder, auction.spaceIndex, auction.currentBid);
+        }, 750)
+      );
+    }
+  };
+
+  const aiAuctionDecision = (aiId: number, si: number, currentBid: number) => {
+    const pl = playersRef.current[aiId];
+    const sp = SPACES[si];
+    const maxValuation = (sp.price ?? 100) * 0.9;
+
+    // AI raises if price is reasonable and has money
+    if (pl.cash >= currentBid + 20 && currentBid + 20 <= maxValuation) {
+      submitAuctionBid(aiId, 20);
+    } else {
+      passAuctionBid(aiId);
+    }
+  };
+
+  const concludeAuction = (winnerId: number, finalPrice: number, si: number, dbl: boolean) => {
+    const arr = snapPlayers();
+    const deedsNow = snapDeeds();
+    arr[winnerId].cash -= finalPrice;
+    deedsNow.owners[si] = winnerId;
+    deedsNow.mortgaged[si] = false;
+    setP(arr);
+    setD(deedsNow);
+    GameSound.playCashRegister();
+    fireVictoryConfetti();
+    addLog(`🏆 SOLD! ${P[winnerId].short} won ${SPACES[si].name} at auction for ${money(finalPrice)}!`);
+    setAuction(null);
     setPhase("idle");
-    finishLanding(p, dbl);
+    finishLanding(turn, dbl);
   };
 
   const resolveLanding = (p: number, a: number, b: number, dbl: boolean) => {
@@ -593,12 +768,18 @@ export default function MonopolyTycoon() {
         } else if (owner === p) {
           finishLanding(p, dbl);
         } else {
-          const rent = rentFor(pos, owner, a + b);
-          addLog(`🏠 ${P[p].short} ${p === 0 ? "pay" : "pays"} ${money(rent)} rent to ${P[owner].short} (${sp.name}).`);
-          const ok = payMoney(p, rent, owner, false);
-          if (ok) {
-            GameSound.playCashRegister();
+          const isMortgaged = deedsRef.current.mortgaged[pos];
+          if (isMortgaged) {
+            addLog(`🏠 ${sp.name} is MORTGAGED! No rent owed to ${P[owner].short}.`);
             finishLanding(p, dbl);
+          } else {
+            const rent = rentFor(pos, owner, a + b);
+            addLog(`🏠 ${P[p].short} ${p === 0 ? "pay" : "pays"} ${money(rent)} rent to ${P[owner].short} (${sp.name}).`);
+            const ok = payMoney(p, rent, owner, false);
+            if (ok) {
+              GameSound.playCashRegister();
+              finishLanding(p, dbl);
+            }
           }
         }
         break;
@@ -702,7 +883,20 @@ export default function MonopolyTycoon() {
     arr[p].inJail = false;
     arr[p].jailTurns = 0;
     setP(arr);
-    addLog(`💵 ${P[p].short} paid the $50 fine — roll to move!`);
+    addLog(`💵 ${P[p].short} paid the $50 fine — free to roll!`);
+    setPhase("idle");
+  };
+
+  const jailUseCard = () => {
+    const p = turn;
+    const arr = snapPlayers();
+    if ((arr[p].jailCards || 0) <= 0) return;
+    arr[p].jailCards -= 1;
+    arr[p].inJail = false;
+    arr[p].jailTurns = 0;
+    setP(arr);
+    GameSound.playCashRegister();
+    addLog(`🎟️ ${P[p].short} used a 'Get Out of Jail Free' card! Free to roll.`);
     setPhase("idle");
   };
 
@@ -747,7 +941,11 @@ export default function MonopolyTycoon() {
     if (sp.type !== "street" || !sp.house) return;
     if (deedsRef.current.owners[si] !== p) return;
     if (!ownsGroup(p, sp.group!)) {
-      addLog(`⚠️ You must own the whole ${sp.group} group before building.`);
+      addLog(`⚠️ You must own the entire ${sp.group} color group first.`);
+      return;
+    }
+    if (deedsRef.current.mortgaged[si]) {
+      addLog(`⚠️ Cannot build on a mortgaged property!`);
       return;
     }
     if (deedsRef.current.levels[si] >= 5) return;
@@ -777,6 +975,7 @@ export default function MonopolyTycoon() {
         sp.type === "street" &&
         sp.house &&
         deedsRef.current.owners[si] === p &&
+        !deedsRef.current.mortgaged[si] &&
         deedsRef.current.levels[si] < 5 &&
         ownsGroup(p, sp.group!) &&
         arr[p].cash - sp.house >= 300
@@ -787,7 +986,49 @@ export default function MonopolyTycoon() {
     }
   };
 
-  /* ── selling & liquidation (User requested) ── */
+  /* ── Official Mortgage & Unmortgage System ── */
+  const mortgageProperty = (p: number, si: number) => {
+    const sp = SPACES[si];
+    if (deedsRef.current.owners[si] !== p) return;
+    if (deedsRef.current.levels[si] > 0) {
+      addLog(`⚠️ Sell all houses on ${sp.name} before mortgaging!`);
+      return;
+    }
+    if (deedsRef.current.mortgaged[si]) return;
+
+    const mortgageValue = Math.floor((sp.price ?? 100) * 0.5); // 50% mortgage cash
+    const arr = snapPlayers();
+    const deedsNow = snapDeeds();
+    arr[p].cash += mortgageValue;
+    deedsNow.mortgaged[si] = true;
+    setP(arr);
+    setD(deedsNow);
+    GameSound.playCashRegister();
+    addLog(`📜 ${P[p].short} mortgaged ${sp.name} for +${money(mortgageValue)}.`);
+  };
+
+  const unmortgageProperty = (p: number, si: number) => {
+    const sp = SPACES[si];
+    if (deedsRef.current.owners[si] !== p) return;
+    if (!deedsRef.current.mortgaged[si]) return;
+
+    // Principal (50%) + 10% interest = 55% of face value
+    const unmortgageCost = Math.floor((sp.price ?? 100) * 0.55);
+    const arr = snapPlayers();
+    if (arr[p].cash < unmortgageCost) {
+      addLog(`💳 Insufficient cash to unmortgage. Cost is ${money(unmortgageCost)}.`);
+      return;
+    }
+
+    const deedsNow = snapDeeds();
+    arr[p].cash -= unmortgageCost;
+    deedsNow.mortgaged[si] = false;
+    setP(arr);
+    setD(deedsNow);
+    GameSound.playCashRegister();
+    addLog(`✨ ${P[p].short} paid ${money(unmortgageCost)} to lift mortgage on ${sp.name}!`);
+  };
+
   const sellHouse = (p: number, si: number) => {
     const sp = SPACES[si];
     if (sp.type !== "street" || !sp.house) return;
@@ -805,26 +1046,6 @@ export default function MonopolyTycoon() {
     addLog(`🏚️ ${P[p].short} sold a house on ${sp.name} for +${money(refund)}.`);
   };
 
-  const sellPropertyToBank = (p: number, si: number) => {
-    const sp = SPACES[si];
-    if (deedsRef.current.owners[si] !== p) return;
-    if (deedsRef.current.levels[si] > 0) {
-      addLog(`⚠️ You must sell all houses on ${sp.name} first!`);
-      return;
-    }
-
-    const refund = Math.floor((sp.price ?? 100) * 0.6); // 60% liquidation value
-    const arr = snapPlayers();
-    const deedsNow = snapDeeds();
-    arr[p].cash += refund;
-    deedsNow.owners[si] = null;
-    deedsNow.levels[si] = 0;
-    setP(arr);
-    setD(deedsNow);
-    GameSound.playCashRegister();
-    addLog(`🏦 ${P[p].short} sold ${sp.name} to the Bank for +${money(refund)}.`);
-  };
-
   /* ── Trade Evaluation & Execution ── */
   const evaluateTradeProposal = (
     target: number,
@@ -835,7 +1056,6 @@ export default function MonopolyTycoon() {
   ) => {
     const targetPl = playersRef.current[target];
 
-    // Cannot demand more cash than opponent has
     if (theirCash > targetPl.cash) {
       return {
         accepted: false,
@@ -852,7 +1072,6 @@ export default function MonopolyTycoon() {
       };
     }
 
-    // Valuation of what AI is giving up
     let givingVal = theirCash;
     for (const si of theirProps) {
       const sp = SPACES[si];
@@ -860,19 +1079,18 @@ export default function MonopolyTycoon() {
       if (sp.group && ownsGroup(target, sp.group)) val *= 2.2;
       else if (sp.group) {
         const myCount = SPACES.filter((s, i) => s.group === sp.group && (deedsRef.current.owners[i] === 0 || i === si)).length;
-        if (myCount === (GROUP_COUNT[sp.group] ?? 3)) val *= 1.7; // Human completes monopoly
+        if (myCount === (GROUP_COUNT[sp.group] ?? 3)) val *= 1.7;
       }
       givingVal += val;
     }
 
-    // Valuation of what AI is receiving
     let recVal = yourCash;
     for (const si of yourProps) {
       const sp = SPACES[si];
       let val = sp.price ?? 100;
       if (sp.group) {
         const aiCount = SPACES.filter((s, i) => s.group === sp.group && (deedsRef.current.owners[i] === target || i === si)).length;
-        if (aiCount === (GROUP_COUNT[sp.group] ?? 3)) val *= 2.0; // AI completes monopoly
+        if (aiCount === (GROUP_COUNT[sp.group] ?? 3)) val *= 2.0;
       }
       recVal += val;
     }
@@ -926,17 +1144,14 @@ export default function MonopolyTycoon() {
     const arr = snapPlayers();
     const deedsNow = snapDeeds();
 
-    // Check cash limits
     if (arr[fromP].cash < fromCash || arr[toP].cash < toCash) {
       addLog("⚠️ Trade failed: insufficient cash balance.");
       return;
     }
 
-    // Transfer cash
     arr[fromP].cash = arr[fromP].cash - fromCash + toCash;
     arr[toP].cash = arr[toP].cash - toCash + fromCash;
 
-    // Transfer properties
     for (const si of fromProps) deedsNow.owners[si] = toP;
     for (const si of toProps) deedsNow.owners[si] = fromP;
 
@@ -988,7 +1203,6 @@ export default function MonopolyTycoon() {
     const aiPl = playersRef.current[aiId];
     if (aiPl.cash < 250) return;
 
-    // Look for a color group where AI owns 1 or 2 streets and Player 0 owns the missing street
     for (const [group, total] of Object.entries(GROUP_COUNT)) {
       const g = group as GroupKey;
       const groupSpaces = SPACES.map((s, idx) => ({ ...s, idx })).filter((s) => s.group === g && s.type === "street");
@@ -996,11 +1210,9 @@ export default function MonopolyTycoon() {
       const humanOwned = groupSpaces.filter((s) => deedsRef.current.owners[s.idx] === 0);
 
       if (aiOwned.length >= 1 && humanOwned.length === 1 && aiOwned.length + humanOwned.length === total) {
-        // AI found an opportunity to complete monopoly!
         const targetSpace = humanOwned[0];
         const offerCash = Math.min(Math.floor(aiPl.cash * 0.45), (targetSpace.price ?? 100) * 1.5);
-        
-        // Find if AI has an extra single street or rail it doesn't need
+
         const extraProp = SPACES.findIndex((s, idx) => {
           if (deedsRef.current.owners[idx] !== aiId) return false;
           if (s.group === g) return false;
@@ -1023,9 +1235,9 @@ export default function MonopolyTycoon() {
     }
   };
 
-  /* ── AI automation ── */
+  /* ── AI Automation Loop ── */
   useEffect(() => {
-    if (winner !== null || rolling || phase === "moving") return;
+    if (!gameStarted || winner !== null || rolling || phase === "moving" || phase === "auction") return;
     let t: ReturnType<typeof setTimeout> | null = null;
     const p = turn;
 
@@ -1041,9 +1253,8 @@ export default function MonopolyTycoon() {
       if (t) clearTimeout(t);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [turn, phase, dicePair, rolling, winner]);
+  }, [turn, phase, dicePair, rolling, winner, gameStarted]);
 
-  /* also skip a turn if it somehow becomes a bankrupt player's move */
   useEffect(() => {
     if (winner !== null) return;
     if (playersRef.current[turn].bankrupt) {
@@ -1058,7 +1269,11 @@ export default function MonopolyTycoon() {
     timers.current = [];
     setPlayers(initialPlayers());
     playersRef.current = initialPlayers();
-    const fresh = { owners: Array(40).fill(null) as (number | null)[], levels: Array(40).fill(0) };
+    const fresh = {
+      owners: Array(40).fill(null) as (number | null)[],
+      levels: Array(40).fill(0),
+      mortgaged: Array(40).fill(false),
+    };
     setD(fresh);
     setPot(0);
     setTurn(0);
@@ -1072,11 +1287,11 @@ export default function MonopolyTycoon() {
     setInspectSpace(null);
     setTradeOpen(false);
     setIncomingTrade(null);
+    setAuction(null);
     doubleChain.current = 0;
-    setLog(["New game! Roll the dice to start your empire."]);
+    setLog(["New game started! Roll the dice to build your empire."]);
   };
 
-  /* ── render helpers ── */
   const pctBoard = (v: number) => (v / 11) * 100;
   const curTurn = turn;
   const turnIsHuman = curTurn === 0 && !P[0].bot;
@@ -1093,6 +1308,7 @@ export default function MonopolyTycoon() {
     };
     const owner = deeds.owners[i];
     const lvl = deeds.levels[i];
+    const isMortgaged = deeds.mortgaged[i];
 
     if (side === "corner") {
       const cornerStyle: Record<number, CSSProperties> = {
@@ -1134,12 +1350,14 @@ export default function MonopolyTycoon() {
 
     return (
       <div
-        className="absolute inset-0 cursor-pointer hover:bg-[#00000008] transition-colors"
+        className={`absolute inset-0 cursor-pointer hover:bg-[#00000008] transition-colors ${
+          isMortgaged ? "opacity-65" : ""
+        }`}
         style={{ transform: `rotate(${rotation[side]}deg)` }}
         onClick={() => { setSelected(i); setInspectSpace(i); }}
         title={`${sp.name}${sp.price ? ` — ${money(sp.price)}` : ""}${
           owner !== null && owner !== undefined ? ` — owned by ${P[owner].short}` : ""
-        }`}
+        }${isMortgaged ? " (MORTGAGED)" : ""}`}
       >
         {/* colour band */}
         <div
@@ -1152,9 +1370,14 @@ export default function MonopolyTycoon() {
               style={{ backgroundColor: P[owner].hex }}
             />
           )}
+          {isMortgaged && (
+            <span className="text-[6px] font-black bg-red-600 text-white px-1 rounded">
+              M
+            </span>
+          )}
         </div>
-        {/* buildings on the band */}
-        {lvl > 0 && (
+        {/* buildings */}
+        {lvl > 0 && !isMortgaged && (
           <div
             className="absolute inset-x-0 z-10 flex items-center justify-center gap-[1px]"
             style={{ top: `calc(24% - 3px)` }}
@@ -1189,6 +1412,7 @@ export default function MonopolyTycoon() {
 
   const selectedSpace = selected !== null ? SPACES[selected] : null;
   const selOwner = selected !== null ? deeds.owners[selected] : null;
+  const isSelectedMortgaged = selected !== null ? deeds.mortgaged[selected] : false;
   const canBuild =
     selected !== null &&
     turn === 0 &&
@@ -1196,15 +1420,16 @@ export default function MonopolyTycoon() {
     winner === null &&
     selectedSpace?.type === "street" &&
     selOwner === 0 &&
+    !isSelectedMortgaged &&
     ownsGroup(0, selectedSpace.group!) &&
     deeds.levels[selected] < 5 &&
     players[0].cash >= (selectedSpace.house ?? Infinity);
 
   return (
-    <div ref={containerRef} className="w-full select-none">
+    <div ref={containerRef} className="w-full select-none relative">
       <NetBar gameTitle="Monopoly Empire" net={net} />
 
-      {/* Header */}
+      {/* Header Toolbar */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#213026] bg-[#080e0b] p-3.5 sm:p-4">
         <div>
           <h2 className="flex items-center gap-2 text-base font-bold text-[#e7eee9] sm:text-lg">
@@ -1215,12 +1440,22 @@ export default function MonopolyTycoon() {
             </span>
           </h2>
           <p className="mt-0.5 text-xs text-[#9baaa1]">
-            Classic 40-space board · Buy, sell, trade lands, negotiate deals &amp; bankrupt rivals!
+            Official 40-Space Board · Auctions · Mortgages · Trading · Bankrupt rivals!
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* Trade / Deal Modal Trigger Button */}
+          {/* Rules Modal Button */}
+          <button
+            type="button"
+            onClick={() => setRulesOpen(true)}
+            className="flex items-center gap-1.5 rounded-xl border border-[#213026] bg-[#0c1510] px-3 py-1.5 text-xs font-semibold text-[#c0d0c6] hover:text-[#3cff5f] transition-all cursor-pointer"
+          >
+            <BookOpen className="h-3.5 w-3.5" />
+            <span>Rules</span>
+          </button>
+
+          {/* Trade / Deals Button */}
           <button
             type="button"
             onClick={() => setTradeOpen(true)}
@@ -1244,7 +1479,7 @@ export default function MonopolyTycoon() {
             <span>{fastAi ? "Turbo AI" : "Normal Speed"}</span>
           </button>
 
-          {/* Sound Mute Toggle */}
+          {/* Mute Toggle */}
           <button
             type="button"
             onClick={toggleMute}
@@ -1276,7 +1511,7 @@ export default function MonopolyTycoon() {
       </div>
 
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        {/* ── Board ── */}
+        {/* ── Main Board ── */}
         <div className="relative mx-auto w-full max-w-[620px]">
           <div
             className="relative w-full overflow-hidden rounded-2xl border-4 border-[#16211b]"
@@ -1287,7 +1522,7 @@ export default function MonopolyTycoon() {
                 "0 18px 45px rgba(0,0,0,0.6), 0 0 0 1px rgba(60,255,95,0.12)",
             }}
           >
-            {/* tiles */}
+            {/* 40 Tiles Grid */}
             <div
               className="absolute inset-0"
               style={{
@@ -1309,7 +1544,7 @@ export default function MonopolyTycoon() {
                 );
               })}
 
-              {/* centre */}
+              {/* Center Arena */}
               <div
                 className="relative"
                 style={{ gridColumn: "2 / 11", gridRow: "2 / 11" }}
@@ -1323,7 +1558,7 @@ export default function MonopolyTycoon() {
                   }}
                 />
 
-                {/* diagonal logo banner */}
+                {/* Diagonal Banner */}
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-45 text-center">
                   <div
                     className="rounded-md px-4 py-2 text-xl font-black italic tracking-widest text-white sm:px-8 sm:py-3 sm:text-4xl"
@@ -1348,7 +1583,7 @@ export default function MonopolyTycoon() {
                   </div>
                 </div>
 
-                {/* free parking pot */}
+                {/* Free Parking Pot */}
                 <div className="absolute left-2 top-2 rounded-lg border border-[#c8bfa5] bg-white/80 px-2 py-1.5 text-center shadow-sm">
                   <div className="text-[7px] font-bold uppercase tracking-wider text-[#8a6d1f]">
                     🚗 Free Parking Pot
@@ -1358,7 +1593,7 @@ export default function MonopolyTycoon() {
                   </div>
                 </div>
 
-                {/* current player chip */}
+                {/* Turn Chip */}
                 <div
                   className="absolute rounded-lg border border-[#c8bfa5] bg-white/80 px-2 py-1.5 text-center shadow-sm"
                   style={{ right: 8, top: 8 }}
@@ -1379,10 +1614,10 @@ export default function MonopolyTycoon() {
                 </div>
 
                 <div className="absolute bottom-2 left-0 right-0 text-center text-[6px] text-[#9a917d] sm:text-[8px]">
-                  Buy · Sell to Bank · Trade &amp; Deal with AI · Bankrupt rivals
+                  Pass GO ➔ Collect $200 · Auctions · Mortgages · Bankruptcy
                 </div>
 
-                {/* drawn card overlay */}
+                {/* Chance / Community Chest Card Display */}
                 {card && (
                   <div
                     className="absolute left-1/2 top-1/2 z-30 w-[55%] -translate-x-1/2 -translate-y-1/2 rounded-xl p-3 text-center shadow-2xl sm:p-4"
@@ -1398,7 +1633,7 @@ export default function MonopolyTycoon() {
                       className="text-[10px] font-black uppercase tracking-widest"
                       style={{ color: card.kind === "chance" ? "#c25e0a" : "#12689a" }}
                     >
-                      {card.kind === "chance" ? "❓ Chance" : "🎁 Community Chest"}
+                      {card.kind === "chance" ? "❓ Chance Card" : "🎁 Community Chest"}
                     </div>
                     <p className="mt-1.5 text-[11px] font-semibold leading-snug text-[#1c2130] sm:text-sm">
                       {card.text}
@@ -1408,7 +1643,7 @@ export default function MonopolyTycoon() {
               </div>
             </div>
 
-            {/* token overlay */}
+            {/* Token Overlay */}
             {(() => {
               const groups = new Map<string, { p: number; cell: [number, number] }[]>();
               players.forEach((pl) => {
@@ -1448,7 +1683,7 @@ export default function MonopolyTycoon() {
               return out;
             })()}
 
-            {/* gloss */}
+            {/* Board Glass Reflection */}
             <div
               className="pointer-events-none absolute inset-0 z-30"
               style={{
@@ -1459,19 +1694,21 @@ export default function MonopolyTycoon() {
           </div>
 
           <p className="mt-2 text-center text-[10px] text-[#62776a]">
-            Tip: click any property tile to inspect, build, or sell it back to the Bank.
+            Tip: click any property tile to inspect, build, or mortgage it.
           </p>
         </div>
 
-        {/* ── Side panel ── */}
+        {/* ── Side Controls Panel ── */}
         <div className="space-y-4">
-          {/* dice & roll */}
+          {/* Dice & Roll Bar */}
           <div className="flex flex-col items-center gap-3 rounded-2xl border border-[#213026] bg-[#080e0b] p-5">
             <span className="font-mono text-[10px] uppercase tracking-widest text-[#62776a]">
               {rolling
                 ? "Rolling…"
                 : phase === "action"
                 ? "Buying decision"
+                : phase === "auction"
+                ? "Live Auction"
                 : phase === "jail"
                 ? "In Jail!"
                 : "Dice"}
@@ -1504,7 +1741,7 @@ export default function MonopolyTycoon() {
             </button>
           </div>
 
-          {/* prompts */}
+          {/* Buy or Auction Prompt */}
           {phase === "action" && pendingBuy !== null && turn === 0 && (
             <div className="rounded-2xl border border-amber-400/40 bg-amber-400/10 p-4">
               <div className="text-xs font-bold text-amber-300">
@@ -1520,48 +1757,139 @@ export default function MonopolyTycoon() {
                   onClick={() => buyProperty(0, pendingBuy, Boolean(dicePair && dicePair[0] === dicePair[1]))}
                   className="flex-1 cursor-pointer rounded-xl bg-[#3cff5f] px-3 py-2 text-xs font-bold text-[#050a08] transition-all hover:bg-[#52ff71] disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  Buy it
+                  Buy It
                 </button>
                 <button
                   type="button"
                   onClick={() => passProperty(0, pendingBuy, Boolean(dicePair && dicePair[0] === dicePair[1]))}
-                  className="flex-1 cursor-pointer rounded-xl border border-white/15 bg-[#080e0b] px-3 py-2 text-xs font-bold text-[#9baaa1] transition-colors hover:bg-[#0f1712]"
+                  className="flex-1 cursor-pointer rounded-xl border border-amber-400/30 bg-[#080e0b] px-3 py-2 text-xs font-bold text-amber-300 transition-colors hover:bg-amber-400/10 flex items-center justify-center gap-1"
                 >
-                  Pass
+                  <Gavel className="h-3.5 w-3.5" />
+                  <span>Auction It</span>
                 </button>
               </div>
             </div>
           )}
 
+          {/* Live Auction (নিলাম) Banner */}
+          {phase === "auction" && auction && (
+            <div className="rounded-2xl border-2 border-[#3cff5f]/60 bg-[#0c1810] p-4 shadow-xl animate-pulse-subtle">
+              <div className="flex items-center justify-between pb-2 border-b border-[#1c2a22]">
+                <span className="flex items-center gap-1.5 text-xs font-black text-[#3cff5f]">
+                  <Gavel className="h-4 w-4" />
+                  <span>LIVE AUCTION</span>
+                </span>
+                <span className="text-[11px] font-mono text-[#8ea396]">
+                  Value: ${SPACES[auction.spaceIndex].price}
+                </span>
+              </div>
+              <div className="mt-2">
+                <h4 className="text-sm font-bold text-[#e7eee9]">
+                  {SPACES[auction.spaceIndex].name}
+                </h4>
+                <div className="mt-2 flex items-center justify-between rounded-xl bg-[#08100c] p-2.5 border border-[#1a2920]">
+                  <span className="text-xs text-[#8ea396]">Current High Bid:</span>
+                  <div className="text-right">
+                    <span className="font-mono text-base font-black text-[#3cff5f]">
+                      {money(auction.currentBid)}
+                    </span>
+                    <span className="block text-[10px] text-[#c0d0c6]">
+                      by {auction.highBidder !== null ? P[auction.highBidder].name : "No bids yet"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Player Auction Controls */}
+              {auction.currentTurnIdx === 0 && (
+                <div className="mt-3 space-y-2">
+                  <span className="text-[11px] font-semibold text-[#3cff5f] block">
+                    Your Turn to Bid!
+                  </span>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <button
+                      type="button"
+                      disabled={players[0].cash < auction.currentBid + 10}
+                      onClick={() => submitAuctionBid(0, 10)}
+                      className="py-1.5 rounded-lg bg-[#163820] border border-[#2a5234] text-xs font-bold text-[#3cff5f] hover:bg-[#1e4d2b]"
+                    >
+                      +$10
+                    </button>
+                    <button
+                      type="button"
+                      disabled={players[0].cash < auction.currentBid + 25}
+                      onClick={() => submitAuctionBid(0, 25)}
+                      className="py-1.5 rounded-lg bg-[#163820] border border-[#2a5234] text-xs font-bold text-[#3cff5f] hover:bg-[#1e4d2b]"
+                    >
+                      +$25
+                    </button>
+                    <button
+                      type="button"
+                      disabled={players[0].cash < auction.currentBid + 50}
+                      onClick={() => submitAuctionBid(0, 50)}
+                      className="py-1.5 rounded-lg bg-[#163820] border border-[#2a5234] text-xs font-bold text-[#3cff5f] hover:bg-[#1e4d2b]"
+                    >
+                      +$50
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => passAuctionBid(0)}
+                    className="w-full py-1.5 rounded-lg border border-red-500/30 bg-red-500/10 text-xs font-bold text-red-400 hover:bg-red-500/20"
+                  >
+                    Withdraw / Pass
+                  </button>
+                </div>
+              )}
+
+              {auction.currentTurnIdx !== 0 && (
+                <div className="mt-3 text-center py-2 text-xs font-mono text-[#8ea396]">
+                  {P[auction.currentTurnIdx].short} is placing a bid…
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Jail Options */}
           {phase === "jail" && turn === 0 && (
             <div className="rounded-2xl border border-orange-400/40 bg-orange-400/10 p-4">
               <div className="flex items-center gap-2 text-xs font-bold text-orange-300">
                 <Lock className="h-4 w-4" /> You're in jail (attempt {players[0].jailTurns}/3)
               </div>
               <p className="mt-1 text-[11px] text-[#9baaa1]">
-                Pay the fine to roll freely, or try to roll doubles.
+                Pay $50 fine, try doubles, or use your Get Out of Jail Free card.
               </p>
-              <div className="mt-3 flex gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 <button
                   type="button"
                   disabled={players[0].cash < 50}
                   onClick={jailPay}
-                  className="flex-1 cursor-pointer rounded-xl bg-[#3cff5f] px-3 py-2 text-xs font-bold text-[#050a08] transition-all hover:bg-[#52ff71] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex-1 cursor-pointer rounded-xl bg-[#3cff5f] px-3 py-2 text-xs font-bold text-[#050a08] transition-all hover:bg-[#52ff71] disabled:opacity-40"
                 >
                   Pay $50
                 </button>
                 <button
                   type="button"
                   onClick={jailTry}
-                  className="flex-1 cursor-pointer rounded-xl border border-white/15 bg-[#080e0b] px-3 py-2 text-xs font-bold text-[#9baaa1] transition-colors hover:bg-[#0f1712]"
+                  className="flex-1 cursor-pointer rounded-xl border border-white/15 bg-[#080e0b] px-3 py-2 text-xs font-bold text-[#9baaa1] hover:bg-[#0f1712]"
                 >
                   Try Doubles
                 </button>
+                {(players[0].jailCards || 0) > 0 && (
+                  <button
+                    type="button"
+                    onClick={jailUseCard}
+                    className="w-full cursor-pointer rounded-xl border border-yellow-400/40 bg-yellow-400/15 px-3 py-1.5 text-xs font-bold text-yellow-300 hover:bg-yellow-400/25 flex items-center justify-center gap-1.5"
+                  >
+                    <Ticket className="h-3.5 w-3.5" />
+                    <span>Use 'Get Out of Jail Free' Card ({players[0].jailCards})</span>
+                  </button>
+                )}
               </div>
             </div>
           )}
 
-          {/* selected property with Build & Sell options */}
+          {/* Selected Property with Mortgage & Build */}
           {selectedSpace && (
             <div className="rounded-2xl border border-[#213026] bg-[#080e0b] p-4">
               <div className="flex items-center justify-between">
@@ -1588,9 +1916,18 @@ export default function MonopolyTycoon() {
                 )}
                 {selOwner === null && <span className="text-[10px] text-[#62776a]">Unowned</span>}
               </div>
-              <h4 className="mt-1.5 text-sm font-bold text-[#e7eee9]">
-                {selectedSpace.name}
-              </h4>
+
+              <div className="flex items-center justify-between mt-1.5">
+                <h4 className="text-sm font-bold text-[#e7eee9]">
+                  {selectedSpace.name}
+                </h4>
+                {isSelectedMortgaged && (
+                  <span className="text-[9px] font-black uppercase bg-red-600/80 text-white px-2 py-0.5 rounded">
+                    Mortgaged
+                  </span>
+                )}
+              </div>
+
               {selectedSpace.type === "street" && (
                 <>
                   <div className="mt-2 flex items-center gap-2">
@@ -1651,18 +1988,29 @@ export default function MonopolyTycoon() {
                     </button>
                   )}
 
-                  {/* Sell Property to Bank Button */}
-                  {selOwner === 0 && deeds.levels[selected!] === 0 && (
+                  {/* Official Mortgage / Unmortgage Button */}
+                  {selOwner === 0 && deeds.levels[selected!] === 0 && !isSelectedMortgaged && (
                     <button
                       type="button"
-                      onClick={() => sellPropertyToBank(0, selected!)}
+                      onClick={() => mortgageProperty(0, selected!)}
                       className="mt-2 w-full cursor-pointer rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-xs font-bold text-red-300 hover:bg-red-500/20 transition-all"
                     >
-                      Sell to Bank (+{money(Math.floor((selectedSpace.price ?? 100) * 0.6))})
+                      Mortgage Property (+{money(Math.floor((selectedSpace.price ?? 100) * 0.5))})
+                    </button>
+                  )}
+
+                  {selOwner === 0 && isSelectedMortgaged && (
+                    <button
+                      type="button"
+                      onClick={() => unmortgageProperty(0, selected!)}
+                      className="mt-2 w-full cursor-pointer rounded-xl border border-[#3cff5f]/50 bg-[#102a16] px-3 py-1.5 text-xs font-bold text-[#3cff5f] hover:bg-[#163820] transition-all"
+                    >
+                      Unmortgage &amp; Lift (-{money(Math.floor((selectedSpace.price ?? 100) * 0.55))})
                     </button>
                   )}
                 </>
               )}
+
               {(selectedSpace.type === "rail" || selectedSpace.type === "utility") && (
                 <>
                   <p className="mt-2 text-[10px] leading-relaxed text-[#9baaa1]">
@@ -1670,13 +2018,22 @@ export default function MonopolyTycoon() {
                       ? "Rent: $25 / $50 / $100 / $200 based on railroad count owned."
                       : "Rent: 4× dice — 10× dice if both utilities owned."}
                   </p>
-                  {selOwner === 0 && (
+                  {selOwner === 0 && !isSelectedMortgaged && (
                     <button
                       type="button"
-                      onClick={() => sellPropertyToBank(0, selected!)}
+                      onClick={() => mortgageProperty(0, selected!)}
                       className="mt-2 w-full cursor-pointer rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-xs font-bold text-red-300 hover:bg-red-500/20 transition-all"
                     >
-                      Sell to Bank (+{money(Math.floor((selectedSpace.price ?? 100) * 0.6))})
+                      Mortgage (+{money(Math.floor((selectedSpace.price ?? 100) * 0.5))})
+                    </button>
+                  )}
+                  {selOwner === 0 && isSelectedMortgaged && (
+                    <button
+                      type="button"
+                      onClick={() => unmortgageProperty(0, selected!)}
+                      className="mt-2 w-full cursor-pointer rounded-xl border border-[#3cff5f]/50 bg-[#102a16] px-3 py-1.5 text-xs font-bold text-[#3cff5f] hover:bg-[#163820] transition-all"
+                    >
+                      Unmortgage (-{money(Math.floor((selectedSpace.price ?? 100) * 0.55))})
                     </button>
                   )}
                 </>
@@ -1684,7 +2041,7 @@ export default function MonopolyTycoon() {
             </div>
           )}
 
-          {/* players overview */}
+          {/* Players Roster */}
           <div className="divide-y divide-[#1a2620] rounded-2xl border border-[#213026] bg-[#080e0b]">
             {P.map((style, p) => {
               const pl = players[p];
@@ -1712,6 +2069,11 @@ export default function MonopolyTycoon() {
                       )}
                       <span>{style.short}</span>
                       {pl.inJail && !pl.bankrupt && <Lock className="h-3 w-3 text-orange-400" />}
+                      {(pl.jailCards || 0) > 0 && (
+                        <span title="Has Jail Free Card">
+                          <Ticket className="h-3 w-3 text-yellow-400" />
+                        </span>
+                      )}
                       {pl.bankrupt && <span className="text-[9px] text-[#62776a]">BANKRUPT</span>}
                     </div>
                     <div className="font-mono text-[10px] text-[#62776a]">
@@ -1735,7 +2097,7 @@ export default function MonopolyTycoon() {
             })}
           </div>
 
-          {/* log */}
+          {/* Game Log */}
           <div className="rounded-2xl border border-[#213026] bg-[#080e0b] p-4">
             <h4 className="mb-2 flex items-center gap-1.5 text-xs font-bold text-[#e7eee9]">
               <Siren className="h-3.5 w-3.5 text-[#3cff5f]" /> Game log
@@ -1756,11 +2118,142 @@ export default function MonopolyTycoon() {
         </div>
       </div>
 
-      {/* ── Trade & Deal Negotiation Modal (User Requested) ── */}
+      {/* ── Instant Browser Entry Screen (Zero Friction Overlay) ── */}
+      {!gameStarted && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border-2 border-[#3cff5f]/50 bg-[#0c1510] shadow-[0_0_50px_rgba(60,255,95,0.25)] p-6 sm:p-8 text-center">
+            {/* Top Glowing Stud */}
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#102a16] border border-[#2a5234] shadow-[0_0_20px_rgba(60,255,95,0.3)]">
+              <span className="text-3xl">🎩</span>
+            </div>
+
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-[#102a16] px-3 py-1 text-[10px] font-semibold text-[#3cff5f] border border-[#2a4d33] mb-3">
+              <Sparkles className="h-3 w-3" />
+              <span>Instant 60 FPS Browser Game • Zero Download</span>
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl font-black text-[#e7eee9] tracking-tight uppercase">
+              Monopoly Empire Tycoon
+            </h1>
+            <p className="mt-2 text-xs sm:text-sm text-[#9baaa1] leading-relaxed max-w-sm mx-auto">
+              Buy properties, complete color sets, run auctions, trade land with AI, and bankrupt your rivals to rule Empire City!
+            </p>
+
+            {/* Quick 3-Pill Summary */}
+            <div className="mt-6 grid grid-cols-3 gap-2.5 text-left text-xs">
+              <div className="rounded-xl border border-[#1d2a23] bg-[#08100c] p-2.5">
+                <span className="text-[10px] font-bold text-[#3cff5f] block">1. Start Cash</span>
+                <span className="font-mono text-xs text-[#e7eee9]">$1,500 bank roll</span>
+              </div>
+              <div className="rounded-xl border border-[#1d2a23] bg-[#08100c] p-2.5">
+                <span className="text-[10px] font-bold text-[#3cff5f] block">2. Pass 'GO'</span>
+                <span className="font-mono text-xs text-[#e7eee9]">+$200 salary</span>
+              </div>
+              <div className="rounded-xl border border-[#1d2a23] bg-[#08100c] p-2.5">
+                <span className="text-[10px] font-bold text-[#3cff5f] block">3. Auctions</span>
+                <span className="font-mono text-xs text-[#e7eee9]">Live bidding</span>
+              </div>
+            </div>
+
+            {/* Buttons */}
+            <div className="mt-8 flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setGameStarted(true);
+                  GameSound.playDiceRoll();
+                }}
+                className="flex-1 py-3.5 rounded-2xl bg-[#3cff5f] text-sm font-black text-[#050a08] shadow-[0_0_25px_rgba(60,255,95,0.4)] hover:bg-[#52ff71] transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Play className="h-4 w-4 fill-current" />
+                <span>Play Now (Roll Dice)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRulesOpen(true)}
+                className="py-3.5 px-5 rounded-2xl border border-white/15 bg-[#101b14] text-xs font-bold text-[#c0d0c6] hover:text-white hover:bg-[#16271c] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <BookOpen className="h-4 w-4" />
+                <span>View Rules</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Official Rules & Guide Modal ── */}
+      {rulesOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-xl overflow-hidden rounded-3xl border-2 border-[#3cff5f]/40 bg-[#0c1510] shadow-2xl flex flex-col max-h-[88vh]">
+            <div className="flex items-center justify-between border-b border-[#213026] bg-[#101b14] p-4">
+              <div className="flex items-center gap-2 text-[#3cff5f]">
+                <BookOpen className="h-5 w-5" />
+                <h3 className="text-base font-bold text-[#e7eee9]">Monopoly Empire Rules &amp; Guide</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRulesOpen(false)}
+                className="p-1 rounded-full bg-white/5 hover:bg-white/10 text-[#8ea396] hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="p-5 overflow-y-auto space-y-4 text-xs text-[#9baaa1] leading-relaxed">
+              <div className="rounded-xl border border-[#1d2a23] bg-[#08100c] p-3.5">
+                <span className="font-bold text-[#3cff5f] text-sm block mb-1">১. অবজেক্টিভ ও শুরুর সেটআপ</span>
+                <p>
+                  প্রতিটি প্লেয়ার ব্যাংক থেকে <strong>$১,৫০০</strong> ক্যাশ নিয়ে যাত্রা শুরু করে। প্রতিবার 'GO' ঘরটি অতিক্রম করলে ব্যাংক থেকে <strong>$২০০</strong> বেতন পাওয়া যায়। সর্বশেষ টিকে থাকা খেলোয়াড় বিজয়ী হন।
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-[#1d2a23] bg-[#08100c] p-3.5">
+                <span className="font-bold text-[#3cff5f] text-sm block mb-1">২. সম্পত্তির ধরন ও মনোপলি</span>
+                <p>
+                  বোর্ডে মোট ২৮টি প্রপার্টি রয়েছে (২২টি রঙিন রাস্তা, ৪টি রেলরোড, ২টি ইউটিলিটি)। কোনো নির্দিষ্ট কালার গ্রুপের সবকটি জমি কিনে নিলে ভাড়ার পরিমাণ <strong>দ্বিগুণ</strong> হয়ে যায় এবং সেখানে বাড়ি ও হোটেল বানানোর অধিকার মেলে।
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-[#1d2a23] bg-[#08100c] p-3.5">
+                <span className="font-bold text-[#3cff5f] text-sm block mb-1">৩. অফিশিয়াল নিলাম (Auction) ও ডিলিং (Trade)</span>
+                <p>
+                  কোনো খেলোয়াড় খালি জমিতে নেমে যদি তা না কেনেন, ব্যাংকার সেটি সবার জন্য <strong>নিলামে (Auction)</strong> তোলে। সর্বোচ্চ দরদাতা সেটি পায়। এছাড়াও <em>Trade / Deals</em> বাটনের মাধ্যমে যে কোনো সময় অন্য প্লেয়ারের সাথে জমি বদল বা ক্যাশ অফার করা যায়।
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-[#1d2a23] bg-[#08100c] p-3.5">
+                <span className="font-bold text-[#3cff5f] text-sm block mb-1">৪. মর্টগেজ (Mortgage) ও ব্যাংক ঋণ</span>
+                <p>
+                  ক্যাশের সংকট হলে বাড়ি ছাড়া যে কোনো জমি ব্যাংকে বন্ধক রেখে দামের <strong>৫০% ক্যাশ</strong> নেওয়া যায়। মর্টগেজ অবস্থায় ভাড়া বন্ধ থাকে। পরবর্তীতে ৫৫% মূল্যে বন্ধক মুক্ত (Unmortgage) করা যায়।
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-[#1d2a23] bg-[#08100c] p-3.5">
+                <span className="font-bold text-[#3cff5f] text-sm block mb-1">৫. জেলখানা (Jail)</span>
+                <p>
+                  টানা ৩ বার ডাবল পড়লে বা 'Go to Jail'-এ নামলে জেলে যেতে হয়। বের হওয়ার উপায়: $৫০ জরিমানা দেওয়া, পরবর্তী ৩ চালে ছক্কায় ডাবল তোলা, অথবা <em>Get Out of Jail Free</em> কার্ড ব্যবহার করা।
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3 bg-[#08100c] border-t border-[#213026]">
+              <button
+                type="button"
+                onClick={() => setRulesOpen(false)}
+                className="w-full py-2.5 rounded-xl bg-[#102a16] border border-[#2a5234] text-xs font-bold text-[#3cff5f] hover:bg-[#16381e]"
+              >
+                Got It! Back to Game
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Trade & Deal Negotiation Modal ── */}
       {tradeOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="relative w-full max-w-2xl overflow-hidden rounded-3xl border-2 border-[#3cff5f]/40 bg-[#0c1510] shadow-2xl flex flex-col max-h-[90vh]">
-            {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-[#213026] bg-[#101b14] p-4 sm:p-5">
               <div className="flex items-center gap-2.5">
                 <span className="p-2 rounded-xl bg-[#14281c] text-[#3cff5f] border border-[#2a5234]">
@@ -1787,7 +2280,6 @@ export default function MonopolyTycoon() {
               </button>
             </div>
 
-            {/* Target Opponent Tabs */}
             <div className="p-4 border-b border-[#213026] bg-[#08100c] flex items-center gap-2 overflow-x-auto">
               <span className="text-xs font-semibold text-[#8ea396] mr-2">Trade With:</span>
               {[1, 2, 3].map((pid) => {
@@ -1823,9 +2315,8 @@ export default function MonopolyTycoon() {
               })}
             </div>
 
-            {/* Trade Floor: You vs Opponent */}
             <div className="p-4 sm:p-5 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-5 flex-1">
-              {/* Left Column: Your Offer (Red) */}
+              {/* Left Column: Your Offer */}
               <div className="rounded-2xl border border-[#213026] bg-[#08100c] p-4 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between pb-2 border-b border-[#1c2a22] mb-3">
@@ -1838,7 +2329,6 @@ export default function MonopolyTycoon() {
                     </span>
                   </div>
 
-                  {/* Cash Offer Slider */}
                   <div className="mb-4 rounded-xl border border-[#1a2920] bg-[#0c1611] p-3">
                     <div className="flex justify-between text-xs text-[#c0d0c6] mb-1">
                       <span>Add Money to Offer:</span>
@@ -1878,7 +2368,6 @@ export default function MonopolyTycoon() {
                     </div>
                   </div>
 
-                  {/* Your Owned Properties */}
                   <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
                     <span className="text-[11px] font-semibold text-[#8ea396] block mb-1">
                       Select Lands to Give:
@@ -1926,7 +2415,7 @@ export default function MonopolyTycoon() {
                 </div>
               </div>
 
-              {/* Right Column: Opponent's Assets (Requested) */}
+              {/* Right Column: Requested from Opponent */}
               <div className="rounded-2xl border border-[#213026] bg-[#08100c] p-4 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between pb-2 border-b border-[#1c2a22] mb-3">
@@ -1945,7 +2434,6 @@ export default function MonopolyTycoon() {
                     </span>
                   </div>
 
-                  {/* Cash Request Slider */}
                   <div className="mb-4 rounded-xl border border-[#1a2920] bg-[#0c1611] p-3">
                     <div className="flex justify-between text-xs text-[#c0d0c6] mb-1">
                       <span>Demand Money from Them:</span>
@@ -1985,7 +2473,6 @@ export default function MonopolyTycoon() {
                     </div>
                   </div>
 
-                  {/* Opponent's Owned Properties */}
                   <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
                     <span className="text-[11px] font-semibold text-[#8ea396] block mb-1">
                       Select Lands to Take:
@@ -2034,7 +2521,7 @@ export default function MonopolyTycoon() {
               </div>
             </div>
 
-            {/* Trade Feedback Dialogue */}
+            {/* Feedback Message */}
             {tradeFeedback && (
               <div
                 className={`mx-5 mb-2 p-3 rounded-xl border text-xs flex items-center gap-2 ${
@@ -2054,7 +2541,6 @@ export default function MonopolyTycoon() {
               </div>
             )}
 
-            {/* Action Buttons */}
             <div className="p-4 sm:p-5 border-t border-[#213026] bg-[#0a120e] flex flex-wrap items-center justify-between gap-3">
               <div className="text-xs text-[#8ea396]">
                 Offer: <span className="text-[#e7eee9] font-bold">{myOfferedProps.length} lands + {money(myOfferedCash)}</span> ➔ Demand: <span className="text-[#e7eee9] font-bold">{theirRequestedProps.length} lands + {money(theirRequestedCash)}</span>
@@ -2088,7 +2574,7 @@ export default function MonopolyTycoon() {
         </div>
       )}
 
-      {/* ── Incoming AI Trade Proposal Modal ── */}
+      {/* ── AI Initiated Trade Proposal Modal ── */}
       {incomingTrade && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="relative w-full max-w-md overflow-hidden rounded-3xl border-2 border-amber-400/60 bg-[#0c1510] shadow-2xl p-6 text-center">
@@ -2162,7 +2648,7 @@ export default function MonopolyTycoon() {
         </div>
       )}
 
-      {/* Winner overlay */}
+      {/* Winner Overlay */}
       {winner !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-3xl border border-[#2a5234] bg-[#0c1510] p-8 text-center shadow-2xl sm:p-10">
@@ -2174,7 +2660,7 @@ export default function MonopolyTycoon() {
             </h3>
             <p className="mt-2 text-xs text-[#9baaa1]">
               {winner === 0
-                ? "Every rival is bankrupt — the city is yours."
+                ? "Every rival is bankrupt — the entire city is yours."
                 : `All others went bankrupt. Better luck next time!`}
             </p>
             <button
@@ -2196,6 +2682,7 @@ export default function MonopolyTycoon() {
             const sp = SPACES[inspectSpace];
             const owner = deeds.owners[inspectSpace];
             const lvl = deeds.levels[inspectSpace];
+            const isMortgaged = deeds.mortgaged[inspectSpace];
             const bandColor =
               sp.type === "street" && sp.group
                 ? GROUP_META[sp.group]
@@ -2206,7 +2693,6 @@ export default function MonopolyTycoon() {
                 : "#213026";
             return (
               <div className="relative w-full max-w-xs overflow-hidden rounded-2xl border-2 border-[#3cff5f]/30 bg-[#0c1510] shadow-2xl">
-                {/* Header Band */}
                 <div
                   className="p-4 text-center text-white relative"
                   style={{ backgroundColor: bandColor }}
@@ -2226,7 +2712,6 @@ export default function MonopolyTycoon() {
                   </h3>
                 </div>
 
-                {/* Deed Details */}
                 <div className="p-4 text-xs space-y-2.5 text-[#e7eee9]">
                   {sp.price && (
                     <div className="flex justify-between border-b border-[#213026] pb-1.5">
@@ -2280,16 +2765,17 @@ export default function MonopolyTycoon() {
                   )}
 
                   <div className="flex justify-between border-t border-[#213026] pt-1.5 text-[11px]">
-                    <span className="text-[#9baaa1]">Current Status:</span>
+                    <span className="text-[#9baaa1]">Status:</span>
                     <span className="font-bold">
                       {owner === null
                         ? "Unowned"
+                        : isMortgaged
+                        ? `Mortgaged by ${P[owner].short}`
                         : `Owned by ${P[owner].short} (${lvl === 5 ? "Hotel" : `${lvl} Houses`})`}
                     </span>
                   </div>
                 </div>
 
-                {/* Direct Actions in Modal (Sell House / Sell Property / Build) */}
                 <div className="p-3 bg-[#080e0b] border-t border-[#213026] space-y-2">
                   {owner === 0 && lvl > 0 && sp.house && (
                     <button
@@ -2301,13 +2787,23 @@ export default function MonopolyTycoon() {
                     </button>
                   )}
 
-                  {owner === 0 && lvl === 0 && (
+                  {owner === 0 && lvl === 0 && !isMortgaged && (
                     <button
                       type="button"
-                      onClick={() => sellPropertyToBank(0, inspectSpace)}
+                      onClick={() => mortgageProperty(0, inspectSpace)}
                       className="w-full py-2 rounded-xl bg-red-500/10 border border-red-500/40 text-xs font-bold text-red-300 hover:bg-red-500/20 cursor-pointer"
                     >
-                      Sell Property to Bank (+{money(Math.floor((sp.price ?? 100) * 0.6))})
+                      Mortgage Property (+{money(Math.floor((sp.price ?? 100) * 0.5))})
+                    </button>
+                  )}
+
+                  {owner === 0 && isMortgaged && (
+                    <button
+                      type="button"
+                      onClick={() => unmortgageProperty(0, inspectSpace)}
+                      className="w-full py-2 rounded-xl bg-[#102a16] border border-[#2a5234] text-xs font-bold text-[#3cff5f] hover:bg-[#16381e] cursor-pointer"
+                    >
+                      Unmortgage &amp; Lift (-{money(Math.floor((sp.price ?? 100) * 0.55))})
                     </button>
                   )}
 
@@ -2323,7 +2819,7 @@ export default function MonopolyTycoon() {
                       className="w-full py-2 rounded-xl bg-[#102a16] border border-[#2a5234] text-xs font-bold text-[#3cff5f] hover:bg-[#16381e] cursor-pointer flex items-center justify-center gap-1.5"
                     >
                       <Handshake className="h-3.5 w-3.5" />
-                      <span>Trade with {P[owner].short} for this Land</span>
+                      <span>Trade for this Land</span>
                     </button>
                   )}
 
@@ -2344,7 +2840,6 @@ export default function MonopolyTycoon() {
   );
 }
 
-/* base rent display helper (outside component) */
 function rentBase(si: number): number {
   const sp = SPACES[si];
   return sp.base ?? 0;
