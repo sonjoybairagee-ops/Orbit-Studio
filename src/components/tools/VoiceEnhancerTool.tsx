@@ -358,8 +358,8 @@ export default function VoiceEnhancerTool() {
       orig.volume = isMuted ? 0 : activeTrack === "original" ? 1 : 0;
 
       Promise.all([
-        enh.play().catch(() => { }),
-        orig.play().catch(() => { }),
+        enh.play().catch(() => {}),
+        orig.play().catch(() => {}),
       ]).then(() => {
         setIsPlaying(true);
       });
@@ -595,10 +595,11 @@ export default function VoiceEnhancerTool() {
                   loadAndEnhanceAudio(audioFile);
                 }
               }}
-              className={`flex items-center gap-1.5 rounded-xl px-4 py-2 transition-all cursor-pointer ${engineMode === "ai"
+              className={`flex items-center gap-1.5 rounded-xl px-4 py-2 transition-all cursor-pointer ${
+                engineMode === "ai"
                   ? "bg-[#3cff5f] text-[#050a08] font-bold shadow-md shadow-[#3cff5f]/20"
                   : "text-[#9baaa1] hover:text-[#e7eee9]"
-                }`}
+              }`}
             >
               <Sparkles className="h-3.5 w-3.5" />
               <span>AI Neural Studio</span>
@@ -611,10 +612,11 @@ export default function VoiceEnhancerTool() {
                   reprocessWithCurrentSettings();
                 }
               }}
-              className={`flex items-center gap-1.5 rounded-xl px-4 py-2 transition-all cursor-pointer ${engineMode === "dsp"
+              className={`flex items-center gap-1.5 rounded-xl px-4 py-2 transition-all cursor-pointer ${
+                engineMode === "dsp"
                   ? "bg-[#3cff5f] text-[#050a08] font-bold shadow-md shadow-[#3cff5f]/20"
                   : "text-[#9baaa1] hover:text-[#e7eee9]"
-                }`}
+              }`}
             >
               <Zap className="h-3.5 w-3.5" />
               <span>In-Browser Turbo</span>
@@ -647,10 +649,11 @@ export default function VoiceEnhancerTool() {
                   key={pid}
                   type="button"
                   onClick={() => applyPreset(pid)}
-                  className={`text-left p-4 rounded-2xl border transition-all cursor-pointer ${isActive
+                  className={`text-left p-4 rounded-2xl border transition-all cursor-pointer ${
+                    isActive
                       ? "bg-[#102a16] border-[#3cff5f] shadow-md shadow-[#3cff5f]/15"
                       : "bg-[#080e0b] border-[#213026] hover:border-[#3cff5f]/50 hover:bg-[#0c1510]"
-                    }`}
+                  }`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-xs font-bold text-[#e7eee9] flex items-center gap-1">
@@ -660,10 +663,11 @@ export default function VoiceEnhancerTool() {
                       <span>{p.name}</span>
                     </span>
                     <span
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${isActive
+                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                        isActive
                           ? "bg-[#3cff5f]/20 text-[#3cff5f]"
                           : "bg-[#15231c] text-[#9baaa1]"
-                        }`}
+                      }`}
                     >
                       {p.badge}
                     </span>
@@ -865,10 +869,11 @@ export default function VoiceEnhancerTool() {
               <button
                 type="button"
                 onClick={() => handleTrackSwitch("enhanced")}
-                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTrack === "enhanced"
+                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeTrack === "enhanced"
                     ? "bg-[#3cff5f] text-[#050a08] shadow-md shadow-[#3cff5f]/20"
                     : "text-[#9baaa1] hover:text-[#e7eee9]"
-                  }`}
+                }`}
               >
                 <Sparkles className="h-3.5 w-3.5" />
                 <span>Enhanced Studio Voice (Active)</span>
@@ -877,10 +882,11 @@ export default function VoiceEnhancerTool() {
               <button
                 type="button"
                 onClick={() => handleTrackSwitch("original")}
-                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTrack === "original"
+                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeTrack === "original"
                     ? "bg-amber-400 text-[#050a08] shadow-md shadow-amber-400/20"
                     : "text-[#9baaa1] hover:text-[#e7eee9]"
-                  }`}
+                }`}
               >
                 <span>Original (Noisy Raw)</span>
               </button>
@@ -928,8 +934,9 @@ export default function VoiceEnhancerTool() {
               <button
                 type="button"
                 onClick={handleToggleMute}
-                className={`p-2.5 rounded-xl border transition-colors cursor-pointer shrink-0 ${isMuted ? "bg-[#101813] border-[#29392f] text-[#9baaa1]" : "bg-[#102a16] border-[#2a5234] text-[#3cff5f]"
-                  }`}
+                className={`p-2.5 rounded-xl border transition-colors cursor-pointer shrink-0 ${
+                  isMuted ? "bg-[#101813] border-[#29392f] text-[#9baaa1]" : "bg-[#102a16] border-[#2a5234] text-[#3cff5f]"
+                }`}
                 title={isMuted ? "Unmute" : "Mute"}
               >
                 {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
@@ -986,4 +993,3 @@ export default function VoiceEnhancerTool() {
     </div>
   );
 }
-                                                                                                                         
