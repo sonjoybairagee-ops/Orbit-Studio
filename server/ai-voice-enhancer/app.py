@@ -37,38 +37,59 @@ def to_wav(src: str, dst: str, sr: int = 48000):
         raise HTTPException(status_code=400, detail="Could not decode media file with ffmpeg")
 
 
-def deepfilter(in_wav: str, out_wav: str, atten_db: float):
+def deepfilter(in_wav: str, out_wav: str, atten_db: float) -> bool:
     """Deep noise reduction using DeepFilterNet neural model"""
     global _df
-    from df.enhance import enhance, init_df, load_audio, save_audio
+    try:
+        from df.enhance import enhance, init_df, load_audio, save_audio
 
-    if _df is None:
-        _df = init_df()
-    model, state, _ = _df
-    audio, _ = load_audio(in_wav, sr=state.sr())
-    limit = None if atten_db >= 100 else float(atten_db)
-    out = enhance(model, state, audio, atten_lim_db=limit)
-    save_audio(out_wav, out, state.sr())
+        if _df is None:
+            _df = init_df()
+        model, state, _ = _df
+        audio, _ = load_audio(in_wav, sr=state.sr())
+        limit = None if atten_db >= 100 else float(atten_db)
+        out = enhance(model, state, audio, atten_lim_db=limit)
+        save_audio(out_wav, out, state.sr())
+        return True
+    except Exception as e:
+        print(f"DeepFilterNet not available, fallback to Resemble Denoise: {e}")
+        return False
 
 
-def resemble(in_wav: str, out_wav: str, denoise_strength: float):
+def resemble(in_wav: str, out_wav: str, mode: str, denoise_strength: float):
     """Deep voice reconstruction & super-resolution using Resemble Enhance (44.1kHz output)"""
     import torch
     import torchaudio
-    from resemble_enhance.enhancer.inference import enhance
+    from resemble_enhance.enhancer.inference import denoise, enhance
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     wav, sr = torchaudio.load(in_wav)
     wav = wav.mean(dim=0)
-    out, new_sr = enhance(
-        wav,
-        sr,
-        device,
-        nfe=64,
-        solver="midpoint",
-        lambd=float(denoise_strength),  # 0..1 denoise strength
-        tau=0.5,
-    )
+
+    if mode == "denoise":
+        out, new_sr = denoise(wav, sr, device)
+    elif mode == "enhance":
+        out, new_sr = enhance(
+            wav,
+            sr,
+            device,
+            nfe=64,
+            solver="midpoint",
+            lambd=float(denoise_strength),  # 0..1 denoise strength
+            tau=0.5,
+        )
+    else:  # both
+        denoised, d_sr = denoise(wav, sr, device)
+        out, new_sr = enhance(
+            denoised,
+            d_sr,
+            device,
+            nfe=64,
+            solver="midpoint",
+            lambd=float(denoise_strength),
+            tau=0.5,
+        )
+
     torchaudio.save(out_wav, out.unsqueeze(0).cpu(), new_sr)
 
 
@@ -116,17 +137,25 @@ def process(
         to_wav(raw, cur, 48000)
 
         with lock:
-            # Stage 1: DeepFilterNet (Eradicates background noise, fan hum, AC whirr)
-            if mode in ("denoise", "both"):
+            if mode == "denoise":
                 nxt = os.path.join(tmp, "denoised.wav")
-                deepfilter(cur, nxt, atten_db)
+                if not deepfilter(cur, nxt, atten_db):
+                    resemble(cur, nxt, "denoise", denoise_strength)
                 cur = nxt
-
-            # Stage 2: Resemble Enhance (Reconstructs lost voice frequencies, adds studio warmth & clarity)
-            if mode in ("enhance", "both"):
+            elif mode == "enhance":
                 nxt = os.path.join(tmp, "enhanced.wav")
-                resemble(cur, nxt, denoise_strength)
+                resemble(cur, nxt, "enhance", denoise_strength)
                 cur = nxt
+            else:  # both
+                nxt = os.path.join(tmp, "denoised.wav")
+                if deepfilter(cur, nxt, atten_db):
+                    cur = nxt
+                    nxt2 = os.path.join(tmp, "enhanced.wav")
+                    resemble(cur, nxt2, "enhance", denoise_strength)
+                    cur = nxt2
+                else:
+                    resemble(cur, nxt, "both", denoise_strength)
+                    cur = nxt
 
         return FileResponse(
             cur,

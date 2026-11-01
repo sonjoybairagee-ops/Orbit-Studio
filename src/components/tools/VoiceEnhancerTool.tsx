@@ -110,6 +110,29 @@ export default function VoiceEnhancerTool() {
   const [broadcastLeveling, setBroadcastLeveling] = useState<boolean>(true);
   const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
   const [engineMode, setEngineMode] = useState<"ai" | "dsp">("ai");
+  const [aiStatus, setAiStatus] = useState<{
+    online: boolean;
+    gpu?: boolean;
+    name?: string;
+  } | null>(null);
+
+  // Check AI GPU Server status on mount
+  useEffect(() => {
+    fetch("/api/tools/voice-enhance")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.online) {
+          setAiStatus({
+            online: true,
+            gpu: data.details?.gpu,
+            name: data.details?.name || "Tesla T4 GPU",
+          });
+        } else {
+          setAiStatus({ online: false });
+        }
+      })
+      .catch(() => setAiStatus({ online: false }));
+  }, []);
 
   // Processing state
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
@@ -335,8 +358,8 @@ export default function VoiceEnhancerTool() {
       orig.volume = isMuted ? 0 : activeTrack === "original" ? 1 : 0;
 
       Promise.all([
-        enh.play().catch(() => {}),
-        orig.play().catch(() => {}),
+        enh.play().catch(() => { }),
+        orig.play().catch(() => { }),
       ]).then(() => {
         setIsPlaying(true);
       });
@@ -439,21 +462,26 @@ export default function VoiceEnhancerTool() {
       const sampleBlob = encodeWav(buffer);
       const url = URL.createObjectURL(sampleBlob);
       setOriginalAudioUrl(url);
-      setAudioFile(new File([sampleBlob], "sample-noisy-voice.wav", { type: "audio/wav" }));
+      const sampleFile = new File([sampleBlob], "sample-noisy-voice.wav", { type: "audio/wav" });
+      setAudioFile(sampleFile);
       setFileName("sample-noisy-voice.wav");
       rawAudioBufferRef.current = buffer;
       setDuration(durationSec);
 
-      const p = PRESETS[selectedPreset];
-      await processAudioBuffer(
-        buffer,
-        p.noiseReduction,
-        p.clarityBoost,
-        p.highPassFreq,
-        p.warmthBoost,
-        p.roomDeMuffle,
-        p.broadcastLeveling
-      );
+      if (engineMode === "ai") {
+        await loadAndEnhanceAudio(sampleFile);
+      } else {
+        const p = PRESETS[selectedPreset];
+        await processAudioBuffer(
+          buffer,
+          p.noiseReduction,
+          p.clarityBoost,
+          p.highPassFreq,
+          p.warmthBoost,
+          p.roomDeMuffle,
+          p.broadcastLeveling
+        );
+      }
     } catch {
       setError("Failed to create sample audio.");
       setIsProcessing(false);
@@ -538,7 +566,19 @@ export default function VoiceEnhancerTool() {
         {/* Processing Engine Switcher */}
         <div className="mt-5 pt-4 border-t border-[#213026] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="text-xs">
-            <span className="font-bold text-[#e7eee9] block">Processing Engine Mode:</span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-[#e7eee9]">Processing Engine Mode:</span>
+              {aiStatus?.online ? (
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  AI GPU: {aiStatus.name} Online
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-zinc-800 text-zinc-400 border border-zinc-700">
+                  In-Browser DSP Ready
+                </span>
+              )}
+            </div>
             <span className="text-[11px] text-[#9baaa1]">
               {engineMode === "ai"
                 ? "🧠 AI Neural Studio (DeepFilterNet + Resemble Enhance Model)"
@@ -549,24 +589,32 @@ export default function VoiceEnhancerTool() {
           <div className="inline-flex rounded-2xl border border-[#213026] bg-[#080e0b] p-1 text-xs font-semibold">
             <button
               type="button"
-              onClick={() => setEngineMode("ai")}
-              className={`flex items-center gap-1.5 rounded-xl px-4 py-2 transition-all cursor-pointer ${
-                engineMode === "ai"
+              onClick={() => {
+                setEngineMode("ai");
+                if (audioFile && engineMode !== "ai") {
+                  loadAndEnhanceAudio(audioFile);
+                }
+              }}
+              className={`flex items-center gap-1.5 rounded-xl px-4 py-2 transition-all cursor-pointer ${engineMode === "ai"
                   ? "bg-[#3cff5f] text-[#050a08] font-bold shadow-md shadow-[#3cff5f]/20"
                   : "text-[#9baaa1] hover:text-[#e7eee9]"
-              }`}
+                }`}
             >
               <Sparkles className="h-3.5 w-3.5" />
               <span>AI Neural Studio</span>
             </button>
             <button
               type="button"
-              onClick={() => setEngineMode("dsp")}
-              className={`flex items-center gap-1.5 rounded-xl px-4 py-2 transition-all cursor-pointer ${
-                engineMode === "dsp"
+              onClick={() => {
+                setEngineMode("dsp");
+                if (rawAudioBufferRef.current && engineMode !== "dsp") {
+                  reprocessWithCurrentSettings();
+                }
+              }}
+              className={`flex items-center gap-1.5 rounded-xl px-4 py-2 transition-all cursor-pointer ${engineMode === "dsp"
                   ? "bg-[#3cff5f] text-[#050a08] font-bold shadow-md shadow-[#3cff5f]/20"
                   : "text-[#9baaa1] hover:text-[#e7eee9]"
-              }`}
+                }`}
             >
               <Zap className="h-3.5 w-3.5" />
               <span>In-Browser Turbo</span>
@@ -599,11 +647,10 @@ export default function VoiceEnhancerTool() {
                   key={pid}
                   type="button"
                   onClick={() => applyPreset(pid)}
-                  className={`text-left p-4 rounded-2xl border transition-all cursor-pointer ${
-                    isActive
+                  className={`text-left p-4 rounded-2xl border transition-all cursor-pointer ${isActive
                       ? "bg-[#102a16] border-[#3cff5f] shadow-md shadow-[#3cff5f]/15"
                       : "bg-[#080e0b] border-[#213026] hover:border-[#3cff5f]/50 hover:bg-[#0c1510]"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-xs font-bold text-[#e7eee9] flex items-center gap-1">
@@ -613,11 +660,10 @@ export default function VoiceEnhancerTool() {
                       <span>{p.name}</span>
                     </span>
                     <span
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                        isActive
+                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${isActive
                           ? "bg-[#3cff5f]/20 text-[#3cff5f]"
                           : "bg-[#15231c] text-[#9baaa1]"
-                      }`}
+                        }`}
                     >
                       {p.badge}
                     </span>
@@ -819,11 +865,10 @@ export default function VoiceEnhancerTool() {
               <button
                 type="button"
                 onClick={() => handleTrackSwitch("enhanced")}
-                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTrack === "enhanced"
+                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTrack === "enhanced"
                     ? "bg-[#3cff5f] text-[#050a08] shadow-md shadow-[#3cff5f]/20"
                     : "text-[#9baaa1] hover:text-[#e7eee9]"
-                }`}
+                  }`}
               >
                 <Sparkles className="h-3.5 w-3.5" />
                 <span>Enhanced Studio Voice (Active)</span>
@@ -832,11 +877,10 @@ export default function VoiceEnhancerTool() {
               <button
                 type="button"
                 onClick={() => handleTrackSwitch("original")}
-                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTrack === "original"
+                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTrack === "original"
                     ? "bg-amber-400 text-[#050a08] shadow-md shadow-amber-400/20"
                     : "text-[#9baaa1] hover:text-[#e7eee9]"
-                }`}
+                  }`}
               >
                 <span>Original (Noisy Raw)</span>
               </button>
@@ -884,9 +928,8 @@ export default function VoiceEnhancerTool() {
               <button
                 type="button"
                 onClick={handleToggleMute}
-                className={`p-2.5 rounded-xl border transition-colors cursor-pointer shrink-0 ${
-                  isMuted ? "bg-[#101813] border-[#29392f] text-[#9baaa1]" : "bg-[#102a16] border-[#2a5234] text-[#3cff5f]"
-                }`}
+                className={`p-2.5 rounded-xl border transition-colors cursor-pointer shrink-0 ${isMuted ? "bg-[#101813] border-[#29392f] text-[#9baaa1]" : "bg-[#102a16] border-[#2a5234] text-[#3cff5f]"
+                  }`}
                 title={isMuted ? "Unmute" : "Mute"}
               >
                 {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
@@ -943,3 +986,4 @@ export default function VoiceEnhancerTool() {
     </div>
   );
 }
+                                                                                                                         

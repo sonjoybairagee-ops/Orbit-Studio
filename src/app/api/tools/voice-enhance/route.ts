@@ -3,9 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60; // Allow up to 60s for deep neural AI models
 
+// Default fallback to active Cloudflare tunnel if not explicitly specified in env
+const DEFAULT_AI_URL = "https://whole-fare-wow-sites.trycloudflare.com";
+
 // Check if AI service is configured
 export async function GET() {
-  const backendUrl = process.env.AI_VOICE_ENHANCE_URL;
+  const backendUrl = process.env.AI_VOICE_ENHANCE_URL || DEFAULT_AI_URL;
   if (!backendUrl) {
     return NextResponse.json({
       configured: false,
@@ -39,7 +42,7 @@ export async function GET() {
 
 // Forward audio to Python DeepFilterNet + Resemble Enhance microservice
 export async function POST(req: NextRequest) {
-  const backendUrl = process.env.AI_VOICE_ENHANCE_URL;
+  const backendUrl = process.env.AI_VOICE_ENHANCE_URL || DEFAULT_AI_URL;
 
   if (!backendUrl) {
     return NextResponse.json(
