@@ -15,6 +15,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { GameSound, fireVictoryConfetti } from "./GameAudio";
+import NetBar from "./net/NetBar";
+import { useNetGame } from "./net/useNetGame";
 
 /* ───────────────────────────────────────────────────────────────────────────
    Carrom Pool Pro — 2D Physics Canvas Board
@@ -188,6 +190,7 @@ function simulateShot(balls: Ball[]): ShotOutcome {
 }
 
 export default function CarromPool() {
+  const net = useNetGame("cxgame-carrom", 2);
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -683,6 +686,9 @@ export default function CarromPool() {
 
   return (
     <div ref={containerRef} className="w-full select-none">
+      {/* Online Multiplayer Team Room Lobby Bar */}
+      <NetBar gameTitle="Carrom Pool" net={net} />
+
       {/* Top Controls bar */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#213026] bg-[#080e0b] p-3.5 sm:p-4">
         <div className="flex items-center gap-3">

@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { RotateCcw, Trophy, Play, Bot, User, SkipForward, Volume2, VolumeX, Maximize2, Minimize2, Users, Flame } from "lucide-react";
 import { GameSound, fireVictoryConfetti } from "./GameAudio";
+import NetBar from "./net/NetBar";
+import { useNetGame, NetGameApi } from "./net/useNetGame";
 
 /* ───────────────────────────────────────────────────────────────────────────
    UNO Blast — the classic colour-matching card game, you vs 3 AI bots.
@@ -74,11 +76,11 @@ function playable(card: Card, top: Card, curColor: CColor): boolean {
   return false;
 }
 
-const P = [
-  { name: "You", short: "You", hex: "#ef4444", bot: false },
-  { name: "AI Green", short: "Green", hex: "#22c55e", bot: true },
-  { name: "AI Yellow", short: "Yellow", hex: "#eab308", bot: true },
-  { name: "AI Blue", short: "Blue", hex: "#3b82f6", bot: true },
+const BASE_P = [
+  { short: "You", hex: "#ef4444", bot: false },
+  { short: "Green", hex: "#22c55e", bot: true },
+  { short: "Yellow", hex: "#eab308", bot: true },
+  { short: "Blue", hex: "#3b82f6", bot: true },
 ];
 
 const newRound = () => ({
@@ -95,12 +97,64 @@ const newRound = () => ({
 type Round = ReturnType<typeof newRound>;
 
 export default function UnoBlast() {
+  const net = useNetGame("cxgame-uno", 4);
   const [game, setGame] = useState<Round>(() => deal());
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [gameMode, setGameMode] = useState<"ai" | "pass_play">("ai");
   const [unoCalled, setUnoCalled] = useState<Record<number, boolean>>({});
   const containerRef = useRef<HTMLDivElement>(null);
+
+  /* dynamic seat roster — solo vs online room */
+  const P = useMemo(() => {
+    if (net.role === "solo" || !net.players) return BASE_P;
+    return BASE_P.map((base, i) => {
+      const p = net.players![i];
+      if (!p || p.kind === "bot") return base;
+      const word = p.name.trim().split(/\s+/)[0].slice(0, 9) || base.short;
+      return { ...base, short: p.kind === "host" && i === 0 ? word : word, bot: false };
+    });
+  }, [net.players, net.role]);
+
+  /* which seat does the local human control? */
+  const mySeat = net.role === "guest" ? net.seat : 0;
+
+  /* ── network plumbing ── */
+  const netRef = useRef(net);
+  netRef.current = net;
+  useEffect(() => {
+    if (net.role === "guest" && net.remote != null) {
+      const incoming = net.remote as Round;
+      if (incoming && incoming.hands) setGame(incoming);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [net.remote, net.role]);
+
+  useEffect(() => {
+    if (net.role === "host") net.broadcast(gameRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game, net.role, net.isNet]);
+
+  useEffect(() => {
+    net.onAction((raw, fromSeat) => {
+      const a = raw as { u?: string; id?: string; color?: CColor };
+      const n = netRef.current;
+      if (n.role !== "host") return;
+      if (fromSeat < 1 || fromSeat > 3) return;
+      const cur = gameRef.current;
+      if (a.u === "play") {
+        if (cur.turn !== fromSeat) return;
+        const color = a.color ?? botPickColorRef.current(cur, fromSeat);
+        playCardRef.current(fromSeat, a.id ?? "", color);
+      } else if (a.u === "draw") {
+        if (cur.turn !== fromSeat) return;
+        doDrawRef.current(fromSeat);
+      } else if (a.u === "reset") {
+        setGame(deal());
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [net.onAction]);
 
   useEffect(() => {
     setIsMuted(GameSound.getMuted());
@@ -249,13 +303,18 @@ export default function UnoBlast() {
     return (Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "red") as CColor;
   };
 
-  /* ── bot turn automation ── */
+  const playCardRef = useRef(playCard); playCardRef.current = playCard;
+  const doDrawRef = useRef(doDraw); doDrawRef.current = doDraw;
+  const botPickColorRef = useRef(botPickColor); botPickColorRef.current = botPickColor;
+
+  /* ── bot turn automation (host-only; bots fill empty seats) ── */
   useEffect(() => {
     if (game.over !== null) return;
-    if (!P[game.turn].bot) return;
+    if (net.isNet && net.role === "guest") return;
+    if (!P[game.turn]?.bot) return;
     const t = setTimeout(() => {
       const g = gameRef.current;
-      if (g.over !== null || !P[g.turn].bot) return;
+      if (g.over !== null || !P[g.turn]?.bot) return;
       const p = g.turn;
       const options = g.hands[p]
         .map((c, i) => ({ c, i }))
@@ -283,16 +342,24 @@ export default function UnoBlast() {
     }, 800);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [game.turn, game.over]);
+  }, [game.turn, game.over, P]);
 
-  const reset = () => setGame(deal());
+  const reset = () => {
+    if (net.role === "guest") {
+      net.send({ u: "reset" });
+      return;
+    }
+    setGame(deal());
+  };
 
   const g = game;
   const justDrawnPlayable =
-    g.hands[0].length > 0 && playable(g.hands[0][g.hands[0].length - 1], g.top!, g.color);
+    g.hands[mySeat].length > 0 && playable(g.hands[mySeat][g.hands[mySeat].length - 1], g.top!, g.color);
 
   return (
     <div className="w-full">
+      <NetBar gameTitle="UNO Blast" net={net} />
+
       {/* Header */}
       <div className="mb-5 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <div>
@@ -300,7 +367,7 @@ export default function UnoBlast() {
             <span className="text-xl">🂡</span>
             <span>UNO Blast</span>
             <span className="rounded-full border border-[#2a5234] bg-[#102a16] px-2.5 py-0.5 font-mono text-[10px] text-[#3cff5f]">
-              You vs 3 Bots · {P[g.turn].short}&apos;s turn
+              {net.isNet ? "Online" : "You vs 3 Bots"} · {P[g.turn]?.short ?? "?"}&apos;s turn
             </span>
           </h2>
           <p className="mt-0.5 text-xs text-[#9baaa1]">{g.log[0]}</p>
@@ -353,7 +420,7 @@ export default function UnoBlast() {
       <div className="mb-6 flex flex-col items-center gap-4 rounded-3xl border border-[#213026] bg-[#0c1510] p-6 sm:flex-row sm:justify-center">
         {/* draw pile */}
         <div className="flex flex-col items-center gap-1.5">
-          {g.hands[0].some((c) => playable(c, g.top!, g.color)) ? (
+          {g.hands[mySeat].some((c) => playable(c, g.top!, g.color)) ? (
             <span className="rounded-full border border-[#213026] bg-[#080e0b] px-2 py-0.5 text-[9px] text-[#62776a]">
               deck
             </span>
@@ -364,8 +431,15 @@ export default function UnoBlast() {
           )}
           <button
             type="button"
-            onClick={() => g.turn === 0 && g.over === null && doDraw(0)}
-            disabled={g.turn !== 0 || g.over !== null}
+            onClick={() => {
+              if (g.turn !== mySeat || g.over !== null) return;
+              if (net.role === "guest") {
+                net.send({ u: "draw" });
+                return;
+              }
+              doDraw(mySeat);
+            }}
+            disabled={g.turn !== mySeat || g.over !== null}
             className="group relative h-24 w-16 cursor-pointer rounded-lg border-2 border-[#2a5234] bg-[#080e0b] transition-all hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="draw a card"
           >
@@ -428,21 +502,24 @@ export default function UnoBlast() {
         <div className="mb-3 flex items-center justify-between">
           <span className="flex items-center gap-2 text-xs font-bold text-[#e7eee9]">
             <User className="h-3.5 w-3.5 text-[#ef4444]" />
-            Your hand · {g.hands[0].length} cards · need {g.color}
+            Your hand · {g.hands[mySeat].length} cards · need {g.color}
           </span>
           <button
             type="button"
-            disabled={!justDrawnPlayable}
+            disabled={!justDrawnPlayable || g.turn !== mySeat}
             onClick={() => {
-              if (g.hands[0].length === 0) return;
-              const drawn = g.hands[0][g.hands[0].length - 1];
-              if (playable(drawn, g.top!, g.color)) {
-                if (drawn.color === "wild") {
-                  const color = botPickColor(g, 0);
-                  playCard(0, drawn.id, color);
-                } else {
-                  playCard(0, drawn.id);
-                }
+              if (g.hands[mySeat].length === 0) return;
+              const drawn = g.hands[mySeat][g.hands[mySeat].length - 1];
+              if (!playable(drawn, g.top!, g.color)) return;
+              if (net.role === "guest") {
+                net.send({ u: "play", id: drawn.id });
+                return;
+              }
+              if (drawn.color === "wild") {
+                const color = botPickColor(g, mySeat);
+                playCard(mySeat, drawn.id, color);
+              } else {
+                playCard(mySeat, drawn.id);
               }
             }}
             className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[10px] font-bold transition-colors ${
@@ -456,28 +533,33 @@ export default function UnoBlast() {
         </div>
 
         <div className="flex gap-2 overflow-x-auto pb-2">
-          {g.hands[0].length === 0 && (
+          {g.hands[mySeat].length === 0 && (
             <p className="py-6 text-xs text-[#62776a]">Empty — waiting…</p>
           )}
-          {g.hands[0].map((c, i) => {
+          {g.hands[mySeat].map((c, i) => {
             const ok = playable(c, g.top!, g.color);
             const isWild = c.color === "wild";
             return (
               <button
                 key={c.id}
                 type="button"
-                disabled={!ok || g.turn !== 0 || g.over !== null}
+                disabled={!ok || g.turn !== mySeat || g.over !== null}
                 onClick={() => {
+                  if (!ok) return;
+                  if (net.role === "guest") {
+                    net.send({ u: "play", id: c.id });
+                    return;
+                  }
                   if (isWild) {
-                    if (P[0].bot) return;
-                    const color = botPickColor(g, 0);
-                    playCard(0, c.id, color);
+                    if (P[mySeat]?.bot) return;
+                    const color = botPickColor(g, mySeat);
+                    playCard(mySeat, c.id, color);
                   } else {
-                    playCard(0, c.id);
+                    playCard(mySeat, c.id);
                   }
                 }}
                 className={`relative flex h-24 w-[68px] shrink-0 flex-col items-center justify-center rounded-xl border transition-all duration-150 ${
-                  ok && g.turn === 0
+                  ok && g.turn === mySeat
                     ? "-translate-y-2 cursor-pointer shadow-lg hover:-translate-y-3.5"
                     : "opacity-45 grayscale-[0.35] cursor-not-allowed"
                 }`}
@@ -514,13 +596,13 @@ export default function UnoBlast() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-3xl border border-[#2a5234] bg-[#0c1510] p-8 text-center shadow-2xl sm:p-10">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-[#2a5234] bg-[#102a16]">
-              {g.over === 0 ? <Trophy className="h-8 w-8 text-[#3cff5f]" /> : <Bot className="h-8 w-8" style={{ color: P[g.over].hex }} />}
+              {g.over === mySeat ? <Trophy className="h-8 w-8 text-[#3cff5f]" /> : <Bot className="h-8 w-8" style={{ color: P[g.over ?? 1].hex }} />}
             </div>
             <h3 className="text-2xl font-black text-[#e7eee9]">
-              {g.over === 0 ? "You Win the Round! 🎉" : `${P[g.over].short} Wins!`}
+              {g.over === mySeat ? "You Win the Round!" : `${P[g.over ?? 1]?.short ?? "?"} Wins!`}
             </h3>
             <p className="mt-2 text-xs text-[#9baaa1]">
-              {g.over === 0 ? "Empty hand — UNO! UNO!" : "Match your colour faster next time!"}
+              {g.over === mySeat ? "Empty hand — UNO! UNO!" : "Match your colour faster next time!"}
             </p>
             <button
               type="button"

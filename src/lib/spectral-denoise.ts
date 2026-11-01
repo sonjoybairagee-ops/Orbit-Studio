@@ -379,7 +379,7 @@ export function spectralDenoiseAudio(
           );
           if (mag < minMagProfile[k]) minMagProfile[k] = mag;
           avgAccum[k] += mag;
-          perBinMags[noiseOrdinal * binCount + k] = mag;
+          perBinMags[k * noiseFrameCount + noiseOrdinal] = mag;
         }
         noiseOrdinal++;
         continue;
@@ -504,7 +504,7 @@ export function spectralDenoiseAudio(
         : baselineNoiseRms * gainFloor;
 
     // ── STAGE 5: Adaptive Downward Speech Gate (Total Pause Silence) ──
-    const gateThresh = Math.max(0.010, residualNoiseRmsArr[ch] * 2.2);
+    const gateThresh = Math.max(0.003, residualNoiseRmsArr[ch] * 1.8);
     const attackCoeff = Math.exp(-1 / (sampleRate * 0.008)); // 8ms attack (preserves consonants)
     const releaseCoeff = Math.exp(-1 / (sampleRate * 0.300)); // 300ms release (natural decay)
 
@@ -614,7 +614,8 @@ export function spectralDenoiseAudio(
           const g = targetRms / r;
           target = Math.min(staticGain, Math.max(1.0, g));
         }
-        const speed = target > prev ? 0.4 : 0.08; // attack ~50ms, release ~250ms
+        // Fast attack on speech bursts, smoother release on decay
+        const speed = target < prev ? 0.35 : 0.08;
         const cur = prev + (target - prev) * speed;
         blockGains[b] = cur;
         prev = cur;

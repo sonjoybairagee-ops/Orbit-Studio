@@ -18,6 +18,8 @@ import {
   Swords,
 } from "lucide-react";
 import { GameSound, fireVictoryConfetti } from "./GameAudio";
+import NetBar from "./net/NetBar";
+import { useNetGame } from "./net/useNetGame";
 
 /* ────────────────────────────────────────────────────────────────────────────
    Ludo Engine — classic 15×15 board, full traditional rules
@@ -233,6 +235,9 @@ export default function LudoGame() {
   const [winner, setWinner] = useState<number | null>(null);
   const [message, setMessage] = useState("Roll a 6 to launch your first token!");
   const [lastMoved, setLastMoved] = useState<string | null>(null);
+
+  // P2P Online Multiplayer Room Engine
+  const net = useNetGame("cxgame-ludo", 4);
 
   // New audio, fullscreen, and game mode state
   const containerRef = useRef<HTMLDivElement>(null);
@@ -515,9 +520,17 @@ export default function LudoGame() {
   );
 
   /* ── Human roll handler ── */
-  const isCurrentHuman = playMode === "pass_4" || turn === 0;
+  const isCurrentHuman = net.isNet
+    ? turn === net.seat
+    : playMode === "pass_4" || turn === 0;
 
   const handleRollClick = () => {
+    if (net.isNet && net.role === "guest") {
+      if (turn === net.seat && phase === "idle" && !rolling && winner === null) {
+        net.send({ type: "roll" });
+      }
+      return;
+    }
     if (!isCurrentHuman) return;
     rollDie();
   };
@@ -527,7 +540,12 @@ export default function LudoGame() {
     if (winner !== null || rolling) return;
     let t: ReturnType<typeof setTimeout> | null = null;
 
-    const isBot = playMode === "pass_4" ? false : turn !== 0;
+    const isBot = net.isNet
+      ? (net.players?.[turn]?.kind === "bot")
+      : (playMode === "pass_4" ? false : turn !== 0);
+
+    // Guests in online mode never execute AI decisions
+    if (net.isNet && net.role === "guest") return;
 
     if (isBot) {
       if (phase === "idle" && dice === null) {
@@ -542,7 +560,60 @@ export default function LudoGame() {
       if (t) clearTimeout(t);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [turn, phase, dice, movablePieces.length, winner, rolling, playMode]);
+  }, [turn, phase, dice, movablePieces.length, winner, rolling, playMode, net.isNet, net.role, net.players]);
+
+  // Host: Broadcast state to all connected guests
+  useEffect(() => {
+    if (!net.isNet || net.role !== "host") return;
+    net.broadcast({
+      tokens,
+      turn,
+      dice,
+      rolling,
+      winner,
+      message,
+      sixChain,
+      phase,
+    });
+  }, [tokens, turn, dice, rolling, winner, message, sixChain, phase, net]);
+
+  // Guest: Receive live state updates from host
+  useEffect(() => {
+    if (!net.isNet || net.role !== "guest" || !net.remote) return;
+    const r = net.remote as {
+      tokens?: Tokens;
+      turn?: number;
+      dice?: number | null;
+      rolling?: boolean;
+      winner?: number | null;
+      message?: string;
+      sixChain?: number;
+      phase?: "idle" | "choose";
+    };
+    if (r.tokens) setTokens(r.tokens);
+    if (typeof r.turn === "number") setTurn(r.turn);
+    if (r.dice !== undefined) setDice(r.dice);
+    if (typeof r.rolling === "boolean") setRolling(r.rolling);
+    if (r.winner !== undefined) setWinner(r.winner);
+    if (r.message) setMessage(r.message);
+    if (typeof r.sixChain === "number") setSixChain(r.sixChain);
+    if (r.phase) setPhase(r.phase);
+  }, [net.remote, net.isNet, net.role]);
+
+  // Host: Receive and execute guest moves & rolls
+  useEffect(() => {
+    net.onAction((rawA: unknown, fromSeat: number) => {
+      if (net.role !== "host") return;
+      const a = (rawA || {}) as { type?: string; piece?: number };
+      if (a.type === "roll" && turn === fromSeat && phase === "idle" && !rolling && winner === null) {
+        rollDie();
+      } else if (a.type === "move" && turn === fromSeat && typeof a.piece === "number" && dice !== null) {
+        if (movablePieces.includes(a.piece)) {
+          applyMove(fromSeat, a.piece, dice);
+        }
+      }
+    });
+  }, [net, turn, phase, rolling, winner, movablePieces, dice, applyMove, rollDie]);
 
   /* ── Geometry ── */
   const pct = (v: number) => (v / 15) * 100;
@@ -654,6 +725,9 @@ export default function LudoGame() {
 
   return (
     <div ref={containerRef} className="w-full select-none">
+      {/* Online Multiplayer Team Room Lobby Bar */}
+      <NetBar gameTitle="Ludo King" net={net} />
+
       {/* Header row */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#213026] bg-[#080e0b] p-3.5 sm:p-4">
         <div>
@@ -939,6 +1013,10 @@ export default function LudoGame() {
                     }}
                     onClick={() => {
                       if (clickable && !rolling && dice !== null) {
+                        if (net.isNet && net.role === "guest") {
+                          net.send({ type: "move", piece: tok.piece });
+                          return;
+                        }
                         applyMove(tok.p, tok.piece, dice);
                       }
                     }}

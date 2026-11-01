@@ -16,6 +16,8 @@ import {
   Users,
 } from "lucide-react";
 import { GameSound, fireVictoryConfetti } from "./GameAudio";
+import NetBar from "./net/NetBar";
+import { useNetGame } from "./net/useNetGame";
 
 /* ───────────────────────────────────────────────────────────────────────────
    Speed Chess Arena — 8×8 Interactive Browser Chess
@@ -78,6 +80,7 @@ export default function SpeedChess() {
   const [turn, setTurn] = useState<PieceColor>("w");
   const [selected, setSelected] = useState<[number, number] | null>(null);
   const [gameMode, setGameMode] = useState<"ai" | "pass_play">("ai");
+  const net = useNetGame("cxgame-chess", 2);
   const [winner, setWinner] = useState<PieceColor | "draw" | null>(null);
   const [captured, setCaptured] = useState<{ w: PieceType[]; b: PieceType[] }>({
     w: [],
@@ -331,7 +334,8 @@ export default function SpeedChess() {
 
   // AI Turn Logic (Material heuristic + positional bonuses)
   useEffect(() => {
-    if (winner !== null || turn !== "b" || gameMode !== "ai") return;
+    if (winner !== null || turn !== "b") return;
+    if (net.isNet ? (net.role !== "host" || net.players?.[1]?.kind !== "bot") : gameMode !== "ai") return;
 
     const timer = setTimeout(() => {
       let bestMove: { from: [number, number]; to: [number, number]; score: number } | null =
@@ -369,9 +373,55 @@ export default function SpeedChess() {
     return () => clearTimeout(timer);
   }, [turn, winner, board, gameMode]);
 
+  // Host: Broadcast state to guest
+  useEffect(() => {
+    if (!net.isNet || net.role !== "host") return;
+    net.broadcast({
+      board,
+      turn,
+      captured,
+      winner,
+      timeLeft,
+    });
+  }, [board, turn, captured, winner, timeLeft, net]);
+
+  // Guest: Receive live updates from host
+  useEffect(() => {
+    if (!net.isNet || net.role !== "guest" || !net.remote) return;
+    const r = net.remote as {
+      board?: Board;
+      turn?: PieceColor;
+      captured?: { w: PieceType[]; b: PieceType[] };
+      winner?: PieceColor | "draw" | null;
+      timeLeft?: { w: number; b: number };
+    };
+    if (r.board) setBoard(r.board);
+    if (r.turn) setTurn(r.turn);
+    if (r.captured) setCaptured(r.captured);
+    if (r.winner !== undefined) setWinner(r.winner);
+    if (r.timeLeft) setTimeLeft(r.timeLeft);
+  }, [net.remote, net.isNet, net.role]);
+
+  // Host: Handle moves sent by guest
+  useEffect(() => {
+    net.onAction((rawA: unknown, fromSeat: number) => {
+      if (net.role !== "host" || fromSeat !== 1) return;
+      const a = (rawA || {}) as { type?: string; from?: [number, number]; to?: [number, number] };
+      if (a.type === "move" && a.from && a.to && turn === "b") {
+        makeMove(a.from[0], a.from[1], a.to[0], a.to[1]);
+      }
+    });
+  }, [net, turn, makeMove]);
+
   const handleSquareClick = (r: number, c: number) => {
     if (winner !== null) return;
-    if (gameMode === "ai" && turn === "b") return; // Waiting for AI
+
+    if (net.isNet) {
+      const myColor: PieceColor = net.seat === 0 ? "w" : "b";
+      if (turn !== myColor) return;
+    } else if (gameMode === "ai" && turn === "b") {
+      return; // Waiting for AI
+    }
 
     const piece = board[r][c];
 
@@ -379,6 +429,11 @@ export default function SpeedChess() {
     if (selected) {
       const isTarget = validMovesForSelected.some(([mr, mc]) => mr === r && mc === c);
       if (isTarget) {
+        if (net.isNet && net.role === "guest") {
+          net.send({ type: "move", from: [selected[0], selected[1]], to: [r, c] });
+          setSelected(null);
+          return;
+        }
         makeMove(selected[0], selected[1], r, c);
         return;
       }
@@ -409,6 +464,9 @@ export default function SpeedChess() {
 
   return (
     <div ref={containerRef} className="w-full select-none">
+      {/* Online Multiplayer Team Room Lobby Bar */}
+      <NetBar gameTitle="Speed Chess" net={net} />
+
       {/* Top Header & Controls */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#213026] bg-[#080e0b] p-3.5 sm:p-4">
         <div>
@@ -726,3 +784,4 @@ export default function SpeedChess() {
     </div>
   );
 }
+

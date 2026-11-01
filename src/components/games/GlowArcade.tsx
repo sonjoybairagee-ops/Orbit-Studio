@@ -1,19 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState, useRef } from "react";
-import { Trophy, RotateCcw, Bot, User, X, Circle, Grid3x3, Columns3, Volume2, VolumeX, Maximize2, Minimize2, Users, Flame, Zap } from "lucide-react";
-import { GameSound, fireVictoryConfetti } from "./GameAudio";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Trophy, RotateCcw, Bot, User, X, Circle, Grid3x3, Columns3 } from "lucide-react";
+import NetBar from "./net/NetBar";
+import { NetGameApi, useNetGame } from "./net/useNetGame";
 
 /* ───────────────────────────────────────────────────────────────────────────
    Glow Arcade — two quick casual classics in one component:
    1) Neon Tic-Tac-Toe with a perfect minimax AI (never loses)
    2) Connect Four with a smart heuristic AI (win / block / threat / center)
+
+   Online: host-authority over PeerJS. Host runs the engine + bots for any
+   empty seat; guests send actions and receive full-state snapshots.
 ──────────────────────────────────────────────────────────────────────────── */
 
 type Mark = "X" | "O" | null;
 type Mode = "ttt" | "c4";
 
-/* ══ TicTacToe ══ */
+/* ══ TicTacToe pure logic ══ */
 const LINES = [
   [0, 1, 2], [3, 4, 5], [6, 7, 8],
   [0, 3, 6], [1, 4, 7], [2, 5, 8],
@@ -60,7 +64,7 @@ function tttBest(b: Mark[]): number {
   return move;
 }
 
-/* ══ Connect Four ══ */
+/* ══ Connect Four pure logic ══ */
 const C4W = 7, C4H = 6;
 
 function c4Winner(b: (1 | 2 | null)[]): { who: 1 | 2; cells: number[] } | null {
@@ -97,7 +101,6 @@ function lowestEmpty(b: (1 | 2 | null)[], col: number): number {
 
 function c4GreatMove(b: (1 | 2 | null)[]): number {
   const open = [0, 1, 2, 3, 4, 5, 6].filter((c) => lowestEmpty(b, c) !== -1);
-  // 1. immediate win
   for (const c of open) {
     const idx = lowestEmpty(b, c);
     b[idx] = 2;
@@ -105,7 +108,6 @@ function c4GreatMove(b: (1 | 2 | null)[]): number {
     b[idx] = null;
     if (w) return c;
   }
-  // 2. block opponent win
   for (const c of open) {
     const idx = lowestEmpty(b, c);
     b[idx] = 1;
@@ -113,7 +115,6 @@ function c4GreatMove(b: (1 | 2 | null)[]): number {
     b[idx] = null;
     if (w) return c;
   }
-  // 3. don't open a win for the opponent
   const safe: number[] = [];
   for (const c of open) {
     const idx = lowestEmpty(b, c);
@@ -129,7 +130,6 @@ function c4GreatMove(b: (1 | 2 | null)[]): number {
     if (!bad) safe.push(c);
   }
   const pool = safe.length ? safe : open;
-  // 4. threat-building + centre preference
   return pool.sort((a, bb) => {
     const ca = 3 - Math.abs(3 - a);
     const cb = 3 - Math.abs(3 - bb);
@@ -137,26 +137,30 @@ function c4GreatMove(b: (1 | 2 | null)[]): number {
   })[Math.random() < 0.65 ? 0 : Math.floor(Math.random() * pool.length)];
 }
 
+/* ══ Net snapshot shape ══ */
+interface Snap {
+  mode: Mode;
+  ttt: Mark[];
+  tttOver: { who: string } | null;
+  tttScore: { you: number; ai: number; draw: number };
+  c4: (1 | 2 | null)[];
+  c4Over: { who: string } | null;
+  c4Score: { you: number; ai: number; draw: number };
+}
+
+const freshSnap = (): Snap => ({
+  mode: "ttt",
+  ttt: Array(9).fill(null),
+  tttOver: null,
+  tttScore: { you: 0, ai: 0, draw: 0 },
+  c4: Array(42).fill(null),
+  c4Over: null,
+  c4Score: { you: 0, ai: 0, draw: 0 },
+});
+
 export default function GlowArcade() {
+  const net = useNetGame("cxgame-tttc4", 2);
   const [mode, setMode] = useState<Mode>("ttt");
-  const [playMode, setPlayMode] = useState<"ai" | "pass_play">("ai");
-  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
-  const [isMuted, setIsMuted] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setIsMuted(GameSound.getMuted());
-  }, []);
-
-  const toggleMute = () => setIsMuted(GameSound.toggleMute());
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
-    } else {
-      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
-    }
-  };
 
   /* ttt state */
   const [ttt, setTtt] = useState<Mark[]>(Array(9).fill(null));
@@ -170,43 +174,116 @@ export default function GlowArcade() {
 
   const wT = tttWinner(ttt);
   const winLine = wT ? wT.line : null;
-
   const scoreC4 = useMemo(() => c4Winner(c4), [c4]);
 
-  /* ttt AI */
+  /* seat helpers — seat 0 plays X/1, seat 1 plays O/2 (bot if empty/solo) */
+  const seatKind = (s: number): "host" | "guest" | "bot" =>
+    net.role === "solo" ? (s === 0 ? "host" : "bot") : (net.players?.[s]?.kind ?? "bot");
+
+  const seatName = (s: number): string => {
+    if (net.role === "solo") return s === 0 ? "You" : "AI";
+    const p = net.players?.[s];
+    return p ? (p.kind === "bot" ? "AI" : p.name) : "AI";
+  };
+
+  const aiCanPlaySeat1 = seatKind(1) === "bot";
+
+  /* ── HOST: broadcast snapshots after any change (declared before handlers) ── */
+  const netRef = useRef(net);
+  netRef.current = net;
+  const stateRef = useRef<Snap>(freshSnap());
+  stateRef.current = { mode, ttt, tttOver, tttScore, c4, c4Over, c4Score };
+
+  useEffect(() => {
+    if (!net.isNet) return;
+    if (net.role === "guest" && net.remote != null) {
+      const s = net.remote as Snap;
+      setMode(s.mode);
+      setTtt(s.ttt);
+      setTttOver(s.tttOver as { who: "you" | "ai" | "draw" } | null);
+      setTttScore(s.tttScore);
+      setC4(s.c4);
+      setC4Over(s.c4Over as { who: "you" | "ai" | "draw" } | null);
+      setC4Score(s.c4Score);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [net.remote, net.role]);
+
+  useEffect(() => {
+    if (!net.isNet || net.role !== "host") return;
+    net.broadcast(stateRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, ttt, tttOver, tttScore, c4, c4Over, c4Score, net.role, net.isNet, net.code]);
+
+  /* ── guest action routing ── */
+  useEffect(() => {
+    net.onAction((rawA: unknown, fromSeat: number) => {
+      const a = (rawA || {}) as { ga?: string; i?: number; m?: string };
+      if (netRef.current.role !== "host") return;
+      if (fromSeat < 0 || fromSeat > 1) return;
+      if (a.ga === "ttt") {
+        const st = stateRef.current;
+        if (st.tttOver) return;
+        const x = st.ttt.filter((v) => v === "X").length;
+        const o = st.ttt.filter((v) => v === "O").length;
+        if (x <= o || st.ttt[a.i ?? -1]) return; // must be O's turn, cell free
+        const nb = [...st.ttt];
+        nb[a.i!] = "O";
+        setTtt(nb);
+      } else if (a.ga === "c4") {
+        const st = stateRef.current;
+        if (st.c4Over || scoreC4) return;
+        const ones = st.c4.filter((v) => v === 1).length;
+        const twos = st.c4.filter((v) => v === 2).length;
+        if (ones <= twos) return;
+        const idx = lowestEmpty(st.c4, a.i ?? -1);
+        if (idx === -1) return;
+        const nb = [...st.c4];
+        nb[idx] = 2;
+        setC4(nb);
+      } else if (a.ga === "mode") {
+        setMode((a.m as Mode) === "c4" ? "c4" : "ttt");
+      } else if (a.ga === "reset") {
+        doReset(stateRef.current.mode);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [net.onAction]);
+
+  /* ttt AI (seat-1 bot only) */
   useEffect(() => {
     if (mode !== "ttt" || tttOver) return;
+    if (!aiCanPlaySeat1) return;
     const xCount = ttt.filter((v) => v === "X").length;
     const oCount = ttt.filter((v) => v === "O").length;
-    if (xCount <= oCount) return; // not AI's turn
+    if (xCount <= oCount) return; // not the bot's turn
     const t = setTimeout(() => {
       const move = tttBest([...ttt]);
       const nb = [...ttt];
       nb[move] = "O";
-      GameSound.playNeonMark(false);
       setTtt(nb);
     }, 450);
     return () => clearTimeout(t);
-  }, [ttt, mode, tttOver]);
+  }, [ttt, mode, tttOver, aiCanPlaySeat1, net.players]);
 
-  /* ttt end detection (AI moves into draw/win) */
+  /* ttt end detection */
   useEffect(() => {
-    if (mode !== "ttt" || tttOver) return;
+    if (tttOver) return;
     const w = tttWinner(ttt);
     if (w) {
       const who = w.mark === "X" ? "you" : "ai";
-      if (who === "you") { GameSound.playVictory(); fireVictoryConfetti(); }
       setTttOver({ who });
       setTttScore((s) => (who === "you" ? { ...s, you: s.you + 1 } : { ...s, ai: s.ai + 1 }));
     } else if (ttt.every(Boolean)) {
       setTttOver({ who: "draw" });
       setTttScore((s) => ({ ...s, draw: s.draw + 1 }));
     }
-  }, [ttt, mode, tttOver]);
+  }, [ttt, tttOver]);
 
-  /* c4 AI */
+  /* c4 AI (seat-1 bot only) */
   useEffect(() => {
     if (mode !== "c4" || c4Over || scoreC4) return;
+    if (!aiCanPlaySeat1) return;
     const ones = c4.filter((v) => v === 1).length;
     const twos = c4.filter((v) => v === 2).length;
     if (ones <= twos) return;
@@ -216,37 +293,50 @@ export default function GlowArcade() {
       if (idx === -1) return;
       const nb = [...c4];
       nb[idx] = 2;
-      GameSound.playTokenStep();
       setC4(nb);
     }, 500);
     return () => clearTimeout(t);
-  }, [c4, mode, c4Over, scoreC4]);
+  }, [c4, mode, c4Over, scoreC4, aiCanPlaySeat1, net.players]);
 
   /* c4 end detection */
   useEffect(() => {
-    if (mode !== "c4" || c4Over) return;
+    if (c4Over) return;
     const w = c4Winner(c4);
     if (w) {
       const who = w.who === 1 ? "you" : "ai";
-      if (who === "you") { GameSound.playVictory(); fireVictoryConfetti(); }
       setC4Over({ who });
       setC4Score((s) => (who === "you" ? { ...s, you: s.you + 1 } : { ...s, ai: s.ai + 1 }));
     } else if (c4.every((v) => v !== null)) {
       setC4Over({ who: "draw" });
       setC4Score((s) => ({ ...s, draw: s.draw + 1 }));
     }
-  }, [c4, mode, c4Over]);
+  }, [c4, c4Over]);
 
+  /* ── user actions (routed for guests) ── */
   const playTtt = (i: number) => {
-    if (ttt[i] || tttOver || mode !== "ttt") return;
+    if (ttt[i] || tttOver) return;
+    if (mode !== "ttt") return;
+    const x = ttt.filter((v) => v === "X").length;
+    const o = ttt.filter((v) => v === "O").length;
+    if (net.role === "guest") {
+      if (x > o) netRef.current.send({ ga: "ttt", i }); // O's turn
+      return;
+    }
+    if (x !== o) return; // seat-0 plays X only on their turn
     const nb = [...ttt];
     nb[i] = "X";
-    GameSound.playNeonMark(true);
     setTtt(nb);
   };
 
   const playC4 = (col: number) => {
-    if (c4Over || mode !== "c4") return;
+    if (c4Over || scoreC4) return;
+    const ones = c4.filter((v) => v === 1).length;
+    const twos = c4.filter((v) => v === 2).length;
+    if (net.role === "guest") {
+      if (ones > twos) netRef.current.send({ ga: "c4", i: col });
+      return;
+    }
+    if (ones !== twos) return; // seat-0 plays green only on their turn
     const idx = lowestEmpty(c4, col);
     if (idx === -1) return;
     const nb = [...c4];
@@ -254,15 +344,39 @@ export default function GlowArcade() {
     setC4(nb);
   };
 
-  const resetCur = () => {
-    if (mode === "ttt") setTtt(Array(9).fill(null)), setTttOver(null);
-    else setC4(Array(42).fill(null)), setC4Over(null);
+  function doReset(m: Mode) {
+    if (m === "ttt") {
+      setTtt(Array(9).fill(null));
+      setTttOver(null);
+    } else {
+      setC4(Array(42).fill(null));
+      setC4Over(null);
+    }
+  }
+
+  const setModeRouted = (m: Mode) => {
+    if (net.role === "guest") {
+      netRef.current.send({ ga: "mode", m });
+      return;
+    }
+    setMode(m);
+  };
+
+  const resetRouted = () => {
+    if (net.role === "guest") {
+      netRef.current.send({ ga: "reset" });
+      return;
+    }
+    doReset(mode);
   };
 
   const over = mode === "ttt" ? tttOver : c4Over;
+  const curScore = mode === "ttt" ? tttScore : c4Score;
 
   return (
     <div className="w-full">
+      <NetBar gameTitle="Glow Arcade" net={net} />
+
       {/* Header + mode switch */}
       <div className="mb-5 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <div>
@@ -270,12 +384,18 @@ export default function GlowArcade() {
             <span className="text-xl">⚡</span>
             <span>{mode === "ttt" ? "Glow Tic-Tac-Toe" : "Glow Connect Four"}</span>
             <span className="rounded-full border border-[#2a5234] bg-[#102a16] px-2.5 py-0.5 font-mono text-[10px] text-[#3cff5f]">
-              You vs AI
+              {net.isNet
+                ? `${seatName(0)} vs ${seatName(1)}`
+                : "You vs AI"}
             </span>
           </h2>
           <p className="mt-0.5 text-xs text-[#9baaa1]">
             {mode === "ttt"
-              ? "Perfect minimax AI — the best you can get is a draw!"
+              ? net.isNet
+                ? `${seatName(0)} plays ✕ · ${seatName(1)} plays ◯`
+                : "Perfect minimax AI — the best you can get is a draw!"
+              : net.isNet
+              ? `${seatName(0)} is green · ${seatName(1)} is pink`
               : "Drop discs, build a line of 4 — the AI blocks and attacks."}
           </p>
         </div>
@@ -283,7 +403,7 @@ export default function GlowArcade() {
           <div className="flex rounded-xl border border-[#213026] bg-[#080e0b] p-1">
             <button
               type="button"
-              onClick={() => { setMode("ttt"); }}
+              onClick={() => setModeRouted("ttt")}
               className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
                 mode === "ttt" ? "bg-[#102a16] text-[#3cff5f]" : "text-[#62776a] hover:text-[#9baaa1]"
               }`}
@@ -292,7 +412,7 @@ export default function GlowArcade() {
             </button>
             <button
               type="button"
-              onClick={() => { setMode("c4"); }}
+              onClick={() => setModeRouted("c4")}
               className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
                 mode === "c4" ? "bg-[#102a16] text-[#3cff5f]" : "text-[#62776a] hover:text-[#9baaa1]"
               }`}
@@ -302,7 +422,7 @@ export default function GlowArcade() {
           </div>
           <button
             type="button"
-            onClick={resetCur}
+            onClick={resetRouted}
             className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-[#2a5234] bg-[#102a16] px-3 py-2 text-xs font-semibold text-[#3cff5f] transition-colors hover:bg-[#16381e]"
           >
             <RotateCcw className="h-3.5 w-3.5" />
@@ -313,13 +433,14 @@ export default function GlowArcade() {
       {/* Score row */}
       <div className="mb-4 flex items-center justify-center gap-3 text-xs font-mono">
         <span className="flex items-center gap-1.5 rounded-full border border-[#2a5234] bg-[#080e0b] px-3 py-1 text-[#3cff5f]">
-          <User className="h-3 w-3" /> You <strong>{(mode === "ttt" ? tttScore : c4Score).you}</strong>
+          <User className="h-3 w-3" /> {seatName(0)} <strong>{curScore.you}</strong>
         </span>
         <span className="text-[#62776a]">VS</span>
-        <span className="flex items-center gap-1.5 rounded-full border border-[#213026] bg-[#080e0b] px-3 py-1 text-[#f0f]">
-          <Bot className="h-3 w-3" /> AI <strong>{(mode === "ttt" ? tttScore : c4Score).ai}</strong>
+        <span className="flex items-center gap-1.5 rounded-full border border-[#213026] bg-[#080e0b] px-3 py-1 text-[#ff5cf5]">
+          {seatKind(1) === "bot" ? <Bot className="h-3 w-3" /> : <User className="h-3 w-3" />} {seatName(1)}{" "}
+          <strong>{curScore.ai}</strong>
         </span>
-        <span className="text-[#62776a]">Draws {mode === "ttt" ? tttScore.draw : c4Score.draw}</span>
+        <span className="text-[#62776a]">Draws {curScore.draw}</span>
       </div>
 
       {/* Boards */}
@@ -389,11 +510,13 @@ export default function GlowArcade() {
       {/* status */}
       <p className="mt-4 text-center text-xs text-[#9baaa1]">
         {over
-          ? over.who === "you"
-            ? "You win this round! 🎉"
-            : over.who === "ai"
-            ? "AI takes the round."
-            : "It's a draw — rematch?"
+          ? over.who === "draw"
+            ? "It's a draw — rematch?"
+            : `${seatName(over.who === "you" ? 0 : 1)} wins this round! 🎉`
+          : net.role === "guest" &&
+            ((mode === "ttt" && ttt.filter((v) => v === "X").length <= ttt.filter((v) => v === "O").length) ||
+              (mode === "c4" && c4.filter((v) => v === 1).length <= c4.filter((v) => v === 2).length))
+          ? `Waiting for ${seatName(1)}…`
           : "Your move."}
       </p>
 
@@ -404,10 +527,12 @@ export default function GlowArcade() {
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-[#2a5234] bg-[#102a16]">
               <Trophy className="h-7 w-7 text-[#3cff5f]" />
             </div>
-            <h3 className="text-xl font-black text-[#e7eee9]">You Win! 🎉</h3>
+            <h3 className="text-xl font-black text-[#e7eee9]">
+              {seatName(0)} Wins! 🎉
+            </h3>
             <button
               type="button"
-              onClick={resetCur}
+              onClick={resetRouted}
               className="mt-5 cursor-pointer rounded-2xl bg-[#3cff5f] px-6 py-3 text-sm font-bold text-[#050a08] shadow-lg shadow-[#3cff5f]/20 transition-all hover:bg-[#52ff71]"
             >
               Next Round

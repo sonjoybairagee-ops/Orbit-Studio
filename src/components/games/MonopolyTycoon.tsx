@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { GameSound, fireVictoryConfetti } from "./GameAudio";
 import { DiceCube, Pawn } from "./GameTokens";
+import NetBar from "./net/NetBar";
+import { useNetGame } from "./net/useNetGame";
 
 /* ────────────────────────────────────────────────────────────────────────────
    Monopoly Empire Tycoon — full classic 40-space board, simplified house rules
@@ -221,6 +223,7 @@ const TOKEN_OFFSETS: [number, number][][] = [
 ];
 
 export default function MonopolyTycoon() {
+  const net = useNetGame("cxgame-monopoly", 4);
   const [players, setPlayers] = useState<Player[]>(initialPlayers);
   const [deeds, setDeeds] = useState<Deeds>({
     owners: Array(40).fill(null) as (number | null)[],
@@ -935,6 +938,7 @@ export default function MonopolyTycoon() {
 
   return (
     <div ref={containerRef} className="w-full select-none">
+      <NetBar gameTitle="Monopoly Empire" net={net} />
       {/* Header */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#213026] bg-[#080e0b] p-3.5 sm:p-4">
         <div>

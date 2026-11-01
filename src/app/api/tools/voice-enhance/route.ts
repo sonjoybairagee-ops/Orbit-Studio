@@ -6,26 +6,31 @@ export const maxDuration = 60; // Allow up to 60s for deep neural AI models
 // Default fallback to active Cloudflare tunnel if not explicitly specified in env
 const DEFAULT_AI_URL = "https://logan-enters-restore-ste.trycloudflare.com";
 
-// Check if AI service is configured
-export async function GET() {
-  const backendUrl = process.env.AI_VOICE_ENHANCE_URL || DEFAULT_AI_URL;
+// Check if AI service is configured and reachable
+export async function GET(req: NextRequest) {
+  const queryUrl = req.nextUrl.searchParams.get("url");
+  const backendUrl = queryUrl || process.env.AI_VOICE_ENHANCE_URL || DEFAULT_AI_URL;
+
   if (!backendUrl) {
     return NextResponse.json({
       configured: false,
-      message: "AI microservice URL not configured in environment.",
+      online: false,
+      message: "AI microservice URL not configured.",
     });
   }
 
   try {
-    const res = await fetch(`${backendUrl}/health`, {
+    const cleanUrl = backendUrl.replace(/\/+$/, "");
+    const res = await fetch(`${cleanUrl}/health`, {
       method: "GET",
-      signal: AbortSignal.timeout(4000),
+      signal: AbortSignal.timeout(3000), // Fast 3s probe
     });
     if (res.ok) {
       const data = await res.json().catch(() => ({}));
       return NextResponse.json({
         configured: true,
         online: true,
+        url: cleanUrl,
         details: data,
       });
     }
@@ -36,24 +41,13 @@ export async function GET() {
   return NextResponse.json({
     configured: true,
     online: false,
+    url: backendUrl,
     message: "AI backend endpoint is configured but currently offline.",
   });
 }
 
 // Forward audio to Python DeepFilterNet + Resemble Enhance microservice
 export async function POST(req: NextRequest) {
-  const backendUrl = process.env.AI_VOICE_ENHANCE_URL || DEFAULT_AI_URL;
-
-  if (!backendUrl) {
-    return NextResponse.json(
-      {
-        error: "AI Voice microservice is not configured.",
-        fallbackToClient: true,
-      },
-      { status: 503 }
-    );
-  }
-
   try {
     const formData = await req.formData();
     const file = formData.get("file");
@@ -62,6 +56,49 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Valid audio file is required" },
         { status: 400 }
+      );
+    }
+
+    const customUrl =
+      (formData.get("custom_url") as string) ||
+      req.headers.get("x-colab-url") ||
+      process.env.AI_VOICE_ENHANCE_URL ||
+      DEFAULT_AI_URL;
+
+    if (!customUrl) {
+      return NextResponse.json(
+        {
+          error: "AI Voice microservice is not configured.",
+          fallbackToClient: true,
+        },
+        { status: 503 }
+      );
+    }
+
+    const cleanBackendUrl = customUrl.replace(/\/+$/, "");
+
+    // Quick preflight check: ensure endpoint is responsive before pipe
+    try {
+      const ping = await fetch(`${cleanBackendUrl}/health`, {
+        method: "GET",
+        signal: AbortSignal.timeout(2500),
+      });
+      if (!ping.ok) {
+        return NextResponse.json(
+          {
+            error: "AI Voice endpoint health check failed.",
+            fallbackToClient: true,
+          },
+          { status: 502 }
+        );
+      }
+    } catch {
+      return NextResponse.json(
+        {
+          error: "AI backend endpoint is offline or tunnel expired.",
+          fallbackToClient: true,
+        },
+        { status: 502 }
       );
     }
 
@@ -76,9 +113,9 @@ export async function POST(req: NextRequest) {
     );
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 55000);
+    const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
-    const response = await fetch(`${backendUrl.replace(/\/+$/, "")}/process`, {
+    const response = await fetch(`${cleanBackendUrl}/process`, {
       method: "POST",
       body: apiFormData,
       signal: controller.signal,
@@ -119,4 +156,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

@@ -13,6 +13,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ["/tools", 0.95, "daily"],
     ["/games", 0.95, "daily"],
     ["/games/ludo", 0.9, "daily"],
+    ["/games/monopoly", 0.9, "daily"],
+    ["/games/chess", 0.9, "daily"],
+    ["/games/carrom", 0.9, "daily"],
+    ["/games/uno", 0.9, "daily"],
+    ["/games/tic-tac-toe", 0.9, "daily"],
 
     // All 13 Tool Category Landing Hubs
     ["/downloader-tools", 0.9, "daily"],

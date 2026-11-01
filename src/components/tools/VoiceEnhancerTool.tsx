@@ -16,7 +16,8 @@ import {
   AudioWaveform,
   Zap,
   Radio,
-  Flame,
+  ExternalLink,
+  Link2,
 } from "lucide-react";
 import { encodeWav } from "@/lib/audio-file-utils";
 import { spectralDenoiseAudio, getSharedAudioContext } from "@/lib/spectral-denoise";
@@ -109,16 +110,31 @@ export default function VoiceEnhancerTool() {
   const [highPassFreq, setHighPassFreq] = useState<number>(90);
   const [broadcastLeveling, setBroadcastLeveling] = useState<boolean>(true);
   const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
-  const [engineMode, setEngineMode] = useState<"ai" | "dsp">("ai");
+
+  // Engine Mode: Defaults to in-browser Turbo DSP (guaranteed 100% available with zero setup)
+  const [engineMode, setEngineMode] = useState<"ai" | "dsp">("dsp");
   const [aiStatus, setAiStatus] = useState<{
     online: boolean;
     gpu?: boolean;
     name?: string;
   } | null>(null);
 
+  // Custom Colab URL connector
+  const [customColabUrl, setCustomColabUrl] = useState<string>("");
+  const [showColabInput, setShowColabInput] = useState<boolean>(false);
+  const [isCheckingColab, setIsCheckingColab] = useState<boolean>(false);
+  const [colabConnectMsg, setColabConnectMsg] = useState<string>("");
+
   // Check AI GPU Server status on mount
   useEffect(() => {
-    fetch("/api/tools/voice-enhance")
+    const savedUrl = typeof window !== "undefined" ? localStorage.getItem("orbit_colab_url") || "" : "";
+    if (savedUrl) {
+      setCustomColabUrl(savedUrl);
+    }
+
+    const checkUrl = savedUrl ? `/api/tools/voice-enhance?url=${encodeURIComponent(savedUrl)}` : "/api/tools/voice-enhance";
+
+    fetch(checkUrl)
       .then((r) => r.json())
       .then((data) => {
         if (data?.online) {
@@ -127,19 +143,55 @@ export default function VoiceEnhancerTool() {
             gpu: data.details?.gpu,
             name: data.details?.name || "Tesla T4 GPU",
           });
+          setEngineMode("ai");
         } else {
           setAiStatus({ online: false });
+          setEngineMode("dsp"); // Seamlessly default to Turbo in-browser DSP
         }
       })
-      .catch(() => setAiStatus({ online: false }));
+      .catch(() => {
+        setAiStatus({ online: false });
+        setEngineMode("dsp");
+      });
   }, []);
+
+  const handleConnectCustomColab = async () => {
+    if (!customColabUrl.trim()) return;
+    setIsCheckingColab(true);
+    setColabConnectMsg("Testing Colab tunnel connection...");
+
+    try {
+      const clean = customColabUrl.trim().replace(/\/+$/, "");
+      const res = await fetch(`/api/tools/voice-enhance?url=${encodeURIComponent(clean)}`);
+      const data = await res.json();
+
+      if (data?.online) {
+        setAiStatus({
+          online: true,
+          gpu: data.details?.gpu,
+          name: data.details?.name || "Tesla T4 GPU",
+        });
+        setEngineMode("ai");
+        if (typeof window !== "undefined") {
+          localStorage.setItem("orbit_colab_url", clean);
+        }
+        setColabConnectMsg("Connected successfully to Colab GPU!");
+      } else {
+        setColabConnectMsg("Could not reach Colab tunnel. Ensure cell 2 is running.");
+      }
+    } catch {
+      setColabConnectMsg("Failed to connect. Check URL and try again.");
+    } finally {
+      setIsCheckingColab(false);
+    }
+  };
 
   // Processing state
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [progressMsg, setProgressMsg] = useState<string>("");
   const [error, setError] = useState<string>("");
 
-  // Dual Synchronized Audio Elements (Zero-latency A/B volume switching, eliminates all lag/stutter)
+  // Dual Synchronized Audio Elements (Zero-latency A/B volume switching)
   const enhancedAudioRef = useRef<HTMLAudioElement | null>(null);
   const originalAudioRef = useRef<HTMLAudioElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -180,7 +232,7 @@ export default function VoiceEnhancerTool() {
       leveling: boolean
     ) => {
       setIsProcessing(true);
-      setProgressMsg("Applying deep spectral noise removal & studio vocal enhancement...");
+      setProgressMsg("Applying deep spectral noise eradication & studio vocal enhancement...");
 
       try {
         // Yield to browser UI thread so spinner renders
@@ -277,15 +329,32 @@ export default function VoiceEnhancerTool() {
     setIsProcessing(true);
     setError("");
 
-    // Try AI Deep Neural Engine (DeepFilter + Resemble Enhance) first if selected
+    // Step 1: Decode to AudioBuffer first so duration and raw buffer are always ready
+    let decodedBuffer: AudioBuffer;
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const audioCtx = getSharedAudioContext();
+      decodedBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+      rawAudioBufferRef.current = decodedBuffer;
+      setDuration(decodedBuffer.duration);
+    } catch {
+      setError("Could not decode audio file. Please try another MP3 or WAV file.");
+      setIsProcessing(false);
+      return;
+    }
+
+    // Step 2: Try AI Deep Neural Engine (DeepFilterNet 3) if AI mode is selected
     if (engineMode === "ai") {
-      setProgressMsg("Sending to AI Neural Model (DeepFilterNet + Resemble Enhance)...");
+      setProgressMsg("Sending to AI Neural Model (DeepFilterNet 3 GPU)...");
       try {
         const fd = new FormData();
         fd.append("file", file);
         fd.append("mode", "both");
         fd.append("atten_db", "100");
         fd.append("denoise_strength", "0.8");
+        if (customColabUrl.trim()) {
+          fd.append("custom_url", customColabUrl.trim());
+        }
 
         const res = await fetch("/api/tools/voice-enhance", {
           method: "POST",
@@ -298,31 +367,20 @@ export default function VoiceEnhancerTool() {
           const newUrl = URL.createObjectURL(blob);
           setEnhancedAudioUrl(newUrl);
 
-          // Decode for duration
-          const arrayBuffer = await file.arrayBuffer();
-          const audioCtx = getSharedAudioContext();
-          const decodedBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-          rawAudioBufferRef.current = decodedBuffer;
-          setDuration(decodedBuffer.duration);
-
           setIsProcessing(false);
-          setProgressMsg("Enhanced with Deep Neural AI (Adobe Podcast Level)!");
+          setProgressMsg("Enhanced with DeepFilterNet 3 AI Neural Network!");
           return;
+        } else {
+          console.warn("AI Backend unavailable or offline. Falling back to In-Browser Turbo DSP.");
         }
       } catch (e) {
-        console.warn("AI Backend unavailable, switching to Client DSP:", e);
+        console.warn("AI Backend request failed, falling back to In-Browser Turbo DSP:", e);
       }
     }
 
-    // Fallback or In-Browser Turbo Mode
+    // Step 3: In-Browser Turbo Audio Engine (Zero-latency DSP, 100% reliable)
     setProgressMsg("Processing with In-Browser Turbo Audio Engine...");
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      const audioCtx = getSharedAudioContext();
-      const decodedBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-      rawAudioBufferRef.current = decodedBuffer;
-      setDuration(decodedBuffer.duration);
-
       const p = PRESETS[selectedPreset];
       await processAudioBuffer(
         decodedBuffer,
@@ -334,7 +392,7 @@ export default function VoiceEnhancerTool() {
         p.broadcastLeveling
       );
     } catch {
-      setError("Could not decode audio file. Please try another MP3 or WAV file.");
+      setError("Could not process audio. Please try another file.");
       setIsProcessing(false);
     }
   };
@@ -420,7 +478,7 @@ export default function VoiceEnhancerTool() {
     document.body.removeChild(link);
   };
 
-  // Generate realistic human speech recording with audible fan/AC hum and hiss
+  // Generate realistic human speech recording with heavy audible fan/AC hum and hiss
   const loadSampleRecording = async () => {
     setIsProcessing(true);
     setProgressMsg("Generating sample voiceover with room fan & AC noise...");
@@ -430,7 +488,7 @@ export default function VoiceEnhancerTool() {
       const ctx = getSharedAudioContext();
       const sampleRate = ctx.sampleRate;
       const durationSec = 6.0;
-      const numFrames = sampleRate * durationSec;
+      const numFrames = Math.floor(sampleRate * durationSec);
       const buffer = ctx.createBuffer(1, numFrames, sampleRate);
       const data = buffer.getChannelData(0);
 
@@ -468,20 +526,16 @@ export default function VoiceEnhancerTool() {
       rawAudioBufferRef.current = buffer;
       setDuration(durationSec);
 
-      if (engineMode === "ai") {
-        await loadAndEnhanceAudio(sampleFile);
-      } else {
-        const p = PRESETS[selectedPreset];
-        await processAudioBuffer(
-          buffer,
-          p.noiseReduction,
-          p.clarityBoost,
-          p.highPassFreq,
-          p.warmthBoost,
-          p.roomDeMuffle,
-          p.broadcastLeveling
-        );
-      }
+      const p = PRESETS[selectedPreset];
+      await processAudioBuffer(
+        buffer,
+        p.noiseReduction,
+        p.clarityBoost,
+        p.highPassFreq,
+        p.warmthBoost,
+        p.roomDeMuffle,
+        p.broadcastLeveling
+      );
     } catch {
       setError("Failed to create sample audio.");
       setIsProcessing(false);
@@ -567,62 +621,121 @@ export default function VoiceEnhancerTool() {
         <div className="mt-5 pt-4 border-t border-[#213026] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="text-xs">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-[#e7eee9]">Processing Engine Mode:</span>
-              {aiStatus?.online ? (
+              <span className="font-bold text-[#e7eee9]">Processing Engine:</span>
+              {engineMode === "ai" && aiStatus?.online ? (
                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   AI GPU: {aiStatus.name} Online
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-zinc-800 text-zinc-400 border border-zinc-700">
-                  In-Browser DSP Ready
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
+                  <Zap className="h-3 w-3 text-emerald-400" />
+                  In-Browser Turbo DSP Active (Zero Setup Required)
                 </span>
               )}
             </div>
             <span className="text-[11px] text-[#9baaa1]">
               {engineMode === "ai"
-                ? "🧠 AI Neural Studio (DeepFilterNet + Resemble Enhance Model)"
-                : "⚡ In-Browser Turbo Engine (Client DSP • 100% Private & Instant)"}
+                ? "🧠 DeepFilterNet 3 AI Neural Network (Colab Cloud GPU)"
+                : "⚡ 100% Client-Side Pure Web Audio DSP (Private, Instant &amp; Zero Latency)"}
             </span>
           </div>
 
-          <div className="inline-flex rounded-2xl border border-[#213026] bg-[#080e0b] p-1 text-xs font-semibold">
+          <div className="flex items-center gap-2">
+            <div className="inline-flex rounded-2xl border border-[#213026] bg-[#080e0b] p-1 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => {
+                  setEngineMode("dsp");
+                  if (rawAudioBufferRef.current && engineMode !== "dsp") {
+                    reprocessWithCurrentSettings();
+                  }
+                }}
+                className={`flex items-center gap-1.5 rounded-xl px-4 py-2 transition-all cursor-pointer ${
+                  engineMode === "dsp"
+                    ? "bg-[#3cff5f] text-[#050a08] font-bold shadow-md shadow-[#3cff5f]/20"
+                    : "text-[#9baaa1] hover:text-[#e7eee9]"
+                }`}
+              >
+                <Zap className="h-3.5 w-3.5" />
+                <span>In-Browser Turbo (Instant)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setEngineMode("ai");
+                  if (!aiStatus?.online) {
+                    setShowColabInput(true);
+                  }
+                  if (audioFile && engineMode !== "ai") {
+                    loadAndEnhanceAudio(audioFile);
+                  }
+                }}
+                className={`flex items-center gap-1.5 rounded-xl px-4 py-2 transition-all cursor-pointer ${
+                  engineMode === "ai"
+                    ? "bg-[#3cff5f] text-[#050a08] font-bold shadow-md shadow-[#3cff5f]/20"
+                    : "text-[#9baaa1] hover:text-[#e7eee9]"
+                }`}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>AI Neural GPU</span>
+              </button>
+            </div>
+
             <button
               type="button"
-              onClick={() => {
-                setEngineMode("ai");
-                if (audioFile && engineMode !== "ai") {
-                  loadAndEnhanceAudio(audioFile);
-                }
-              }}
-              className={`flex items-center gap-1.5 rounded-xl px-4 py-2 transition-all cursor-pointer ${
-                engineMode === "ai"
-                  ? "bg-[#3cff5f] text-[#050a08] font-bold shadow-md shadow-[#3cff5f]/20"
-                  : "text-[#9baaa1] hover:text-[#e7eee9]"
-              }`}
+              onClick={() => setShowColabInput(!showColabInput)}
+              className="p-2 rounded-xl border border-[#213026] bg-[#080e0b] text-[#9baaa1] hover:text-[#3cff5f] hover:border-[#3cff5f]/40 transition-colors"
+              title="Connect Custom Colab GPU URL"
             >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>AI Neural Studio</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setEngineMode("dsp");
-                if (rawAudioBufferRef.current && engineMode !== "dsp") {
-                  reprocessWithCurrentSettings();
-                }
-              }}
-              className={`flex items-center gap-1.5 rounded-xl px-4 py-2 transition-all cursor-pointer ${
-                engineMode === "dsp"
-                  ? "bg-[#3cff5f] text-[#050a08] font-bold shadow-md shadow-[#3cff5f]/20"
-                  : "text-[#9baaa1] hover:text-[#e7eee9]"
-              }`}
-            >
-              <Zap className="h-3.5 w-3.5" />
-              <span>In-Browser Turbo</span>
+              <Link2 className="h-4 w-4" />
             </button>
           </div>
         </div>
+
+        {/* Colab Custom Tunnel URL Connector */}
+        {showColabInput && (
+          <div className="mt-4 p-4 rounded-2xl bg-[#080e0b] border border-[#213026] text-xs space-y-2 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-[#e7eee9] flex items-center gap-1.5">
+                <Link2 className="h-3.5 w-3.5 text-[#3cff5f]" />
+                Connect Colab Cloudflare URL:
+              </span>
+              <a
+                href="https://colab.research.google.com"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[11px] text-[#3cff5f] hover:underline flex items-center gap-1"
+              >
+                <span>Open Colab</span>
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="https://...trycloudflare.com"
+                value={customColabUrl}
+                onChange={(e) => setCustomColabUrl(e.target.value)}
+                className="flex-1 rounded-xl bg-[#0c1510] border border-[#2a3c30] px-3 py-2 text-xs text-[#e7eee9] placeholder:text-[#62776a] focus:outline-none focus:border-[#3cff5f]"
+              />
+              <button
+                type="button"
+                onClick={handleConnectCustomColab}
+                disabled={isCheckingColab}
+                className="px-4 py-2 rounded-xl bg-[#3cff5f] text-[#050a08] font-bold text-xs hover:bg-[#48ff69] disabled:opacity-50 cursor-pointer"
+              >
+                {isCheckingColab ? "Testing..." : "Connect"}
+              </button>
+            </div>
+            {colabConnectMsg && (
+              <span className={`text-[11px] block ${colabConnectMsg.includes("success") ? "text-emerald-400" : "text-amber-400"}`}>
+                {colabConnectMsg}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Studio Presets */}
         <div className="mt-6 pt-5 border-t border-[#213026]">
@@ -825,7 +938,7 @@ export default function VoiceEnhancerTool() {
               <button
                 type="button"
                 onClick={reprocessWithCurrentSettings}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-[#3cff5f] text-[#050a08] px-4 py-2 text-xs font-bold shadow-md shadow-[#3cff5f]/20 cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[#3cff5f] text-[#050a08] px-4 py-2 text-xs font-bold shadow-md shadow-[#3cff5f]/20 cursor-pointer hover:bg-[#48ff69] transition-all"
               >
                 <Sparkles className="h-3.5 w-3.5" />
                 <span>Apply Custom Settings</span>
@@ -893,6 +1006,35 @@ export default function VoiceEnhancerTool() {
             </div>
           </div>
 
+          {/* Prominent Active Listening Status Banner */}
+          <div
+            className={`flex items-center justify-between px-4 py-2.5 rounded-xl border text-xs font-semibold transition-all ${
+              activeTrack === "enhanced"
+                ? "bg-emerald-950/40 border-emerald-500/30 text-emerald-300"
+                : "bg-amber-950/40 border-amber-500/30 text-amber-300"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <span
+                className={`h-2.5 w-2.5 rounded-full ${
+                  activeTrack === "enhanced" ? "bg-emerald-400 animate-pulse" : "bg-amber-400"
+                }`}
+              />
+              <span>
+                {activeTrack === "enhanced"
+                  ? "🟢 Listening to: Enhanced Studio Audio (100% Background Hum Removed + Voice Body Lifted)"
+                  : "🟡 Listening to: Original Raw Audio (Unfiltered Room Noise, Fan Hum & Airflow)"}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleTrackSwitch(activeTrack === "enhanced" ? "original" : "enhanced")}
+              className="underline text-[11px] opacity-80 hover:opacity-100 cursor-pointer"
+            >
+              Toggle A/B
+            </button>
+          </div>
+
           {/* Interactive Player Controls */}
           <div className="rounded-2xl bg-[#080e0b] border border-[#213026] p-6 flex flex-col gap-4">
             <div className="flex items-center justify-between gap-4">
@@ -910,7 +1052,7 @@ export default function VoiceEnhancerTool() {
                     {Math.floor(currentTime / 60)}:{Math.floor(currentTime % 60).toString().padStart(2, "0")}
                   </span>
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-[#9baaa1]">
-                    Listening to:{" "}
+                    Track:{" "}
                     <strong className={activeTrack === "enhanced" ? "text-[#3cff5f]" : "text-amber-400"}>
                       {activeTrack === "enhanced" ? "Enhanced Studio Voice" : "Original Raw Audio"}
                     </strong>
