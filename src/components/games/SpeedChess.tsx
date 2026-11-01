@@ -19,6 +19,8 @@ import { GameSound, fireVictoryConfetti } from "./GameAudio";
 import NetBar from "./net/NetBar";
 import { useNetGame } from "./net/useNetGame";
 import GameLobbyModal from "./net/GameLobbyModal";
+import InGameReactions from "./net/InGameReactions";
+import VictoryCardModal from "./net/VictoryCardModal";
 
 /* ───────────────────────────────────────────────────────────────────────────
    Speed Chess Arena — 8×8 Interactive Browser Chess
@@ -546,6 +548,9 @@ export default function SpeedChess() {
             ))}
           </div>
 
+          {/* In-Game Reactions */}
+          <InGameReactions net={net} myName={turn === "w" ? "White" : "Black"} />
+
           {/* Sound Mute Toggle */}
           <button
             type="button"
@@ -757,30 +762,30 @@ export default function SpeedChess() {
             </ul>
           </div>
 
-          {/* Winner overlay */}
-          {winner !== null && (
-            <div className="rounded-2xl border border-[#3cff5f] bg-[#102a16] p-5 text-center animate-in zoom-in-95">
-              <Trophy className="mx-auto h-8 w-8 text-[#3cff5f] mb-1" />
-              <h3 className="text-base font-bold text-[#e7eee9]">
-                {winner === "draw"
-                  ? "Stalemate / Draw!"
-                  : winner === "w"
-                  ? "White Wins by Checkmate! 🏆"
-                  : "Black Wins by Checkmate! 🏆"}
-              </h3>
-              <p className="mt-1 text-xs text-[#3cff5f]">
-                {winner === "draw" ? "No legal moves remain." : "Opponent king has fallen."}
-              </p>
-              <button
-                type="button"
-                onClick={resetGame}
-                className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-[#3cff5f] px-5 py-2.5 text-xs font-bold text-[#050a08] hover:bg-[#48ff69] transition-all cursor-pointer shadow-md shadow-[#3cff5f]/20"
-              >
-                <Play className="h-3.5 w-3.5" />
-                <span>Play Again</span>
-              </button>
-            </div>
-          )}
+          {/* Winner overlay with Branded Shareable Card */}
+          <VictoryCardModal
+            isOpen={winner !== null}
+            onClose={resetGame}
+            winnerName={
+              winner === "draw"
+                ? "Stalemate (Draw)"
+                : winner === "w"
+                ? "White Grandmaster"
+                : "Black Grandmaster"
+            }
+            gameTitle="Speed Chess Arena"
+            stats={[
+              { label: "Winner", value: winner === "draw" ? "Draw / Stalemate" : winner === "w" ? "White (Checkmate)" : "Black (Checkmate)" },
+              { label: "Checkmate", value: "King Fallen" },
+              { label: "Game Mode", value: gameMode === "ai" ? "vs Stockfish AI" : "Pass & Play / Net" },
+            ]}
+            victoryQuote={
+              winner === "draw"
+                ? "No legal moves remained — a masterclass defensive draw!"
+                : "Checkmate executed! The opposing King has fallen!"
+            }
+            onRematch={resetGame}
+          />
         </div>
       </div>
 

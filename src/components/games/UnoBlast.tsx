@@ -36,6 +36,8 @@ import { GameSound, fireVictoryConfetti } from "./GameAudio";
 import NetBar from "./net/NetBar";
 import { useNetGame } from "./net/useNetGame";
 import GameLobbyModal from "./net/GameLobbyModal";
+import InGameReactions from "./net/InGameReactions";
+import VictoryCardModal from "./net/VictoryCardModal";
 
 /* ───────────────────────────────────────────────────────────────────────────
    CompX UNO Online — Custom Deck Design System & 3D Table Player Architecture
@@ -811,6 +813,8 @@ export default function UnoBlast() {
 
         {/* Right: Quick actions */}
         <div className="flex items-center gap-2">
+          <InGameReactions net={net} myName={P[mySeat]?.short || "You"} />
+
           <button
             type="button"
             onClick={() => setShowRulesModal(true)}
@@ -1240,34 +1244,24 @@ export default function UnoBlast() {
         </div>
       )}
 
-      {/* ── MODAL: Round Winner Celebration ── */}
-      {g.over !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-sm rounded-3xl border-2 border-[#3cff5f]/50 bg-[#0c1510] p-8 text-center shadow-2xl">
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full border-2 border-[#3cff5f] bg-[#102a16] shadow-xl">
-              <Trophy className="h-10 w-10 text-[#3cff5f]" />
-            </div>
-
-            <h3 className="text-2xl font-black text-[#e7eee9]">
-              {g.over === mySeat ? "Victory! You Won!" : `${P[g.over]?.short} Wins!`}
-            </h3>
-            <p className="mt-2 text-xs text-[#8ea396]">
-              {g.over === mySeat
-                ? "Brilliant play! You emptied your hand first and conquered UNO Online!"
-                : "Better luck next deal! Match colors and counter attacks faster!"}
-            </p>
-
-            <button
-              type="button"
-              onClick={resetRound}
-              className="mt-6 inline-flex cursor-pointer items-center gap-2 rounded-2xl bg-[#3cff5f] px-6 py-3 text-sm font-black text-black shadow-lg shadow-[#3cff5f]/30 hover:bg-[#52ff71] hover:scale-105 active:scale-95"
-            >
-              <Play className="h-4 w-4 fill-black" />
-              <span>Deal Again</span>
-            </button>
-          </div>
-        </div>
-      )}
+      {/* ── MODAL: Round Winner Celebration with Branded Shareable Card ── */}
+      <VictoryCardModal
+        isOpen={g.over !== null}
+        onClose={resetRound}
+        winnerName={g.over === mySeat ? "You (Champion)" : P[g.over!]?.short || "Winner"}
+        gameTitle="UNO Online"
+        stats={[
+          { label: "Winner", value: g.over === mySeat ? "Victory! 🏆" : P[g.over!]?.short || "Winner" },
+          { label: "Remaining", value: "0 Cards (UNO)" },
+          { label: "Match Mode", value: net.isNet ? "Live Room" : "Solo vs Bots" },
+        ]}
+        victoryQuote={
+          g.over === mySeat
+            ? "Emptied hand first and conquered rivals in CompX UNO Online!"
+            : "A hard-fought UNO match — deal again for sweet revenge!"
+        }
+        onRematch={resetRound}
+      />
 
       {/* ── MODAL: Settings ── */}
       {showSettingsModal && (

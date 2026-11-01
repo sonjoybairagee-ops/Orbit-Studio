@@ -345,6 +345,115 @@ export const GameSound = {
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.05);
   },
+
+  // Meme & In-game sound reactions
+  playReaction: (reactionId: string) => {
+    if (GameSound.getMuted()) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    if (reactionId === "nice") {
+      // Cheerful ascending arpeggio (C5 -> E5 -> G5 -> C6)
+      [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const t = ctx.currentTime + i * 0.055;
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(freq, t);
+        gain.gain.setValueAtTime(0.18, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.17);
+      });
+    } else if (reactionId === "laugh") {
+      // Funny cartoon chuckle bounce
+      [420, 360, 480, 380, 520].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const t = ctx.currentTime + i * 0.06;
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(freq, t);
+        gain.gain.setValueAtTime(0.15, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.08);
+      });
+    } else if (reactionId === "oops") {
+      // Comic sliding drop
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(450, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.28);
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.28);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.3);
+    } else if (reactionId === "fire") {
+      // Whoosh flame flare
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(180, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(750, ctx.currentTime + 0.12);
+      osc.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 0.26);
+      gain.gain.setValueAtTime(0.22, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.26);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.28);
+    } else if (reactionId === "king") {
+      // Royal fanfare
+      [587.33, 587.33, 587.33, 880].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const t = ctx.currentTime + i * 0.08;
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(freq, t);
+        gain.gain.setValueAtTime(0.2, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + (i === 3 ? 0.35 : 0.09));
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + (i === 3 ? 0.36 : 0.1));
+      });
+    } else if (reactionId === "rip") {
+      // Low dramatic minor thud
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(140, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(45, ctx.currentTime + 0.35);
+      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.36);
+    } else {
+      // GG / Celebration double bell
+      [659.25, 987.77].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const t = ctx.currentTime + i * 0.09;
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, t);
+        gain.gain.setValueAtTime(0.22, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.33);
+      });
+    }
+  },
 };
 
 /**

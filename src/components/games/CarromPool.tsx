@@ -18,6 +18,8 @@ import { GameSound, fireVictoryConfetti } from "./GameAudio";
 import NetBar from "./net/NetBar";
 import { useNetGame } from "./net/useNetGame";
 import GameLobbyModal from "./net/GameLobbyModal";
+import InGameReactions from "./net/InGameReactions";
+import VictoryCardModal from "./net/VictoryCardModal";
 
 /* ───────────────────────────────────────────────────────────────────────────
    Carrom Pool Pro — 2D Physics Canvas Board
@@ -740,6 +742,9 @@ export default function CarromPool() {
             </button>
           </div>
 
+          {/* In-Game Reactions */}
+          <InGameReactions net={net} myName={turn === 0 ? "White" : "Black"} />
+
           {/* Sound Mute Toggle */}
           <button
             type="button"
@@ -951,22 +956,24 @@ export default function CarromPool() {
             </div>
           </div>
 
-          {/* Winner banner */}
-          {winner !== null && (
-            <div className="rounded-2xl border border-[#3cff5f] bg-[#102a16] p-4 text-center animate-in zoom-in-95">
-              <Trophy className="mx-auto h-7 w-7 text-[#3cff5f] mb-1" />
-              <h3 className="text-sm font-bold text-[#e7eee9]">Match Concluded!</h3>
-              <p className="mt-1 text-xs text-[#3cff5f] font-semibold">{message}</p>
-              <button
-                type="button"
-                onClick={reset}
-                className="mt-3 inline-flex items-center gap-1 rounded-xl bg-[#3cff5f] px-4 py-2 text-xs font-bold text-[#050a08] hover:bg-[#48ff69] transition-all cursor-pointer"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-                <span>Play Rematch</span>
-              </button>
-            </div>
-          )}
+          {/* Winner banner with Branded Shareable Card */}
+          <VictoryCardModal
+            isOpen={winner !== null}
+            onClose={reset}
+            winnerName={winner === 0 ? "White (Player 1)" : gameMode === "ai" ? "Carrom Bot" : "Black (Player 2)"}
+            gameTitle="Carrom Pool Pro"
+            stats={[
+              { label: "Winner", value: winner === 0 ? "White Striker" : "Black Striker" },
+              { label: "Queen Status", value: queenState === "claimed" ? "Covered 👑" : "Pockets Clear" },
+              { label: "White / Black", value: `${potted.w} / ${potted.b} Potted` },
+            ]}
+            victoryQuote={
+              winner === 0
+                ? "Pocketed all target carrom men with precision striker physics!"
+                : "A high-stakes Carrom board showdown!"
+            }
+            onRematch={reset}
+          />
         </div>
       </div>
 

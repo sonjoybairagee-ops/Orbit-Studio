@@ -5,6 +5,8 @@ import { Trophy, RotateCcw, Bot, User, X, Circle, Grid3x3, Columns3 } from "luci
 import NetBar from "./net/NetBar";
 import { NetGameApi, useNetGame } from "./net/useNetGame";
 import GameLobbyModal from "./net/GameLobbyModal";
+import InGameReactions from "./net/InGameReactions";
+import VictoryCardModal from "./net/VictoryCardModal";
 
 /* ───────────────────────────────────────────────────────────────────────────
    Glow Arcade — two quick casual classics in one component:
@@ -422,6 +424,8 @@ export default function GlowArcade() {
               <Columns3 className="h-3.5 w-3.5" /> Connect 4
             </button>
           </div>
+          <InGameReactions net={net} myName={seatName(0)} />
+
           <button
             type="button"
             onClick={resetRouted}
@@ -522,26 +526,24 @@ export default function GlowArcade() {
           : "Your move."}
       </p>
 
-      {/* Winner overlay */}
-      {over && over.who === "you" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-xs rounded-3xl border border-[#2a5234] bg-[#0c1510] p-8 text-center shadow-2xl">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-[#2a5234] bg-[#102a16]">
-              <Trophy className="h-7 w-7 text-[#3cff5f]" />
-            </div>
-            <h3 className="text-xl font-black text-[#e7eee9]">
-              {seatName(0)} Wins! 🎉
-            </h3>
-            <button
-              type="button"
-              onClick={resetRouted}
-              className="mt-5 cursor-pointer rounded-2xl bg-[#3cff5f] px-6 py-3 text-sm font-bold text-[#050a08] shadow-lg shadow-[#3cff5f]/20 transition-all hover:bg-[#52ff71]"
-            >
-              Next Round
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Winner overlay with Branded Shareable Card */}
+      <VictoryCardModal
+        isOpen={Boolean(over && over.who !== "draw")}
+        onClose={resetRouted}
+        winnerName={over?.who === "you" ? `${seatName(0)} (Champion)` : `${seatName(1)} (Winner)`}
+        gameTitle={mode === "ttt" ? "Glow Tic-Tac-Toe" : "Glow Connect Four"}
+        stats={[
+          { label: "Winner", value: over?.who === "you" ? seatName(0) : seatName(1) },
+          { label: "Game Mode", value: mode === "ttt" ? "3x3 Neon Grid" : "Gravity Connect 4" },
+          { label: "Match Mode", value: net.isNet ? "P2P WebRTC" : "Minimax AI" },
+        ]}
+        victoryQuote={
+          over?.who === "you"
+            ? "Outsmarted the opponent on the retro neon grid!"
+            : "A sharp strategic neon arcade duel!"
+        }
+        onRematch={resetRouted}
+      />
 
       {/* ── MULTIPLAYER TEAM LOBBY MODAL ── */}
       {!gameStarted && (

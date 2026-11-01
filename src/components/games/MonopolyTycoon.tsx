@@ -44,6 +44,8 @@ import { GameSound, fireVictoryConfetti } from "./GameAudio";
 import { DiceCube, Pawn } from "./GameTokens";
 import NetBar from "./net/NetBar";
 import { useNetGame } from "./net/useNetGame";
+import InGameReactions from "./net/InGameReactions";
+import VictoryCardModal from "./net/VictoryCardModal";
 
 /* ────────────────────────────────────────────────────────────────────────────
    Monopoly Empire Tycoon — Official Classic 40-Space Browser Edition
@@ -1556,6 +1558,9 @@ export default function MonopolyTycoon() {
             <span>{fastAi ? "Turbo AI" : "Normal Speed"}</span>
           </button>
 
+          {/* Quick Chat Reactions */}
+          <InGameReactions net={net} myName={P[0]?.short || "You"} />
+
           {/* Mute Toggle */}
           <button
             type="button"
@@ -3006,32 +3011,24 @@ export default function MonopolyTycoon() {
         </div>
       )}
 
-      {/* Winner Overlay */}
-      {winner !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-3xl border border-[#2a5234] bg-[#0c1510] p-8 text-center shadow-2xl sm:p-10">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-[#2a5234] bg-[#102a16]">
-              <Trophy className="h-8 w-8" style={{ color: P[winner].hex }} />
-            </div>
-            <h3 className="text-2xl font-black text-[#e7eee9]">
-              {winner === 0 ? "You Win Empire City! 🎉" : `${P[winner].short} Wins!`}
-            </h3>
-            <p className="mt-2 text-xs text-[#9baaa1]">
-              {winner === 0
-                ? "Every rival is bankrupt — the entire city is yours."
-                : `All others went bankrupt. Better luck next time!`}
-            </p>
-            <button
-              type="button"
-              onClick={resetGame}
-              className="mt-6 inline-flex cursor-pointer items-center gap-2 rounded-2xl bg-[#3cff5f] px-6 py-3 text-sm font-bold text-[#050a08] shadow-lg shadow-[#3cff5f]/20 transition-all hover:bg-[#52ff71]"
-            >
-              <Play className="h-4 w-4" />
-              <span>Play Again</span>
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Winner Overlay with Branded Shareable Card */}
+      <VictoryCardModal
+        isOpen={winner !== null}
+        onClose={resetGame}
+        winnerName={winner === 0 ? "You (Tycoon Boss)" : P[winner!]?.short || "Tycoon"}
+        gameTitle="Monopoly Empire Tycoon"
+        stats={[
+          { label: "Net Worth", value: `$${players[winner!]?.cash || 1500} Cash` },
+          { label: "City Rank", value: "🏆 Empire Ruler" },
+          { label: "Status", value: "All Rivals Bankrupt" },
+        ]}
+        victoryQuote={
+          winner === 0
+            ? "Bankrupted every rival and seized monopoly control of Empire City!"
+            : "All rivals went bankrupt in this cutthroat Monopoly showdown!"
+        }
+        onRematch={resetGame}
+      />
 
       {/* Title Deed Inspection Modal */}
       {inspectSpace !== null && (

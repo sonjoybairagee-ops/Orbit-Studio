@@ -21,6 +21,8 @@ import { GameSound, fireVictoryConfetti } from "./GameAudio";
 import NetBar from "./net/NetBar";
 import { useNetGame } from "./net/useNetGame";
 import GameLobbyModal from "./net/GameLobbyModal";
+import InGameReactions from "./net/InGameReactions";
+import VictoryCardModal from "./net/VictoryCardModal";
 
 /* ────────────────────────────────────────────────────────────────────────────
    Ludo Engine — classic 15×15 board, full traditional rules
@@ -802,6 +804,9 @@ export default function LudoGame() {
             </button>
           </div>
 
+          {/* In-Game Reactions */}
+          <InGameReactions net={net} myName={turn === 0 ? "You" : P[turn]?.name} />
+
           {/* Sound Mute Toggle */}
           <button
             type="button"
@@ -1152,35 +1157,24 @@ export default function LudoGame() {
         </div>
       </div>
 
-      {/* Winner overlay */}
-      {winner !== null && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="rounded-3xl border border-[#2a5234] bg-[#0c1510] p-8 sm:p-10 text-center max-w-sm w-full shadow-2xl">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#102a16] border border-[#2a5234]">
-              <Trophy
-                className="h-8 w-8"
-                style={{ color: P[winner].hex }}
-              />
-            </div>
-            <h3 className="text-2xl font-black text-[#e7eee9]">
-              {winner === 0 ? "You Win! 🎉" : `AI ${P[winner].name} Wins!`}
-            </h3>
-            <p className="mt-2 text-xs text-[#9baaa1]">
-              All four {P[winner].name} tokens reached the home triangle first.
-            </p>
-            <div className="mt-6 flex items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={resetGame}
-                className="inline-flex items-center gap-2 rounded-2xl bg-[#3cff5f] px-6 py-3 text-sm font-bold text-[#050a08] hover:bg-[#48ff69] transition-all cursor-pointer shadow-lg shadow-[#3cff5f]/20"
-              >
-                <Play className="h-4 w-4" />
-                Play Again
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Winner overlay with Branded Shareable Card */}
+      <VictoryCardModal
+        isOpen={winner !== null}
+        onClose={resetGame}
+        winnerName={winner === 0 ? "You (Ludo King)" : `AI ${P[winner!]?.name || "Player"}`}
+        gameTitle="Ludo King"
+        stats={[
+          { label: "Winner", value: winner === 0 ? "🏆 Champion" : P[winner!]?.name || "Winner" },
+          { label: "Tokens Home", value: "4/4 Tokens Home" },
+          { label: "Match Mode", value: net.isNet ? "Live Room" : "Solo vs Bots" },
+        ]}
+        victoryQuote={
+          winner === 0
+            ? "Led all 4 tokens into the home triangle and claimed the Ludo Crown!"
+            : "A thrilling race to the home triangle in Ludo King!"
+        }
+        onRematch={resetGame}
+      />
 
       {/* ── MULTIPLAYER TEAM LOBBY MODAL ── */}
       {!gameStarted && (
