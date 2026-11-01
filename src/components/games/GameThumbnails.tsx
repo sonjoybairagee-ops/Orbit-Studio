@@ -661,3 +661,4 @@ export function ArcadeThumbnail() {
     </div>
   );
 }
+

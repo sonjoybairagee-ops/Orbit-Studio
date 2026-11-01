@@ -352,14 +352,32 @@ export default function VoiceEnhancerTool() {
         fd.append("mode", "both");
         fd.append("atten_db", "100");
         fd.append("denoise_strength", "0.8");
+
+        let res: Response | null = null;
+
+        // Direct browser-to-Colab call first (bypasses Vercel 4.5MB payload limit & 10s serverless timeout!)
         if (customColabUrl.trim()) {
-          fd.append("custom_url", customColabUrl.trim());
+          const directUrl = `${customColabUrl.trim().replace(/\/+$/, "")}/process`;
+          try {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 35000);
+            res = await fetch(directUrl, { method: "POST", body: fd, signal: controller.signal });
+            clearTimeout(timer);
+          } catch {
+            res = null;
+          }
         }
 
-        const res = await fetch("/api/tools/voice-enhance", {
-          method: "POST",
-          body: fd,
-        });
+        // If direct call didn't succeed, proxy through /api/tools/voice-enhance
+        if (!res || !res.ok) {
+          if (customColabUrl.trim()) {
+            fd.append("custom_url", customColabUrl.trim());
+          }
+          res = await fetch("/api/tools/voice-enhance", {
+            method: "POST",
+            body: fd,
+          });
+        }
 
         if (res.ok) {
           const blob = await res.blob();
