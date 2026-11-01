@@ -1,12 +1,13 @@
 /* ────────────────────────────────────────────────────────────────────────────
    CompX Orbit — P2P game networking (PeerJS / WebRTC)
    Host-authority model:
-   • Host creates a room → its broker peer ID is "<gameId>-<CODE>".
+   • Host creates a room → its broker peer ID is "cx-<gameId>-<CODE>".
    • Guests join by code. Seats fill in order (seat 0 = host). Empty seats
      stay AI-controlled on the host's device.
    • Host broadcasts the FULL serialized game state after every change.
    • Guests send small "action" messages; the host applies them through the
      game's normal engine and re-broadcasts state.
+   • Real-time Lobby support: Ready/Not Ready, Color/Team, Kick, and Start Game.
 ──────────────────────────────────────────────────────────────────────────── */
 
 export type NetMsg =
@@ -14,12 +15,19 @@ export type NetMsg =
   | { t: "seats"; players: NetPlayer[]; youSeat: number }
   | { t: "state"; s: unknown }
   | { t: "action"; a: unknown }
+  | { t: "ready"; ready: boolean }
+  | { t: "color"; color: string }
+  | { t: "kick"; seat: number }
+  | { t: "start" }
   | { t: "chat"; m: string };
 
 export interface NetPlayer {
   seat: number;
   name: string;
   kind: "host" | "guest" | "bot";
+  ready?: boolean;
+  color?: string;
+  team?: string;
 }
 
 export type NetRole = "solo" | "host" | "guest";
@@ -30,6 +38,7 @@ export interface RoomEvents {
   onAction?: (a: unknown, fromSeat: number) => void;
   onStatus?: (s: string) => void;
   onRole?: (role: NetRole, seat: number) => void;
+  onGameStart?: () => void;
 }
 
 const NAME_WORDS = ["Valor", "Comet", "Neon", "Titan", "Echo", "Blitz", "Onyx", "Zephyr", "Pulsar", "Vertex", "Nova", "Drift"];
@@ -40,7 +49,6 @@ export function randomName(): string {
 }
 
 export function makeRoomCode(gameId: string): { code: string; peerId: string } {
-  // exclude ambiguous chars
   const abc = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
   for (let i = 0; i < 5; i++) code += abc[Math.floor(Math.random() * abc.length)];
@@ -58,6 +66,8 @@ export class HostRoom {
   private peer: import("peerjs").Peer | null = null;
   private conns: import("peerjs").DataConnection[] = [];
   private names: string[] = [];
+  private readyMap: Record<number, boolean> = { 0: true };
+  private colorMap: Record<number, string> = { 0: "red", 1: "green", 2: "yellow", 3: "blue" };
   private maxSeats: number;
   private myName: string;
   private ev: RoomEvents;
@@ -82,13 +92,12 @@ export class HostRoom {
     this.peer = peer;
 
     await new Promise<void>((res, rej) => {
-      const ok = (id: string) => {
+      const ok = () => {
         peer.on("connection", (c) => this.onConn(c));
         res();
       };
       peer.on("open", ok);
       peer.on("error", (e) => rej(e));
-      // safety: cloud broker usually < 4s
       setTimeout(() => (peer.id ? res() : rej(new Error("Peer broker timeout"))), 8000);
     });
 
@@ -101,51 +110,113 @@ export class HostRoom {
     this.conns.push(c);
     c.on("data", (raw) => {
       const m = raw as NetMsg;
+      const seat = this.conns.indexOf(c) + 1;
       if (m.t === "hello") {
-        this.names[this.conns.indexOf(c)] = m.name || "Guest";
+        this.names[seat - 1] = m.name || `Player ${seat + 1}`;
+        this.readyMap[seat] = false;
         this.rebuildSeats();
-        this.ev.onStatus?.(`${m.name} joined!`);
-        // late-joiner needs the current game snapshot immediately
+        this.ev.onStatus?.(`${m.name || "A player"} joined the room!`);
         if (this.lastState) safeSend(c, { t: "state", s: this.lastState });
       } else if (m.t === "action") {
-        const seat = this.conns.indexOf(c) + 1;
         if (seat > 0 && seat < this.maxSeats) this.ev.onAction?.(m.a, seat);
+      } else if (m.t === "ready") {
+        this.readyMap[seat] = m.ready;
+        this.rebuildSeats();
+      } else if (m.t === "color") {
+        this.colorMap[seat] = m.color;
+        this.rebuildSeats();
       }
     });
     c.on("close", () => {
       const i = this.conns.indexOf(c);
-      this.conns.splice(i, 1);
-      this.names.splice(i, 1);
-      this.rebuildSeats();
-      this.ev.onStatus?.(`A player left.`);
+      if (i >= 0) {
+        this.conns.splice(i, 1);
+        this.names.splice(i, 1);
+        delete this.readyMap[i + 1];
+        this.rebuildSeats();
+        this.ev.onStatus?.(`A player left.`);
+      }
     });
-    // seats to the fresh guest (after hello)
+
     setTimeout(() => {
       const idx = this.conns.indexOf(c);
-      if (idx >= 0)
+      if (idx >= 0) {
         safeSend(c, {
           t: "seats",
           players: this.players,
           youSeat: idx + 1,
         });
+      }
     }, 400);
   }
 
+  kickPlayer(seat: number) {
+    if (seat <= 0 || seat > this.conns.length) return;
+    const c = this.conns[seat - 1];
+    if (c) {
+      safeSend(c, { t: "chat", m: "You were kicked from the lobby by the host." });
+      try { c.close(); } catch {}
+      this.conns.splice(seat - 1, 1);
+      this.names.splice(seat - 1, 1);
+      delete this.readyMap[seat];
+      this.rebuildSeats();
+      this.ev.onStatus?.(`Player in seat ${seat + 1} was kicked.`);
+    }
+  }
+
+  setReady(ready: boolean, seat: number = 0) {
+    this.readyMap[seat] = ready;
+    this.rebuildSeats();
+  }
+
+  setColor(color: string, seat: number = 0) {
+    this.colorMap[seat] = color;
+    this.rebuildSeats();
+  }
+
+  startGame() {
+    for (const c of this.conns) safeSend(c, { t: "start" });
+    this.ev.onGameStart?.();
+  }
+
   private rebuildSeats() {
-    const players: NetPlayer[] = [{ seat: 0, name: this.myName, kind: "host" }];
+    const defaultColors = ["red", "green", "yellow", "blue", "purple", "cyan"];
+    const players: NetPlayer[] = [
+      {
+        seat: 0,
+        name: this.myName,
+        kind: "host",
+        ready: this.readyMap[0] ?? true,
+        color: this.colorMap[0] || defaultColors[0],
+      },
+    ];
     for (let i = 0; i < this.conns.length && players.length < this.maxSeats; i++) {
-      players.push({ seat: players.length, name: this.names[i] || `Guest ${players.length + 1}`, kind: "guest" });
+      const s = players.length;
+      players.push({
+        seat: s,
+        name: this.names[i] || `Guest ${s + 1}`,
+        kind: "guest",
+        ready: this.readyMap[s] ?? false,
+        color: this.colorMap[s] || defaultColors[s % defaultColors.length],
+      });
     }
     for (let s = players.length; s < this.maxSeats; s++) {
-      players.push({ seat: s, name: "AI Bot", kind: "bot" });
+      players.push({
+        seat: s,
+        name: `AI Bot ${s + 1}`,
+        kind: "bot",
+        ready: true,
+        color: this.colorMap[s] || defaultColors[s % defaultColors.length],
+      });
     }
     this.players = players;
     this.ev.onPlayers?.(players);
-    // tell every guest their seat
+
     this.conns.forEach((c, i) => {
       const seat = i + 1;
-      if (seat < this.maxSeats)
+      if (seat < this.maxSeats) {
         safeSend(c, { t: "seats", players: this.players, youSeat: seat });
+      }
     });
   }
 
@@ -209,6 +280,10 @@ export class GuestRoom {
       else if (m.t === "seats") {
         this.ev.onPlayers?.(m.players);
         this.ev.onRole?.("guest", m.youSeat);
+      } else if (m.t === "start") {
+        this.ev.onGameStart?.();
+      } else if (m.t === "chat") {
+        this.ev.onStatus?.(m.m);
       }
     });
     conn.on("close", () => this.ev.onStatus?.("Disconnected from host."));
@@ -221,6 +296,14 @@ export class GuestRoom {
 
   sendAction(a: unknown) {
     if (this.conn && this.conn.open) safeSend(this.conn, { t: "action", a });
+  }
+
+  setReady(ready: boolean) {
+    if (this.conn && this.conn.open) safeSend(this.conn, { t: "ready", ready });
+  }
+
+  setColor(color: string) {
+    if (this.conn && this.conn.open) safeSend(this.conn, { t: "color", color });
   }
 
   destroy() {

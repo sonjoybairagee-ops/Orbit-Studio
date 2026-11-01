@@ -26,6 +26,12 @@ export interface NetGameApi {
   send: (a: unknown) => void;         // guest → host: action
   onAction: (fn: (a: unknown, fromSeat: number) => void) => void;
   remote: unknown;                    // guest: latest full-state snapshot from host
+
+  kickPlayer: (seat: number) => void;
+  setReady: (ready: boolean) => void;
+  setColor: (color: string) => void;
+  startGame: () => void;
+  onGameStart: (fn: () => void) => void;
 }
 
 export function useNetGame(gameId: string, maxSeats: number): NetGameApi {
@@ -42,6 +48,7 @@ export function useNetGame(gameId: string, maxSeats: number): NetGameApi {
   const hostRef = useRef<HostRoom | null>(null);
   const guestRef = useRef<GuestRoom | null>(null);
   const actionFnRef = useRef<((a: unknown, fromSeat: number) => void) | null>(null);
+  const gameStartFnRef = useRef<(() => void) | null>(null);
   const busyRef = useRef(false);
 
   useEffect(() => {
@@ -67,6 +74,7 @@ export function useNetGame(gameId: string, maxSeats: number): NetGameApi {
         setRole(r);
         setSeat(s);
       },
+      onGameStart: () => gameStartFnRef.current?.(),
     });
     hostRef.current = host;
     host
@@ -105,6 +113,7 @@ export function useNetGame(gameId: string, maxSeats: number): NetGameApi {
           setRole(r);
           setSeat(s);
         },
+        onGameStart: () => gameStartFnRef.current?.(),
       });
       guestRef.current = guest;
       guest
@@ -150,6 +159,36 @@ export function useNetGame(gameId: string, maxSeats: number): NetGameApi {
     actionFnRef.current = fn;
   }, []);
 
+  const kickPlayer = useCallback((seatToKick: number) => {
+    hostRef.current?.kickPlayer(seatToKick);
+  }, []);
+
+  const setReady = useCallback((ready: boolean) => {
+    if (role === "host") {
+      hostRef.current?.setReady(ready, 0);
+    } else if (role === "guest") {
+      guestRef.current?.setReady(ready);
+    }
+  }, [role]);
+
+  const setColor = useCallback((color: string) => {
+    if (role === "host") {
+      hostRef.current?.setColor(color, 0);
+    } else if (role === "guest") {
+      guestRef.current?.setColor(color);
+    }
+  }, [role]);
+
+  const startGame = useCallback(() => {
+    if (role === "host") {
+      hostRef.current?.startGame();
+    }
+  }, [role]);
+
+  const onGameStart = useCallback((fn: () => void) => {
+    gameStartFnRef.current = fn;
+  }, []);
+
   return {
     role,
     seat,
@@ -166,5 +205,10 @@ export function useNetGame(gameId: string, maxSeats: number): NetGameApi {
     send,
     onAction,
     remote,
+    kickPlayer,
+    setReady,
+    setColor,
+    startGame,
+    onGameStart,
   };
 }
