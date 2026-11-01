@@ -18,6 +18,7 @@ import {
 import { GameSound, fireVictoryConfetti } from "./GameAudio";
 import NetBar from "./net/NetBar";
 import { useNetGame } from "./net/useNetGame";
+import GameLobbyModal from "./net/GameLobbyModal";
 
 /* ───────────────────────────────────────────────────────────────────────────
    Speed Chess Arena — 8×8 Interactive Browser Chess
@@ -90,6 +91,7 @@ export default function SpeedChess() {
   // Audio & Fullscreen
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
 
   // Chess Clock (in seconds, 0 = untimed)
   const [timeControl, setTimeControl] = useState<number>(300); // 5 mins
@@ -781,6 +783,38 @@ export default function SpeedChess() {
           )}
         </div>
       </div>
+
+      {/* ── MULTIPLAYER TEAM LOBBY MODAL ── */}
+      {!gameStarted && (
+        <GameLobbyModal
+          gameTitle="SPEED CHESS LOBBY"
+          gameIcon={<span className="text-2xl">♟️</span>}
+          tagline="Create a private match, challenge friends with room codes, or play solo vs Stockfish AI!"
+          net={net}
+          maxSeats={2}
+          seatTokens={[
+            { name: "White", icon: "♔", color: "#f8fafc" },
+            { name: "Black", icon: "♚", color: "#94a3b8" },
+          ]}
+          rulesHighlights={[
+            { title: "1. Blitz Timer", desc: "Fast-paced move clocks" },
+            { title: "2. Legal Moves", desc: "Strict FIDE move validator" },
+            { title: "3. Smart AI", desc: "Multi-depth AI opponent" },
+          ]}
+          officialRulesSummary="💡 FIDE Standard Chess: Castling • En Passant • Pawn Promotion • Checkmate"
+          isMuted={isMuted}
+          onToggleMute={toggleMute}
+          onStartGame={() => setGameStarted(true)}
+          onStartSolo={() => {
+            net.goSolo();
+            setGameMode("ai");
+            setGameStarted(true);
+          }}
+          playButtonText="Enter Chess Arena (Start Game)"
+          soloButtonText="Play Solo vs Chess AI"
+          whatsappMessage={`♟️ Challenge me to a Speed Chess match! Room Code: #${net.code}\nJoin instantly in your browser:`}
+        />
+      )}
     </div>
   );
 }

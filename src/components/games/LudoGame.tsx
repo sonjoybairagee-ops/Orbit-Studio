@@ -20,6 +20,7 @@ import {
 import { GameSound, fireVictoryConfetti } from "./GameAudio";
 import NetBar from "./net/NetBar";
 import { useNetGame } from "./net/useNetGame";
+import GameLobbyModal from "./net/GameLobbyModal";
 
 /* ────────────────────────────────────────────────────────────────────────────
    Ludo Engine — classic 15×15 board, full traditional rules
@@ -244,6 +245,7 @@ export default function LudoGame() {
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [playMode, setPlayMode] = useState<"ai_4" | "pass_4" | "duel_2">("ai_4");
+  const [gameStarted, setGameStarted] = useState(false);
 
   useEffect(() => {
     setIsMuted(GameSound.getMuted());
@@ -1178,6 +1180,39 @@ export default function LudoGame() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── MULTIPLAYER TEAM LOBBY MODAL ── */}
+      {!gameStarted && (
+        <GameLobbyModal
+          gameTitle="LUDO KING LOBBY"
+          gameIcon={<span className="text-2xl">🎲</span>}
+          tagline="Create a team room, invite friends with room codes, or play solo vs 3 AI rivals!"
+          net={net}
+          maxSeats={4}
+          seatTokens={[
+            { name: "Red", icon: "🔴", color: "#dc2626" },
+            { name: "Green", icon: "🟢", color: "#16a34a" },
+            { name: "Yellow", icon: "🟡", color: "#eab308" },
+            { name: "Blue", icon: "🔵", color: "#2563eb" },
+          ]}
+          rulesHighlights={[
+            { title: "1. 6 to Unlock", desc: "Roll 6 to leave yard" },
+            { title: "2. Safe Stars", desc: "Opponents can't capture" },
+            { title: "3. Home Run", desc: "Lead all 4 tokens home" },
+          ]}
+          officialRulesSummary="💡 Classic Ludo: 4 Colors • Safe Zones • Extra Roll on 6 & Captures"
+          isMuted={isMuted}
+          onToggleMute={toggleMute}
+          onStartGame={() => setGameStarted(true)}
+          onStartSolo={() => {
+            net.goSolo();
+            setGameStarted(true);
+          }}
+          playButtonText="Enter Ludo Board (Start Game)"
+          soloButtonText="Play Solo Now (Roll Dice)"
+          whatsappMessage={`🎲 Play Ludo King with me! Room Code: #${net.code}\nJoin instantly in your browser:`}
+        />
       )}
     </div>
   );

@@ -35,6 +35,7 @@ import {
 import { GameSound, fireVictoryConfetti } from "./GameAudio";
 import NetBar from "./net/NetBar";
 import { useNetGame } from "./net/useNetGame";
+import GameLobbyModal from "./net/GameLobbyModal";
 
 /* ───────────────────────────────────────────────────────────────────────────
    CompX UNO Online — Custom Deck Design System & 3D Table Player Architecture
@@ -227,6 +228,7 @@ export default function UnoBlast() {
   const [wildPickerCard, setWildPickerCard] = useState<Card | null>(null);
   const [joinCodeInput, setJoinCodeInput] = useState("");
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
 
   const [game, setGame] = useState<Round>(() => deal(settings));
   const gameRef = useRef(game);
@@ -1435,6 +1437,47 @@ export default function UnoBlast() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── MULTIPLAYER TEAM LOBBY MODAL ── */}
+      {!gameStarted && (
+        <GameLobbyModal
+          gameTitle="UNO ONLINE LOBBY"
+          gameIcon={
+            <span
+              className="font-black italic text-amber-400 text-lg drop-shadow-[0_2px_0_#b45309]"
+              style={{ WebkitTextStroke: "1px black" }}
+            >
+              UNO
+            </span>
+          }
+          tagline="Create a team room, invite friends with room codes, or play solo vs AI bots!"
+          net={net}
+          maxSeats={4}
+          seatTokens={[
+            { name: "Player 1", icon: "👨", color: "#0063b1" },
+            { name: "Player 2", icon: "🤠", color: "#16a34a" },
+            { name: "Player 3", icon: "👩", color: "#dc2626" },
+            { name: "Player 4", icon: "👧", color: "#eab308" },
+          ]}
+          rulesHighlights={[
+            { title: "1. 108 Cards", desc: "4 Colors + Action & Wilds" },
+            { title: "2. Shout UNO", desc: "1 card left or +2 catch!" },
+            { title: "3. Fast AI", desc: "Smart bot turn counters" },
+          ]}
+          officialRulesSummary="💡 Official UNO: 108 Cards • Wild Draw-4 • Instant 'UNO!' Shout & Catch"
+          onOpenRules={() => setShowRulesModal(true)}
+          isMuted={isMuted}
+          onToggleMute={toggleMute}
+          onStartGame={() => setGameStarted(true)}
+          onStartSolo={() => {
+            net.goSolo();
+            setGameStarted(true);
+          }}
+          playButtonText="Enter UNO Arena (Start Game)"
+          soloButtonText="Play Solo Now (Deal 7 Cards)"
+          whatsappMessage={`🔥 Play UNO Online with me! Room Code: #${net.code}\nJoin instantly in your browser:`}
+        />
       )}
     </div>
   );

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Trophy, RotateCcw, Bot, User, X, Circle, Grid3x3, Columns3 } from "lucide-react";
 import NetBar from "./net/NetBar";
 import { NetGameApi, useNetGame } from "./net/useNetGame";
+import GameLobbyModal from "./net/GameLobbyModal";
 
 /* ───────────────────────────────────────────────────────────────────────────
    Glow Arcade — two quick casual classics in one component:
@@ -161,6 +162,7 @@ const freshSnap = (): Snap => ({
 export default function GlowArcade() {
   const net = useNetGame("cxgame-tttc4", 2);
   const [mode, setMode] = useState<Mode>("ttt");
+  const [gameStarted, setGameStarted] = useState(false);
 
   /* ttt state */
   const [ttt, setTtt] = useState<Mark[]>(Array(9).fill(null));
@@ -539,6 +541,35 @@ export default function GlowArcade() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* ── MULTIPLAYER TEAM LOBBY MODAL ── */}
+      {!gameStarted && (
+        <GameLobbyModal
+          gameTitle="GLOW ARCADE LOBBY"
+          gameIcon={<span className="text-2xl">✨</span>}
+          tagline="Create a 2-player arcade room, invite friends with room codes, or play solo vs AI!"
+          net={net}
+          maxSeats={2}
+          seatTokens={[
+            { name: "Player X", icon: "❌", color: "#38bdf8" },
+            { name: "Player O", icon: "⭕", color: "#ec4899" },
+          ]}
+          rulesHighlights={[
+            { title: "1. Neon Grid", desc: "Glow 3x3 Tic-Tac-Toe" },
+            { title: "2. Connect 4", desc: "Gravity column drop mode" },
+            { title: "3. Unbeatable AI", desc: "Minimax smart algorithm" },
+          ]}
+          officialRulesSummary="💡 Retro Neon Arcade: Tic-Tac-Toe 3-in-a-Row • Connect 4 Gravity Drop"
+          onStartGame={() => setGameStarted(true)}
+          onStartSolo={() => {
+            net.goSolo();
+            setGameStarted(true);
+          }}
+          playButtonText="Enter Arcade Arena (Start Game)"
+          soloButtonText="Play Solo vs Arcade AI"
+          whatsappMessage={`✨ Play Glow Arcade (Tic-Tac-Toe & Connect 4) with me! Room Code: #${net.code}\nJoin instantly in your browser:`}
+        />
       )}
     </div>
   );

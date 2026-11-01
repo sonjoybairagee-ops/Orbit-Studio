@@ -17,6 +17,7 @@ import {
 import { GameSound, fireVictoryConfetti } from "./GameAudio";
 import NetBar from "./net/NetBar";
 import { useNetGame } from "./net/useNetGame";
+import GameLobbyModal from "./net/GameLobbyModal";
 
 /* ───────────────────────────────────────────────────────────────────────────
    Carrom Pool Pro — 2D Physics Canvas Board
@@ -198,6 +199,7 @@ export default function CarromPool() {
   const [gameMode, setGameMode] = useState<"ai" | "pass_play">("ai");
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
 
   // State
   const ballsRef = useRef<Ball[]>(initialBoard());
@@ -967,6 +969,38 @@ export default function CarromPool() {
           )}
         </div>
       </div>
+
+      {/* ── MULTIPLAYER TEAM LOBBY MODAL ── */}
+      {!gameStarted && (
+        <GameLobbyModal
+          gameTitle="CARROM POOL LOBBY"
+          gameIcon={<span className="text-2xl">⚪</span>}
+          tagline="Create a private board, invite friends with room codes, or play solo vs Carrom Bot!"
+          net={net}
+          maxSeats={2}
+          seatTokens={[
+            { name: "White Player", icon: "⚪", color: "#f8fafc" },
+            { name: "Black Player", icon: "⚫", color: "#64748b" },
+          ]}
+          rulesHighlights={[
+            { title: "1. Striker Physics", desc: "Smooth realistic rebound" },
+            { title: "2. Queen 3pt", desc: "Pocket Queen + Cover piece" },
+            { title: "3. 25pt Target", desc: "First to reach target wins" },
+          ]}
+          officialRulesSummary="💡 Official Carrom: 9 White (10pt), 9 Black (5pt), 1 Red Queen (3pt + Cover)"
+          isMuted={isMuted}
+          onToggleMute={() => setIsMuted(!isMuted)}
+          onStartGame={() => setGameStarted(true)}
+          onStartSolo={() => {
+            net.goSolo();
+            setGameMode("ai");
+            setGameStarted(true);
+          }}
+          playButtonText="Enter Carrom Board (Start Match)"
+          soloButtonText="Play Solo vs Carrom Bot"
+          whatsappMessage={`⚪ Play Carrom Pool with me! Room Code: #${net.code}\nJoin instantly in your browser:`}
+        />
+      )}
     </div>
   );
 }
