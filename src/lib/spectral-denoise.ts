@@ -359,8 +359,25 @@ export function spectralDenoiseAudio(
 
     // ── STAGE 4: Decision-Directed Wiener Filter (Ephraim-Malah standard) ──
     const prevEstimatedSpeechPower = new Float32Array(binCount);
+    const prevFrameMag = new Float32Array(binCount);
     const outAccumulator = new Float32Array(length + FFT_SIZE);
     const alphaDD = 0.82; // Decision-directed smoothing factor
+
+    // Frequency-dependent over-subtraction curve (heavier on bass rumble & air hiss, gentler on speech formants)
+    const oversubCurve = new Float32Array(binCount);
+    const binFreqStep = sampleRate / FFT_SIZE;
+    for (let k = 0; k < binCount; k++) {
+      const f = k * binFreqStep;
+      if (f < 300) {
+        oversubCurve[k] = oversubtraction * 1.15; // aggressive sub-bass & fan rumble cut
+      } else if (f < 2800) {
+        oversubCurve[k] = Math.max(1.02, oversubtraction * 0.92); // protects vocal body & rich chest warmth
+      } else if (f < 7000) {
+        oversubCurve[k] = oversubtraction; // crisp articulation
+      } else {
+        oversubCurve[k] = oversubtraction * 1.12; // deep air hiss reduction
+      }
+    }
 
     for (let f = 0; f < numFrames; f++) {
       const offset = f * HOP_SIZE;
@@ -370,18 +387,33 @@ export function spectralDenoiseAudio(
       }
       fft.transform(realBuffer, imagBuffer, false);
 
+      // Spectral flux transient detector (preserves sharp attacks of consonants and plosives)
+      let flux = 0;
+      for (let k = 0; k < binCount; k++) {
+        const mag = Math.sqrt(realBuffer[k] * realBuffer[k] + imagBuffer[k] * imagBuffer[k]);
+        const diff = mag - prevFrameMag[k];
+        if (diff > 0) flux += diff;
+        prevFrameMag[k] = mag;
+      }
+      const isTransient = flux > 1.25;
+
       for (let k = 0; k < binCount; k++) {
         const py = realBuffer[k] * realBuffer[k] + imagBuffer[k] * imagBuffer[k];
-        const pn = noisePower[k] * oversubtraction;
+        const pn = noisePower[k] * oversubCurve[k];
 
         // a posteriori SNR: gamma = Py / Pn
         const gamma = Math.max(1e-4, py / pn);
 
         // a priori SNR via Decision-Directed recursion:
         // xi = alpha * (S_prev / Pn) + (1 - alpha) * max(0, gamma - 1)
-        const xi =
+        let xi =
           alphaDD * (prevEstimatedSpeechPower[k] / pn) +
           (1 - alphaDD) * Math.max(0, gamma - 1);
+
+        // Instantly unclamp on speech transients to protect plosives & consonants
+        if (isTransient) {
+          xi = Math.max(xi, 2.2);
+        }
 
         // Studio Wiener Gain
         let gain = xi / (1 + xi);
@@ -479,13 +511,23 @@ export function spectralDenoiseAudio(
     const airGainDb = clarityNorm * 2.4; // up to +2.4 dB
     airFilter.setHighShelf(11000, airGainDb, sampleRate);
 
+    // 5. Studio Harmonic Vocal Exciter (Aphex / Studio Condenser Sheen)
+    const highpassExciter = new BiquadFilter();
+    highpassExciter.setHighPass(2800, sampleRate);
+
     for (let i = 0; i < length; i++) {
       let s = expandedOutput[i];
       s = chestWarmthFilter.process(s);
       s = roomDeMuffleFilter.process(s);
       s = clarityFilter.process(s);
       s = airFilter.process(s);
-      outData[i] = s;
+
+      // Subtle 2nd-order harmonic generation on upper speech band (injects expensive condenser sheen)
+      const highBand = highpassExciter.process(s);
+      const exciterAmount = 0.06 * clarityNorm;
+      const harmonicShimmer = exciterAmount * (Math.tanh(2.2 * highBand) - highBand);
+
+      outData[i] = s + harmonicShimmer;
     }
   }
 
