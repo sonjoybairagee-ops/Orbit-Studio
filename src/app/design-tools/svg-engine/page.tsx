@@ -4,25 +4,27 @@ import { CheckCircle2, HelpCircle, Layers, Sparkles, FileCode, Download, ArrowRi
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "SVG Engine — Convert SVG to EPS, PNG (Up to 8K) & JPG Online Free | CompX Orbit",
+  title: "Bulk SVG Engine — Convert Bulk SVG to EPS, PNG (Up to 8K) & JPG | CompX Orbit",
   description:
-    "Free browser SVG Vector Engine. Convert SVG files to Adobe Illustrator EPS vector, high-DPI transparent PNG (1x-8x up to 8K), and compressed JPG. 100% private, instant client-side.",
+    "Free browser Bulk SVG Vector Engine. Bulk upload multiple SVG files, auto-process into Adobe Illustrator EPS vectors, high-DPI transparent PNG (1x-8x up to 8K), and JPG, and download complete bundles as ZIP. 100% private, instant client-side.",
   keywords: [
-    "svg to eps",
+    "bulk svg converter",
+    "bulk svg to eps",
+    "bulk svg to png",
     "svg to eps converter",
     "svg to png 4k",
-    "svg to jpg",
+    "svg to jpg bulk download",
     "convert svg to eps online free",
     "illustrator vector eps from svg",
     "svg vector engine",
-    "high resolution svg converter",
+    "batch svg converter zip",
   ],
   alternates: {
     canonical: "/design-tools/svg-engine",
   },
   openGraph: {
-    title: "SVG Engine — Convert SVG to EPS, PNG & JPG Online Free",
-    description: "Instant in-browser vector conversion to Illustrator EPS, transparent PNG, and JPG.",
+    title: "Bulk SVG Engine — Convert Bulk SVG to EPS, PNG & JPG Online Free",
+    description: "Instant in-browser bulk vector conversion to Illustrator EPS, transparent PNG, and JPG ZIP bundle.",
     url: "https://compxorbit.com/design-tools/svg-engine",
     type: "website",
   },
@@ -37,7 +39,7 @@ export default function SvgEnginePage() {
     applicationCategory: "DesignApplication",
     operatingSystem: "All",
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-    description: "In-browser SVG Vector Engine: convert SVG to EPS, high-DPI PNG, and JPG.",
+    description: "In-browser Bulk SVG Vector Engine: bulk upload and auto-convert SVG to EPS, high-DPI PNG, and JPG ZIP bundles.",
   };
 
   return (
@@ -52,13 +54,13 @@ export default function SvgEnginePage() {
         <div className="text-center mb-8">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-[#102a16] px-3.5 py-1 text-xs font-semibold text-[#3cff5f] border border-[#2a5234] mb-3">
             <Sparkles className="h-3.5 w-3.5" />
-            <span>100% Free · Client-Side Vector Engine</span>
+            <span>100% Free · Bulk & Single Vector Engine</span>
           </span>
           <h1 className="text-3xl sm:text-5xl font-black text-[#e7eee9] tracking-tight">
-            SVG Vector Engine
+            SVG Vector Engine & Bulk Exporter
           </h1>
           <p className="mt-2 text-sm sm:text-base text-[#8da194] max-w-2xl mx-auto">
-            Convert SVG vectors into native <b>Adobe Illustrator EPS</b>, high-resolution transparent <b>PNG</b> (1x to 8K), and optimized <b>JPG</b> directly in your browser.
+            Bulk upload multiple SVG files or folders, auto-convert into native <b>Adobe Illustrator EPS</b>, high-resolution transparent <b>PNG</b> (1x to 8K), and optimized <b>JPG</b>, and download organized <b>ZIP</b> asset bundles instantly.
           </p>
         </div>
 
@@ -126,6 +128,15 @@ export default function SvgEnginePage() {
 
             <div className="py-4">
               <h3 className="font-bold text-[#e7eee9] text-sm">
+                How does bulk upload and automatic ZIP download work?
+              </h3>
+              <p className="mt-1 text-[#8da194] leading-relaxed">
+                You can drag and drop dozens of SVG vector files or an entire icon folder at once. With <b>Auto-Process</b> enabled, the engine immediately converts every file into all of your selected formats (EPS, PNG 1x, 2x, 4K, 8K, and JPG), bundles them into a clean <b>.zip</b> archive, and automatically initiates the download directly to your computer.
+              </p>
+            </div>
+
+            <div className="py-4">
+              <h3 className="font-bold text-[#e7eee9] text-sm">
                 Are my SVG files uploaded to any external server?
               </h3>
               <p className="mt-1 text-[#8da194] leading-relaxed">
@@ -147,3 +158,4 @@ export default function SvgEnginePage() {
     </>
   );
 }
+

@@ -4,6 +4,8 @@
  * 100% Client-side, zero external dependencies, privacy-first.
  */
 
+import JSZip from "jszip";
+
 export interface SvgDimension {
   width: number;
   height: number;
@@ -18,6 +20,41 @@ export interface ExportOptions {
   quality?: number; // 0.1 to 1.0 (for JPG)
   title?: string;
   epsMode?: "vector" | "hires";
+}
+
+export interface BulkTargetFormats {
+  eps: boolean;
+  png1x: boolean;
+  png2x: boolean;
+  png4x: boolean;
+  png8x: boolean;
+  jpg: boolean;
+  includeSvg: boolean;
+  jpgQuality: number; // 0.1 to 1.0
+  bgColor?: string; // transparent or hex
+  epsMode?: "vector" | "hires";
+}
+
+export interface BulkSvgItem {
+  id: string;
+  name: string;
+  svgString: string;
+  size: number;
+  width: number;
+  height: number;
+  viewBox: string;
+  status: "idle" | "processing" | "done" | "error";
+  error?: string;
+}
+
+export interface BulkProgressCallback {
+  (progress: {
+    processedFiles: number;
+    totalFiles: number;
+    currentFileName: string;
+    stage: "rendering" | "zipping" | "complete";
+    percent: number;
+  }): void;
 }
 
 /**
@@ -505,3 +542,162 @@ export function downloadBlob(blob: Blob, filename: string): void {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+/**
+ * Process multiple SVGs into a single ZIP archive containing all requested sizes & formats
+ */
+export async function processBulkSvgToZip(
+  items: BulkSvgItem[],
+  targets: BulkTargetFormats,
+  zipFileName: string = "svg-bulk-bundle",
+  onProgress?: BulkProgressCallback
+): Promise<{ zipBlob: Blob; totalFilesGenerated: number; zipSize: number }> {
+  const zip = new JSZip();
+  let totalFilesGenerated = 0;
+  const totalItems = items.length;
+
+  for (let i = 0; i < totalItems; i++) {
+    const item = items[i];
+    const baseName = item.name.replace(/\.svg$/i, "").replace(/[^a-zA-Z0-9_\-]/g, "_") || `vector_${i + 1}`;
+
+    if (onProgress) {
+      onProgress({
+        processedFiles: i,
+        totalFiles: totalItems,
+        currentFileName: item.name,
+        stage: "rendering",
+        percent: Math.round((i / Math.max(1, totalItems)) * 80),
+      });
+    }
+
+    try {
+      // 1. EPS Vector
+      if (targets.eps) {
+        const epsBlob = await svgToEpsBlob(item.svgString, {
+          width: item.width,
+          height: item.height,
+          title: baseName,
+          epsMode: targets.epsMode || "vector",
+        });
+        zip.file(`eps/${baseName}.eps`, epsBlob);
+        totalFilesGenerated++;
+      }
+
+      // 2. PNG 1x
+      if (targets.png1x) {
+        const png1Blob = await svgToPngBlob(item.svgString, {
+          width: item.width,
+          height: item.height,
+          scale: 1,
+          bgColor: targets.bgColor || "transparent",
+        });
+        zip.file(`png_1x/${baseName}_1x.png`, png1Blob);
+        totalFilesGenerated++;
+      }
+
+      // 3. PNG 2x (Retina)
+      if (targets.png2x) {
+        const png2Blob = await svgToPngBlob(item.svgString, {
+          width: item.width,
+          height: item.height,
+          scale: 2,
+          bgColor: targets.bgColor || "transparent",
+        });
+        zip.file(`png_2x/${baseName}_2x.png`, png2Blob);
+        totalFilesGenerated++;
+      }
+
+      // 4. PNG 4x (4K Ultra HD)
+      if (targets.png4x) {
+        const png4Blob = await svgToPngBlob(item.svgString, {
+          width: item.width,
+          height: item.height,
+          scale: 4,
+          bgColor: targets.bgColor || "transparent",
+        });
+        zip.file(`png_4x/${baseName}_4k.png`, png4Blob);
+        totalFilesGenerated++;
+      }
+
+      // 5. PNG 8K Print Master
+      if (targets.png8x) {
+        const png8Blob = await svgToPngBlob(item.svgString, {
+          width: item.width,
+          height: item.height,
+          scale: 8,
+          bgColor: targets.bgColor || "transparent",
+        });
+        zip.file(`png_8k/${baseName}_8k.png`, png8Blob);
+        totalFilesGenerated++;
+      }
+
+      // 6. JPG
+      if (targets.jpg) {
+        const jpgBlob = await svgToJpgBlob(item.svgString, {
+          width: item.width,
+          height: item.height,
+          scale: 2,
+          bgColor: targets.bgColor && targets.bgColor !== "transparent" ? targets.bgColor : "#ffffff",
+          quality: targets.jpgQuality || 0.92,
+        });
+        zip.file(`jpg/${baseName}.jpg`, jpgBlob);
+        totalFilesGenerated++;
+      }
+
+      // 7. Original SVG
+      if (targets.includeSvg) {
+        zip.file(`svg/${baseName}.svg`, item.svgString);
+        totalFilesGenerated++;
+      }
+    } catch (err) {
+      console.error(`Error processing ${item.name}:`, err);
+    }
+  }
+
+  // Finalize ZIP
+  if (onProgress) {
+    onProgress({
+      processedFiles: totalItems,
+      totalFiles: totalItems,
+      currentFileName: "Compressing ZIP archive...",
+      stage: "zipping",
+      percent: 85,
+    });
+  }
+
+  const zipBlob = await zip.generateAsync(
+    {
+      type: "blob",
+      compression: "DEFLATE",
+      compressionOptions: { level: 6 },
+    },
+    (metadata) => {
+      if (onProgress) {
+        onProgress({
+          processedFiles: totalItems,
+          totalFiles: totalItems,
+          currentFileName: "Packaging assets bundle...",
+          stage: "zipping",
+          percent: 85 + Math.round((metadata.percent / 100) * 15),
+        });
+      }
+    }
+  );
+
+  if (onProgress) {
+    onProgress({
+      processedFiles: totalItems,
+      totalFiles: totalItems,
+      currentFileName: "Completed!",
+      stage: "complete",
+      percent: 100,
+    });
+  }
+
+  return {
+    zipBlob,
+    totalFilesGenerated,
+    zipSize: zipBlob.size,
+  };
+}
+

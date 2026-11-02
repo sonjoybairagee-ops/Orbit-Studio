@@ -1109,12 +1109,12 @@ export const TOOLS_DATA: ToolItem[] = [
   {
     id: "svg-engine",
     name: "SVG Vector Engine",
-    shortDesc: "Parse SVG code & export to vector EPS, up to 8K PNG, or JPG.",
-    description: "Interactive SVG canvas inspector and converter. Preview on transparent checkerboard or dark themes, zoom up to 300%, and export to Adobe Illustrator-ready EPS vectors, ultra high-DPI PNG (1x-8x), and JPG.",
+    shortDesc: "Bulk upload SVGs & auto-convert to EPS vectors, 1x-8K PNG, or JPG ZIP bundles.",
+    description: "Bulk batch upload SVG files or entire folders. Auto-convert into Adobe Illustrator EPS vectors, transparent PNGs (1x, 2x, 4K, 8K), and JPGs, and download organized ZIP archives with one click.",
     category: "design",
     href: "/design-tools/svg-engine",
     isPopular: true,
-    badge: "Vector & Print",
+    badge: "Bulk & Vector",
     cardColor: {
       bg: "bg-emerald-50/50 hover:bg-emerald-50",
       border: "border-emerald-200",
