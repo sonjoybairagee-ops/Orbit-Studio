@@ -1107,6 +1107,23 @@ export const TOOLS_DATA: ToolItem[] = [
     iconName: "LayoutGrid",
   },
   {
+    id: "svg-engine",
+    name: "SVG Vector Engine",
+    shortDesc: "Parse SVG code & export to vector EPS, up to 8K PNG, or JPG.",
+    description: "Interactive SVG canvas inspector and converter. Preview on transparent checkerboard or dark themes, zoom up to 300%, and export to Adobe Illustrator-ready EPS vectors, ultra high-DPI PNG (1x-8x), and JPG.",
+    category: "design",
+    href: "/design-tools/svg-engine",
+    isPopular: true,
+    badge: "Vector & Print",
+    cardColor: {
+      bg: "bg-emerald-50/50 hover:bg-emerald-50",
+      border: "border-emerald-200",
+      accent: "text-emerald-700",
+      headerBg: "bg-emerald-100/70 text-emerald-800",
+    },
+    iconName: "FileCode2",
+  },
+  {
     id: "serp-snippet-preview",
     name: "SERP Snippet Preview",
     shortDesc: "Simulate Google Desktop & Mobile search results with character & pixel counters.",
