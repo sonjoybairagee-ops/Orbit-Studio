@@ -3,22 +3,24 @@ import BackgroundRemoverTool from "@/components/tools/BackgroundRemoverTool";
 import { Wand2, CheckCircle2, HelpCircle, Sparkles, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Free Background Remover — Remove Image Background Online (100% Free)",
+  title: "Free Bulk Background Remover — Batch Remove Backgrounds Online (100% Free)",
   description:
-    "Free online Background Remover. Instantly remove image background from photos, products, logos, and portraits. Unlimited high-resolution transparent PNG downloads with 100% privacy.",
+    "Free online Bulk Background Remover. Bulk upload dozens of photos or folders, auto-remove studio white or complex backgrounds, and download cutouts as a ZIP archive. Unlimited high-resolution transparent PNGs with 100% privacy.",
   keywords: [
-    "remove bg",
-    "background remover",
+    "bulk background remover",
+    "batch background remover",
+    "bulk remove bg",
     "remove background from image free",
     "transparent png maker",
-    "photo cutout online",
+    "bulk product photo cutout",
     "product photo background removal",
     "free png background remover",
+    "batch image cutout zip",
   ],
   openGraph: {
-    title: "Free Background Remover — 100% Free & Private",
+    title: "Free Bulk Background Remover — 100% Free & Private",
     description:
-      "Remove background from any photo in 1 click. 100% Free with zero registration.",
+      "Remove background from multiple photos in batch. 100% Free, instant ZIP download.",
   },
 };
 
@@ -26,16 +28,17 @@ export default function BackgroundRemoverPage() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    name: "CompX Orbit Background Remover",
+    name: "CompX Orbit Bulk Background Remover",
     url: "https://compxorbit.com/image-tools/background-remover",
     applicationCategory: "MultimediaApplication",
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
     description:
-      "Browser-based background removal tool for portraits, product photography, logos, and graphics with instant transparent PNG export.",
+      "Browser-based bulk background removal tool for portraits, product photography, logos, and graphics with instant transparent PNG and ZIP bundle export.",
     featureList: [
-      "Automatic subject cutout and background removal",
-      "Backdrop replacement (Transparent, White, Black, Studio Gradients)",
-      "High-Resolution PNG Download",
+      "Bulk upload multiple images or full folders",
+      "Automatic subject cutout and background removal in batch",
+      "Backdrop replacement (Transparent, White, Black, Custom Color)",
+      "Instant ZIP bundle download",
       "100% Private - files never leave your device",
     ],
   };
@@ -52,14 +55,13 @@ export default function BackgroundRemoverPage() {
         <div className="text-center mb-8">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-[#102a16] px-3.5 py-1 text-xs font-semibold text-[#3cff5f] border border-[#2a5234] mb-3">
             <Wand2 className="h-3.5 w-3.5" />
-            <span>Image Editing Suite</span>
+            <span>Image Editing Suite · Bulk & Single</span>
           </span>
           <h1 className="text-3xl sm:text-5xl font-black text-[#e7eee9] tracking-tight">
-            Background Remover
+            Bulk Background Remover
           </h1>
           <p className="mt-3 text-sm sm:text-base text-[#9baaa1] max-w-2xl mx-auto leading-relaxed">
-            Instantly remove backgrounds from portraits, e-commerce products,
-            logos, and graphics with high precision and 100% privacy.
+            Bulk upload multiple photos or full folders, auto-remove backgrounds from portraits, e-commerce products, and graphics, and download all cutouts as a <b>ZIP bundle</b>.
           </p>
         </div>
 
@@ -116,6 +118,15 @@ export default function BackgroundRemoverPage() {
           </h2>
 
           <div className="space-y-4">
+            <div className="rounded-2xl bg-[#080e0b] p-5 border border-[#213026]">
+              <h3 className="text-sm font-bold text-[#e7eee9]">
+                How does Bulk Background Removal and ZIP download work?
+              </h3>
+              <p className="mt-1.5 text-xs text-[#9baaa1] leading-relaxed">
+                You can drag and drop dozens of photos or an entire product catalog folder at once. With <strong>Auto-process</strong> enabled, the engine immediately removes backgrounds from all images, generates transparent PNGs or studio-white cutouts, and automatically bundles them into a <strong>.zip</strong> archive downloaded directly to your computer.
+              </p>
+            </div>
+
             <div className="rounded-2xl bg-[#080e0b] p-5 border border-[#213026]">
               <h3 className="text-sm font-bold text-[#e7eee9]">
                 Are my photos uploaded to a cloud server?

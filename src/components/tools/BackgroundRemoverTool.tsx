@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   Upload,
   Download,
@@ -16,10 +16,24 @@ import {
   Eye,
   Layers,
   Wand2,
+  FolderArchive,
+  Trash2,
+  Play,
+  Plus,
+  Loader2,
+  FolderOpen,
 } from "lucide-react";
-
-type ProcessingMode = "ai" | "chroma";
-type BgOption = "transparent" | "white" | "black" | "gradient1" | "gradient2" | "gradient3" | "custom";
+import {
+  BulkImageItem,
+  RemovalEngine,
+  BgOption,
+  processBulkImagesToZip,
+  removeBackgroundCanvas,
+  removeBackgroundAi,
+  compositeCutoutBackground,
+  downloadBlob,
+} from "@/lib/background-remover-engine";
+import { formatBytes } from "@/lib/image-utils";
 
 interface BackdropConfig {
   id: BgOption;
@@ -59,203 +73,340 @@ const BACKDROP_OPTIONS: BackdropConfig[] = [
     },
   },
   {
-    id: "gradient2",
-    label: "Neon Sunset (Pink / Purple)",
-    badgeText: "SUNSET",
+    id: "custom",
+    label: "Custom Color",
+    badgeText: "CUSTOM",
     previewStyle: {
-      background: "linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)",
-    },
-  },
-  {
-    id: "gradient1",
-    label: "Cyberpunk (Indigo / Cyan)",
-    badgeText: "CYBERPUNK",
-    previewStyle: {
-      background: "linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)",
-    },
-  },
-  {
-    id: "gradient3",
-    label: "Emerald Orbit (Green / Dark)",
-    badgeText: "EMERALD",
-    previewStyle: {
-      background: "linear-gradient(135deg, #102a16 0%, #050a08 100%)",
-      border: "1px solid #2a5234",
+      backgroundColor: "#3cff5f",
     },
   },
 ];
 
 export default function BackgroundRemoverTool() {
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [originalUrl, setOriginalUrl] = useState<string>("");
-  const [processedUrl, setProcessedUrl] = useState<string>("");
-  const [processingMode, setProcessingMode] = useState<ProcessingMode>("ai");
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [progressMsg, setProgressMsg] = useState<string>("");
-  const [progressPercent, setProgressPercent] = useState<number>(0);
-  const [error, setError] = useState<string>("");
-  const [copied, setCopied] = useState<boolean>(false);
+  // Navigation Mode: Bulk or Single
+  const [activeTabMode, setActiveTabMode] = useState<"bulk" | "single">("bulk");
 
-  // Background replacement
-  const [selectedBg, setSelectedBg] = useState<BgOption>("transparent");
-  const [customColor, setCustomColor] = useState<string>("#3cff5f");
-  const [viewMode, setViewMode] = useState<"side-by-side" | "result-only">("side-by-side");
+  // ==========================================
+  // BULK BATCH REMOVER STATE
+  // ==========================================
+  const [bulkImages, setBulkImages] = useState<BulkImageItem[]>([]);
+  const [bulkEngine, setBulkEngine] = useState<RemovalEngine>("smart-studio");
+  const [bulkOutputBg, setBulkOutputBg] = useState<BgOption>("transparent");
+  const [bulkCustomColor, setBulkCustomColor] = useState<string>("#ffffff");
+  const [bulkTolerance, setBulkTolerance] = useState<number>(38);
+  const [bulkAutoDetectCorner, setBulkAutoDetectCorner] = useState<boolean>(true);
+  const [bulkAutoProcessOnUpload, setBulkAutoProcessOnUpload] = useState<boolean>(true);
+  const [bulkAutoDownloadZip, setBulkAutoDownloadZip] = useState<boolean>(true);
+  const [bulkZipName, setBulkZipName] = useState<string>("compx-cutouts-bundle");
 
-  // Chroma key / Color tolerance settings
-  const [targetColor, setTargetColor] = useState<string>("#ffffff");
-  const [tolerance, setTolerance] = useState<number>(35);
+  const [isBulkProcessing, setIsBulkProcessing] = useState<boolean>(false);
+  const [bulkProgress, setBulkProgress] = useState<{
+    processed: number;
+    total: number;
+    currentName: string;
+    percent: number;
+  }>({
+    processed: 0,
+    total: 0,
+    currentName: "",
+    percent: 0,
+  });
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const processedBlobRef = useRef<Blob | null>(null);
-  const originalImgRef = useRef<HTMLImageElement | null>(null);
+  const [bulkZipResult, setBulkZipResult] = useState<{
+    blob: Blob;
+    total: number;
+    size: number;
+  } | null>(null);
+
+  const bulkFileInputRef = useRef<HTMLInputElement>(null);
+  const bulkFolderInputRef = useRef<HTMLInputElement>(null);
+
+  // ==========================================
+  // SINGLE EDITOR STATE
+  // ==========================================
+  const [singleImageFile, setSingleImageFile] = useState<File | null>(null);
+  const [singleOriginalUrl, setSingleOriginalUrl] = useState<string>("");
+  const [singleProcessedUrl, setSingleProcessedUrl] = useState<string>("");
+  const [singleMode, setSingleMode] = useState<RemovalEngine>("smart-studio");
+  const [singleBg, setSingleBg] = useState<BgOption>("transparent");
+  const [singleCustomColor, setSingleCustomColor] = useState<string>("#3cff5f");
+  const [singleTolerance, setSingleTolerance] = useState<number>(35);
+  const [singleTargetColor, setSingleTargetColor] = useState<string>("#ffffff");
+
+  const [isSingleProcessing, setIsSingleProcessing] = useState<boolean>(false);
+  const [singleProgressMsg, setSingleProgressMsg] = useState<string>("");
+  const [singleProgressPercent, setSingleProgressPercent] = useState<number>(0);
+  const [singleError, setSingleError] = useState<string>("");
+  const [singleCopied, setSingleCopied] = useState<boolean>(false);
+
+  const singleFileInputRef = useRef<HTMLInputElement>(null);
+  const singleProcessedBlobRef = useRef<Blob | null>(null);
+  const singleImgRef = useRef<HTMLImageElement | null>(null);
 
   // Cleanup object URLs on unmount
   useEffect(() => {
     return () => {
-      if (originalUrl) URL.revokeObjectURL(originalUrl);
-      if (processedUrl) URL.revokeObjectURL(processedUrl);
-    };
-  }, [originalUrl, processedUrl]);
-
-  // AI-powered Background Removal via in-browser WebAssembly
-  const runAiRemoval = async (file: File) => {
-    setIsProcessing(true);
-    setProgressMsg("Preparing image...");
-    setProgressPercent(15);
-    setError("");
-
-    try {
-      // Load ESM dynamically at client runtime via native browser import
-      // Using Function constructor prevents Webpack/SWC from statically analyzing or bundling onnxruntime-web
-      const dynamicImport = new Function("url", "return import(url)");
-      const imglyModule: any = await dynamicImport(
-        "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm"
-      );
-      const removeBackgroundFn =
-        imglyModule.removeBackground ||
-        imglyModule.default?.removeBackground ||
-        imglyModule.default;
-
-      if (!removeBackgroundFn) {
-        throw new Error("Could not initialize background removal engine");
-      }
-
-      setProgressMsg("Detecting subject and removing background...");
-      setProgressPercent(35);
-
-      const blob = await removeBackgroundFn(file, {
-        progress: (key: string, current: number, total: number) => {
-          if (total > 0) {
-            const p = Math.round((current / total) * 100);
-            if (key.includes("fetch")) {
-              setProgressMsg(`Preparing image (${p}%)...`);
-              setProgressPercent(15 + Math.round(p * 0.35));
-            } else if (key.includes("compute")) {
-              setProgressMsg(`Removing background (${p}%)...`);
-              setProgressPercent(50 + Math.round(p * 0.45));
-            }
-          }
-        },
+      if (singleOriginalUrl) URL.revokeObjectURL(singleOriginalUrl);
+      if (singleProcessedUrl) URL.revokeObjectURL(singleProcessedUrl);
+      bulkImages.forEach((item) => {
+        if (item.originalUrl) URL.revokeObjectURL(item.originalUrl);
+        if (item.processedUrl) URL.revokeObjectURL(item.processedUrl);
       });
+    };
+  }, [bulkImages, singleOriginalUrl, singleProcessedUrl]);
 
-      processedBlobRef.current = blob;
-      const url = URL.createObjectURL(blob);
-      setProcessedUrl(url);
-      setProgressPercent(100);
-      setProgressMsg("Background removed successfully!");
-    } catch (err: unknown) {
-      console.error("Removal error:", err);
-      // Fallback to chroma key
-      runChromaKeyRemoval();
-    } finally {
-      setIsProcessing(false);
+  // ==========================================
+  // BULK BATCH HANDLERS
+  // ==========================================
+  const handleBulkUpload = async (files: FileList | File[]) => {
+    const validFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
+
+    if (validFiles.length === 0) {
+      alert("Please select valid image files (PNG, JPG, JPEG, WebP).");
+      return;
     }
+
+    const newItems: BulkImageItem[] = [];
+
+    for (let i = 0; i < validFiles.length; i++) {
+      const file = validFiles[i];
+      const url = URL.createObjectURL(file);
+      newItems.push({
+        id: `img_${Date.now()}_${i}_${Math.random().toString(36).slice(2, 6)}`,
+        file,
+        name: file.name,
+        originalUrl: url,
+        processedUrl: null,
+        processedBlob: null,
+        size: file.size,
+        width: 800,
+        height: 800,
+        status: "idle",
+        progress: 0,
+      });
+    }
+
+    setBulkImages((prev) => {
+      const merged = [...prev, ...newItems];
+      if (bulkAutoProcessOnUpload) {
+        setTimeout(() => {
+          runBulkProcess(merged);
+        }, 120);
+      }
+      return merged;
+    });
+
+    setBulkZipResult(null);
   };
 
-  // Instant Canvas-based Chroma / Solid Color Key Removal
-  const runChromaKeyRemoval = useCallback(() => {
-    if (!originalImgRef.current) return;
-    setIsProcessing(true);
-    setProgressMsg("Removing color background...");
-    setError("");
+  // Generate 4 diverse sample images on HTML5 canvas for 1-click test
+  const handleLoadSampleBulkPack = () => {
+    const samples = [
+      { name: "Product-Sneaker.jpg", bg: "#ffffff", shape: "sneaker" },
+      { name: "Portrait-Avatar.jpg", bg: "#3b82f6", shape: "avatar" },
+      { name: "Electronics-Camera.jpg", bg: "#10b981", shape: "camera" },
+      { name: "Fashion-Watch.jpg", bg: "#e2e8f0", shape: "watch" },
+    ];
 
-    try {
-      const img = originalImgRef.current;
+    const generatedItems: BulkImageItem[] = [];
+
+    samples.forEach((sample, idx) => {
       const canvas = document.createElement("canvas");
-      canvas.width = img.naturalWidth || img.width;
-      canvas.height = img.naturalHeight || img.height;
+      canvas.width = 600;
+      canvas.height = 600;
       const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Could not initialize 2D canvas context");
+      if (!ctx) return;
 
-      ctx.drawImage(img, 0, 0);
-      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imgData.data;
+      // Solid studio background
+      ctx.fillStyle = sample.bg;
+      ctx.fillRect(0, 0, 600, 600);
 
-      // Parse target hex color
-      const hex = targetColor.replace("#", "");
-      const tr = parseInt(hex.substring(0, 2), 16);
-      const tg = parseInt(hex.substring(2, 4), 16);
-      const tb = parseInt(hex.substring(4, 6), 16);
-
-      const maxDist = (tolerance / 100) * 441.67; // max distance sqrt(255^2 * 3)
-
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-
-        // Euclidean color distance
-        const dist = Math.sqrt((r - tr) ** 2 + (g - tg) ** 2 + (b - tb) ** 2);
-
-        if (dist <= maxDist) {
-          // Feather edges smoothly near the tolerance boundary
-          const featherRange = maxDist * 0.3;
-          if (dist > maxDist - featherRange) {
-            const alphaRatio = (dist - (maxDist - featherRange)) / featherRange;
-            data[i + 3] = Math.round(data[i + 3] * alphaRatio);
-          } else {
-            data[i + 3] = 0; // 100% transparent
-          }
-        }
+      if (sample.shape === "sneaker") {
+        // Red shoe shape
+        ctx.fillStyle = "#ef4444";
+        ctx.beginPath();
+        ctx.roundRect(120, 240, 360, 140, [30, 80, 20, 40]);
+        ctx.fill();
+        ctx.fillStyle = "#111827";
+        ctx.fillRect(140, 360, 320, 30);
+      } else if (sample.shape === "avatar") {
+        // Person silhouette
+        ctx.fillStyle = "#facc15";
+        ctx.beginPath();
+        ctx.arc(300, 240, 110, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#1e293b";
+        ctx.beginPath();
+        ctx.arc(300, 500, 190, Math.PI, 0);
+        ctx.fill();
+      } else if (sample.shape === "camera") {
+        // Dark camera body
+        ctx.fillStyle = "#18181b";
+        ctx.beginPath();
+        ctx.roundRect(160, 200, 280, 200, 25);
+        ctx.fill();
+        // Lens
+        ctx.fillStyle = "#38bdf8";
+        ctx.beginPath();
+        ctx.arc(300, 300, 65, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Watch dial & strap
+        ctx.fillStyle = "#334155";
+        ctx.fillRect(260, 100, 80, 400);
+        ctx.fillStyle = "#ca8a04";
+        ctx.beginPath();
+        ctx.arc(300, 300, 90, 0, Math.PI * 2);
+        ctx.fill();
       }
-
-      ctx.putImageData(imgData, 0, 0);
 
       canvas.toBlob((blob) => {
         if (blob) {
-          processedBlobRef.current = blob;
-          if (processedUrl) URL.revokeObjectURL(processedUrl);
-          const url = URL.createObjectURL(blob);
-          setProcessedUrl(url);
-          setProgressMsg("Background removed!");
-        }
-        setIsProcessing(false);
-      }, "image/png");
-    } catch {
-      setError("Failed to remove background using chroma key.");
-      setIsProcessing(false);
-    }
-  }, [processedUrl, targetColor, tolerance]);
+          const file = new File([blob], sample.name, { type: "image/jpeg" });
+          const url = URL.createObjectURL(file);
+          generatedItems.push({
+            id: `sample_${idx}_${Date.now()}`,
+            file,
+            name: sample.name,
+            originalUrl: url,
+            processedUrl: null,
+            processedBlob: null,
+            size: blob.size,
+            width: 600,
+            height: 600,
+            status: "idle",
+            progress: 0,
+          });
 
-  const handleFileSelect = (file: File) => {
-    if (!file.type.startsWith("image/")) {
-      setError("Please select a valid image file (JPG, PNG, WebP).");
+          if (generatedItems.length === samples.length) {
+            setBulkImages(generatedItems);
+            setBulkZipResult(null);
+            if (bulkAutoProcessOnUpload) {
+              setTimeout(() => {
+                runBulkProcess(generatedItems);
+              }, 120);
+            }
+          }
+        }
+      }, "image/jpeg");
+    });
+  };
+
+  // Run Bulk Removal Pipeline
+  const runBulkProcess = async (itemsToProcess = bulkImages) => {
+    if (itemsToProcess.length === 0) {
+      alert("Please upload at least one image first!");
       return;
     }
-    setError("");
-    setImageFile(file);
-    if (originalUrl) URL.revokeObjectURL(originalUrl);
-    if (processedUrl) URL.revokeObjectURL(processedUrl);
-    setProcessedUrl("");
+
+    setIsBulkProcessing(true);
+    setBulkZipResult(null);
+    setBulkProgress({
+      processed: 0,
+      total: itemsToProcess.length,
+      currentName: "Starting engine...",
+      percent: 0,
+    });
+
+    try {
+      const result = await processBulkImagesToZip(
+        itemsToProcess,
+        {
+          engine: bulkEngine,
+          tolerance: bulkTolerance,
+          autoDetectCorner: bulkAutoDetectCorner,
+          outputBg: bulkOutputBg,
+          customBgColor: bulkCustomColor,
+        },
+        bulkZipName,
+        (prog) => {
+          setBulkProgress({
+            processed: prog.processed,
+            total: prog.total,
+            currentName: prog.currentName,
+            percent: prog.percent,
+          });
+        }
+      );
+
+      // Update individual items with their processed preview URLs
+      const mapResults = new Map(result.processedItems.map((r) => [r.id, r]));
+
+      setBulkImages((prev) =>
+        prev.map((item) => {
+          const res = mapResults.get(item.id);
+          if (res) {
+            return {
+              ...item,
+              status: "done",
+              processedUrl: res.url,
+              processedBlob: res.blob,
+            };
+          }
+          return item;
+        })
+      );
+
+      setBulkZipResult({
+        blob: result.zipBlob,
+        total: result.totalProcessed,
+        size: result.zipSize,
+      });
+
+      // Auto Download ZIP if enabled
+      if (bulkAutoDownloadZip && result.zipBlob) {
+        downloadBlob(result.zipBlob, `${bulkZipName}.zip`);
+      }
+    } catch (err) {
+      alert("Bulk background removal error: " + String(err));
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const handleClearBulk = () => {
+    setBulkImages([]);
+    setBulkZipResult(null);
+    setBulkProgress({
+      processed: 0,
+      total: 0,
+      currentName: "",
+      percent: 0,
+    });
+  };
+
+  const handleRemoveBulkItem = (id: string) => {
+    setBulkImages((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const handleDownloadSingleCutoutFromBulk = (item: BulkImageItem) => {
+    if (!item.processedBlob) return;
+    const base = item.name.replace(/\.[^/.]+$/, "");
+    downloadBlob(item.processedBlob, `${base}_cutout.png`);
+  };
+
+  // ==========================================
+  // SINGLE EDITOR HANDLERS
+  // ==========================================
+  const handleSingleFileSelect = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      setSingleError("Please select a valid image file (PNG, JPG, WebP).");
+      return;
+    }
+    setSingleError("");
+    setSingleImageFile(file);
+
+    if (singleOriginalUrl) URL.revokeObjectURL(singleOriginalUrl);
+    if (singleProcessedUrl) URL.revokeObjectURL(singleProcessedUrl);
+    setSingleProcessedUrl("");
 
     const url = URL.createObjectURL(file);
-    setOriginalUrl(url);
+    setSingleOriginalUrl(url);
 
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      originalImgRef.current = img;
+      singleImgRef.current = img;
 
       // Auto-detect corner pixel color for chroma key
       const tempCanvas = document.createElement("canvas");
@@ -265,475 +416,823 @@ export default function BackgroundRemoverTool() {
       if (tCtx) {
         tCtx.drawImage(img, 0, 0, 10, 10);
         const p = tCtx.getImageData(0, 0, 1, 1).data;
-        const autoHex = "#" + [p[0], p[1], p[2]].map((x) => x.toString(16).padStart(2, "0")).join("");
-        setTargetColor(autoHex);
+        const autoHex =
+          "#" + [p[0], p[1], p[2]].map((x) => x.toString(16).padStart(2, "0")).join("");
+        setSingleTargetColor(autoHex);
       }
 
-      // Automatically run AI removal by default
-      if (processingMode === "ai") {
-        runAiRemoval(file);
-      } else {
-        runChromaKeyRemoval();
-      }
+      runSingleRemoval(file, img);
     };
     img.src = url;
   };
 
-  const handleDownload = () => {
-    if (!processedUrl) return;
+  const runSingleRemoval = async (file: File, img: HTMLImageElement) => {
+    setIsSingleProcessing(true);
+    setSingleProgressMsg("Removing background...");
+    setSingleProgressPercent(25);
+    setSingleError("");
 
-    // If a background color/gradient is selected other than transparent, render onto composite canvas
-    if (selectedBg !== "transparent") {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        const c = document.createElement("canvas");
-        c.width = img.width;
-        c.height = img.height;
-        const ctx = c.getContext("2d");
-        if (!ctx) return;
+    try {
+      let cutoutBlob: Blob;
 
-        // Draw custom background
-        if (selectedBg === "white") {
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, c.width, c.height);
-        } else if (selectedBg === "black") {
-          ctx.fillStyle = "#000000";
-          ctx.fillRect(0, 0, c.width, c.height);
-        } else if (selectedBg === "gradient1") {
-          const g = ctx.createLinearGradient(0, 0, c.width, c.height);
-          g.addColorStop(0, "#4f46e5");
-          g.addColorStop(1, "#06b6d4");
-          ctx.fillStyle = g;
-          ctx.fillRect(0, 0, c.width, c.height);
-        } else if (selectedBg === "gradient2") {
-          const g = ctx.createLinearGradient(0, 0, c.width, c.height);
-          g.addColorStop(0, "#ec4899");
-          g.addColorStop(1, "#8b5cf6");
-          ctx.fillStyle = g;
-          ctx.fillRect(0, 0, c.width, c.height);
-        } else if (selectedBg === "gradient3") {
-          const g = ctx.createLinearGradient(0, 0, c.width, c.height);
-          g.addColorStop(0, "#102a16");
-          g.addColorStop(1, "#050a08");
-          ctx.fillStyle = g;
-          ctx.fillRect(0, 0, c.width, c.height);
-        } else if (selectedBg === "custom") {
-          ctx.fillStyle = customColor;
-          ctx.fillRect(0, 0, c.width, c.height);
+      if (singleMode === "ai-deep") {
+        try {
+          cutoutBlob = await removeBackgroundAi(file, (msg, pct) => {
+            setSingleProgressMsg(msg);
+            setSingleProgressPercent(pct);
+          });
+        } catch {
+          // Fallback to studio canvas
+          cutoutBlob = await removeBackgroundCanvas(img, {
+            autoDetectCorner: true,
+            tolerance: singleTolerance,
+          });
         }
+      } else {
+        cutoutBlob = await removeBackgroundCanvas(img, {
+          targetColor: singleTargetColor,
+          tolerance: singleTolerance,
+          autoDetectCorner: true,
+        });
+      }
 
-        ctx.drawImage(img, 0, 0);
+      // Backdrop composite
+      const finalBlob = await compositeCutoutBackground(cutoutBlob, singleBg, singleCustomColor);
+      singleProcessedBlobRef.current = finalBlob;
 
-        c.toBlob((blob) => {
-          if (!blob) return;
-          const u = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = u;
-          a.download = `compx-removed-bg-${Date.now()}.png`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(u);
-        }, "image/png");
-      };
-      img.src = processedUrl;
-      return;
+      if (singleProcessedUrl) URL.revokeObjectURL(singleProcessedUrl);
+      const url = URL.createObjectURL(finalBlob);
+      setSingleProcessedUrl(url);
+      setSingleProgressPercent(100);
+      setSingleProgressMsg("Done!");
+    } catch (err) {
+      setSingleError("Background removal failed: " + String(err));
+    } finally {
+      setIsSingleProcessing(false);
     }
-
-    // Default transparent download
-    const link = document.createElement("a");
-    link.href = processedUrl;
-    link.download = `compx-removed-bg-${imageFile?.name?.replace(/\.[^/.]+$/, "") || "transparent"}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
-  const handleCopyToClipboard = async () => {
-    if (!processedBlobRef.current) return;
+  const handleSingleDownload = () => {
+    if (!singleProcessedBlobRef.current) return;
+    const base = singleImageFile?.name?.replace(/\.[^/.]+$/, "") || "transparent";
+    downloadBlob(singleProcessedBlobRef.current, `compx-removed-bg-${base}.png`);
+  };
+
+  const handleSingleCopy = async () => {
+    if (!singleProcessedBlobRef.current) return;
     try {
       await navigator.clipboard.write([
         new ClipboardItem({
-          "image/png": processedBlobRef.current,
+          "image/png": singleProcessedBlobRef.current,
         }),
       ]);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setSingleCopied(true);
+      setTimeout(() => setSingleCopied(false), 2000);
     } catch {
-      setError("Clipboard write failed. Please use Download button instead.");
+      setSingleError("Clipboard write failed. Please use Download button instead.");
     }
-  };
-
-  // Sample Images to test instantly
-  const loadSample = (sampleType: "portrait" | "product") => {
-    // Generate high contrast geometric canvas sample
-    const canvas = document.createElement("canvas");
-    canvas.width = 800;
-    canvas.height = 800;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    if (sampleType === "portrait") {
-      // Solid bright blue background
-      ctx.fillStyle = "#3b82f6";
-      ctx.fillRect(0, 0, 800, 800);
-
-      // Person silhouette
-      ctx.fillStyle = "#facc15";
-      ctx.beginPath();
-      ctx.arc(400, 320, 160, 0, Math.PI * 2); // head
-      ctx.fill();
-
-      ctx.fillStyle = "#1e293b";
-      ctx.beginPath();
-      ctx.arc(400, 680, 260, Math.PI, 0); // body
-      ctx.fill();
-    } else {
-      // Studio product with white background
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, 800, 800);
-
-      // Tech device / sneaker shape
-      ctx.fillStyle = "#10b981";
-      ctx.beginPath();
-      ctx.roundRect(200, 300, 400, 240, 40);
-      ctx.fill();
-
-      ctx.fillStyle = "#0f172a";
-      ctx.font = "bold 32px sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("PRODUCT TEST", 400, 430);
-    }
-
-    canvas.toBlob((blob) => {
-      if (blob) {
-        const file = new File([blob], `sample-${sampleType}.png`, { type: "image/png" });
-        handleFileSelect(file);
-      }
-    }, "image/png");
   };
 
   return (
-    <div className="w-full">
-      {/* Upload & Controls Hub */}
-      <div className="rounded-3xl border border-[#26332d] bg-[#0c1510] p-6 sm:p-8 mb-8 shadow-2xl">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="w-full space-y-6">
+      {/* Hidden File Inputs */}
+      <input
+        ref={bulkFileInputRef}
+        type="file"
+        multiple
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          if (e.target.files) handleBulkUpload(e.target.files);
+          e.target.value = "";
+        }}
+      />
+      <input
+        ref={bulkFolderInputRef}
+        type="file"
+        // @ts-expect-error webkitdirectory is standard in Chromium
+        webkitdirectory="true"
+        directory="true"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          if (e.target.files) handleBulkUpload(e.target.files);
+          e.target.value = "";
+        }}
+      />
+      <input
+        ref={singleFileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handleSingleFileSelect(f);
+        }}
+      />
+
+      {/* Top Banner & Mode Switcher */}
+      <div className="rounded-3xl border border-[#213026] bg-[#0c1510] p-4 sm:p-5 shadow-2xl backdrop-blur-md">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div>
-            <h2 className="text-base sm:text-lg font-bold text-[#e7eee9] flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-[#3cff5f]" />
-              <span>Instant Background Remover</span>
-            </h2>
-            <p className="text-xs text-[#9baaa1] mt-0.5">
-              Upload any portrait, product, logo, or graphic for instant transparent cutout.
+            <div className="flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#102a16] border border-[#2a5234] text-[#3cff5f]">
+                <Wand2 className="h-4 w-4" />
+              </span>
+              <h2 className="text-base sm:text-lg font-black text-[#e7eee9]">
+                CompX Bulk Background Remover Engine
+              </h2>
+            </div>
+            <p className="mt-1 text-xs text-[#8da194]">
+              Upload multiple images, auto-remove white studio or complex backgrounds, and download cutouts as a <b>ZIP bundle</b>.
             </p>
           </div>
 
-          {/* Upload Button */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) handleFileSelect(f);
-              }}
-              className="hidden"
-            />
-
+          {/* Mode Switcher Tabs */}
+          <div className="flex items-center gap-2 rounded-2xl border border-[#213026] bg-[#080e0b] p-1.5 w-full lg:w-auto">
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center gap-2 rounded-2xl bg-[#3cff5f] px-5 py-3 text-xs sm:text-sm font-bold text-[#050a08] hover:bg-[#48ff69] transition-all cursor-pointer shadow-md shadow-[#3cff5f]/20"
+              onClick={() => setActiveTabMode("bulk")}
+              className={`flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                activeTabMode === "bulk"
+                  ? "bg-[#3cff5f] text-[#050a08] shadow-md shadow-[#3cff5f]/20"
+                  : "text-[#8da194] hover:text-[#e7eee9]"
+              }`}
             >
-              <Upload className="h-4 w-4" />
-              <span>Upload Image</span>
+              <FolderArchive className="h-3.5 w-3.5" />
+              <span>⚡ Bulk Batch Remover</span>
+              {bulkImages.length > 0 && (
+                <span className="rounded-full bg-[#050a08] px-1.5 py-0.2 text-[10px] font-bold text-[#3cff5f]">
+                  {bulkImages.length}
+                </span>
+              )}
             </button>
 
             <button
               type="button"
-              onClick={() => loadSample("product")}
-              className="inline-flex items-center gap-1.5 rounded-2xl bg-[#102a16] px-3.5 py-3 text-xs font-semibold text-[#3cff5f] border border-[#2a5234] hover:bg-[#16381e] transition-colors cursor-pointer"
+              onClick={() => setActiveTabMode("single")}
+              className={`flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                activeTabMode === "single"
+                  ? "bg-[#3cff5f] text-[#050a08] shadow-md shadow-[#3cff5f]/20"
+                  : "text-[#8da194] hover:text-[#e7eee9]"
+              }`}
             >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>Try Sample</span>
+              <Eye className="h-3.5 w-3.5" />
+              <span>🎨 Single Studio Editor</span>
             </button>
           </div>
         </div>
-
-        {/* Chroma Key Controls Bar (Only visible if Chroma mode active) */}
-        {processingMode === "chroma" && (
-          <div className="mt-6 pt-5 border-t border-[#213026] flex flex-wrap items-center gap-6 text-xs text-[#9baaa1]">
-            <div className="flex items-center gap-2">
-              <Palette className="h-4 w-4 text-[#3cff5f]" />
-              <span>Background Color:</span>
-              <input
-                type="color"
-                value={targetColor}
-                onChange={(e) => {
-                  setTargetColor(e.target.value);
-                  setTimeout(runChromaKeyRemoval, 50);
-                }}
-                className="h-8 w-10 cursor-pointer rounded-lg border border-[#213026] bg-transparent p-0.5"
-              />
-              <span className="font-mono text-[#e7eee9]">{targetColor}</span>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Sliders className="h-4 w-4 text-[#3cff5f]" />
-              <span>Color Tolerance:</span>
-              <input
-                type="range"
-                min="5"
-                max="85"
-                value={tolerance}
-                onChange={(e) => setTolerance(Number(e.target.value))}
-                onMouseUp={runChromaKeyRemoval}
-                onTouchEnd={runChromaKeyRemoval}
-                className="w-32 accent-[#3cff5f] cursor-pointer"
-              />
-              <span className="font-mono text-[#e7eee9]">{tolerance}%</span>
-            </div>
-
-            <button
-              type="button"
-              onClick={runChromaKeyRemoval}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-[#080e0b] px-3 py-1.5 font-semibold text-[#3cff5f] border border-[#213026] hover:border-[#3cff5f] cursor-pointer"
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
-              <span>Re-Apply</span>
-            </button>
-          </div>
-        )}
-
-        {/* Progress Bar (during AI processing) */}
-        {isProcessing && (
-          <div className="mt-6 space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-[#3cff5f] font-medium flex items-center gap-2">
-                <span className="h-3 w-3 border-2 border-[#3cff5f] border-t-transparent rounded-full animate-spin" />
-                {progressMsg}
-              </span>
-              <span className="text-[#9baaa1] font-mono">{progressPercent}%</span>
-            </div>
-            <div className="h-2 w-full bg-[#080e0b] rounded-full overflow-hidden border border-[#213026]">
-              <div
-                className="h-full bg-gradient-to-r from-[#102a16] to-[#3cff5f] transition-all duration-300"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-          </div>
-        )}
-
-        {error && (
-          <div className="mt-4 flex items-center gap-2 rounded-xl bg-red-950/40 border border-red-800/40 px-4 py-3 text-xs text-red-300">
-            <AlertCircle className="h-4 w-4 shrink-0 text-red-400" />
-            <span>{error}</span>
-          </div>
-        )}
       </div>
 
-      {/* Main Workspace: Comparison & Results */}
-      {processedUrl || originalUrl ? (
+      {/* ========================================================= */}
+      {/* BULK BATCH REMOVER TAB */}
+      {/* ========================================================= */}
+      {activeTabMode === "bulk" && (
         <div className="space-y-6">
-          {/* Top Action & View Toolbar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#213026] pb-4">
-            {/* Background Backdrop Selector */}
-            <div className="flex items-center gap-3 text-xs">
-              <span className="text-[#9baaa1] font-semibold">Backdrop:</span>
-              <div className="flex flex-wrap items-center gap-2">
-                {BACKDROP_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setSelectedBg(opt.id)}
-                    className={`swatch-btn no-btn-override group relative p-0.5 rounded-xl transition-all cursor-pointer flex items-center justify-center ${
-                      selectedBg === opt.id
-                        ? "ring-2 ring-[#3cff5f] ring-offset-2 ring-offset-[#080e0b] scale-105"
-                        : "opacity-85 hover:opacity-100 hover:scale-105"
-                    }`}
-                    style={{ background: "#0c1510", border: selectedBg === opt.id ? "1px solid #3cff5f" : "1px solid #26332d" }}
-                    title={opt.label}
-                  >
-                    <span
-                      className="block h-7 w-7 rounded-lg shadow-inner flex items-center justify-center transition-transform"
-                      style={opt.previewStyle}
-                    >
-                      {selectedBg === opt.id && (
-                        <Check className={`h-4 w-4 ${opt.id === "white" ? "text-black" : "text-white"} drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] stroke-[3]`} />
-                      )}
-                    </span>
-                  </button>
-                ))}
+          {/* Bulk Controls & Settings Hub */}
+          <div className="rounded-3xl border border-[#213026] bg-[#0c1510] p-5 sm:p-6 shadow-xl space-y-5">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-[#1b2720] pb-4">
+              <div>
+                <h3 className="text-sm font-black text-[#e7eee9] flex items-center gap-2">
+                  <Sliders className="h-4 w-4 text-[#3cff5f]" />
+                  <span>Removal Engine & Output Settings</span>
+                </h3>
+                <p className="text-xs text-[#8da194] mt-0.5">
+                  Choose between Ultra-Fast Smart Studio Mode (50+ photos in seconds) or AI Deep Cutout.
+                </p>
+              </div>
 
-                {/* Custom Color Picker Swatch */}
-                <label
-                  className={`swatch-btn no-btn-override group relative p-0.5 rounded-xl transition-all cursor-pointer flex items-center justify-center ${
-                    selectedBg === "custom"
-                      ? "ring-2 ring-[#3cff5f] ring-offset-2 ring-offset-[#080e0b] scale-105"
-                      : "opacity-85 hover:opacity-100 hover:scale-105"
+              {/* Engine Switcher */}
+              <div className="flex items-center gap-2 rounded-2xl border border-[#213026] bg-[#080e0b] p-1">
+                <button
+                  type="button"
+                  onClick={() => setBulkEngine("smart-studio")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    bulkEngine === "smart-studio"
+                      ? "bg-[#3cff5f] text-[#050a08]"
+                      : "text-[#8da194] hover:text-[#e7eee9]"
                   }`}
-                  style={{ background: "#0c1510", border: selectedBg === "custom" ? "1px solid #3cff5f" : "1px solid #26332d" }}
-                  title="Pick Custom Color"
                 >
+                  <span>⚡ Smart Studio (Fast)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBulkEngine("ai-deep")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    bulkEngine === "ai-deep"
+                      ? "bg-[#3cff5f] text-[#050a08]"
+                      : "text-[#8da194] hover:text-[#e7eee9]"
+                  }`}
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>🤖 AI Deep Cutout</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Options Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {/* Output Backdrop Choice */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#8da194]">Output Backdrop:</label>
+                <div className="flex items-center gap-2">
+                  {BACKDROP_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setBulkOutputBg(opt.id)}
+                      className={`flex-1 py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center ${
+                        bulkOutputBg === opt.id
+                          ? "border-[#3cff5f] bg-[#102a16] text-[#3cff5f] shadow-md shadow-[#3cff5f]/15"
+                          : "border-[#213026] bg-[#080e0b] text-[#8da194] hover:text-[#e7eee9]"
+                      }`}
+                    >
+                      {opt.badgeText}
+                    </button>
+                  ))}
+                  {bulkOutputBg === "custom" && (
+                    <input
+                      type="color"
+                      value={bulkCustomColor}
+                      onChange={(e) => setBulkCustomColor(e.target.value)}
+                      className="h-8 w-8 rounded-lg border border-[#213026] bg-transparent cursor-pointer p-0"
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Tolerance (Smart Studio) */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <label className="font-bold text-[#8da194]">Color Sensitivity:</label>
+                  <span className="font-mono font-bold text-[#3cff5f]">{bulkTolerance}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="10"
+                  max="70"
+                  value={bulkTolerance}
+                  onChange={(e) => setBulkTolerance(Number(e.target.value))}
+                  className="w-full accent-[#3cff5f] h-2 bg-[#1b2720] rounded-lg cursor-pointer"
+                />
+                <span className="text-[10px] text-[#62776a]">Auto-detects corner studio background</span>
+              </div>
+
+              {/* ZIP Archive Name */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#8da194]">Bundle ZIP Name:</label>
+                <div className="flex items-center gap-1.5">
                   <input
-                    type="color"
-                    value={customColor}
-                    onChange={(e) => {
-                      setCustomColor(e.target.value);
-                      setSelectedBg("custom");
-                    }}
-                    className="sr-only"
+                    type="text"
+                    value={bulkZipName}
+                    onChange={(e) => setBulkZipName(e.target.value.replace(/[^a-zA-Z0-9_\-]/g, "_"))}
+                    className="w-full rounded-xl border border-[#213026] bg-[#080e0b] px-3 py-2 text-xs font-mono text-[#3cff5f] focus:outline-none focus:border-[#3cff5f]"
                   />
-                  <span
-                    className="block h-7 w-7 rounded-lg shadow-inner flex items-center justify-center transition-transform"
-                    style={{ backgroundColor: customColor }}
-                  >
-                    {selectedBg === "custom" ? (
-                      <Check className="h-4 w-4 text-black drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] stroke-[3]" />
-                    ) : (
-                      <Palette className="h-3.5 w-3.5 text-black/80 drop-shadow-[0_1px_2px_rgba(255,255,255,0.6)]" />
-                    )}
+                  <span className="text-xs text-[#62776a]">.zip</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Automation Toggles */}
+            <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-[#1b2720]">
+              <div className="flex flex-wrap items-center gap-5">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={bulkAutoProcessOnUpload}
+                    onChange={(e) => setBulkAutoProcessOnUpload(e.target.checked)}
+                    className="accent-[#3cff5f] h-4 w-4 rounded"
+                  />
+                  <span className="text-xs font-bold text-[#e7eee9]">
+                    ⚡ Auto-remove background immediately on upload
+                  </span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={bulkAutoDownloadZip}
+                    onChange={(e) => setBulkAutoDownloadZip(e.target.checked)}
+                    className="accent-[#3cff5f] h-4 w-4 rounded"
+                  />
+                  <span className="text-xs font-bold text-[#e7eee9]">
+                    📥 Auto-download ZIP archive when complete
                   </span>
                 </label>
               </div>
             </div>
+          </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-center gap-3">
+          {/* Bulk Drop & Upload Zone */}
+          <div
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              if (e.dataTransfer.files) handleBulkUpload(e.dataTransfer.files);
+            }}
+            onClick={() => bulkFileInputRef.current?.click()}
+            className="rounded-3xl border-2 border-dashed border-[#2a5234] bg-[#0c1510]/90 hover:bg-[#102217] hover:border-[#3cff5f] p-8 text-center transition-all cursor-pointer shadow-xl group"
+          >
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#102a16] border border-[#2a5234] text-[#3cff5f] mb-4 group-hover:scale-110 transition-transform">
+              <Upload className="h-8 w-8" />
+            </div>
+            <h3 className="text-lg font-black text-[#e7eee9]">
+              Drag & Drop Multiple Photos / Product Images Here
+            </h3>
+            <p className="mt-1 text-xs text-[#8da194] max-w-md mx-auto">
+              Select 5, 20, or 50+ photos (JPG, PNG, WebP) or entire folders. All backgrounds will be cleanly removed and bundled into a ZIP.
+            </p>
+
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-3" onClick={(e) => e.stopPropagation()}>
               <button
                 type="button"
-                onClick={handleCopyToClipboard}
-                disabled={!processedUrl}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-[#213026] bg-[#102a16] px-4 py-2.5 text-xs sm:text-sm font-semibold text-[#3cff5f] hover:bg-[#16381e] hover:border-[#3cff5f] transition-colors cursor-pointer disabled:opacity-40"
+                onClick={() => bulkFileInputRef.current?.click()}
+                className="inline-flex items-center gap-2 rounded-xl bg-[#3cff5f] px-5 py-2.5 text-xs font-black text-[#050a08] hover:bg-[#50ff70] transition-all cursor-pointer shadow-lg shadow-[#3cff5f]/20 hover:scale-[1.02] active:scale-95"
               >
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                <span>{copied ? "Copied PNG!" : "Copy PNG"}</span>
+                <Plus className="h-4 w-4" />
+                <span>Select Photos</span>
               </button>
 
               <button
                 type="button"
-                onClick={handleDownload}
-                disabled={!processedUrl}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#3cff5f] px-5 py-2.5 text-xs sm:text-sm font-bold text-[#050a08] hover:bg-[#48ff69] transition-all cursor-pointer shadow-md shadow-[#3cff5f]/20 disabled:opacity-40"
+                onClick={() => bulkFolderInputRef.current?.click()}
+                className="inline-flex items-center gap-2 rounded-xl border border-[#2a5234] bg-[#102a16] px-4 py-2.5 text-xs font-bold text-[#3cff5f] hover:bg-[#183d21] transition-all cursor-pointer hover:scale-[1.02] active:scale-95"
               >
-                <Download className="h-4 w-4" />
-                <span>Download Result</span>
+                <FolderOpen className="h-4 w-4" />
+                <span>Upload Entire Folder</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleLoadSampleBulkPack}
+                className="inline-flex items-center gap-2 rounded-xl border border-[#213026] bg-[#080e0b] px-4 py-2.5 text-xs font-bold text-[#8da194] hover:text-[#e7eee9] hover:bg-[#14231b] transition-all cursor-pointer hover:scale-[1.02] active:scale-95"
+              >
+                <Sparkles className="h-4 w-4 text-amber-400" />
+                <span>⚡ Test with 4 Sample Photos</span>
               </button>
             </div>
           </div>
 
-          {/* Visual Display Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Left: Original Image */}
-            <div className="rounded-3xl border border-[#26332d] bg-[#0c1510] overflow-hidden flex flex-col shadow-xl">
-              <div className="px-5 py-3 border-b border-[#213026] bg-[#080e0b] flex items-center justify-between text-xs">
-                <span className="font-bold text-[#e7eee9]">Original Image</span>
-                <span className="text-[#9baaa1] font-mono">{imageFile?.name || "Uploaded"}</span>
-              </div>
-              <div className="relative aspect-square w-full bg-[#050a08] flex items-center justify-center p-4 overflow-hidden">
-                {originalUrl ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    src={originalUrl}
-                    alt="Original Upload"
-                    className="max-h-full max-w-full object-contain rounded-xl shadow-lg"
-                  />
-                ) : (
-                  <span className="text-xs text-[#9baaa1]">No image selected</span>
-                )}
-              </div>
-            </div>
-
-            {/* Right: Transparent Removed BG Result */}
-            <div className="rounded-3xl border border-[#26332d] bg-[#0c1510] overflow-hidden flex flex-col shadow-xl">
-              <div className="px-5 py-3 border-b border-[#213026] bg-[#080e0b] flex items-center justify-between text-xs">
-                <span className="font-bold text-[#3cff5f] flex items-center gap-1.5">
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span>Transparent Result</span>
+          {/* Progress Bar (during batch processing) */}
+          {isBulkProcessing && (
+            <div className="rounded-3xl border border-[#2a5234] bg-gradient-to-r from-[#0c1f13] to-[#08120c] p-6 shadow-2xl space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-black text-[#3cff5f] flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Removing Backgrounds: {bulkProgress.processed} of {bulkProgress.total} images...
                 </span>
-                <span className="text-[#3cff5f] bg-[#102a16] border border-[#2a5234] px-2 py-0.5 rounded-md font-mono text-[10px]">
-                  {selectedBg.toUpperCase()}
-                </span>
+                <span className="font-mono font-bold text-[#e7eee9]">{bulkProgress.percent}%</span>
               </div>
 
-              {/* Backdrop Container */}
-              <div
-                className="relative aspect-square w-full flex items-center justify-center p-4 overflow-hidden transition-all"
-                style={
-                  selectedBg === "transparent"
-                    ? {
-                        backgroundImage:
-                          "linear-gradient(45deg, #374151 25%, transparent 25%), linear-gradient(-45deg, #374151 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #374151 75%), linear-gradient(-45deg, transparent 75%, #374151 75%)",
-                        backgroundSize: "16px 16px",
-                        backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
-                        backgroundColor: "#1f2937",
-                      }
-                    : selectedBg === "white"
-                    ? { backgroundColor: "#ffffff" }
-                    : selectedBg === "black"
-                    ? { backgroundColor: "#000000" }
-                    : selectedBg === "gradient1"
-                    ? { background: "linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)" }
-                    : selectedBg === "gradient2"
-                    ? { background: "linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)" }
-                    : selectedBg === "gradient3"
-                    ? { background: "linear-gradient(135deg, #102a16 0%, #050a08 100%)" }
-                    : selectedBg === "custom"
-                    ? { backgroundColor: customColor }
-                    : undefined
-                }
-              >
-                {isProcessing ? (
-                  <div className="text-center p-6 space-y-3">
-                    <div className="h-10 w-10 border-3 border-[#3cff5f] border-t-transparent rounded-full animate-spin mx-auto" />
-                    <p className="text-xs text-[#3cff5f] font-semibold">{progressMsg}</p>
-                  </div>
-                ) : processedUrl ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    src={processedUrl}
-                    alt="Background Removed"
-                    className="max-h-full max-w-full object-contain rounded-xl drop-shadow-2xl"
-                  />
-                ) : (
-                  <div className="text-center p-6 text-xs text-[#9baaa1]">
-                    Click &quot;Upload Image&quot; or &quot;Try Sample&quot; to remove background
-                  </div>
-                )}
+              {/* Progress Track */}
+              <div className="h-3 w-full rounded-full bg-[#080e0b] border border-[#213026] overflow-hidden p-0.5">
+                <div
+                  className="h-full rounded-full bg-[#3cff5f] shadow-[0_0_15px_#3cff5f] transition-all duration-300"
+                  style={{ width: `${Math.min(100, Math.max(5, bulkProgress.percent))}%` }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] text-[#8da194]">
+                <span className="truncate max-w-sm font-mono text-[#38bdf8]">
+                  Processing: {bulkProgress.currentName}
+                </span>
+                <span>Engine: {bulkEngine === "smart-studio" ? "⚡ Smart Studio" : "🤖 AI Deep"}</span>
               </div>
             </div>
-          </div>
+          )}
+
+          {/* Result ZIP Ready Card */}
+          {bulkZipResult && !isBulkProcessing && (
+            <div className="rounded-3xl border-2 border-[#3cff5f] bg-[#0c2214] p-6 shadow-[0_0_40px_rgba(60,255,95,0.25)] flex flex-col md:flex-row items-center justify-between gap-5 animate-in fade-in zoom-in-95 duration-300">
+              <div className="flex items-center gap-4 text-left">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#3cff5f] text-[#050a08] shadow-lg shadow-[#3cff5f]/30">
+                  <CheckCircle2 className="h-8 w-8" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-[#e7eee9]">
+                    Bulk Background Removal Complete! 🎉
+                  </h3>
+                  <p className="text-xs text-[#8da194] mt-0.5">
+                    <b>{bulkZipResult.total} cutouts</b> generated ({formatBytes(bulkZipResult.size)} ZIP archive).
+                    {bulkAutoDownloadZip && " Auto-downloaded to your computer."}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 w-full md:w-auto">
+                <button
+                  type="button"
+                  onClick={() => downloadBlob(bulkZipResult.blob, `${bulkZipName}.zip`)}
+                  className="w-full md:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-[#3cff5f] px-6 py-3.5 text-xs font-black text-[#050a08] hover:bg-[#52ff71] transition-all cursor-pointer shadow-lg shadow-[#3cff5f]/25 hover:scale-105 active:scale-95"
+                >
+                  <Download className="h-4 w-4" />
+                  <span>Download All Cutouts (.zip)</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Bulk Images Queue & Gallery */}
+          {bulkImages.length > 0 && (
+            <div className="rounded-3xl border border-[#213026] bg-[#0c1510] p-5 sm:p-6 shadow-xl space-y-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[#1b2720] pb-4">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#102a16] text-[#3cff5f] font-bold text-xs border border-[#2a5234]">
+                    {bulkImages.length}
+                  </span>
+                  <div>
+                    <h3 className="text-sm font-black text-[#e7eee9]">
+                      Images Queue & Cutout Previews
+                    </h3>
+                    <span className="text-[11px] text-[#8da194]">
+                      {bulkImages.filter((x) => x.status === "done").length} of {bulkImages.length} cutouts ready
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => bulkFileInputRef.current?.click()}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-[#213026] bg-[#080e0b] px-3 py-1.5 text-xs font-bold text-[#8da194] hover:text-[#e7eee9] hover:bg-[#14231b] transition-all cursor-pointer"
+                  >
+                    <Plus className="h-3.5 w-3.5 text-[#3cff5f]" />
+                    <span>Add More</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleClearBulk}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-[#3b1d22] bg-[#1f0f12] px-3 py-1.5 text-xs font-bold text-red-400 hover:bg-[#2d1419] transition-all cursor-pointer"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span>Clear All</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={isBulkProcessing}
+                    onClick={() => runBulkProcess()}
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#3cff5f] px-4 py-1.5 text-xs font-black text-[#050a08] hover:bg-[#52ff71] transition-all cursor-pointer shadow-md shadow-[#3cff5f]/20 disabled:opacity-50"
+                  >
+                    {isBulkProcessing ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Play className="h-3.5 w-3.5 fill-current" />
+                    )}
+                    <span>{isBulkProcessing ? "Processing..." : "Process All Now"}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Items Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 max-h-[550px] overflow-y-auto pr-1">
+                {bulkImages.map((item, idx) => (
+                  <div
+                    key={item.id}
+                    className="flex flex-col rounded-2xl border border-[#1b2720] bg-[#080e0b] p-3 space-y-2.5 hover:border-[#2a5234] transition-all"
+                  >
+                    {/* Before / After Previews */}
+                    <div className="grid grid-cols-2 gap-2 h-28">
+                      {/* Original */}
+                      <div className="relative rounded-xl border border-[#213026] bg-[#050a08] overflow-hidden flex items-center justify-center p-1">
+                        <span className="absolute top-1 left-1 rounded bg-[#080e0b]/80 px-1 py-0.2 text-[9px] font-bold text-[#8da194] z-10">
+                          Original
+                        </span>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={item.originalUrl}
+                          alt={item.name}
+                          className="max-h-full max-w-full object-contain"
+                        />
+                      </div>
+
+                      {/* Cutout Result */}
+                      <div
+                        className="relative rounded-xl border border-[#213026] overflow-hidden flex items-center justify-center p-1"
+                        style={{
+                          backgroundImage:
+                            bulkOutputBg === "transparent"
+                              ? "linear-gradient(45deg, #18281e 25%, transparent 25%), linear-gradient(-45deg, #18281e 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #18281e 75%), linear-gradient(-45deg, transparent 75%, #18281e 75%)"
+                              : undefined,
+                          backgroundSize: "8px 8px",
+                          backgroundColor:
+                            bulkOutputBg === "transparent"
+                              ? "#0d1a12"
+                              : bulkOutputBg === "white"
+                              ? "#ffffff"
+                              : bulkOutputBg === "black"
+                              ? "#000000"
+                              : bulkCustomColor,
+                        }}
+                      >
+                        <span className="absolute top-1 left-1 rounded bg-[#080e0b]/80 px-1 py-0.2 text-[9px] font-bold text-[#3cff5f] z-10">
+                          Cutout
+                        </span>
+                        {item.status === "processing" ? (
+                          <div className="flex flex-col items-center gap-1">
+                            <Loader2 className="h-5 w-5 animate-spin text-[#3cff5f]" />
+                            <span className="text-[10px] text-[#3cff5f]">Removing...</span>
+                          </div>
+                        ) : item.processedUrl ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img
+                            src={item.processedUrl}
+                            alt="Cutout"
+                            className="max-h-full max-w-full object-contain"
+                          />
+                        ) : (
+                          <span className="text-[10px] text-[#62776a]">Waiting</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Metadata & Actions */}
+                    <div className="flex items-center justify-between text-xs pt-1 border-t border-[#14231b]">
+                      <div className="overflow-hidden mr-2">
+                        <div className="flex items-center gap-1">
+                          <span className="text-[10px] font-bold text-[#62776a]">#{idx + 1}</span>
+                          <h4 className="text-xs font-bold text-[#e7eee9] truncate max-w-[120px]">
+                            {item.name}
+                          </h4>
+                        </div>
+                        <span className="text-[10px] text-[#8da194]">{formatBytes(item.size)}</span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {item.processedBlob && (
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadSingleCutoutFromBulk(item)}
+                            className="rounded-lg bg-[#102a16] border border-[#2a5234] p-1.5 text-[#3cff5f] hover:bg-[#183d21] transition-all cursor-pointer"
+                            title="Download PNG"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveBulkItem(item.id)}
+                          className="rounded-lg p-1.5 text-[#62776a] hover:text-red-400 hover:bg-[#1a1215] transition-all cursor-pointer"
+                          title="Remove item"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      ) : (
-        /* Empty State */
-        <div
-          onClick={() => fileInputRef.current?.click()}
-          className="rounded-3xl border-2 border-dashed border-[#26332d] bg-[#0c1510]/50 p-12 text-center hover:border-[#3cff5f]/50 transition-colors cursor-pointer group"
-        >
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#102a16] border border-[#2a5234] text-[#3cff5f] mb-4 group-hover:scale-105 transition-transform">
-            <Wand2 className="h-8 w-8" />
+      )}
+
+      {/* ========================================================= */}
+      {/* SINGLE STUDIO EDITOR TAB */}
+      {/* ========================================================= */}
+      {activeTabMode === "single" && (
+        <div className="space-y-6">
+          {/* Upload & Controls Hub */}
+          <div className="rounded-3xl border border-[#26332d] bg-[#0c1510] p-6 sm:p-8 shadow-2xl">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-base sm:text-lg font-bold text-[#e7eee9] flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-[#3cff5f]" />
+                  <span>Single Image Studio Editor</span>
+                </h2>
+                <p className="text-xs text-[#9baaa1] mt-0.5">
+                  Inspect cutouts side by side, fine-tune color tolerance, and replace backgrounds.
+                </p>
+              </div>
+
+              {/* Upload Button */}
+              <div className="flex flex-wrap items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => singleFileInputRef.current?.click()}
+                  className="inline-flex items-center gap-2 rounded-2xl bg-[#3cff5f] px-5 py-3 text-xs sm:text-sm font-bold text-[#050a08] hover:bg-[#48ff69] transition-all cursor-pointer shadow-md shadow-[#3cff5f]/20"
+                >
+                  <Upload className="h-4 w-4" />
+                  <span>Upload Image</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Controls Bar */}
+            <div className="mt-6 pt-5 border-t border-[#213026] flex flex-wrap items-center gap-6 text-xs text-[#9baaa1]">
+              <div className="flex items-center gap-2">
+                <span>Engine:</span>
+                <button
+                  type="button"
+                  onClick={() => setSingleMode("smart-studio")}
+                  className={`px-3 py-1 rounded-xl text-xs font-bold border transition-all ${
+                    singleMode === "smart-studio"
+                      ? "border-[#3cff5f] bg-[#102a16] text-[#3cff5f]"
+                      : "border-[#213026] bg-[#080e0b] text-[#8da194]"
+                  }`}
+                >
+                  Smart Studio
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSingleMode("ai-deep")}
+                  className={`px-3 py-1 rounded-xl text-xs font-bold border transition-all ${
+                    singleMode === "ai-deep"
+                      ? "border-[#3cff5f] bg-[#102a16] text-[#3cff5f]"
+                      : "border-[#213026] bg-[#080e0b] text-[#8da194]"
+                  }`}
+                >
+                  AI Deep Cutout
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Sliders className="h-4 w-4 text-[#3cff5f]" />
+                <span>Tolerance:</span>
+                <input
+                  type="range"
+                  min="5"
+                  max="85"
+                  value={singleTolerance}
+                  onChange={(e) => setSingleTolerance(Number(e.target.value))}
+                  onMouseUp={() => {
+                    if (singleImageFile && singleImgRef.current) {
+                      runSingleRemoval(singleImageFile, singleImgRef.current);
+                    }
+                  }}
+                  className="w-28 accent-[#3cff5f] cursor-pointer"
+                />
+                <span className="font-mono text-[#e7eee9]">{singleTolerance}%</span>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            {isSingleProcessing && (
+              <div className="mt-6 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#3cff5f] font-medium flex items-center gap-2">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    {singleProgressMsg}
+                  </span>
+                  <span className="text-[#9baaa1] font-mono">{singleProgressPercent}%</span>
+                </div>
+                <div className="h-2 w-full bg-[#080e0b] rounded-full overflow-hidden border border-[#213026]">
+                  <div
+                    className="h-full bg-gradient-to-r from-[#102a16] to-[#3cff5f] transition-all duration-300"
+                    style={{ width: `${singleProgressPercent}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {singleError && (
+              <div className="mt-4 flex items-center gap-2 rounded-xl bg-red-950/40 border border-red-800/40 px-4 py-3 text-xs text-red-300">
+                <AlertCircle className="h-4 w-4 shrink-0 text-red-400" />
+                <span>{singleError}</span>
+              </div>
+            )}
           </div>
-          <h3 className="text-lg font-bold text-[#e7eee9]">
-            Drag & Drop or Click to Upload Image
-          </h3>
-          <p className="mt-2 text-xs sm:text-sm text-[#9baaa1] max-w-md mx-auto leading-relaxed">
-            Supports PNG, JPG, JPEG, and WebP up to 25MB. Processed 100% locally in your browser with zero data upload.
-          </p>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs font-semibold text-[#3cff5f]">
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-4 w-4" /> AI Subject Detection
-            </span>
-            <span className="text-[#334538]">•</span>
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-4 w-4" /> 100% Free & Unlimited
-            </span>
-            <span className="text-[#334538]">•</span>
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-4 w-4" /> High-Res PNG Download
-            </span>
-          </div>
+
+          {/* Main Comparison & Result */}
+          {singleProcessedUrl || singleOriginalUrl ? (
+            <div className="space-y-6">
+              {/* Toolbar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#213026] pb-4">
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="text-[#9baaa1] font-semibold">Backdrop:</span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {BACKDROP_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => {
+                          setSingleBg(opt.id);
+                          if (singleImageFile && singleImgRef.current) {
+                            runSingleRemoval(singleImageFile, singleImgRef.current);
+                          }
+                        }}
+                        className={`p-0.5 rounded-xl transition-all cursor-pointer flex items-center justify-center ${
+                          singleBg === opt.id
+                            ? "ring-2 ring-[#3cff5f] ring-offset-2 ring-offset-[#080e0b] scale-105"
+                            : "opacity-85 hover:opacity-100"
+                        }`}
+                        style={{
+                          background: "#0c1510",
+                          border: singleBg === opt.id ? "1px solid #3cff5f" : "1px solid #26332d",
+                        }}
+                        title={opt.label}
+                      >
+                        <span className="block h-7 w-7 rounded-lg shadow-inner flex items-center justify-center" style={opt.previewStyle}>
+                          {singleBg === opt.id && <Check className="h-4 w-4 text-white stroke-[3]" />}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleSingleCopy}
+                    disabled={!singleProcessedUrl}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-[#213026] bg-[#102a16] px-4 py-2.5 text-xs sm:text-sm font-semibold text-[#3cff5f] hover:bg-[#16381e] transition-colors cursor-pointer disabled:opacity-40"
+                  >
+                    {singleCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    <span>{singleCopied ? "Copied PNG!" : "Copy PNG"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSingleDownload}
+                    disabled={!singleProcessedUrl}
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#3cff5f] px-5 py-2.5 text-xs sm:text-sm font-bold text-[#050a08] hover:bg-[#48ff69] transition-all cursor-pointer shadow-md shadow-[#3cff5f]/20 disabled:opacity-40"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Download Result</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Side-by-Side Display */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="rounded-3xl border border-[#26332d] bg-[#0c1510] overflow-hidden flex flex-col shadow-xl">
+                  <div className="px-5 py-3 border-b border-[#213026] bg-[#080e0b] flex items-center justify-between text-xs">
+                    <span className="font-bold text-[#e7eee9]">Original Image</span>
+                    <span className="text-[#9baaa1] font-mono">{singleImageFile?.name || "Uploaded"}</span>
+                  </div>
+                  <div className="relative aspect-square w-full bg-[#050a08] flex items-center justify-center p-4 overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={singleOriginalUrl}
+                      alt="Original"
+                      className="max-h-full max-w-full object-contain rounded-xl shadow-lg"
+                    />
+                  </div>
+                </div>
+
+                <div className="rounded-3xl border border-[#26332d] bg-[#0c1510] overflow-hidden flex flex-col shadow-xl">
+                  <div className="px-5 py-3 border-b border-[#213026] bg-[#080e0b] flex items-center justify-between text-xs">
+                    <span className="font-bold text-[#3cff5f] flex items-center gap-1.5">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span>Cutout Result</span>
+                    </span>
+                    <span className="text-[#3cff5f] bg-[#102a16] border border-[#2a5234] px-2 py-0.5 rounded-md font-mono text-[10px]">
+                      {singleBg.toUpperCase()}
+                    </span>
+                  </div>
+                  <div
+                    className="relative aspect-square w-full flex items-center justify-center p-4 overflow-hidden"
+                    style={{
+                      backgroundImage:
+                        singleBg === "transparent"
+                          ? "linear-gradient(45deg, #374151 25%, transparent 25%), linear-gradient(-45deg, #374151 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #374151 75%), linear-gradient(-45deg, transparent 75%, #374151 75%)"
+                          : undefined,
+                      backgroundSize: "16px 16px",
+                      backgroundColor:
+                        singleBg === "transparent"
+                          ? "#1f2937"
+                          : singleBg === "white"
+                          ? "#ffffff"
+                          : singleBg === "black"
+                          ? "#000000"
+                          : singleCustomColor,
+                    }}
+                  >
+                    {isSingleProcessing ? (
+                      <div className="text-center p-6 space-y-3">
+                        <Loader2 className="h-8 w-8 animate-spin text-[#3cff5f] mx-auto" />
+                        <p className="text-xs text-[#3cff5f] font-semibold">{singleProgressMsg}</p>
+                      </div>
+                    ) : singleProcessedUrl ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={singleProcessedUrl}
+                        alt="Cutout"
+                        className="max-h-full max-w-full object-contain rounded-xl drop-shadow-2xl"
+                      />
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Empty State */
+            <div
+              onClick={() => singleFileInputRef.current?.click()}
+              className="rounded-3xl border-2 border-dashed border-[#26332d] bg-[#0c1510]/50 p-12 text-center hover:border-[#3cff5f]/50 transition-colors cursor-pointer group"
+            >
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#102a16] border border-[#2a5234] text-[#3cff5f] mb-4 group-hover:scale-105 transition-transform">
+                <Wand2 className="h-8 w-8" />
+              </div>
+              <h3 className="text-lg font-bold text-[#e7eee9]">
+                Click or Drag Image to Open in Single Studio
+              </h3>
+              <p className="mt-2 text-xs sm:text-sm text-[#9baaa1] max-w-md mx-auto leading-relaxed">
+                Inspect before and after side-by-side with full precision.
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>

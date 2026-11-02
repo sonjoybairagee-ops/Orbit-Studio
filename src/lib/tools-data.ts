@@ -100,11 +100,11 @@ export const TOOLS_DATA: ToolItem[] = [
   {
     id: "background-remover",
     name: "Background Remover",
-    shortDesc: "Remove image background in 1-click with high precision.",
-    description: "Instantly isolate subjects and remove backgrounds from photos, products, logos, and portraits. Download high-res transparent PNGs.",
+    shortDesc: "Bulk upload photos & auto-remove backgrounds into ZIP transparent PNG cutouts.",
+    description: "Bulk batch background remover for portraits, e-commerce products, logos, and graphics. Auto-remove backgrounds, replace with studio white, and download all cutouts as a ZIP archive.",
     category: "image",
     href: "/image-tools/background-remover",
-    badge: "1-Click Cutout",
+    badge: "Bulk & AI Cutout",
     isPopular: true,
     cardColor: {
       bg: "bg-emerald-50/50 hover:bg-emerald-50",
