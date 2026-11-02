@@ -195,6 +195,23 @@ export const TOOLS_DATA: ToolItem[] = [
     iconName: "Layers",
   },
   {
+    id: "invoice-generator",
+    name: "Invoice Generator & PDF Exporter",
+    shortDesc: "Create professional business invoices & export directly to PDF.",
+    description: "Design custom invoices with business logo, billing addresses, line item pricing, automatic taxes, and export print-ready A4 PDF files.",
+    category: "pdf",
+    href: "/pdf-tools/invoice-generator",
+    isPopular: true,
+    badge: "PDF & Print",
+    cardColor: {
+      bg: "bg-emerald-50/50 hover:bg-emerald-50",
+      border: "border-emerald-200",
+      accent: "text-emerald-700",
+      headerBg: "bg-emerald-100/70 text-emerald-800",
+    },
+    iconName: "Receipt",
+  },
+  {
     id: "word-counter",
     name: "Word Counter",
     shortDesc: "Count words, characters, sentences, and reading time.",
