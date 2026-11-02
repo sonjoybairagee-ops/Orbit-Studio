@@ -154,7 +154,7 @@ const schemas = [
 ];
 
 const ADSENSE_CLIENT_ID =
-  process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || "ca-pub-3118671109259877";
+  process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || "ca-pub-7889890860409136";
 
 export default function RootLayout({
   children,
@@ -164,10 +164,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <meta name="google-adsense-account" content="ca-pub-3118671109259877" />
+        <meta name="google-adsense-account" content="ca-pub-7889890860409136" />
         <script
           async
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`}
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7889890860409136"
           crossOrigin="anonymous"
         />
         <Script
