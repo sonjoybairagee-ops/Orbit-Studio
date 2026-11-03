@@ -79,10 +79,11 @@ export function ProjectDetailsClientView({
     if (!selectedFile) return;
 
     setIsUploading(true);
-    setUploadProgress(10);
+    setUploadProgress(5);
+    let reservationId: string | null = null;
 
     try {
-      // 1. Get presigned upload URL
+      // 1. Get presigned upload URL & atomically reserve quota
       const presignedRes = await fetch("/api/agency/storage/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -101,51 +102,84 @@ export function ProjectDetailsClientView({
         throw new Error(presignedData.error || "Failed to initiate upload.");
       }
 
-      setUploadProgress(40);
+      reservationId = presignedData.reservationId;
+      setUploadProgress(15);
 
-      // 2. Direct upload to Cloudflare R2
-      const uploadRes = await fetch(presignedData.uploadUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": selectedFile.type || "application/octet-stream",
-        },
-        body: selectedFile,
+      // 2. Direct upload to Cloudflare R2 via XHR with progress
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const pct = Math.min(95, Math.round(15 + (event.loaded / event.total) * 80));
+            setUploadProgress(pct);
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+          } else {
+            reject(new Error(`Direct R2 upload rejected with status ${xhr.status}`));
+          }
+        };
+
+        xhr.onerror = () => reject(new Error("Network failure during direct R2 upload"));
+        xhr.onabort = () => reject(new Error("Upload aborted"));
+
+        xhr.open("PUT", presignedData.uploadUrl, true);
+        xhr.setRequestHeader("Content-Type", selectedFile.type || "application/octet-stream");
+        xhr.send(selectedFile);
       });
 
-      if (!uploadRes.ok) {
-        throw new Error("Direct Cloudflare R2 upload failed.");
-      }
+      setUploadProgress(96);
 
-      setUploadProgress(80);
-
-      // 3. Confirm upload and save file record
+      // 3. Confirm upload and save file record (atomic reservation commit)
       const confirmRes = await fetch("/api/agency/storage/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           workspaceId: project.workspace_id,
           projectId: project.id,
-          r2Key: presignedData.r2Key,
+          reservationId,
           fileName: selectedFile.name,
           fileSizeBytes: selectedFile.size,
           mimeType: selectedFile.type,
-          category: uploadCategory,
         }),
       });
 
       const confirmData = await confirmRes.json();
-      if (!confirmRes.ok) {
+      if (!confirmRes.ok || !confirmData.file) {
         throw new Error(confirmData.error || "Failed to confirm file registration.");
       }
 
       setUploadProgress(100);
       setFiles([confirmData.file, ...files]);
 
-      // If category is preview/video, prompt or offer to create version
+      // If category is preview/video, fetch signed download URL to prefill versionUrl
       if (selectedFile.type.startsWith("video/")) {
-        setVersionUrl(`https://assets.compxorbit.com/${presignedData.r2Key}`);
+        try {
+          const dlRes = await fetch(`/api/agency/storage/download?fileId=${confirmData.file.id}`);
+          const dlData = await dlRes.json();
+          if (dlData.downloadUrl) {
+            setVersionUrl(dlData.downloadUrl);
+          }
+        } catch {
+          // Non-critical fallback
+        }
       }
     } catch (err: any) {
+      if (reservationId) {
+        // Release reservation on failure
+        fetch("/api/agency/storage/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reservationId,
+            workspaceId: project.workspace_id,
+          }),
+        }).catch(() => {});
+      }
       alert(err.message || "Upload failed");
     } finally {
       setIsUploading(false);
@@ -205,6 +239,25 @@ export function ProjectDetailsClientView({
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  // Secure Signed Download
+  const handleDownloadFile = async (file: AgencyProjectFile) => {
+    try {
+      const res = await fetch(`/api/agency/storage/download?fileId=${file.id}`);
+      const data = await res.json();
+      if (!res.ok || !data.downloadUrl) {
+        throw new Error(data.error || "Failed to generate download URL");
+      }
+      const a = document.createElement("a");
+      a.href = data.downloadUrl;
+      a.download = file.file_name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (err: any) {
+      alert(err.message || "Download failed");
     }
   };
 
@@ -419,15 +472,14 @@ export function ProjectDetailsClientView({
                     </div>
 
                     <div className="flex items-center gap-2 self-end sm:self-auto">
-                      <a
-                        href={`https://assets.compxorbit.com/${file.r2_key}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#213026] bg-[#0c1510] text-xs font-bold text-[#3cff5f] hover:bg-[#102a16] transition-all"
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadFile(file)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#213026] bg-[#0c1510] text-xs font-bold text-[#3cff5f] hover:bg-[#102a16] transition-all cursor-pointer"
                       >
                         <Download className="h-3.5 w-3.5" />
                         <span>Download</span>
-                      </a>
+                      </button>
 
                       <button
                         type="button"

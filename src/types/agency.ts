@@ -38,6 +38,8 @@ export interface Workspace {
   plan_tier: WorkspacePlanTier;
   storage_quota_bytes: number;
   storage_used_bytes: number;
+  reserved_bytes?: number;
+  is_over_quota?: boolean;
   settings?: {
     currency?: string;
     brandColor?: string;
@@ -193,4 +195,57 @@ export interface AgencyDashboardStats {
   recentProjects: AgencyProject[];
   recentActivity: AgencyActivityLog[];
 }
+
+export interface WorkspaceUploadReservation {
+  id: string;
+  workspace_id: string;
+  project_id: string;
+  r2_key: string;
+  reserved_bytes: number;
+  mime_type?: string | null;
+  category: FileCategory;
+  status: "pending" | "confirmed" | "expired" | "cancelled" | "failed";
+  reserved_by?: string | null;
+  expires_at: string;
+  resolved_at?: string | null;
+  created_at: string;
+}
+
+export interface WorkspaceStorageAddon {
+  id: string;
+  workspace_id: string;
+  addon_id: string;
+  bytes_added: number;
+  status: "active" | "cancelled" | "expired";
+  billing_cycle: "monthly" | "annual" | "one_time";
+  payment_ref?: string | null;
+  activated_at: string;
+  expires_at?: string | null;
+  cancelled_at?: string | null;
+  created_at: string;
+}
+
+export interface WorkspaceStorageTransaction {
+  id: string;
+  workspace_id: string;
+  event_type:
+    | "upload_reserved"
+    | "upload_confirmed"
+    | "upload_cancelled"
+    | "upload_expired"
+    | "upload_failed"
+    | "file_deleted"
+    | "quota_upgraded"
+    | "addon_activated"
+    | "addon_cancelled";
+  delta_bytes: number;
+  balance_after: number;
+  reservation_id?: string | null;
+  file_id?: string | null;
+  addon_id?: string | null;
+  actor_id?: string | null;
+  note?: string | null;
+  created_at: string;
+}
+
 

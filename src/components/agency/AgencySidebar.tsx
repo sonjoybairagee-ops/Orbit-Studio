@@ -37,12 +37,14 @@ const NAV_ITEMS = [
 export function AgencySidebar({ workspace, role }: AgencySidebarProps) {
   const pathname = usePathname();
 
-  const usedMB = (workspace.storage_used_bytes / (1024 * 1024)).toFixed(0);
-  const totalGB = (workspace.storage_quota_bytes / (1024 * 1024 * 1024)).toFixed(1);
-  const usedPercent = Math.min(
-    100,
-    Math.round((workspace.storage_used_bytes / workspace.storage_quota_bytes) * 100) || 0
-  );
+  const used = Number(workspace.storage_used_bytes || 0);
+  const quota = Number(workspace.storage_quota_bytes || 2147483648);
+  const reserved = Number(workspace.reserved_bytes || 0);
+
+  const usedMB = (used / (1024 * 1024)).toFixed(0);
+  const totalGB = (quota / (1024 * 1024 * 1024)).toFixed(1);
+  const usedPercent = Math.min(100, Math.round((used / quota) * 100) || 0);
+  const reservedPercent = Math.min(100 - usedPercent, Math.round((reserved / quota) * 100) || 0);
 
   return (
     <aside className="w-64 shrink-0 flex flex-col justify-between border-r border-[#213026] bg-[#070d09] min-h-[calc(100vh-5rem)] p-4">
@@ -101,19 +103,29 @@ export function AgencySidebar({ workspace, role }: AgencySidebarProps) {
       {/* Footer widgets: Storage Gauge + Return to Orbit Licenses */}
       <div className="space-y-3 pt-4 border-t border-[#1b2720]">
         {/* Storage usage widget */}
-        <div className="rounded-xl border border-[#213026] bg-[#0c1510]/80 p-3">
+        <div className={`rounded-xl border p-3 ${workspace.is_over_quota ? "border-red-500/40 bg-red-950/20" : "border-[#213026] bg-[#0c1510]/80"}`}>
           <div className="flex items-center justify-between text-[11px] font-semibold mb-1.5">
             <span className="text-[#8da194] flex items-center gap-1">
-              <HardDrive className="h-3 w-3 text-[#3cff5f]" />
-              <span>Storage</span>
+              <HardDrive className={`h-3 w-3 ${workspace.is_over_quota ? "text-red-400" : "text-[#3cff5f]"}`} />
+              <span className={workspace.is_over_quota ? "text-red-300 font-bold" : ""}>
+                {workspace.is_over_quota ? "Over Quota" : "Storage"}
+              </span>
             </span>
             <span className="text-[#e7eee9] font-mono">{usedPercent}%</span>
           </div>
-          <div className="h-1.5 w-full rounded-full bg-[#1b2720] overflow-hidden">
+          <div className="h-1.5 w-full rounded-full bg-[#1b2720] overflow-hidden flex">
             <div
-              className="h-full bg-[#3cff5f] rounded-full transition-all duration-500"
+              className={`h-full transition-all duration-500 ${
+                workspace.is_over_quota || usedPercent > 85 ? "bg-red-500" : usedPercent > 60 ? "bg-yellow-400" : "bg-[#3cff5f]"
+              }`}
               style={{ width: `${Math.max(4, usedPercent)}%` }}
             />
+            {reservedPercent > 0 && (
+              <div
+                className="h-full bg-[#4da6ff] animate-pulse transition-all duration-500"
+                style={{ width: `${reservedPercent}%` }}
+              />
+            )}
           </div>
           <div className="mt-1.5 flex justify-between text-[10px] text-[#62776a] font-mono">
             <span>{usedMB} MB used</span>

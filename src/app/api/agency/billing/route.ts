@@ -25,8 +25,10 @@ export async function POST(req: Request) {
       billingCycle = "monthly",
       addonId,
       paymentRef,       // idempotency key (Stripe event ID, payment gateway txn, etc.)
+      txnRef,
       expiresAt,        // ISO string — optional add-on expiry date
     } = body;
+    const effectivePaymentRef = paymentRef || txnRef || null;
 
     if (!workspaceId) {
       return NextResponse.json({ error: "workspaceId is required." }, { status: 400 });
@@ -107,7 +109,7 @@ export async function POST(req: Request) {
           newPlan:    targetTier,
           billingCycle,
           quotaGB:    Math.round(newQuotaBytes / (1024 * 1024 * 1024)),
-          paymentRef: paymentRef || null,
+          paymentRef: effectivePaymentRef,
         },
       });
 
@@ -135,7 +137,7 @@ export async function POST(req: Request) {
           p_addon_id:      addonId,
           p_bytes_added:   addon.bytes,
           p_billing_cycle: billingCycle,
-          p_payment_ref:   paymentRef || null,
+          p_payment_ref:   effectivePaymentRef,
           p_expires_at:    expiresAt || null,
           p_actor_id:      user.id,
         }
@@ -168,7 +170,7 @@ export async function POST(req: Request) {
           addonId,
           bytesAdded:   addon.bytes,
           billingCycle,
-          paymentRef:   paymentRef || null,
+          paymentRef:   effectivePaymentRef,
           addonRecordId,
         },
       });
