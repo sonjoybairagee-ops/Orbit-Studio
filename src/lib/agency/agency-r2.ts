@@ -1,10 +1,10 @@
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-// Dedicated Agency OS Cloudflare R2 Bucket Configuration
-const accountId = process.env.AGENCY_R2_ACCOUNT_ID || process.env.R2_ACCOUNT_ID;
-const accessKeyId = process.env.AGENCY_R2_ACCESS_KEY_ID || process.env.R2_ACCESS_KEY_ID;
-const secretAccessKey = process.env.AGENCY_R2_SECRET_ACCESS_KEY || process.env.R2_SECRET_ACCESS_KEY;
+// Dedicated Agency OS Cloudflare R2 Bucket Configuration (Strictly AGENCY_R2_* isolated)
+const accountId = process.env.AGENCY_R2_ACCOUNT_ID;
+const accessKeyId = process.env.AGENCY_R2_ACCESS_KEY_ID;
+const secretAccessKey = process.env.AGENCY_R2_SECRET_ACCESS_KEY;
 
 // Strictly targets the Agency OS media bucket (compx-orbit-agency-storage)
 export const agencyBucketName =
