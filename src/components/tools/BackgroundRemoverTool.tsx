@@ -631,17 +631,17 @@ export default function BackgroundRemoverTool() {
             </div>
 
             {/* Options Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               {/* Output Backdrop Choice */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[#8da194]">Output Backdrop:</label>
-                <div className="flex items-center gap-2">
+                <div className="grid grid-cols-4 gap-2">
                   {BACKDROP_OPTIONS.map((opt) => (
                     <button
                       key={opt.id}
                       type="button"
                       onClick={() => setBulkOutputBg(opt.id)}
-                      className={`flex-1 py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center ${
+                      className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center truncate ${
                         bulkOutputBg === opt.id
                           ? "border-[#3cff5f] bg-[#102a16] text-[#3cff5f] shadow-md shadow-[#3cff5f]/15"
                           : "border-[#213026] bg-[#080e0b] text-[#8da194] hover:text-[#e7eee9]"
@@ -650,15 +650,19 @@ export default function BackgroundRemoverTool() {
                       {opt.badgeText}
                     </button>
                   ))}
-                  {bulkOutputBg === "custom" && (
+                </div>
+                {bulkOutputBg === "custom" && (
+                  <div className="flex items-center gap-2 pt-1">
+                    <span className="text-xs text-[#8da194]">Pick Color:</span>
                     <input
                       type="color"
                       value={bulkCustomColor}
                       onChange={(e) => setBulkCustomColor(e.target.value)}
-                      className="h-8 w-8 rounded-lg border border-[#213026] bg-transparent cursor-pointer p-0"
+                      className="h-7 w-12 rounded-lg border border-[#213026] bg-transparent cursor-pointer p-0"
                     />
-                  )}
-                </div>
+                    <span className="text-xs font-mono text-[#3cff5f]">{bulkCustomColor}</span>
+                  </div>
+                )}
               </div>
 
               {/* Tolerance (Smart Studio) */}
@@ -673,28 +677,14 @@ export default function BackgroundRemoverTool() {
                   max="70"
                   value={bulkTolerance}
                   onChange={(e) => setBulkTolerance(Number(e.target.value))}
-                  className="w-full accent-[#3cff5f] h-2 bg-[#1b2720] rounded-lg cursor-pointer"
+                  className="w-full accent-[#3cff5f] h-2 bg-[#1b2720] rounded-lg cursor-pointer block"
                 />
-                <span className="text-[10px] text-[#62776a]">Auto-detects corner studio background</span>
-              </div>
-
-              {/* ZIP Archive Name */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#8da194]">Bundle ZIP Name:</label>
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="text"
-                    value={bulkZipName}
-                    onChange={(e) => setBulkZipName(e.target.value.replace(/[^a-zA-Z0-9_\-]/g, "_"))}
-                    className="w-full rounded-xl border border-[#213026] bg-[#080e0b] px-3 py-2 text-xs font-mono text-[#3cff5f] focus:outline-none focus:border-[#3cff5f]"
-                  />
-                  <span className="text-xs text-[#62776a]">.zip</span>
-                </div>
+                <p className="text-[10px] text-[#62776a] mt-1 m-0">Auto-detects corner studio background</p>
               </div>
             </div>
 
-            {/* Automation Toggles */}
-            <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-[#1b2720]">
+            {/* Automation Toggles & ZIP Name */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-3 border-t border-[#1b2720]">
               <div className="flex flex-wrap items-center gap-5">
                 <label className="flex items-center gap-2 cursor-pointer select-none">
                   <input
@@ -719,6 +709,21 @@ export default function BackgroundRemoverTool() {
                     📥 Auto-download ZIP archive when complete
                   </span>
                 </label>
+              </div>
+
+              {/* Bundle ZIP Name */}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <span className="text-xs font-bold text-[#8da194] shrink-0">ZIP Name:</span>
+                <div className="flex items-center rounded-xl border border-[#213026] bg-[#080e0b] px-3 py-1.5 focus-within:border-[#3cff5f] transition-colors">
+                  <input
+                    type="text"
+                    value={bulkZipName}
+                    onChange={(e) => setBulkZipName(e.target.value.replace(/[^a-zA-Z0-9_\-]/g, "_"))}
+                    className="bg-transparent text-xs font-mono text-[#3cff5f] focus:outline-none w-36 sm:w-44"
+                    placeholder="compx-cutouts-bundle"
+                  />
+                  <span className="text-xs text-[#62776a] shrink-0 font-mono">.zip</span>
+                </div>
               </div>
             </div>
           </div>

@@ -805,14 +805,16 @@ export default function SvgEngineTool() {
 
               {/* Bundle ZIP Name */}
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                <span className="text-[11px] font-bold text-[#8da194]">ZIP Name:</span>
-                <input
-                  type="text"
-                  value={zipFileName}
-                  onChange={(e) => setZipFileName(e.target.value.replace(/[^a-zA-Z0-9_\-]/g, "_"))}
-                  className="rounded-xl border border-[#213026] bg-[#080e0b] px-2.5 py-1 text-xs font-mono text-[#3cff5f] focus:outline-none focus:border-[#3cff5f] w-36"
-                />
-                <span className="text-xs text-[#62776a]">.zip</span>
+                <span className="text-xs font-bold text-[#8da194] shrink-0">ZIP Name:</span>
+                <div className="flex items-center rounded-xl border border-[#213026] bg-[#080e0b] px-3 py-1.5 focus-within:border-[#3cff5f] transition-colors">
+                  <input
+                    type="text"
+                    value={zipFileName}
+                    onChange={(e) => setZipFileName(e.target.value.replace(/[^a-zA-Z0-9_\-]/g, "_"))}
+                    className="bg-transparent text-xs font-mono text-[#3cff5f] focus:outline-none w-32 sm:w-40"
+                  />
+                  <span className="text-xs text-[#62776a] shrink-0 font-mono">.zip</span>
+                </div>
               </div>
             </div>
           </div>
