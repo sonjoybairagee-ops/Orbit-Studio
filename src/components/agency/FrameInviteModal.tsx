@@ -370,3 +370,4 @@ export function FrameInviteModal({
     </div>
   );
 }
+

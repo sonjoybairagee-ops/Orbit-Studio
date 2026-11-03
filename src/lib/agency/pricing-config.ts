@@ -160,3 +160,4 @@ export const STORAGE_ADDONS: StorageAddonConfig[] = [
     priceMonthlyBDT: 4900,
   },
 ];
+

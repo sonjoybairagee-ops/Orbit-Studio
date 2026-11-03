@@ -1,12 +1,12 @@
 import { PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { r2Client, r2BucketName } from "@/lib/r2";
+import { agencyR2Client, agencyBucketName } from "./agency-r2";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { FileCategory } from "@/types/agency";
 import { logAgencyActivity } from "./activity-logger";
 
-const bucketName = r2BucketName;
+const bucketName = agencyBucketName;
 
 /**
  * Validates storage quota and generates a presigned PUT URL for direct browser-to-R2 upload.
@@ -61,7 +61,7 @@ export async function createPresignedUploadUrl({
     ContentType: mimeType || "application/octet-stream",
   });
 
-  const uploadUrl = await getSignedUrl(r2Client, command, { expiresIn: 1800 }); // 30 minutes
+  const uploadUrl = await getSignedUrl(agencyR2Client, command, { expiresIn: 1800 }); // 30 minutes
 
   return {
     uploadUrl,
@@ -151,8 +151,8 @@ export async function confirmUploadedFile({
  * Get secure signed download or stream URL for an R2 key.
  */
 export async function getR2SignedReadUrl(r2Key: string, expiresIn = 3600) {
-  // If custom domain is set and public, prefer clean URL
-  const customDomain = process.env.R2_PUBLIC_DOMAIN;
+  // If dedicated agency custom domain is set and public, prefer clean URL
+  const customDomain = process.env.AGENCY_R2_PUBLIC_DOMAIN;
   if (customDomain) {
     const cleanDomain = customDomain.replace(/\/$/, "");
     const cleanKey = r2Key.replace(/^\//, "");
@@ -165,7 +165,7 @@ export async function getR2SignedReadUrl(r2Key: string, expiresIn = 3600) {
     Key: r2Key,
   });
 
-  return await getSignedUrl(r2Client, command, { expiresIn });
+  return await getSignedUrl(agencyR2Client, command, { expiresIn });
 }
 
 /**
@@ -191,7 +191,7 @@ export async function deleteAgencyFile(fileId: string, workspaceId: string) {
       Bucket: bucketName,
       Key: file.r2_key,
     });
-    await r2Client.send(deleteCmd);
+    await agencyR2Client.send(deleteCmd);
   } catch (err) {
     console.warn("Could not delete object from R2 directly:", err);
   }
