@@ -98,6 +98,8 @@ export default function BackgroundRemoverTool() {
   const [bulkAutoProcessOnUpload, setBulkAutoProcessOnUpload] = useState<boolean>(true);
   const [bulkAutoDownloadZip, setBulkAutoDownloadZip] = useState<boolean>(true);
   const [bulkZipName, setBulkZipName] = useState<string>("compx-cutouts-bundle");
+  const [bulkContiguousMode, setBulkContiguousMode] = useState<boolean>(true);
+  const [bulkDecontaminate, setBulkDecontaminate] = useState<boolean>(true);
 
   const [isBulkProcessing, setIsBulkProcessing] = useState<boolean>(false);
   const [bulkProgress, setBulkProgress] = useState<{
@@ -132,6 +134,8 @@ export default function BackgroundRemoverTool() {
   const [singleCustomColor, setSingleCustomColor] = useState<string>("#3cff5f");
   const [singleTolerance, setSingleTolerance] = useState<number>(35);
   const [singleTargetColor, setSingleTargetColor] = useState<string>("#ffffff");
+  const [singleContiguousMode, setSingleContiguousMode] = useState<boolean>(true);
+  const [singleDecontaminate, setSingleDecontaminate] = useState<boolean>(true);
 
   const [isSingleProcessing, setIsSingleProcessing] = useState<boolean>(false);
   const [singleProgressMsg, setSingleProgressMsg] = useState<string>("");
@@ -317,6 +321,8 @@ export default function BackgroundRemoverTool() {
           autoDetectCorner: bulkAutoDetectCorner,
           outputBg: bulkOutputBg,
           customBgColor: bulkCustomColor,
+          contiguousMode: bulkContiguousMode,
+          decontaminateFringe: bulkDecontaminate,
         },
         bulkZipName,
         (prog) => {
@@ -453,6 +459,8 @@ export default function BackgroundRemoverTool() {
           targetColor: singleTargetColor,
           tolerance: singleTolerance,
           autoDetectCorner: true,
+          contiguousMode: singleContiguousMode,
+          decontaminateFringe: singleDecontaminate,
         });
       }
 
@@ -681,6 +689,49 @@ export default function BackgroundRemoverTool() {
                 />
                 <p className="text-[10px] text-[#62776a] mt-1 m-0">Auto-detects corner studio background</p>
               </div>
+            </div>
+
+            {/* Studio High-Quality Cleanliness Options */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-[#1b2720]">
+              <label className="flex items-start gap-2.5 rounded-xl border border-[#213026] bg-[#080e0b]/70 p-3 cursor-pointer select-none hover:border-[#3cff5f]/50 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={bulkContiguousMode}
+                  onChange={(e) => setBulkContiguousMode(e.target.checked)}
+                  className="accent-[#3cff5f] h-4 w-4 rounded mt-0.5"
+                />
+                <div className="text-xs">
+                  <span className="font-bold text-[#e7eee9] flex items-center gap-1.5">
+                    <span>🛡️ Protect Subject Interior (Border-Connected)</span>
+                    <span className="rounded bg-[#102a16] border border-[#2a5234] px-1.5 py-0.2 text-[9px] font-mono text-[#3cff5f]">
+                      STUDIO PRO
+                    </span>
+                  </span>
+                  <p className="text-[11px] text-[#8da194] mt-0.5">
+                    Only carves background connected to outer borders. Internal white clothing, text, sneaker soles &amp; reflections are 100% protected.
+                  </p>
+                </div>
+              </label>
+
+              <label className="flex items-start gap-2.5 rounded-xl border border-[#213026] bg-[#080e0b]/70 p-3 cursor-pointer select-none hover:border-[#3cff5f]/50 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={bulkDecontaminate}
+                  onChange={(e) => setBulkDecontaminate(e.target.checked)}
+                  className="accent-[#3cff5f] h-4 w-4 rounded mt-0.5"
+                />
+                <div className="text-xs">
+                  <span className="font-bold text-[#e7eee9] flex items-center gap-1.5">
+                    <span>✨ Anti-Halo &amp; Color Decontamination</span>
+                    <span className="rounded bg-[#102a16] border border-[#2a5234] px-1.5 py-0.2 text-[9px] font-mono text-[#3cff5f]">
+                      CRISP EDGES
+                    </span>
+                  </span>
+                  <p className="text-[11px] text-[#8da194] mt-0.5">
+                    Removes white/green edge bleeding and fringe halos on semi-transparent borders for razor-sharp cutouts on any background.
+                  </p>
+                </div>
+              </label>
             </div>
 
             {/* Automation Toggles & ZIP Name */}
@@ -961,7 +1012,14 @@ export default function BackgroundRemoverTool() {
                             {item.name}
                           </h4>
                         </div>
-                        <span className="text-[10px] text-[#8da194]">{formatBytes(item.size)}</span>
+                        <div className="flex items-center gap-1.5 text-[10px] text-[#8da194]">
+                          <span>{formatBytes(item.size)}</span>
+                          {item.width > 0 && (
+                            <span className="font-mono text-[#3cff5f]">
+                              • {item.width}×{item.height} HQ PNG
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <div className="flex items-center gap-1.5 shrink-0">
@@ -1070,6 +1128,39 @@ export default function BackgroundRemoverTool() {
                 />
                 <span className="font-mono text-[#e7eee9]">{singleTolerance}%</span>
               </div>
+            </div>
+
+            {/* Single Studio Pro Toggles */}
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-[#213026]">
+              <label className="flex items-center gap-2 cursor-pointer text-xs select-none">
+                <input
+                  type="checkbox"
+                  checked={singleContiguousMode}
+                  onChange={(e) => {
+                    setSingleContiguousMode(e.target.checked);
+                    if (singleImageFile && singleImgRef.current) {
+                      setTimeout(() => runSingleRemoval(singleImageFile, singleImgRef.current!), 50);
+                    }
+                  }}
+                  className="accent-[#3cff5f] h-3.5 w-3.5 rounded"
+                />
+                <span className="text-[#e7eee9] font-bold">🛡️ Protect Subject Interior (Border Flood-Fill)</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer text-xs select-none">
+                <input
+                  type="checkbox"
+                  checked={singleDecontaminate}
+                  onChange={(e) => {
+                    setSingleDecontaminate(e.target.checked);
+                    if (singleImageFile && singleImgRef.current) {
+                      setTimeout(() => runSingleRemoval(singleImageFile, singleImgRef.current!), 50);
+                    }
+                  }}
+                  className="accent-[#3cff5f] h-3.5 w-3.5 rounded"
+                />
+                <span className="text-[#e7eee9] font-bold">✨ Anti-Halo &amp; Edge Despill Filter</span>
+              </label>
             </div>
 
             {/* Progress Bar */}
