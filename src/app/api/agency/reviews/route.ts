@@ -60,3 +60,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: err.message || "Failed to add comment" }, { status: 500 });
   }
 }
+

@@ -182,3 +182,4 @@ export function ClientPortalView({
     </div>
   );
 }
+

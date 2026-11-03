@@ -21,3 +21,4 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: err.message || "Failed to delete file" }, { status: 400 });
   }
 }
+
