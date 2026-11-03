@@ -347,7 +347,7 @@ export function DashboardView({ user, licenses, verified }: DashboardViewProps) 
                     </p>
                   </div>
                   <a
-                    href="https://discord.gg/Je8pxakYf"
+                    href="https://discord.gg/cY8Gyd5Xz"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-[#5865F2] hover:bg-[#4752C4] text-white py-2.5 text-xs font-bold transition-all"
