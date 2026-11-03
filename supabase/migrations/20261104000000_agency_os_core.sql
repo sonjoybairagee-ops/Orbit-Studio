@@ -269,10 +269,11 @@ alter table public.agency_deliveries enable row level security;
 alter table public.agency_activity_logs enable row level security;
 
 -- ------------------------------------------------------------
--- 14. RLS Policies
+-- 14. RLS Policies (Idempotent: drop if exists before create)
 -- ------------------------------------------------------------
 
 -- Workspaces: Viewable if you are a member or the owner
+drop policy if exists "Workspaces viewable by members" on public.workspaces;
 create policy "Workspaces viewable by members"
   on public.workspaces for select
   using (
@@ -280,73 +281,100 @@ create policy "Workspaces viewable by members"
     id in (select workspace_id from public.get_user_workspace_ids())
   );
 
+drop policy if exists "Workspaces insertable by authenticated users" on public.workspaces;
 create policy "Workspaces insertable by authenticated users"
   on public.workspaces for insert
   with check (auth.uid() = owner_id);
 
+drop policy if exists "Workspaces updatable by owners and admins" on public.workspaces;
 create policy "Workspaces updatable by owners and admins"
   on public.workspaces for update
   using (public.is_workspace_member(id, 'admin') or owner_id = auth.uid());
 
 -- Workspace Members
+drop policy if exists "Workspace members viewable by fellow members" on public.workspace_members;
 create policy "Workspace members viewable by fellow members"
   on public.workspace_members for select
   using (workspace_id in (select workspace_id from public.get_user_workspace_ids()));
 
+drop policy if exists "Workspace members manageable by owners and admins" on public.workspace_members;
 create policy "Workspace members manageable by owners and admins"
   on public.workspace_members for all
   using (public.is_workspace_member(workspace_id, 'admin'));
 
+-- Workspace Invitations
+drop policy if exists "Invitations viewable by workspace members" on public.workspace_invitations;
+create policy "Invitations viewable by workspace members"
+  on public.workspace_invitations for select
+  using (workspace_id in (select workspace_id from public.get_user_workspace_ids()));
+
+drop policy if exists "Invitations manageable by workspace admins" on public.workspace_invitations;
+create policy "Invitations manageable by workspace admins"
+  on public.workspace_invitations for all
+  using (public.is_workspace_member(workspace_id, 'admin'));
+
 -- Clients
+drop policy if exists "Clients viewable by workspace members" on public.agency_clients;
 create policy "Clients viewable by workspace members"
   on public.agency_clients for select
   using (workspace_id in (select workspace_id from public.get_user_workspace_ids()));
 
+drop policy if exists "Clients manageable by workspace editors, admins, owners" on public.agency_clients;
 create policy "Clients manageable by workspace editors, admins, owners"
   on public.agency_clients for all
   using (public.is_workspace_member(workspace_id, 'editor'));
 
 -- Projects
+drop policy if exists "Projects viewable by workspace members" on public.agency_projects;
 create policy "Projects viewable by workspace members"
   on public.agency_projects for select
   using (workspace_id in (select workspace_id from public.get_user_workspace_ids()));
 
+drop policy if exists "Projects manageable by workspace editors, admins, owners" on public.agency_projects;
 create policy "Projects manageable by workspace editors, admins, owners"
   on public.agency_projects for all
   using (public.is_workspace_member(workspace_id, 'editor'));
 
 -- Project Members
+drop policy if exists "Project members viewable by workspace members" on public.agency_project_members;
 create policy "Project members viewable by workspace members"
   on public.agency_project_members for select
   using (project_id in (select id from public.agency_projects where workspace_id in (select workspace_id from public.get_user_workspace_ids())));
 
 -- Project Files
+drop policy if exists "Project files viewable by workspace members" on public.agency_project_files;
 create policy "Project files viewable by workspace members"
   on public.agency_project_files for select
   using (workspace_id in (select workspace_id from public.get_user_workspace_ids()));
 
+drop policy if exists "Project files manageable by workspace members" on public.agency_project_files;
 create policy "Project files manageable by workspace members"
   on public.agency_project_files for all
   using (public.is_workspace_member(workspace_id, 'editor'));
 
 -- Video Versions
+drop policy if exists "Video versions viewable by workspace members" on public.agency_video_versions;
 create policy "Video versions viewable by workspace members"
   on public.agency_video_versions for select
   using (project_id in (select id from public.agency_projects where workspace_id in (select workspace_id from public.get_user_workspace_ids())));
 
+drop policy if exists "Video versions manageable by workspace editors" on public.agency_video_versions;
 create policy "Video versions manageable by workspace editors"
   on public.agency_video_versions for all
   using (project_id in (select id from public.agency_projects where workspace_id in (select workspace_id from public.get_user_workspace_ids())));
 
 -- Video Comments
+drop policy if exists "Video comments viewable by workspace members" on public.agency_video_comments;
 create policy "Video comments viewable by workspace members"
   on public.agency_video_comments for select
   using (project_id in (select id from public.agency_projects where workspace_id in (select workspace_id from public.get_user_workspace_ids())));
 
+drop policy if exists "Video comments insertable by workspace members" on public.agency_video_comments;
 create policy "Video comments insertable by workspace members"
   on public.agency_video_comments for insert
   with check (project_id in (select id from public.agency_projects where workspace_id in (select workspace_id from public.get_user_workspace_ids())));
 
+drop policy if exists "Video comments updatable by author or workspace editors" on public.agency_video_comments;
 create policy "Video comments updatable by author or workspace editors"
   on public.agency_video_comments for update
   using (
@@ -354,7 +382,19 @@ create policy "Video comments updatable by author or workspace editors"
     project_id in (select id from public.agency_projects where workspace_id in (select workspace_id from public.get_user_workspace_ids()))
   );
 
+-- Deliveries
+drop policy if exists "Deliveries viewable by workspace members" on public.agency_deliveries;
+create policy "Deliveries viewable by workspace members"
+  on public.agency_deliveries for select
+  using (project_id in (select id from public.agency_projects where workspace_id in (select workspace_id from public.get_user_workspace_ids())));
+
+drop policy if exists "Deliveries manageable by workspace editors" on public.agency_deliveries;
+create policy "Deliveries manageable by workspace editors"
+  on public.agency_deliveries for all
+  using (project_id in (select id from public.agency_projects where workspace_id in (select workspace_id from public.get_user_workspace_ids())));
+
 -- Activity Logs
+drop policy if exists "Activity logs viewable by workspace members" on public.agency_activity_logs;
 create policy "Activity logs viewable by workspace members"
   on public.agency_activity_logs for select
   using (workspace_id in (select workspace_id from public.get_user_workspace_ids()));
