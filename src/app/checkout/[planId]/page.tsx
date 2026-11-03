@@ -8,7 +8,7 @@ export default async function CheckoutPage({
   searchParams,
 }: {
   params: { planId: string };
-  searchParams: { seats?: string };
+  searchParams: { seats?: string; coupon?: string };
 }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
@@ -63,5 +63,5 @@ export default async function CheckoutPage({
       ? Math.max(plan.max_devices, requestedSeats)
       : requestedSeats;
 
-  return <CheckoutForm plan={plan} seats={effectiveSeats} />;
+  return <CheckoutForm plan={plan} seats={effectiveSeats} initialCoupon={searchParams.coupon} />;
 }

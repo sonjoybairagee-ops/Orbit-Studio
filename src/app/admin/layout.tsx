@@ -15,6 +15,7 @@ export default async function AdminLayout({
     ["⌁", "Licenses", "/admin/licenses"],
     ["◎", "Customers", "/admin/users"],
     ["৳", "Payments", "/admin/payments"],
+    ["🎁", "Discount Campaign", "/admin/discounts"],
     ["📔", "Ledger Book", "/admin/ledger"],
     ["↻", "Device resets", "/admin/resets"],
     ["📢", "Broadcast email", "/admin/broadcast"],

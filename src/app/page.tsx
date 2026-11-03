@@ -4,6 +4,7 @@ import { FullExtensionDemo } from "@/components/FullExtensionDemo";
 import { StoryGraphVisual } from "@/components/StoryGraphVisual";
 import { LayerExploder3D } from "@/components/LayerExploder3D";
 import { PremiereShowcase } from "@/components/PremiereShowcase";
+import { DiscountCampaignBanner } from "@/components/DiscountCampaignBanner";
 
 const WORKSPACES = [
   {
@@ -70,8 +71,28 @@ export default async function Home() {
   const comboBdt = bundlePlan?.unit_price_bdt ?? 480;
   const checkoutHref = bundlePlan ? `/checkout/${bundlePlan.slug}` : "/checkout/orbit-bundle";
 
+  // Real-time discount campaign quota
+  const [{ count: approvedDiscountCount }, { count: pendingDiscountCount }] = await Promise.all([
+    supabase
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .ilike("provider_transaction_id", "%Orbit100%")
+      .eq("status", "approved"),
+    supabase
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .ilike("provider_transaction_id", "%Orbit100%")
+      .eq("status", "pending"),
+  ]);
+
   return (
     <div className="studio-landing">
+      <DiscountCampaignBanner
+        checkoutHref={checkoutHref}
+        initialApprovedCount={approvedDiscountCount ?? 0}
+        initialPendingCount={pendingDiscountCount ?? 0}
+        comboBdt={comboBdt}
+      />
       <section className="home-hero">
         <div className="home-hero__grid" aria-hidden="true" />
         <div className="shell home-hero__inner">

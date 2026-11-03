@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { DISCOUNT_CAMPAIGN, isCouponCodeValid } from "@/lib/discount-campaign";
 
 const schema = z.object({
   planId: z.string().regex(/^(?:[0-9a-f-]{36}|[a-z0-9-]+)$/i),
@@ -9,6 +10,7 @@ const schema = z.object({
   txnRef: z.string().trim().optional().nullable(),
   receiptUrl: z.string().max(500).optional().nullable(),
   seats: z.number().int().min(1).max(10).optional().default(1),
+  couponCode: z.string().trim().max(50).optional().nullable(),
 });
 
 export async function POST(req: Request) {
@@ -23,9 +25,33 @@ export async function POST(req: Request) {
   if (!parsed.success)
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
 
-  const { planId, method, receiptUrl, seats } = parsed.data;
+  const { planId, method, receiptUrl, seats, couponCode } = parsed.data;
   const txnRef = parsed.data.txnRef?.trim().toUpperCase() || null;
   const deviceSeats = seats;
+
+  // Validate coupon if provided
+  let isDiscountApplied = false;
+  if (couponCode) {
+    if (!isCouponCodeValid(couponCode)) {
+      return NextResponse.json({ error: "Invalid coupon code." }, { status: 400 });
+    }
+
+    // Check remaining keys out of 500
+    const adminClient = createAdminClient();
+    const { count: approvedCount } = await adminClient
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .ilike("provider_transaction_id", `%${DISCOUNT_CAMPAIGN.CODE}%`)
+      .eq("status", "approved");
+
+    if ((approvedCount ?? 0) >= DISCOUNT_CAMPAIGN.TOTAL_KEYS) {
+      return NextResponse.json(
+        { error: "The Orbit100 discount limit of 500 keys has been fully claimed." },
+        { status: 400 }
+      );
+    }
+    isDiscountApplied = true;
+  }
 
   if (receiptUrl && !receiptUrl.startsWith(`${user.id}/`)) {
     return NextResponse.json({ error: "Invalid receipt path" }, { status: 400 });
@@ -86,17 +112,29 @@ export async function POST(req: Request) {
   if (!Number.isFinite(unitAmount) || unitAmount < 0) {
     return NextResponse.json({ error: "Plan price is not configured" }, { status: 409 });
   }
-  const amount = unitAmount * deviceSeats;
+  const baseAmount = unitAmount * deviceSeats;
   const currency = (method === "bkash" || method === "nagad") ? "BDT" : "USD";
+
+  // Apply 100 Tk discount if coupon is applied
+  let finalAmount = baseAmount;
+  let providerTxnId: string | null = null;
+  if (isDiscountApplied) {
+    if (currency === "BDT") {
+      finalAmount = Math.max(0, baseAmount - DISCOUNT_CAMPAIGN.DISCOUNT_BDT);
+    }
+    // Tag provider_transaction_id with unique identifier so it obeys unique index constraint
+    providerTxnId = `${DISCOUNT_CAMPAIGN.TAG_PREFIX}:${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  }
 
   // Standard essential columns present in Supabase orders table
   const essentialPayload: any = {
     user_id: user.id,
     plan_id: plan.id,
-    amount: amount,
+    amount: finalAmount,
     currency: currency,
     method,
     txn_ref: txnRef ?? null,
+    provider_transaction_id: providerTxnId,
     status: "pending",
     ...(receiptUrl ? { receipt_path: receiptUrl } : {}),
   };

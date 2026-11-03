@@ -3,11 +3,21 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+import { DISCOUNT_CAMPAIGN, isCouponCodeValid } from "@/lib/discount-campaign";
+
 const BKASH_NUMBER = "01922577297";
 const NAGAD_NUMBER = "01993825578";
 const PADDLE_LIVE_TOKEN = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ?? "";
 
-export function CheckoutForm({ plan, seats = 1 }: { plan: any; seats?: number }) {
+export function CheckoutForm({
+  plan,
+  seats = 1,
+  initialCoupon,
+}: {
+  plan: any;
+  seats?: number;
+  initialCoupon?: string;
+}) {
   const router = useRouter();
   const [method, setMethod] = useState<"bkash" | "nagad" | "paddle">("bkash");
   const [txnRef, setTxnRef] = useState("");
@@ -16,6 +26,13 @@ export function CheckoutForm({ plan, seats = 1 }: { plan: any; seats?: number })
   const [busy, setBusy] = useState(false);
   const submittingRef = useRef(false);
 
+  // Coupon state
+  const [couponInput, setCouponInput] = useState(initialCoupon ?? "");
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(
+    isCouponCodeValid(initialCoupon) ? DISCOUNT_CAMPAIGN.CODE : null
+  );
+  const [couponError, setCouponError] = useState<string | null>(null);
+
   const deviceSeats = Math.max(1, seats);
   const unitBdtAmount = Number(plan.unit_price_bdt ?? 0);
   const unitUsdAmount = Number(plan.unit_price_usd ?? 0);
@@ -23,8 +40,32 @@ export function CheckoutForm({ plan, seats = 1 }: { plan: any; seats?: number })
   const bkashBdtAmount = unitBdtAmount * deviceSeats;
   const paddleUsdAmount = unitUsdAmount * deviceSeats;
 
+  // Calculate discount for BDT payments
+  const discountBdt = appliedCoupon ? DISCOUNT_CAMPAIGN.DISCOUNT_BDT : 0;
+  const finalBdtAmount = Math.max(0, bkashBdtAmount - discountBdt);
+
   const displayCurrency = (method === "bkash" || method === "nagad") ? "BDT" : (plan.currency ?? "USD");
-  const displayPrice = (method === "bkash" || method === "nagad") ? bkashBdtAmount : paddleUsdAmount;
+  const displayPrice = (method === "bkash" || method === "nagad") ? finalBdtAmount : paddleUsdAmount;
+
+  function handleApplyCoupon() {
+    setCouponError(null);
+    if (!couponInput.trim()) {
+      setCouponError("Please enter a coupon code.");
+      return;
+    }
+    if (isCouponCodeValid(couponInput)) {
+      setAppliedCoupon(DISCOUNT_CAMPAIGN.CODE);
+      setCouponError(null);
+    } else {
+      setCouponError(`Invalid coupon code "${couponInput}".`);
+    }
+  }
+
+  function handleRemoveCoupon() {
+    setAppliedCoupon(null);
+    setCouponInput("");
+    setCouponError(null);
+  }
 
   useEffect(() => {
     if (!PADDLE_LIVE_TOKEN) return;
@@ -98,6 +139,7 @@ export function CheckoutForm({ plan, seats = 1 }: { plan: any; seats?: number })
         txnRef,
         receiptUrl,
         seats: deviceSeats,
+        couponCode: appliedCoupon,
       }),
     });
     const json = await res.json();
@@ -160,9 +202,23 @@ export function CheckoutForm({ plan, seats = 1 }: { plan: any; seats?: number })
               </div>
               <div className="text-right">
                 <span className="muted text-xs font-bold">{displayCurrency}</span>
-                <b className="block text-4xl font-black text-[#45c66d]">
-                  {method === "paddle" ? `$${displayPrice}` : `${displayPrice} ৳`}
-                </b>
+                {appliedCoupon && (method === "bkash" || method === "nagad") ? (
+                  <div>
+                    <span className="mr-2 text-sm line-through text-[#8fa896]">
+                      {bkashBdtAmount} ৳
+                    </span>
+                    <b className="block text-4xl font-black text-[#3cff5f]">
+                      {finalBdtAmount} ৳
+                    </b>
+                    <span className="inline-block mt-1 rounded bg-[#3cff5f]/15 px-2 py-0.5 text-[11px] font-bold text-[#3cff5f]">
+                      🎉 -100 ৳ ({appliedCoupon})
+                    </span>
+                  </div>
+                ) : (
+                  <b className="block text-4xl font-black text-[#45c66d]">
+                    {method === "paddle" ? `$${displayPrice}` : `${displayPrice} ৳`}
+                  </b>
+                )}
               </div>
             </div>
           </div>
@@ -182,7 +238,63 @@ export function CheckoutForm({ plan, seats = 1 }: { plan: any; seats?: number })
       </section>
 
       <section className="card p-6 sm:p-8">
-        <h2 className="text-xl font-black">Payment method</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-xl font-black">Payment method</h2>
+          {appliedCoupon && (
+            <span className="rounded-full bg-[#3cff5f]/15 border border-[#3cff5f]/30 px-3 py-1 text-xs font-black text-[#3cff5f]">
+              🎁 100 ৳ Discount Active
+            </span>
+          )}
+        </div>
+
+        {/* Promo / Coupon Box */}
+        <div className="mt-4 rounded-xl border border-white/10 bg-black/40 p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#aab0bd]">
+              Have a Promo Code?
+            </span>
+            <span className="text-[11px] font-semibold text-[#8fa896]">
+              Code: <b className="text-white font-mono">Orbit100</b> (100 ৳ OFF)
+            </span>
+          </div>
+          <div className="mt-2.5 flex items-center gap-2">
+            <input
+              type="text"
+              value={couponInput}
+              onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+              placeholder="e.g. Orbit100"
+              disabled={!!appliedCoupon}
+              className="input !mt-0 flex-1 font-mono uppercase tracking-wider text-sm !py-2"
+            />
+            {appliedCoupon ? (
+              <button
+                type="button"
+                onClick={handleRemoveCoupon}
+                className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-bold text-red-400 hover:bg-red-500/20 transition-all"
+              >
+                ✕ Remove
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleApplyCoupon}
+                className="btn-primary !py-2 !px-4 text-xs font-black tracking-wide"
+              >
+                Apply
+              </button>
+            )}
+          </div>
+          {couponError && (
+            <p className="mt-2 text-xs font-medium text-red-400">{couponError}</p>
+          )}
+          {appliedCoupon && (
+            <div className="mt-2.5 flex items-center justify-between rounded-lg bg-[#3cff5f]/10 border border-[#3cff5f]/20 p-2 text-xs text-[#3cff5f]">
+              <span>🎉 <b>{appliedCoupon}</b> applied! 100 ৳ deducted.</span>
+              <span className="text-[11px] opacity-80">500 Keys Limited Quota</span>
+            </div>
+          )}
+        </div>
+
         <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
           <button
             onClick={() => setMethod("bkash")}
@@ -193,7 +305,7 @@ export function CheckoutForm({ plan, seats = 1 }: { plan: any; seats?: number })
             }
           >
             <span className="rounded bg-white/20 px-1.5 py-0.5 text-[10px]">bKash</span>
-            bKash ({bkashBdtAmount} BDT)
+            bKash ({finalBdtAmount} BDT)
           </button>
           <button
             onClick={() => setMethod("nagad")}
@@ -204,7 +316,7 @@ export function CheckoutForm({ plan, seats = 1 }: { plan: any; seats?: number })
             }
           >
             <span className="rounded bg-white/20 px-1.5 py-0.5 text-[10px]">Nagad</span>
-            Nagad ({bkashBdtAmount} BDT)
+            Nagad ({finalBdtAmount} BDT)
           </button>
           <button
             onClick={() => setMethod("paddle")}
@@ -240,7 +352,12 @@ export function CheckoutForm({ plan, seats = 1 }: { plan: any; seats?: number })
                 </div>
                 <div>
                   <span className={`text-[11px] font-bold ${method === 'bkash' ? 'text-[#ff8ebc]' : 'text-[#fbcd9a]'}`}>Exact Amount:</span>
-                  <p className="font-mono text-base font-black text-[#45c66d]">BDT {bkashBdtAmount} ৳</p>
+                  <div className="flex items-baseline gap-2">
+                    <p className="font-mono text-base font-black text-[#45c66d]">BDT {finalBdtAmount} ৳</p>
+                    {appliedCoupon && (
+                      <span className="text-[10px] font-bold text-[#3cff5f]">(-100 ৳ off)</span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
