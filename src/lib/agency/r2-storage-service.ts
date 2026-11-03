@@ -1,19 +1,42 @@
+/**
+ * Agency OS R2 Storage Service
+ *
+ * Security model:
+ *  - All quota logic delegated to Postgres functions (atomic, race-condition-safe).
+ *  - R2 keys are always generated server-side (never trusted from client input).
+ *  - All mutations use the admin (service-role) Supabase client.
+ *  - compx-assets extension bucket is never touched here.
+ */
+
 import { PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { agencyR2Client, agencyBucketName } from "./agency-r2";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { FileCategory } from "@/types/agency";
 import { logAgencyActivity } from "./activity-logger";
 
 const bucketName = agencyBucketName;
 
+// ---------------------------------------------------------------------------
+// UPLOAD — Step 1: Reserve quota and return presigned PUT URL
+// ---------------------------------------------------------------------------
+
 /**
- * Validates storage quota and generates a presigned PUT URL for direct browser-to-R2 upload.
+ * Atomically reserves storage quota via Postgres RPC and returns a presigned
+ * PUT URL for direct browser-to-R2 upload.
+ *
+ * Security:
+ *  - Calls agency_reserve_upload_bytes() which:
+ *      • Verifies project_id belongs to workspace_id
+ *      • Locks workspace row to prevent concurrent over-quota
+ *      • Creates reservation record with unique r2_key constraint
+ *  - R2 key is always generated server-side.
+ *  - Returns reservation_id so the confirm step can verify the upload.
  */
 export async function createPresignedUploadUrl({
   workspaceId,
   projectId,
+  userId,
   fileName,
   fileSizeBytes,
   mimeType,
@@ -21,6 +44,7 @@ export async function createPresignedUploadUrl({
 }: {
   workspaceId: string;
   projectId: string;
+  userId: string;
   fileName: string;
   fileSizeBytes: number;
   mimeType: string;
@@ -28,44 +52,42 @@ export async function createPresignedUploadUrl({
 }) {
   const adminClient = createAdminClient();
 
-  // 1. Quota Check
-  const { data: ws, error: wsErr } = await adminClient
-    .from("workspaces")
-    .select("storage_quota_bytes, storage_used_bytes")
-    .eq("id", workspaceId)
-    .single();
-
-  if (wsErr || !ws) {
-    throw new Error("Workspace not found.");
-  }
-
-  const currentUsed = Number(ws.storage_used_bytes || 0);
-  const quota = Number(ws.storage_quota_bytes || 2147483648);
-
-  if (currentUsed + fileSizeBytes > quota) {
-    const availableMB = ((quota - currentUsed) / (1024 * 1024)).toFixed(1);
-    throw new Error(
-      `Storage quota exceeded. You have ${availableMB} MB remaining. Upgrade your plan to upload larger files.`
-    );
-  }
-
-  // 2. Generate clean, safe object key
+  // Generate server-side R2 key — never accept from client
   const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
   const timestamp = Date.now();
   const r2Key = `agency/${workspaceId}/${projectId}/${category}/${timestamp}_${safeName}`;
 
-  // 3. Generate Presigned PUT URL
+  // Atomic quota reservation via Postgres function
+  const { data: reservationId, error: rpcError } = await adminClient.rpc(
+    "agency_reserve_upload_bytes",
+    {
+      p_workspace_id:   workspaceId,
+      p_project_id:     projectId,
+      p_r2_key:         r2Key,
+      p_reserved_bytes: fileSizeBytes,
+      p_mime_type:      mimeType,
+      p_category:       category,
+      p_actor_id:       userId,
+    }
+  );
+
+  if (rpcError || !reservationId) {
+    throw new Error(rpcError?.message || "Storage quota reservation failed.");
+  }
+
+  // Generate presigned PUT URL (35-minute window, matches reservation expiry)
   const command = new PutObjectCommand({
     Bucket: bucketName,
     Key: r2Key,
     ContentType: mimeType || "application/octet-stream",
   });
 
-  const uploadUrl = await getSignedUrl(agencyR2Client, command, { expiresIn: 1800 }); // 30 minutes
+  const uploadUrl = await getSignedUrl(agencyR2Client, command, { expiresIn: 2100 }); // 35 min
 
   return {
     uploadUrl,
     r2Key,
+    reservationId: reservationId as string,
     fileName: safeName,
     fileSizeBytes,
     mimeType,
@@ -73,85 +95,109 @@ export async function createPresignedUploadUrl({
   };
 }
 
+// ---------------------------------------------------------------------------
+// UPLOAD — Step 2: Confirm after browser upload finishes
+// ---------------------------------------------------------------------------
+
 /**
- * Register the file in the database and increment workspace storage usage after upload finishes.
+ * Atomically confirms a pending reservation:
+ *  - Locks reservation row (prevents duplicate confirms)
+ *  - Verifies reservation is pending and not expired
+ *  - Inserts agency_project_files record
+ *  - Adjusts workspace reserved_bytes / storage_used_bytes atomically
+ *  - Appends ledger entry
+ *
+ * Security:
+ *  - r2Key is NOT accepted from client — looked up from reservation record.
+ *  - Idempotent: if already confirmed returns existing file record.
  */
 export async function confirmUploadedFile({
+  reservationId,
+  actualFileSizeBytes,
+  fileName,
+  userId,
+  uploaderName,
   workspaceId,
   projectId,
-  r2Key,
-  fileName,
-  fileSizeBytes,
-  mimeType,
-  category = "original",
-  uploadedBy,
-  uploaderName,
 }: {
+  reservationId: string;
+  actualFileSizeBytes: number;
+  fileName: string;
+  userId?: string;
+  uploaderName?: string;
   workspaceId: string;
   projectId: string;
-  r2Key: string;
-  fileName: string;
-  fileSizeBytes: number;
-  mimeType: string;
-  category?: FileCategory;
-  uploadedBy?: string;
-  uploaderName?: string;
 }) {
   const adminClient = createAdminClient();
 
-  // 1. Insert file record
-  const { data: fileRecord, error: fileErr } = await adminClient
-    .from("agency_project_files")
-    .insert({
-      workspace_id: workspaceId,
-      project_id: projectId,
-      file_name: fileName,
-      r2_key: r2Key,
-      file_size_bytes: fileSizeBytes,
-      mime_type: mimeType,
-      category,
-      uploaded_by: uploadedBy || null,
-    })
-    .select("*")
-    .single();
+  // Atomic confirm via Postgres function
+  const { data: fileId, error: rpcError } = await adminClient.rpc(
+    "agency_confirm_upload",
+    {
+      p_reservation_id: reservationId,
+      p_actual_bytes:   actualFileSizeBytes,
+      p_file_name:      fileName,
+      p_actor_id:       userId || null,
+      p_uploader_name:  uploaderName || "Creator",
+    }
+  );
 
-  if (fileErr || !fileRecord) {
-    throw new Error(fileErr?.message || "Failed to register uploaded file.");
+  if (rpcError || !fileId) {
+    throw new Error(rpcError?.message || "Failed to confirm upload.");
   }
 
-  // 2. Increment storage used bytes on workspace
-  const { data: ws } = await adminClient
-    .from("workspaces")
-    .select("storage_used_bytes")
-    .eq("id", workspaceId)
+  // Fetch the created file record for the response
+  const { data: fileRecord } = await adminClient
+    .from("agency_project_files")
+    .select("*")
+    .eq("id", fileId)
     .single();
 
-  const newTotal = Number(ws?.storage_used_bytes || 0) + fileSizeBytes;
-  await adminClient
-    .from("workspaces")
-    .update({ storage_used_bytes: newTotal, updated_at: new Date().toISOString() })
-    .eq("id", workspaceId);
-
-  // 3. Log activity
+  // Log activity (non-critical — don't throw if it fails)
   await logAgencyActivity({
     workspaceId,
     projectId,
-    actorId: uploadedBy,
+    actorId: userId,
     actorName: uploaderName || "Creator",
     action: "file.uploaded",
     resourceType: "file",
-    resourceId: fileRecord.id,
-    details: { name: fileName, size: fileSizeBytes, category },
-  });
+    resourceId: fileId as string,
+    details: { name: fileName, size: actualFileSizeBytes },
+  }).catch(() => {});
 
   return fileRecord;
 }
 
+// ---------------------------------------------------------------------------
+// UPLOAD — Cancel / Fail a reservation explicitly
+// ---------------------------------------------------------------------------
+
 /**
- * Get secure signed download or stream URL for an R2 key.
+ * Release a pending reservation (e.g., user cancelled upload mid-way).
+ * Safe to call multiple times — idempotent.
+ */
+export async function cancelUploadReservation(reservationId: string, reason: "cancelled" | "failed" = "cancelled") {
+  const adminClient = createAdminClient();
+
+  const { error } = await adminClient.rpc("agency_release_reservation", {
+    p_reservation_id: reservationId,
+    p_reason:         reason,
+  });
+
+  if (error) {
+    console.warn("agency_release_reservation error (non-fatal):", error.message);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// READ — Signed download URL
+// ---------------------------------------------------------------------------
+
+/**
+ * Get a short-lived signed GET URL for an R2 key.
+ * Prefer AGENCY_R2_PUBLIC_DOMAIN if configured (e.g., Cloudflare custom domain).
  */
 export async function getR2SignedReadUrl(r2Key: string, expiresIn = 3600) {
-  // If dedicated agency custom domain is set and public, prefer clean URL
   const customDomain = process.env.AGENCY_R2_PUBLIC_DOMAIN;
   if (customDomain) {
     const cleanDomain = customDomain.replace(/\/$/, "");
@@ -159,7 +205,6 @@ export async function getR2SignedReadUrl(r2Key: string, expiresIn = 3600) {
     return `${cleanDomain}/${cleanKey}`;
   }
 
-  // Otherwise generate short-lived signed GET URL
   const command = new GetObjectCommand({
     Bucket: bucketName,
     Key: r2Key,
@@ -168,24 +213,50 @@ export async function getR2SignedReadUrl(r2Key: string, expiresIn = 3600) {
   return await getSignedUrl(agencyR2Client, command, { expiresIn });
 }
 
+// ---------------------------------------------------------------------------
+// DELETE — Atomic file deletion
+// ---------------------------------------------------------------------------
+
 /**
- * Delete a file from Cloudflare R2 and decrement workspace storage quota.
+ * Atomically deletes a file:
+ *  1. Calls agency_delete_file_atomic() which:
+ *       • Verifies file belongs to workspace
+ *       • Deletes DB record
+ *       • Decrements storage_used_bytes atomically
+ *       • Appends ledger entry
+ *  2. Deletes the R2 object (best-effort — DB is the source of truth)
+ *
+ * Security:
+ *  - workspace_id is verified inside the Postgres function.
+ *  - File ownership check prevents cross-workspace deletion.
  */
-export async function deleteAgencyFile(fileId: string, workspaceId: string) {
+export async function deleteAgencyFile(fileId: string, workspaceId: string, userId?: string) {
   const adminClient = createAdminClient();
 
-  const { data: file } = await adminClient
+  // Fetch r2_key before deleting (needed for R2 deletion)
+  const { data: file, error: fetchErr } = await adminClient
     .from("agency_project_files")
-    .select("*")
+    .select("r2_key, file_name, file_size_bytes, project_id")
     .eq("id", fileId)
     .eq("workspace_id", workspaceId)
     .single();
 
-  if (!file) {
+  if (fetchErr || !file) {
     throw new Error("File not found or permission denied.");
   }
 
-  // 1. Delete from R2
+  // Atomic DB deletion + storage_used_bytes decrement via Postgres function
+  const { error: rpcError } = await adminClient.rpc("agency_delete_file_atomic", {
+    p_file_id:      fileId,
+    p_workspace_id: workspaceId,
+    p_actor_id:     userId || null,
+  });
+
+  if (rpcError) {
+    throw new Error(rpcError.message || "Failed to delete file record.");
+  }
+
+  // Best-effort R2 object deletion (DB record already removed above)
   try {
     const deleteCmd = new DeleteObjectCommand({
       Bucket: bucketName,
@@ -193,25 +264,20 @@ export async function deleteAgencyFile(fileId: string, workspaceId: string) {
     });
     await agencyR2Client.send(deleteCmd);
   } catch (err) {
-    console.warn("Could not delete object from R2 directly:", err);
+    console.warn("R2 object deletion failed (DB record already removed):", err);
   }
 
-  // 2. Delete database record
-  await adminClient.from("agency_project_files").delete().eq("id", fileId);
-
-  // 3. Decrement storage_used_bytes
-  const { data: ws } = await adminClient
-    .from("workspaces")
-    .select("storage_used_bytes")
-    .eq("id", workspaceId)
-    .single();
-
-  const newTotal = Math.max(0, Number(ws?.storage_used_bytes || 0) - Number(file.file_size_bytes));
-  await adminClient
-    .from("workspaces")
-    .update({ storage_used_bytes: newTotal, updated_at: new Date().toISOString() })
-    .eq("id", workspaceId);
+  // Log activity (non-critical)
+  await logAgencyActivity({
+    workspaceId,
+    projectId: file.project_id,
+    actorId: userId,
+    actorName: "Creator",
+    action: "file.deleted",
+    resourceType: "file",
+    resourceId: fileId,
+    details: { name: file.file_name, size: file.file_size_bytes },
+  }).catch(() => {});
 
   return { success: true };
 }
-

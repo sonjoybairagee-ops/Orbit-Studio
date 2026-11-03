@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { createPresignedUploadUrl } from "@/lib/agency/r2-storage-service";
+import { getWorkspaceMemberRole } from "@/lib/agency/workspace-service";
 
 export async function POST(req: Request) {
   try {
@@ -17,9 +18,16 @@ export async function POST(req: Request) {
       );
     }
 
+    // Verify calling user is a workspace member (server-side membership check)
+    const role = await getWorkspaceMemberRole(workspaceId, user.id);
+    if (!role) {
+      return NextResponse.json({ error: "Access denied." }, { status: 403 });
+    }
+
     const presignedData = await createPresignedUploadUrl({
       workspaceId,
       projectId,
+      userId: user.id,
       fileName,
       fileSizeBytes: Number(fileSizeBytes),
       mimeType: mimeType || "application/octet-stream",
@@ -27,8 +35,8 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(presignedData);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Failed to generate upload URL" }, { status: 400 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to generate upload URL";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }
-
