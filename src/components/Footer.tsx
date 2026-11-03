@@ -42,6 +42,14 @@ export function Footer() {
             <Link href="/#features">Features</Link>
             <Link href="/contact">Contact Support</Link>
             <a
+              href="https://chat.whatsapp.com/Fzpmh27mRBo2QODckm2uuc"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#25D366] hover:underline flex items-center gap-1 font-medium"
+            >
+              <span>👥 WhatsApp Group</span>
+            </a>
+            <a
               href="https://wa.me/8801922577297?text=Hi%2C%20I%20need%20support%20for%20CompX%20Orbit"
               target="_blank"
               rel="noopener noreferrer"

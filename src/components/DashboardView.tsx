@@ -312,14 +312,24 @@ export function DashboardView({ user, licenses, verified }: DashboardViewProps) 
                       Direct 1-on-1 chat with our team for quick licensing &amp; technical help.
                     </p>
                   </div>
-                  <a
-                    href="https://wa.me/8801922577297?text=Hi%2C%20I%20need%20support%20for%20CompX%20Orbit"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-black py-2.5 text-xs font-black transition-all shadow-[0_0_20px_rgba(37,211,102,0.2)]"
-                  >
-                    <span>💬 WhatsApp (+880 1922-577297)</span>
-                  </a>
+                  <div className="mt-4 flex flex-col gap-2">
+                    <a
+                      href="https://chat.whatsapp.com/Fzpmh27mRBo2QODckm2uuc"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-black py-2.5 text-xs font-black transition-all shadow-[0_0_20px_rgba(37,211,102,0.2)]"
+                    >
+                      <span>👥 Join WhatsApp Group</span>
+                    </a>
+                    <a
+                      href="https://wa.me/8801922577297?text=Hi%2C%20I%20need%20support%20for%20CompX%20Orbit"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 rounded-xl border border-[#25D366]/40 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] py-2 text-xs font-bold transition-all"
+                    >
+                      <span>💬 Direct Chat (+880 1922-577297)</span>
+                    </a>
+                  </div>
                 </div>
 
                 {/* Discord Community Card */}
