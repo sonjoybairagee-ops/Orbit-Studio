@@ -38,6 +38,7 @@ interface TagData {
     maxres: string;
     hq: string;
   };
+  isSuggested?: boolean;
 }
 
 export default function YoutubeTagExtractorTool() {
@@ -329,12 +330,23 @@ ${data.hashtags.join(" ")}
 
           {/* Interactive Tag Pills */}
           <div className="rounded-3xl border border-[#26332d] bg-[#0c1510] p-6 sm:p-8 shadow-2xl">
-            <h4 className="text-xs font-bold text-[#9baaa1] uppercase tracking-wider mb-4 flex items-center justify-between">
-              <span>Interactive Tags (Click to select/deselect):</span>
-              <span className="text-[11px] text-[#3cff5f] font-normal normal-case">
+            <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <h4 className="text-xs font-bold text-[#9baaa1] uppercase tracking-wider flex flex-wrap items-center gap-2">
+                <span>Interactive Tags (Click to select/deselect):</span>
+                {data.isSuggested ? (
+                  <span className="rounded-full bg-amber-500/10 border border-amber-500/30 px-2.5 py-0.5 text-[10px] font-semibold text-amber-400 normal-case">
+                    ✨ YouTube Search Suggested SEO Tags (No custom tags set by creator)
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-[#102a16] border border-[#2a5234] px-2.5 py-0.5 text-[10px] font-semibold text-[#3cff5f] normal-case">
+                    ✓ Official Creator Tags ({data.tags.length})
+                  </span>
+                )}
+              </h4>
+              <span className="text-[11px] text-[#3cff5f] font-normal">
                 Comma-separated format ready for YouTube Studio
               </span>
-            </h4>
+            </div>
 
             {data.tags.length > 0 ? (
               <div className="flex flex-wrap gap-2">
