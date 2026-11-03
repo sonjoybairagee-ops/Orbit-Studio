@@ -5,6 +5,7 @@ import { StoryGraphVisual } from "@/components/StoryGraphVisual";
 import { LayerExploder3D } from "@/components/LayerExploder3D";
 import { PremiereShowcase } from "@/components/PremiereShowcase";
 import { DiscountCampaignBanner } from "@/components/DiscountCampaignBanner";
+import { HeroOfferCountdown } from "@/components/HeroOfferCountdown";
 
 const WORKSPACES = [
   {
@@ -108,8 +109,15 @@ export default async function Home() {
             <p>
               Your tools, motion and assets. Right where you create. Seven focused workspaces, docked inside After Effects and Premiere Pro.
             </p>
+
+            {/* Hero Offer Deadline Live Countdown */}
+            <HeroOfferCountdown
+              initialApprovedCount={approvedDiscountCount ?? 0}
+              initialPendingCount={pendingDiscountCount ?? 0}
+            />
+
             <div className="home-hero__actions">
-              <Link href={checkoutHref} className="btn-primary home-hero__primary">
+              <Link href={`${checkoutHref}${checkoutHref.includes("?") ? "&" : "?"}coupon=Orbit100`} className="btn-primary home-hero__primary">
                 Get lifetime access · ${comboPrice} <span>→</span>
               </Link>
               <a href="https://discord.gg/cY8Gyd5Xz" target="_blank" rel="noopener noreferrer" className="btn-secondary home-hero__secondary flex items-center gap-2">
