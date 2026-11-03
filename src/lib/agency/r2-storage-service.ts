@@ -1,12 +1,12 @@
 import { PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { r2Client } from "@/lib/r2";
+import { r2Client, r2BucketName } from "@/lib/r2";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { FileCategory } from "@/types/agency";
 import { logAgencyActivity } from "./activity-logger";
 
-const bucketName = process.env.R2_BUCKET_NAME || "compx-assets";
+const bucketName = r2BucketName;
 
 /**
  * Validates storage quota and generates a presigned PUT URL for direct browser-to-R2 upload.
