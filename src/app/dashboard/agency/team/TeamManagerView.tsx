@@ -14,6 +14,7 @@ import {
   Clock,
   ExternalLink,
 } from "lucide-react";
+import { FrameInviteModal } from "@/components/agency/FrameInviteModal";
 import { Workspace, WorkspaceMember, WorkspaceRole } from "@/types/agency";
 import { WorkspaceInvitation } from "@/lib/agency/team-service";
 import { canManageMembers } from "@/lib/agency/permissions";
@@ -305,89 +306,13 @@ export function TeamManagerView({
         </div>
       )}
 
-      {/* Invite Member Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-3xl border border-[#213026] bg-[#0c1510] p-6 shadow-2xl relative">
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="absolute right-4 top-4 text-[#8da194] hover:text-[#e7eee9] p-1.5 rounded-lg hover:bg-[#102a16]"
-            >
-              <X className="h-4 w-4" />
-            </button>
-
-            <h2 className="text-base font-black text-[#e7eee9] flex items-center gap-2">
-              <UserPlus className="h-4 w-4 text-[#3cff5f]" />
-              <span>Invite New Team Member</span>
-            </h2>
-            <p className="text-xs text-[#8da194] mt-1 mb-4">
-              Send a join invitation link for your agency workspace.
-            </p>
-
-            {inviteError && (
-              <div className="mb-4 flex items-center gap-2 rounded-xl bg-red-950/40 border border-red-800/40 p-3 text-xs text-red-300">
-                <AlertCircle className="h-4 w-4 shrink-0 text-red-400" />
-                <span>{inviteError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleSendInvite} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-[#8da194] mb-1">
-                  Team Member Email Address *
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="editor@studio.com"
-                  className="w-full rounded-xl border border-[#213026] bg-[#080e0b] px-3.5 py-2.5 text-xs text-[#e7eee9] focus:border-[#3cff5f] focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#8da194] mb-1">
-                  Assign Workspace Role
-                </label>
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as WorkspaceRole)}
-                  className="w-full rounded-xl border border-[#213026] bg-[#080e0b] px-3.5 py-2.5 text-xs text-[#e7eee9] focus:border-[#3cff5f] focus:outline-none cursor-pointer"
-                >
-                  <option value="editor">Editor — Can upload video cuts &amp; manage revisions</option>
-                  <option value="reviewer">Reviewer — Inspect cuts &amp; add timestamp feedback</option>
-                  <option value="admin">Admin — Full project, file &amp; team management</option>
-                </select>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#1b2720]">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-[#8da194] hover:text-[#e7eee9]"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isInviting}
-                  className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-[#3cff5f] text-xs font-black text-[#050a08] hover:bg-[#52ff71] transition-all cursor-pointer disabled:opacity-50"
-                >
-                  {isInviting ? (
-                    <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      <span>Creating Invite...</span>
-                    </>
-                  ) : (
-                    <span>Generate &amp; Send Invite</span>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Frame.io Team Member Invite Modal */}
+      <FrameInviteModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        workspace={workspace}
+        memberCount={members.length}
+      />
     </div>
   );
 }

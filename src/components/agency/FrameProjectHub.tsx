@@ -23,6 +23,7 @@ import {
   Lock,
   ChevronDown,
 } from "lucide-react";
+import { FrameInviteModal } from "./FrameInviteModal";
 import { AgencyProject, AgencyClient, Workspace, WorkspaceRole } from "@/types/agency";
 
 interface FrameProjectHubProps {
@@ -76,6 +77,7 @@ export function FrameProjectHub({
 
   // Create Project Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectedClientId, setSelectedClientId] = useState("");
@@ -205,14 +207,15 @@ export function FrameProjectHub({
 
         {/* Right: Team Invite & + New Project Button */}
         <div className="flex items-center gap-2.5">
-          {/* Team Invite Icon Button */}
-          <Link
-            href="/dashboard/agency/team"
-            className="h-9 w-9 rounded-xl bg-[#141824] hover:bg-[#1a2030] border border-[#212738] flex items-center justify-center text-[#8d9ab2] hover:text-white transition-all shadow-sm"
-            title="Manage Team & Members"
+          {/* Team Invite Icon Button (Frame.io modal trigger) */}
+          <button
+            type="button"
+            onClick={() => setIsInviteModalOpen(true)}
+            className="h-9 w-9 rounded-xl bg-[#141824] hover:bg-[#1a2030] border border-[#212738] flex items-center justify-center text-[#8d9ab2] hover:text-white transition-all shadow-sm cursor-pointer"
+            title="Add to Workspace"
           >
             <Users className="h-4 w-4" />
-          </Link>
+          </button>
 
           {/* + New Project Button (Frame.io signature blue pill) */}
           <button
@@ -542,6 +545,25 @@ export function FrameProjectHub({
           </div>
         </div>
       )}
+
+      {/* ======================================================== */}
+      {/* 5. MODAL: FRAME.IO TEAM INVITATION MODAL                 */}
+      {/* ======================================================== */}
+      <FrameInviteModal
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+        workspace={workspace}
+        memberCount={1}
+        suggestedUsers={
+          clients.length > 0
+            ? clients
+                .filter((c) => Boolean(c.email))
+                .slice(0, 3)
+                .map((c) => ({ name: c.name, email: c.email! }))
+            : [{ name: "Sonjoy Bairagee", email: "sonjoy.bairagee@gmail.com" }]
+        }
+      />
     </div>
   );
 }
+
