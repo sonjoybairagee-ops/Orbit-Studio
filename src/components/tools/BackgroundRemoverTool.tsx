@@ -548,29 +548,33 @@ export default function BackgroundRemoverTool() {
                 <Wand2 className="h-4 w-4" />
               </span>
               <h2 className="text-base sm:text-lg font-black text-[#e7eee9]">
-                CompX Bulk Background Remover Engine
+                {activeTabMode === "bulk"
+                  ? "CompX Bulk Background Remover Engine"
+                  : "CompX Single Studio Cutout Editor"}
               </h2>
             </div>
             <p className="mt-1 text-xs text-[#8da194]">
-              Upload multiple images, auto-remove white studio or complex backgrounds, and download cutouts as a <b>ZIP bundle</b>.
+              {activeTabMode === "bulk"
+                ? "Upload multiple images, auto-remove white studio or complex backgrounds, and download cutouts as a ZIP bundle."
+                : "Upload an image, inspect cutouts side-by-side, fine-tune edge tolerance, and export full-resolution PNG."}
             </p>
           </div>
 
           {/* Mode Switcher Tabs */}
-          <div className="flex items-center gap-2 rounded-2xl border border-[#213026] bg-[#080e0b] p-1.5 w-full lg:w-auto">
+          <div className="flex items-center gap-1.5 rounded-2xl border border-[#213026] bg-[#080e0b] p-1.5 w-full sm:w-auto">
             <button
               type="button"
               onClick={() => setActiveTabMode("bulk")}
-              className={`flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+              className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
                 activeTabMode === "bulk"
                   ? "bg-[#3cff5f] text-[#050a08] shadow-md shadow-[#3cff5f]/20"
                   : "text-[#8da194] hover:text-[#e7eee9]"
               }`}
             >
-              <FolderArchive className="h-3.5 w-3.5" />
-              <span>⚡ Bulk Batch Remover</span>
+              <FolderArchive className="h-4 w-4 shrink-0" />
+              <span>Bulk Batch Remover</span>
               {bulkImages.length > 0 && (
-                <span className="rounded-full bg-[#050a08] px-1.5 py-0.2 text-[10px] font-bold text-[#3cff5f]">
+                <span className="rounded-full bg-[#050a08] px-1.5 py-0.5 text-[10px] font-bold text-[#3cff5f]">
                   {bulkImages.length}
                 </span>
               )}
@@ -579,14 +583,14 @@ export default function BackgroundRemoverTool() {
             <button
               type="button"
               onClick={() => setActiveTabMode("single")}
-              className={`flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+              className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
                 activeTabMode === "single"
                   ? "bg-[#3cff5f] text-[#050a08] shadow-md shadow-[#3cff5f]/20"
                   : "text-[#8da194] hover:text-[#e7eee9]"
               }`}
             >
-              <Eye className="h-3.5 w-3.5" />
-              <span>🎨 Single Studio Editor</span>
+              <Palette className="h-4 w-4 shrink-0" />
+              <span>Single Studio Editor</span>
             </button>
           </div>
         </div>
@@ -1057,66 +1061,124 @@ export default function BackgroundRemoverTool() {
       {activeTabMode === "single" && (
         <div className="space-y-6">
           {/* Upload & Controls Hub */}
-          <div className="rounded-3xl border border-[#26332d] bg-[#0c1510] p-6 sm:p-8 shadow-2xl">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="rounded-3xl border border-[#213026] bg-[#0c1510] p-5 sm:p-6 shadow-xl space-y-5">
+            {/* Header: Title and Engine Switcher */}
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-[#1b2720] pb-4">
               <div>
-                <h2 className="text-base sm:text-lg font-bold text-[#e7eee9] flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-[#3cff5f]" />
+                <h3 className="text-sm font-black text-[#e7eee9] flex items-center gap-2">
+                  <Palette className="h-4 w-4 text-[#3cff5f]" />
                   <span>Single Image Studio Editor</span>
-                </h2>
-                <p className="text-xs text-[#9baaa1] mt-0.5">
+                </h3>
+                <p className="text-xs text-[#8da194] mt-0.5">
                   Inspect cutouts side by side, fine-tune color tolerance, and replace backgrounds.
                 </p>
               </div>
 
-              {/* Upload Button */}
-              <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+                {/* Engine Switcher */}
+                <div className="flex items-center gap-1 rounded-2xl border border-[#213026] bg-[#080e0b] p-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSingleMode("smart-studio");
+                      if (singleImageFile && singleImgRef.current) {
+                        setTimeout(() => runSingleRemoval(singleImageFile, singleImgRef.current!), 50);
+                      }
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      singleMode === "smart-studio"
+                        ? "bg-[#3cff5f] text-[#050a08]"
+                        : "text-[#8da194] hover:text-[#e7eee9]"
+                    }`}
+                  >
+                    <span>⚡ Smart Studio (Fast)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSingleMode("ai-deep");
+                      if (singleImageFile && singleImgRef.current) {
+                        setTimeout(() => runSingleRemoval(singleImageFile, singleImgRef.current!), 50);
+                      }
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      singleMode === "ai-deep"
+                        ? "bg-[#3cff5f] text-[#050a08]"
+                        : "text-[#8da194] hover:text-[#e7eee9]"
+                    }`}
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span>🤖 AI Deep Cutout</span>
+                  </button>
+                </div>
+
+                {/* Upload Button */}
                 <button
                   type="button"
                   onClick={() => singleFileInputRef.current?.click()}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-[#3cff5f] px-5 py-3 text-xs sm:text-sm font-bold text-[#050a08] hover:bg-[#48ff69] transition-all cursor-pointer shadow-md shadow-[#3cff5f]/20"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#3cff5f] px-4 py-2 text-xs font-black text-[#050a08] hover:bg-[#52ff71] transition-all cursor-pointer shadow-md shadow-[#3cff5f]/20"
                 >
-                  <Upload className="h-4 w-4" />
-                  <span>Upload Image</span>
+                  <Upload className="h-3.5 w-3.5" />
+                  <span>{singleImageFile ? "Change Image" : "Upload Image"}</span>
                 </button>
               </div>
             </div>
 
-            {/* Controls Bar */}
-            <div className="mt-6 pt-5 border-t border-[#213026] flex flex-wrap items-center gap-6 text-xs text-[#9baaa1]">
-              <div className="flex items-center gap-2">
-                <span>Engine:</span>
-                <button
-                  type="button"
-                  onClick={() => setSingleMode("smart-studio")}
-                  className={`px-3 py-1 rounded-xl text-xs font-bold border transition-all ${
-                    singleMode === "smart-studio"
-                      ? "border-[#3cff5f] bg-[#102a16] text-[#3cff5f]"
-                      : "border-[#213026] bg-[#080e0b] text-[#8da194]"
-                  }`}
-                >
-                  Smart Studio
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSingleMode("ai-deep")}
-                  className={`px-3 py-1 rounded-xl text-xs font-bold border transition-all ${
-                    singleMode === "ai-deep"
-                      ? "border-[#3cff5f] bg-[#102a16] text-[#3cff5f]"
-                      : "border-[#213026] bg-[#080e0b] text-[#8da194]"
-                  }`}
-                >
-                  AI Deep Cutout
-                </button>
+            {/* Options Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              {/* Output Backdrop Choice */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#8da194]">Output Backdrop:</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {BACKDROP_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => {
+                        setSingleBg(opt.id);
+                        if (singleImageFile && singleImgRef.current) {
+                          runSingleRemoval(singleImageFile, singleImgRef.current);
+                        }
+                      }}
+                      className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center truncate ${
+                        singleBg === opt.id
+                          ? "border-[#3cff5f] bg-[#102a16] text-[#3cff5f] shadow-md shadow-[#3cff5f]/15"
+                          : "border-[#213026] bg-[#080e0b] text-[#8da194] hover:text-[#e7eee9]"
+                      }`}
+                    >
+                      {opt.badgeText}
+                    </button>
+                  ))}
+                </div>
+                {singleBg === "custom" && (
+                  <div className="flex items-center gap-2 pt-1">
+                    <span className="text-xs text-[#8da194]">Pick Color:</span>
+                    <input
+                      type="color"
+                      value={singleCustomColor}
+                      onChange={(e) => {
+                        setSingleCustomColor(e.target.value);
+                        if (singleImageFile && singleImgRef.current) {
+                          runSingleRemoval(singleImageFile, singleImgRef.current);
+                        }
+                      }}
+                      className="h-7 w-12 rounded-lg border border-[#213026] bg-transparent cursor-pointer p-0"
+                    />
+                    <span className="text-xs font-mono text-[#3cff5f]">{singleCustomColor}</span>
+                  </div>
+                )}
               </div>
 
-              <div className="flex items-center gap-3">
-                <Sliders className="h-4 w-4 text-[#3cff5f]" />
-                <span>Tolerance:</span>
+              {/* Tolerance (Smart Studio) */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <label className="font-bold text-[#8da194]">Color Sensitivity:</label>
+                  <span className="font-mono font-bold text-[#3cff5f]">{singleTolerance}%</span>
+                </div>
                 <input
                   type="range"
-                  min="5"
-                  max="85"
+                  min="10"
+                  max="70"
                   value={singleTolerance}
                   onChange={(e) => setSingleTolerance(Number(e.target.value))}
                   onMouseUp={() => {
@@ -1124,15 +1186,20 @@ export default function BackgroundRemoverTool() {
                       runSingleRemoval(singleImageFile, singleImgRef.current);
                     }
                   }}
-                  className="w-28 accent-[#3cff5f] cursor-pointer"
+                  onTouchEnd={() => {
+                    if (singleImageFile && singleImgRef.current) {
+                      runSingleRemoval(singleImageFile, singleImgRef.current);
+                    }
+                  }}
+                  className="w-full accent-[#3cff5f] h-2 bg-[#1b2720] rounded-lg cursor-pointer block"
                 />
-                <span className="font-mono text-[#e7eee9]">{singleTolerance}%</span>
+                <p className="text-[10px] text-[#62776a] mt-1 m-0">Auto-detects corner studio background</p>
               </div>
             </div>
 
-            {/* Single Studio Pro Toggles */}
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-[#213026]">
-              <label className="flex items-center gap-2 cursor-pointer text-xs select-none">
+            {/* Studio High-Quality Cleanliness Options */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-[#1b2720]">
+              <label className="flex items-start gap-2.5 rounded-xl border border-[#213026] bg-[#080e0b]/70 p-3 cursor-pointer select-none hover:border-[#3cff5f]/50 transition-colors">
                 <input
                   type="checkbox"
                   checked={singleContiguousMode}
@@ -1142,12 +1209,22 @@ export default function BackgroundRemoverTool() {
                       setTimeout(() => runSingleRemoval(singleImageFile, singleImgRef.current!), 50);
                     }
                   }}
-                  className="accent-[#3cff5f] h-3.5 w-3.5 rounded"
+                  className="accent-[#3cff5f] h-4 w-4 rounded mt-0.5"
                 />
-                <span className="text-[#e7eee9] font-bold">🛡️ Protect Subject Interior (Border Flood-Fill)</span>
+                <div className="text-xs">
+                  <span className="font-bold text-[#e7eee9] flex items-center gap-1.5">
+                    <span>🛡️ Protect Subject Interior (Border-Connected)</span>
+                    <span className="rounded bg-[#102a16] border border-[#2a5234] px-1.5 py-0.2 text-[9px] font-mono text-[#3cff5f]">
+                      STUDIO PRO
+                    </span>
+                  </span>
+                  <p className="text-[11px] text-[#8da194] mt-0.5">
+                    Only carves background connected to outer borders. Internal white clothing, text, sneaker soles &amp; reflections are 100% protected.
+                  </p>
+                </div>
               </label>
 
-              <label className="flex items-center gap-2 cursor-pointer text-xs select-none">
+              <label className="flex items-start gap-2.5 rounded-xl border border-[#213026] bg-[#080e0b]/70 p-3 cursor-pointer select-none hover:border-[#3cff5f]/50 transition-colors">
                 <input
                   type="checkbox"
                   checked={singleDecontaminate}
@@ -1157,9 +1234,19 @@ export default function BackgroundRemoverTool() {
                       setTimeout(() => runSingleRemoval(singleImageFile, singleImgRef.current!), 50);
                     }
                   }}
-                  className="accent-[#3cff5f] h-3.5 w-3.5 rounded"
+                  className="accent-[#3cff5f] h-4 w-4 rounded mt-0.5"
                 />
-                <span className="text-[#e7eee9] font-bold">✨ Anti-Halo &amp; Edge Despill Filter</span>
+                <div className="text-xs">
+                  <span className="font-bold text-[#e7eee9] flex items-center gap-1.5">
+                    <span>✨ Anti-Halo &amp; Color Decontamination</span>
+                    <span className="rounded bg-[#102a16] border border-[#2a5234] px-1.5 py-0.2 text-[9px] font-mono text-[#3cff5f]">
+                      CRISP EDGES
+                    </span>
+                  </span>
+                  <p className="text-[11px] text-[#8da194] mt-0.5">
+                    Removes white/green edge bleeding and fringe halos on semi-transparent borders for razor-sharp cutouts on any background.
+                  </p>
+                </div>
               </label>
             </div>
 
@@ -1195,36 +1282,12 @@ export default function BackgroundRemoverTool() {
             <div className="space-y-6">
               {/* Toolbar */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#213026] pb-4">
-                <div className="flex items-center gap-3 text-xs">
-                  <span className="text-[#9baaa1] font-semibold">Backdrop:</span>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {BACKDROP_OPTIONS.map((opt) => (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        onClick={() => {
-                          setSingleBg(opt.id);
-                          if (singleImageFile && singleImgRef.current) {
-                            runSingleRemoval(singleImageFile, singleImgRef.current);
-                          }
-                        }}
-                        className={`p-0.5 rounded-xl transition-all cursor-pointer flex items-center justify-center ${
-                          singleBg === opt.id
-                            ? "ring-2 ring-[#3cff5f] ring-offset-2 ring-offset-[#080e0b] scale-105"
-                            : "opacity-85 hover:opacity-100"
-                        }`}
-                        style={{
-                          background: "#0c1510",
-                          border: singleBg === opt.id ? "1px solid #3cff5f" : "1px solid #26332d",
-                        }}
-                        title={opt.label}
-                      >
-                        <span className="block h-7 w-7 rounded-lg shadow-inner flex items-center justify-center" style={opt.previewStyle}>
-                          {singleBg === opt.id && <Check className="h-4 w-4 text-white stroke-[3]" />}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="flex items-center gap-1.5 rounded-full bg-[#102a16] border border-[#2a5234] px-3 py-1 font-mono font-bold text-[#3cff5f]">
+                    <span>✨ 100% Full Resolution</span>
+                    <span>•</span>
+                    <span>Lossless 32-bit PNG</span>
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -1232,7 +1295,7 @@ export default function BackgroundRemoverTool() {
                     type="button"
                     onClick={handleSingleCopy}
                     disabled={!singleProcessedUrl}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-[#213026] bg-[#102a16] px-4 py-2.5 text-xs sm:text-sm font-semibold text-[#3cff5f] hover:bg-[#16381e] transition-colors cursor-pointer disabled:opacity-40"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-[#213026] bg-[#102a16] px-4 py-2 text-xs sm:text-sm font-semibold text-[#3cff5f] hover:bg-[#16381e] transition-colors cursor-pointer disabled:opacity-40"
                   >
                     {singleCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     <span>{singleCopied ? "Copied PNG!" : "Copy PNG"}</span>
@@ -1242,10 +1305,10 @@ export default function BackgroundRemoverTool() {
                     type="button"
                     onClick={handleSingleDownload}
                     disabled={!singleProcessedUrl}
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#3cff5f] px-5 py-2.5 text-xs sm:text-sm font-bold text-[#050a08] hover:bg-[#48ff69] transition-all cursor-pointer shadow-md shadow-[#3cff5f]/20 disabled:opacity-40"
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#3cff5f] px-5 py-2 text-xs sm:text-sm font-bold text-[#050a08] hover:bg-[#48ff69] transition-all cursor-pointer shadow-md shadow-[#3cff5f]/20 disabled:opacity-40"
                   >
                     <Download className="h-4 w-4" />
-                    <span>Download Result</span>
+                    <span>Download Cutout PNG</span>
                   </button>
                 </div>
               </div>
