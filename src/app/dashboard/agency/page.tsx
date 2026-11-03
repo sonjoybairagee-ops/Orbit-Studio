@@ -26,25 +26,42 @@ export default async function AgencyDashboardOverview() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
-  const { workspace, role } = await getOrCreateDefaultWorkspace(
-    user.id,
-    user.email,
-    user.user_metadata?.full_name
-  );
+  let workspace: any = null;
+  let role: any = "owner";
+  let projects: any[] = [];
+  let clients: any[] = [];
+  let activityRows: any[] = [];
 
-  const [projects, clients] = await Promise.all([
-    getWorkspaceProjects(workspace.id, { limit: 6 }),
-    getWorkspaceClients(workspace.id),
-  ]);
+  try {
+    const res = await getOrCreateDefaultWorkspace(
+      user.id,
+      user.email,
+      user.user_metadata?.full_name
+    );
+    workspace = res.workspace;
+    role = res.role;
 
-  // Fetch recent activity
-  const supabase = await createClient();
-  const { data: activityRows } = await supabase
-    .from("agency_activity_logs")
-    .select("*")
-    .eq("workspace_id", workspace.id)
-    .order("created_at", { ascending: false })
-    .limit(8);
+    const [pList, cList] = await Promise.all([
+      getWorkspaceProjects(workspace.id, { limit: 6 }).catch(() => []),
+      getWorkspaceClients(workspace.id).catch(() => []),
+    ]);
+    projects = pList;
+    clients = cList;
+
+    const supabase = await createClient();
+    const { data: act } = await supabase
+      .from("agency_activity_logs")
+      .select("*")
+      .eq("workspace_id", workspace.id)
+      .order("created_at", { ascending: false })
+      .limit(8);
+    activityRows = act || [];
+  } catch (err) {
+    console.error("Dashboard overview load error:", err);
+    return null;
+  }
+
+  if (!workspace) return null;
 
   const activeProjectsCount = projects.filter((p) => p.status !== "delivered" && p.status !== "archived").length;
   const pendingReviewsCount = projects.filter((p) => p.status === "client_review" || p.status === "internal_review").length;

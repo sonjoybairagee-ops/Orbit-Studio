@@ -15,11 +15,62 @@ export default async function AgencyLayout({
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
-  const { workspace, role } = await getOrCreateDefaultWorkspace(
-    user.id,
-    user.email,
-    user.user_metadata?.full_name
-  );
+  let workspace: any = null;
+  let role: any = "owner";
+  let migrationNeeded = false;
+
+  try {
+    const res = await getOrCreateDefaultWorkspace(
+      user.id,
+      user.email,
+      user.user_metadata?.full_name
+    );
+    workspace = res.workspace;
+    role = res.role;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("AgencyLayout workspace load error:", msg);
+    migrationNeeded = true;
+  }
+
+  if (migrationNeeded || !workspace) {
+    return (
+      <div className="w-full -mx-4 sm:-mx-6 lg:-mx-8 -my-8 sm:-my-12 min-h-[80vh] flex items-center justify-center p-4">
+        <div className="max-w-xl w-full rounded-3xl border border-[#26332d] bg-[#0c1510] p-6 sm:p-8 shadow-2xl text-center">
+          <div className="h-12 w-12 rounded-2xl bg-[#102a16] border border-[#2a5234] text-[#3cff5f] flex items-center justify-center mx-auto mb-4 text-xl">
+            ⚡
+          </div>
+          <span className="inline-block rounded-full bg-[#102a16] border border-[#2a5234] px-3 py-1 text-xs font-semibold text-[#3cff5f] mb-3">
+            Database Migration Required
+          </span>
+          <h2 className="text-xl sm:text-2xl font-black text-[#e7eee9]">
+            Agency OS Schema Not Installed Yet
+          </h2>
+          <p className="mt-3 text-xs sm:text-sm text-[#8da194] leading-relaxed">
+            The Agency OS database tables have not been created in your Supabase project yet.
+            Please open your Supabase Dashboard, go to <b>SQL Editor</b>, and run the migration script:
+          </p>
+          <div className="mt-4 rounded-xl bg-[#050a08] border border-[#213026] p-3 text-left font-mono text-xs text-[#3cff5f] break-all select-all">
+            supabase/migrations/20261104000000_agency_os_core.sql
+          </div>
+          <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href="/dashboard"
+              className="rounded-xl border border-[#213026] bg-[#080e0b] px-4 py-2.5 text-xs font-bold text-[#8da194] hover:text-[#e7eee9] transition-all"
+            >
+              ← Back to Dashboard
+            </Link>
+            <Link
+              href="/dashboard/agency"
+              className="rounded-xl bg-[#3cff5f] px-5 py-2.5 text-xs font-black text-[#050a08] hover:bg-[#52ff71] transition-all cursor-pointer inline-flex items-center justify-center"
+            >
+              Retry Connection
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full -mx-4 sm:-mx-6 lg:-mx-8 -my-8 sm:-my-12">
