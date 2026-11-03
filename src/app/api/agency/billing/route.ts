@@ -3,27 +3,7 @@ import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getWorkspaceMemberRole } from "@/lib/agency/workspace-service";
 import { canManageWorkspace } from "@/lib/agency/permissions";
-
-const PLAN_QUOTAS: Record<string, { bytes: number; name: string; priceUSD: number; priceBDT: number }> = {
-  starter: {
-    bytes: 25 * 1024 * 1024 * 1024, // 25 GB
-    name: "Production Starter",
-    priceUSD: 19,
-    priceBDT: 2000,
-  },
-  pro: {
-    bytes: 100 * 1024 * 1024 * 1024, // 100 GB
-    name: "Studio Pro",
-    priceUSD: 49,
-    priceBDT: 5000,
-  },
-  agency: {
-    bytes: 500 * 1024 * 1024 * 1024, // 500 GB
-    name: "Enterprise Agency",
-    priceUSD: 149,
-    priceBDT: 15000,
-  },
-};
+import { AGENCY_PLANS, STORAGE_ADDONS } from "@/lib/agency/pricing-config";
 
 export async function POST(req: Request) {
   try {
@@ -31,10 +11,10 @@ export async function POST(req: Request) {
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { workspaceId, targetTier, paymentMethod, txnRef } = body;
+    const { workspaceId, targetTier, billingCycle = "monthly", addonId, paymentMethod, txnRef } = body;
 
-    if (!workspaceId || !targetTier || !PLAN_QUOTAS[targetTier]) {
-      return NextResponse.json({ error: "Valid workspaceId and targetTier are required." }, { status: 400 });
+    if (!workspaceId) {
+      return NextResponse.json({ error: "workspaceId is required." }, { status: 400 });
     }
 
     const role = await getWorkspaceMemberRole(workspaceId, user.id);
@@ -42,15 +22,49 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Only workspace owners can upgrade plans." }, { status: 403 });
     }
 
-    const planInfo = PLAN_QUOTAS[targetTier];
     const adminClient = createAdminClient();
 
-    // Upgrade workspace plan tier and storage quota
+    // 1. Fetch current workspace
+    const { data: currentWs } = await adminClient
+      .from("workspaces")
+      .select("*")
+      .eq("id", workspaceId)
+      .single();
+
+    if (!currentWs) {
+      return NextResponse.json({ error: "Workspace not found." }, { status: 404 });
+    }
+
+    let newPlanTier = currentWs.plan_tier;
+    let newQuotaBytes = currentWs.storage_quota_bytes;
+    let actionDescription = "plan.upgraded";
+
+    // Tier Upgrade logic
+    if (targetTier && targetTier !== "free") {
+      const planConfig = AGENCY_PLANS[targetTier as keyof typeof AGENCY_PLANS];
+      if (!planConfig) {
+        return NextResponse.json({ error: "Invalid target tier." }, { status: 400 });
+      }
+      newPlanTier = targetTier;
+      newQuotaBytes = planConfig.storageBytes;
+    }
+
+    // Storage Add-on logic (adds extra quota to base plan)
+    if (addonId) {
+      const addon = STORAGE_ADDONS.find((a) => a.id === addonId);
+      if (!addon) {
+        return NextResponse.json({ error: "Invalid storage add-on." }, { status: 400 });
+      }
+      newQuotaBytes = newQuotaBytes + addon.bytes;
+      actionDescription = "addon.purchased";
+    }
+
+    // Update workspace
     const { data: updatedWs, error: wsErr } = await adminClient
       .from("workspaces")
       .update({
-        plan_tier: targetTier,
-        storage_quota_bytes: planInfo.bytes,
+        plan_tier: newPlanTier,
+        storage_quota_bytes: newQuotaBytes,
         updated_at: new Date().toISOString(),
       })
       .eq("id", workspaceId)
@@ -61,29 +75,31 @@ export async function POST(req: Request) {
       throw new Error(wsErr?.message || "Failed to update workspace plan.");
     }
 
-    // Log activity
+    // Audit log
     await adminClient.from("agency_activity_logs").insert({
       workspace_id: workspaceId,
       actor_id: user.id,
       actor_name: user.user_metadata?.full_name || user.email || "Owner",
-      action: "plan.upgraded",
+      action: actionDescription,
       resource_type: "workspace",
       resource_id: workspaceId,
       details: {
-        newPlan: targetTier,
-        quotaGB: planInfo.bytes / (1024 * 1024 * 1024),
-        paymentMethod: paymentMethod || "manual",
-        txnRef: txnRef || "MANUAL_ACTIVATION",
+        newPlan: newPlanTier,
+        billingCycle,
+        addonId: addonId || null,
+        quotaGB: Math.round(newQuotaBytes / (1024 * 1024 * 1024)),
+        paymentMethod: paymentMethod || "card",
+        txnRef: txnRef || `ACT-${Date.now()}`,
       },
     });
 
     return NextResponse.json({
       success: true,
       workspace: updatedWs,
-      plan: planInfo.name,
+      plan: AGENCY_PLANS[newPlanTier as keyof typeof AGENCY_PLANS]?.name || newPlanTier,
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Failed to process upgrade" }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to process upgrade";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

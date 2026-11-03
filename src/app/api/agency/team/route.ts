@@ -10,6 +10,7 @@ import {
 import { getOrCreateDefaultWorkspace, getWorkspaceMemberRole } from "@/lib/agency/workspace-service";
 import { canManageMembers } from "@/lib/agency/permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { AGENCY_PLANS } from "@/lib/agency/pricing-config";
 
 export async function GET(req: Request) {
   try {
@@ -51,6 +52,34 @@ export async function POST(req: Request) {
     const callerRole = await getWorkspaceMemberRole(workspaceId, user.id);
     if (!callerRole || !canManageMembers(callerRole)) {
       return NextResponse.json({ error: "Only workspace owners and admins can invite members." }, { status: 403 });
+    }
+
+    // Enforce Internal Member Limits (external clients/reviewers are always unlimited)
+    if (role === "admin" || role === "editor" || role === "owner") {
+      const adminClient = createAdminClient();
+      const { data: wsRow } = await adminClient
+        .from("workspaces")
+        .select("plan_tier")
+        .eq("id", workspaceId)
+        .single();
+
+      const planTier = (wsRow?.plan_tier || "free") as keyof typeof AGENCY_PLANS;
+      const planConfig = AGENCY_PLANS[planTier] || AGENCY_PLANS.free;
+
+      const { count: memberCount } = await adminClient
+        .from("workspace_members")
+        .select("id", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId)
+        .in("role", ["owner", "admin", "editor"]);
+
+      if ((memberCount || 0) >= planConfig.membersIncluded) {
+        return NextResponse.json(
+          {
+            error: `Your ${planConfig.name} plan includes up to ${planConfig.membersIncluded} internal members. Upgrade your plan to Pro ($19/mo for 5 members) or Agency ($49/mo for 10 members).`,
+          },
+          { status: 403 }
+        );
+      }
     }
 
     const invitation = await createWorkspaceInvitation({
