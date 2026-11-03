@@ -248,6 +248,28 @@ export async function GET(request: Request) {
         if (htmlRes.ok) {
           const html = await htmlRes.text();
 
+          // Try ytInitialPlayerResponse parsing
+          if (tags.length === 0) {
+            const playerMatch = html.match(/ytInitialPlayerResponse\s*=\s*({.+?});(?:var|\s*<\/script>)/s);
+            if (playerMatch && playerMatch[1]) {
+              try {
+                const parsed = JSON.parse(playerMatch[1]);
+                if (Array.isArray(parsed?.videoDetails?.keywords)) {
+                  tags = cleanTagList(parsed.videoDetails.keywords);
+                }
+                if (!title && parsed?.videoDetails?.title) {
+                  title = parsed.videoDetails.title;
+                }
+                if (!channelTitle && parsed?.videoDetails?.author) {
+                  channelTitle = parsed.videoDetails.author;
+                }
+                if (!description && parsed?.videoDetails?.shortDescription) {
+                  description = parsed.videoDetails.shortDescription;
+                }
+              } catch {}
+            }
+          }
+
           // Try keywords json match
           if (tags.length === 0) {
             const kwMatch = html.match(/"keywords"\s*:\s*(\[[^\]]*\])/);
@@ -258,6 +280,15 @@ export async function GET(request: Request) {
                   tags = cleanTagList(parsed);
                 }
               } catch {}
+            }
+          }
+
+          // Try meta keywords match
+          if (tags.length === 0) {
+            const metaKw = html.match(/<meta\s+name=["']keywords["']\s+content=["']([^"']*)["']/i);
+            if (metaKw && metaKw[1]) {
+              const list = metaKw[1].split(",").map((s) => s.trim()).filter(Boolean);
+              tags = cleanTagList(list);
             }
           }
 

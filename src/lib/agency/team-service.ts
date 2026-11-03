@@ -312,3 +312,4 @@ export async function updateMemberRole({
   if (error || !data) throw new Error(error?.message || "Failed to update role.");
   return data;
 }
+

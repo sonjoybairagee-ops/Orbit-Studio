@@ -39,7 +39,7 @@ export function ProjectDetailsClientView({
   files: initialFiles,
   user,
 }: ProjectDetailsClientViewProps) {
-  const [activeTab, setActiveTab] = useState<"review" | "files" | "brief" | "delivery">("review");
+  const [activeTab, setActiveTab] = useState<"review" | "files" | "brief" | "delivery" | "ai">("review");
   const [versions, setVersions] = useState<AgencyVideoVersion[]>(initialVersions);
   const [files, setFiles] = useState<AgencyProjectFile[]>(initialFiles);
 
@@ -47,6 +47,20 @@ export function ProjectDetailsClientView({
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [uploadCategory, setUploadCategory] = useState<FileCategory>("original");
+
+  // AI Studio State
+  const [isAnalyzingAi, setIsAnalyzingAi] = useState<boolean>(false);
+  const [aiData, setAiData] = useState<{
+    transcript: string;
+    segments: Array<{ id: number; start: number; end: number; text: string }>;
+    summary: string;
+    keyTopics: string[];
+    tone: string;
+    pacingReview: string;
+    srtContent: string;
+    vttContent: string;
+  } | null>(null);
+  const [copiedTranscript, setCopiedTranscript] = useState<boolean>(false);
 
   // New Version Cut Modal
   const [isVersionModalOpen, setIsVersionModalOpen] = useState<boolean>(false);
@@ -289,6 +303,7 @@ export function ProjectDetailsClientView({
             { id: "files", label: "Project Files & R2 Assets", icon: FolderTree, count: files.length },
             { id: "brief", label: "Creative Brief & Scope", icon: FileText },
             { id: "delivery", label: "Final Deliveries", icon: PackageCheck },
+            { id: "ai", label: "✨ AI Studio & Subtitles", icon: Sparkles },
           ].map((tab) => {
             const Icon = tab.icon;
             const isTabActive = activeTab === tab.id;
@@ -513,6 +528,203 @@ export function ProjectDetailsClientView({
               Send the private Client Portal link to your client. When they click "Approve Video Cut", the status updates automatically and final renders unlock.
             </p>
           </div>
+        </div>
+      )}
+
+      {/* TAB 5: AI Studio & Subtitles */}
+      {activeTab === "ai" && (
+        <div className="rounded-3xl border border-[#213026] bg-[#0c1510] p-6 shadow-xl space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1b2720] pb-4">
+            <div>
+              <h3 className="text-sm font-black text-[#e7eee9] flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-[#3cff5f]" />
+                <span>AI Video Intelligence &amp; Subtitle Studio</span>
+              </h3>
+              <p className="text-xs text-[#8da194] mt-0.5">
+                Automated dialogue transcription, Creative Director pacing analysis, and 1-click SRT/VTT subtitle export.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              disabled={isAnalyzingAi || versions.length === 0}
+              onClick={async () => {
+                const activeVideoUrl = versions[0]?.video_url;
+                if (!activeVideoUrl) {
+                  alert("Please upload at least one video cut first.");
+                  return;
+                }
+
+                setIsAnalyzingAi(true);
+                try {
+                  const res = await fetch("/api/agency/ai/transcribe", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      projectId: project.id,
+                      versionId: versions[0]?.id,
+                      videoUrl: activeVideoUrl,
+                      videoTitle: project.title,
+                    }),
+                  });
+
+                  const data = await res.json();
+                  if (!res.ok) throw new Error(data.error || "AI Analysis failed.");
+                  setAiData(data);
+                } catch (err: any) {
+                  alert(err.message || "AI Analysis failed.");
+                } finally {
+                  setIsAnalyzingAi(false);
+                }
+              }}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#3cff5f] px-4 py-2.5 text-xs font-black text-[#050a08] hover:bg-[#52ff71] transition-all shadow-md shadow-[#3cff5f]/20 cursor-pointer disabled:opacity-50 self-start sm:self-auto"
+            >
+              {isAnalyzingAi ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Transcribing Audio with Whisper...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" />
+                  <span>Run AI Video Analysis</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {!aiData ? (
+            <div className="rounded-2xl border border-dashed border-[#213026] bg-[#080e0b]/60 p-12 text-center space-y-3">
+              <div className="mx-auto h-12 w-12 rounded-2xl bg-[#102a16] border border-[#2a5234] flex items-center justify-center text-[#3cff5f]">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <h4 className="text-sm font-bold text-[#e7eee9]">
+                Ready to transcribe and analyze video cut
+              </h4>
+              <p className="text-xs text-[#8da194] max-w-sm mx-auto">
+                Click the button above to generate a full dialogue transcript with timestamps, creative pacing remarks, and exportable .SRT subtitles.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Creative Director Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="rounded-2xl border border-[#213026] bg-[#080e0b] p-4 space-y-1.5 md:col-span-2">
+                  <span className="text-[10px] uppercase font-mono text-[#3cff5f] font-bold">
+                    Executive Narrative Summary
+                  </span>
+                  <p className="text-xs text-[#e7eee9] leading-relaxed">{aiData.summary}</p>
+                  <p className="text-[11px] text-[#8da194] pt-2 border-t border-[#1b2720]">
+                    <strong>Pacing &amp; Hook:</strong> {aiData.pacingReview}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-[#213026] bg-[#080e0b] p-4 space-y-2">
+                  <div>
+                    <span className="text-[10px] uppercase font-mono text-[#3cff5f] font-bold">
+                      Narrative Tone
+                    </span>
+                    <p className="text-xs font-bold text-[#e7eee9] mt-0.5">{aiData.tone}</p>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] uppercase font-mono text-[#8da194] font-bold">
+                      Key Topics
+                    </span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {aiData.keyTopics.map((topic) => (
+                        <span
+                          key={topic}
+                          className="px-2 py-0.5 rounded-md bg-[#102a16] border border-[#2a5234] text-[10px] font-mono text-[#3cff5f]"
+                        >
+                          {topic}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Subtitle Export Toolbar */}
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#213026] bg-[#080e0b] p-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-[#e7eee9]">Subtitle Tracks:</span>
+                  <span className="text-xs text-[#8da194]">
+                    {aiData.segments.length} timestamped dialogue segments
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const blob = new Blob([aiData.srtContent], { type: "text/plain;charset=utf-8" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `${project.title.replace(/[^a-z0-9]/gi, "_")}_subtitles.srt`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#102a16] border border-[#2a5234] hover:bg-[#183d21] text-xs font-bold text-[#3cff5f] transition-all cursor-pointer"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    <span>Download .SRT</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const blob = new Blob([aiData.vttContent], { type: "text/vtt;charset=utf-8" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `${project.title.replace(/[^a-z0-9]/gi, "_")}_subtitles.vtt`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#213026] bg-[#0c1510] text-xs font-bold text-[#e7eee9] hover:bg-[#102a16] transition-all cursor-pointer"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    <span>Download .VTT</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(aiData.transcript);
+                      setCopiedTranscript(true);
+                      setTimeout(() => setCopiedTranscript(false), 2000);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#213026] bg-[#0c1510] text-xs font-semibold text-[#8da194] hover:text-[#e7eee9] transition-all cursor-pointer"
+                  >
+                    {copiedTranscript ? <Check className="h-3.5 w-3.5 text-[#3cff5f]" /> : <Copy className="h-3.5 w-3.5" />}
+                    <span>{copiedTranscript ? "Copied!" : "Copy Full Text"}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Timestamped Transcript Segments */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-[#8da194] uppercase tracking-wider">
+                  Interactive Timestamped Dialogue Transcript:
+                </h4>
+                <div className="rounded-2xl border border-[#213026] bg-[#080e0b] p-4 max-h-[350px] overflow-y-auto space-y-2">
+                  {aiData.segments.map((seg) => (
+                    <div
+                      key={seg.id}
+                      className="p-2.5 rounded-xl hover:bg-[#102a16]/40 transition-colors flex items-start gap-3 text-xs"
+                    >
+                      <span className="font-mono text-[11px] text-[#3cff5f] bg-[#102a16] px-2 py-0.5 rounded border border-[#2a5234] shrink-0">
+                        {Math.floor(seg.start / 60)}:{(Math.floor(seg.start % 60)).toString().padStart(2, "0")}
+                      </span>
+                      <p className="text-[#e7eee9] leading-relaxed">{seg.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

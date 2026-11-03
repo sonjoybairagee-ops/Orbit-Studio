@@ -62,3 +62,4 @@ export function InviteAcceptButton({ token }: { token: string }) {
     </div>
   );
 }
+

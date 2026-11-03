@@ -561,14 +561,14 @@ export default function BackgroundRemoverTool() {
           </div>
 
           {/* Mode Switcher Tabs */}
-          <div className="shrink-0 flex items-center gap-1.5 rounded-2xl border border-[#213026] bg-[#080e0b] p-1.5 w-full sm:w-auto">
+          <div className="shrink-0 flex items-center gap-1 rounded-xl border border-[#213026] bg-[#080e0b] p-1 w-full sm:w-auto overflow-hidden">
             <button
               type="button"
               onClick={() => setActiveTabMode("bulk")}
-              className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-black whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+              className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                 activeTabMode === "bulk"
-                  ? "bg-[#3cff5f] text-[#050a08] shadow-md shadow-[#3cff5f]/20"
-                  : "text-[#8da194] hover:text-[#e7eee9]"
+                  ? "bg-[#3cff5f] text-[#050a08] shadow-sm font-black"
+                  : "text-[#8da194] hover:text-[#e7eee9] hover:bg-[#102016]/40"
               }`}
             >
               <FolderArchive className="h-4 w-4 shrink-0" />
@@ -583,10 +583,10 @@ export default function BackgroundRemoverTool() {
             <button
               type="button"
               onClick={() => setActiveTabMode("single")}
-              className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-black whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+              className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                 activeTabMode === "single"
-                  ? "bg-[#3cff5f] text-[#050a08] shadow-md shadow-[#3cff5f]/20"
-                  : "text-[#8da194] hover:text-[#e7eee9]"
+                  ? "bg-[#3cff5f] text-[#050a08] shadow-sm font-black"
+                  : "text-[#8da194] hover:text-[#e7eee9] hover:bg-[#102016]/40"
               }`}
             >
               <Palette className="h-4 w-4 shrink-0" />
@@ -615,11 +615,11 @@ export default function BackgroundRemoverTool() {
               </div>
 
               {/* Engine Switcher */}
-              <div className="shrink-0 flex items-center gap-2 rounded-2xl border border-[#213026] bg-[#080e0b] p-1">
+              <div className="shrink-0 flex items-center gap-1 rounded-xl border border-[#213026] bg-[#080e0b] p-1 overflow-hidden">
                 <button
                   type="button"
                   onClick={() => setBulkEngine("smart-studio")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
                     bulkEngine === "smart-studio"
                       ? "bg-[#3cff5f] text-[#050a08]"
                       : "text-[#8da194] hover:text-[#e7eee9]"
@@ -630,7 +630,7 @@ export default function BackgroundRemoverTool() {
                 <button
                   type="button"
                   onClick={() => setBulkEngine("ai-deep")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
                     bulkEngine === "ai-deep"
                       ? "bg-[#3cff5f] text-[#050a08]"
                       : "text-[#8da194] hover:text-[#e7eee9]"
@@ -1076,7 +1076,7 @@ export default function BackgroundRemoverTool() {
 
               <div className="shrink-0 flex flex-wrap items-center gap-3 w-full md:w-auto justify-between md:justify-end">
                 {/* Engine Switcher */}
-                <div className="shrink-0 flex items-center gap-1 rounded-2xl border border-[#213026] bg-[#080e0b] p-1">
+                <div className="shrink-0 flex items-center gap-1 rounded-xl border border-[#213026] bg-[#080e0b] p-1 overflow-hidden">
                   <button
                     type="button"
                     onClick={() => {
@@ -1085,7 +1085,7 @@ export default function BackgroundRemoverTool() {
                         setTimeout(() => runSingleRemoval(singleImageFile, singleImgRef.current!), 50);
                       }
                     }}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
                       singleMode === "smart-studio"
                         ? "bg-[#3cff5f] text-[#050a08]"
                         : "text-[#8da194] hover:text-[#e7eee9]"
@@ -1101,7 +1101,7 @@ export default function BackgroundRemoverTool() {
                         setTimeout(() => runSingleRemoval(singleImageFile, singleImgRef.current!), 50);
                       }
                     }}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
                       singleMode === "ai-deep"
                         ? "bg-[#3cff5f] text-[#050a08]"
                         : "text-[#8da194] hover:text-[#e7eee9]"

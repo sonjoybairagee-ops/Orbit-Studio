@@ -204,3 +204,4 @@ export function StorageUpgradeClientView({ initialWorkspace }: StorageUpgradeCli
     </div>
   );
 }
+
