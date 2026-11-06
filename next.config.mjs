@@ -13,6 +13,20 @@ const nextConfig = {
     }
     return config;
   },
+  async redirects() {
+    return [
+      {
+        source: "/dashboard/agency/:path*",
+        destination: "/dashboard",
+        permanent: false,
+      },
+      {
+        source: "/dashboard/agency",
+        destination: "/dashboard",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

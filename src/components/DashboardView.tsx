@@ -63,46 +63,12 @@ export function DashboardView({ user, licenses, verified }: DashboardViewProps) 
           <div><p className="account-eyebrow">YOUR ORBIT WORKSPACE</p><h1>Welcome, {formattedName}</h1><p className="account-email">{user.email}</p></div>
         </div>
         <div className="account-header-actions">
-          <Link
-            href="/dashboard/agency"
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#102a16] border border-[#3cff5f]/40 text-[#3cff5f] hover:border-[#3cff5f] text-xs font-black shadow-md shadow-[#3cff5f]/15 transition-all"
-          >
-            <span className="h-2 w-2 rounded-full bg-[#3cff5f] animate-pulse" />
-            <span>Open Agency OS ↗</span>
-          </Link>
           <span className="account-status">{activeCount > 0 ? activeCount + " active license" + (activeCount === 1 ? "" : "s") : "No active licenses"}</span>
           <button onClick={handleRefresh} disabled={refreshing} aria-busy={refreshing}>{refreshing ? "Refreshing…" : "Refresh"}</button>
           <button onClick={handleSignOut}>Sign out</button>
         </div>
       </header>
 
-      {/* Agency OS Quick Portal Banner */}
-      <div className="mb-6 rounded-2xl border border-[#213026] bg-[#0c1510] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-[#102a16] border border-[#2a5234] flex items-center justify-center text-[#3cff5f] font-black shrink-0">
-            ⚡
-          </div>
-          <div>
-            <h3 className="text-sm font-black text-[#e7eee9] flex items-center gap-2">
-              <span>CompX Orbit Agency OS</span>
-              <span className="rounded bg-[#102a16] border border-[#2a5234] px-1.5 py-0.2 text-[9px] font-mono text-[#3cff5f]">
-                NEW SAAS MODULE
-              </span>
-            </h3>
-            <p className="text-xs text-[#8da194]">
-              Client portals, video review players, timestamp comments, R2 cloud storage &amp; project management.
-            </p>
-          </div>
-        </div>
-
-        <Link
-          href="/dashboard/agency"
-          className="inline-flex items-center gap-2 rounded-xl bg-[#3cff5f] px-4 py-2 text-xs font-black text-[#050a08] hover:bg-[#52ff71] transition-all shadow-md shadow-[#3cff5f]/20 cursor-pointer shrink-0"
-        >
-          <span>Launch Agency OS</span>
-          <span>→</span>
-        </Link>
-      </div>
       <div className="account-heading"><div><h2>Your licenses & downloads</h2><p>Download your extensions, copy your key and manage your devices.</p></div><Link href="/pricing">Browse products ↗</Link></div>
       <nav className="account-tabs" aria-label="Account sections">
         {tabs.map(([id, label]) => <button key={id} id={"account-tab-" + id} aria-current={activeTab === id ? "page" : undefined} aria-controls="account-content" onClick={() => setActiveTab(id)}>{label}{id === "licenses" && <span>{licenses.length}</span>}</button>)}
