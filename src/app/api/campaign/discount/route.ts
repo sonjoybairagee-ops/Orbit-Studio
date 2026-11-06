@@ -3,8 +3,15 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getCampaignInfo, DISCOUNT_CAMPAIGN } from "@/lib/discount-campaign";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET() {
+  const headers = {
+    "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+    Pragma: "no-cache",
+    Expires: "0",
+  };
+
   try {
     const supabase = createAdminClient();
 
@@ -31,11 +38,10 @@ export async function GET() {
     }
 
     const campaign = getCampaignInfo(approvedCount ?? 0, pendingCount ?? 0);
-    return NextResponse.json(campaign);
+    return NextResponse.json(campaign, { headers });
   } catch (err: any) {
     console.error("[CAMPAIGN_API] Unexpected error:", err);
     // Fallback info with 0 approved keys
-    return NextResponse.json(getCampaignInfo(0, 0));
+    return NextResponse.json(getCampaignInfo(0, 0), { headers });
   }
 }
-

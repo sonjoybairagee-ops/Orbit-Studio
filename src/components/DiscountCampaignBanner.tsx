@@ -29,13 +29,29 @@ export function DiscountCampaignBanner({
   }>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [copied, setCopied] = useState(false);
 
+  // Keep info in sync if server props update
+  useEffect(() => {
+    setInfo((prev) => {
+      if (prev.approvedKeys === initialApprovedCount && prev.pendingKeys === initialPendingCount) {
+        return prev;
+      }
+      return getCampaignInfo(initialApprovedCount, initialPendingCount);
+    });
+  }, [initialApprovedCount, initialPendingCount]);
+
   // Fetch real-time quota count periodically (every 30s)
   useEffect(() => {
     setMounted(true);
 
     async function fetchQuota() {
       try {
-        const res = await fetch("/api/campaign/discount");
+        const res = await fetch(`/api/campaign/discount?t=${Date.now()}`, {
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          },
+        });
         if (res.ok) {
           const data: CampaignInfo = await res.json();
           setInfo(data);
@@ -53,10 +69,7 @@ export function DiscountCampaignBanner({
   // Update countdown clock every second
   useEffect(() => {
     function calculateClock() {
-      const currentInfo = getCampaignInfo(info.approvedKeys, info.pendingKeys);
-      setInfo(currentInfo);
-
-      const target = currentInfo.targetTimestamp;
+      const target = info.targetTimestamp;
       const diff = Math.max(0, target - Date.now());
 
       const d = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -70,7 +83,7 @@ export function DiscountCampaignBanner({
     calculateClock();
     const timer = setInterval(calculateClock, 1000);
     return () => clearInterval(timer);
-  }, [info.approvedKeys, info.pendingKeys]);
+  }, [info.targetTimestamp]);
 
   function copyCode() {
     navigator.clipboard?.writeText(DISCOUNT_CAMPAIGN.CODE);

@@ -1,11 +1,15 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { FullExtensionDemo } from "@/components/FullExtensionDemo";
 import { StoryGraphVisual } from "@/components/StoryGraphVisual";
 import { LayerExploder3D } from "@/components/LayerExploder3D";
 import { PremiereShowcase } from "@/components/PremiereShowcase";
 import { DiscountCampaignBanner } from "@/components/DiscountCampaignBanner";
 import { HeroOfferCountdown } from "@/components/HeroOfferCountdown";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const WORKSPACES = [
   {
@@ -72,14 +76,15 @@ export default async function Home() {
   const comboBdt = bundlePlan?.unit_price_bdt ?? 480;
   const checkoutHref = bundlePlan ? `/checkout/${bundlePlan.slug}` : "/checkout/orbit-bundle";
 
-  // Real-time discount campaign quota
+  // Real-time discount campaign quota (using admin client to bypass RLS for public campaign quota counters)
+  const adminClient = createAdminClient();
   const [{ count: approvedDiscountCount }, { count: pendingDiscountCount }] = await Promise.all([
-    supabase
+    adminClient
       .from("orders")
       .select("id", { count: "exact", head: true })
       .ilike("provider_transaction_id", "%Orbit100%")
       .eq("status", "approved"),
-    supabase
+    adminClient
       .from("orders")
       .select("id", { count: "exact", head: true })
       .ilike("provider_transaction_id", "%Orbit100%")

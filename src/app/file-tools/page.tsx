@@ -7,7 +7,7 @@ import { FolderArchive, ChevronRight } from "lucide-react";
 export const metadata: Metadata = {
   title: "Free Online File Converters & Archive Utilities — CompX Orbit",
   description:
-    "Free online file and video tools: Video to GIF Converter, Video Frame Extractor, ZIP File Creator, and CSV to JSON Converter. 100% private in-browser processing.",
+    "Free online file and video tools: CSV Viewer & Editor, Video to GIF Converter, Video Frame Extractor, ZIP File Creator, and CSV to JSON Converter. 100% private in-browser processing.",
   alternates: {
     canonical: "/file-tools",
   },
