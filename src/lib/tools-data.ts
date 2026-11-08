@@ -724,6 +724,22 @@ export const TOOLS_DATA: ToolItem[] = [
     iconName: "Table2",
   },
   {
+    id: "word-viewer",
+    name: "Word (.docx) Viewer & Editor",
+    shortDesc: "In-browser Microsoft Word viewer and rich editor with 1-click export to DOCX, PDF, and HTML.",
+    description: "Open and edit Microsoft Word (.docx) documents in an interactive WYSIWYG page canvas. Format headings, lists, and tables, view live word statistics, and export back to Word (.docx), PDF, HTML, or Markdown with 100% privacy.",
+    category: "file",
+    href: "/file-tools/word-viewer",
+    isPopular: true,
+    cardColor: {
+      bg: "bg-blue-50/50 hover:bg-blue-50",
+      border: "border-blue-200",
+      accent: "text-blue-700",
+      headerBg: "bg-blue-100/70 text-blue-800",
+    },
+    iconName: "FileText",
+  },
+  {
     id: "percentage-calculator",
     name: "Percentage Calculator",
     shortDesc: "Calculate percentage values, percentage increase/decrease, and discounts.",
