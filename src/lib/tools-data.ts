@@ -212,6 +212,23 @@ export const TOOLS_DATA: ToolItem[] = [
     iconName: "Receipt",
   },
   {
+    id: "cv-maker",
+    name: "CV & Resume Maker",
+    shortDesc: "Design personalized resumes with 5 pro templates & instant PDF export.",
+    description: "Build ATS-ready resumes with 5 designer templates, sample profiles, color accents, photo upload, and vector PDF download.",
+    category: "pdf",
+    href: "/pdf-tools/cv-maker",
+    isPopular: true,
+    badge: "5 Templates",
+    cardColor: {
+      bg: "bg-teal-50/50 hover:bg-teal-50",
+      border: "border-teal-200",
+      accent: "text-teal-700",
+      headerBg: "bg-teal-100/70 text-teal-800",
+    },
+    iconName: "Briefcase",
+  },
+  {
     id: "word-counter",
     name: "Word Counter",
     shortDesc: "Count words, characters, sentences, and reading time.",

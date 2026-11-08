@@ -4,14 +4,17 @@ import { TOOLS_DATA } from "@/lib/tools-data";
 import { FileText, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Free Online PDF Tools — Merge, Split, Compress & Organize PDFs | CompX Orbit",
+  title: "Free Online PDF & Document Tools — Merge, Split, Compress, CV Maker & Invoices | CompX Orbit",
   description:
-    "Complete client-side PDF tool suite: Merge PDF, Split PDF, Compress PDF, Images to PDF, and PDF Page Organizer without server uploads.",
+    "Complete client-side PDF tool suite: CV & Resume Maker, Invoice Generator, Merge PDF, Split PDF, Compress PDF, Images to PDF, and PDF Page Organizer without server uploads.",
   alternates: {
     canonical: "/pdf-tools",
   },
   keywords: [
     "pdf tools",
+    "cv maker",
+    "resume builder online",
+    "invoice generator",
     "merge pdf online",
     "split pdf free",
     "compress pdf client-side",
@@ -21,7 +24,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: "Free Online PDF Tools — CompX Orbit",
-    description: "Fast, private client-side PDF manipulation with zero file uploads.",
+    description: "Fast, private client-side PDF manipulation, resume builder, and invoice generator with zero file uploads.",
     url: "https://compxorbit.com/pdf-tools",
     type: "website",
   },
@@ -39,10 +42,10 @@ export default function PdfToolsPage() {
           <span>Client-Side PDF Suite</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-          Online PDF Tools
+          Online PDF & Document Tools
         </h1>
         <p className="mt-3 text-sm sm:text-base text-slate-600">
-          Fast, browser-based utilities to merge, split, compress, convert images, and reorder pages in your PDF files without size limits or security risks.
+          Fast, browser-based utilities to create CVs, generate invoices, merge, split, compress, convert images, and reorder pages in your PDF files without size limits or security risks.
         </p>
       </div>
 

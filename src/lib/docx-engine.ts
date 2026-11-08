@@ -714,3 +714,4 @@ export const SAMPLE_WORD_DOCUMENT = `
   <li>Utilize <strong>1-Click Copy</strong> to paste rich formatted content into email or documentation portals.</li>
 </ol>
 `;
+
