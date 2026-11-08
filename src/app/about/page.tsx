@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Sparkles, Video, Cpu, ShieldCheck, Zap, Globe, Heart, ArrowRight, MessageSquare, Terminal } from "lucide-react";
+import { Sparkles, Video, ShieldCheck, Zap, Globe, Heart, ArrowRight, MessageSquare, Terminal } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "About Us — CompX Orbit Studio & Free Creator Tools",
@@ -128,14 +128,14 @@ export default function AboutPage() {
           <div className="text-center max-w-2xl mx-auto mb-12">
             <h2 className="text-xs uppercase tracking-widest text-[#3cff5f] font-bold">The Ecosystem</h2>
             <h3 className="mt-2 text-3xl font-extrabold text-white tracking-tight">
-              Three Pillars of CompX Orbit
+              Two Pillars of CompX Orbit
             </h3>
             <p className="mt-3 text-sm text-[#8da096]">
               A complete pipeline designed to elevate your creative output from pre-production to final render.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 gap-6">
             <div className="p-6 rounded-2xl bg-[#0d1410] border border-[#26332d] hover:border-[#3cff5f]/50 transition-all flex flex-col justify-between">
               <div>
                 <div className="w-12 h-12 rounded-xl bg-[#142319] border border-[#233829] flex items-center justify-center text-[#3cff5f] mb-5">
@@ -149,22 +149,6 @@ export default function AboutPage() {
               </div>
               <Link href="/pricing" className="mt-6 inline-flex items-center gap-1.5 text-xs font-bold text-[#3cff5f] hover:underline">
                 Explore panel features <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-[#0d1410] border border-[#26332d] hover:border-[#3cff5f]/50 transition-all flex flex-col justify-between">
-              <div>
-                <div className="w-12 h-12 rounded-xl bg-[#142319] border border-[#233829] flex items-center justify-center text-[#3cff5f] mb-5">
-                  <Cpu className="w-6 h-6" />
-                </div>
-                <h4 className="text-lg font-bold text-white">CreatorLens AI</h4>
-                <p className="text-xs text-[#3cff5f] font-mono mt-1">Chrome Side-Panel Extension</p>
-                <p className="mt-3 text-sm text-[#9cb1a5] leading-relaxed">
-                  Real-time YouTube competitor research, title hook generation, and outline drafting that lets creators brainstorm viral video angles directly inside Chrome.
-                </p>
-              </div>
-              <Link href="/creator" className="mt-6 inline-flex items-center gap-1.5 text-xs font-bold text-[#3cff5f] hover:underline">
-                Learn about CreatorLens <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 

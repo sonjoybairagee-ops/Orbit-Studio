@@ -7,10 +7,8 @@ import { MobileNav } from "@/components/MobileNav";
 const NAV = [
   ["/#product-tour", "Product tour"],
   ["/#features", "Features"],
-  ["/creator", "CreatorLens"],
   ["/tutorials", "Tutorials"],
   ["/tools", "Free Tools"],
-  ["/games", "Play Games"],
   ["/pricing", "Pricing"],
   ["/contact", "Contact"],
   ["/about", "About"],
