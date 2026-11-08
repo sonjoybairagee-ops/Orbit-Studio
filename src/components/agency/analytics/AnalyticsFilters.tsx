@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { RefreshCw, ChevronDown } from "lucide-react";
 import { AnalyticsExport } from "@/components/agency/analytics/AnalyticsExport";
 
@@ -60,7 +60,7 @@ export function AnalyticsFilters({
       <div className="relative">
         <button
           type="button"
-          onClick={() => setWsOpen((v) => !v)}
+          onClick={() => setWsOpen((v: boolean) => !v)}
           title="Workspace selector — additional workspaces will appear here"
           className="inline-flex items-center gap-2 rounded-xl border border-[#222838] bg-[#121520] px-3 py-2 text-xs font-bold text-[#e7eee9] hover:border-[#2b354d] transition-colors cursor-pointer"
         >

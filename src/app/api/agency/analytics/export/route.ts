@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
   if (report === "project-performance") {
     header = ["Project", "Client", "Status", "Storage", "Progress %", "Last Activity", "Overdue"];
     rows = MOCK_PROJECT_PERFORMANCE.map((p) => ({
-      cells: [p.name, p.client, p.status, formatBytes(p.sizeBytes), p.progressPct, p.lastActivity, p.overdue],
+      cells: [p.name, p.client, p.status, formatBytes(p.sizeBytes), p.progressPct, p.lastActivity, p.overdue ? "Yes" : "No"],
     }));
     filename = "project-performance-preview.csv";
   } else if (report === "team-activity") {

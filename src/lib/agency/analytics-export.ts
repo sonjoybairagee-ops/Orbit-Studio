@@ -9,10 +9,10 @@
  */
 
 export interface CsvRow {
-  cells: (string | number)[];
+  cells: (string | number | boolean)[];
 }
 
-export function csvEscape(value: string | number): string {
+export function csvEscape(value: string | number | boolean): string {
   const s = String(value ?? "");
   if (/[",\n\r]/.test(s)) {
     return `"${s.replace(/"/g, '""')}"`;

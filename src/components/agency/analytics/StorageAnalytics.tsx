@@ -13,6 +13,7 @@ import {
   MOCK_QUOTA_BYTES,
   MOCK_RESERVED_BYTES,
   MOCK_SECTION_NOTE,
+  MOCK_STORAGE_BY_PROJECT,
   MOCK_USED_BYTES,
 } from "@/lib/agency/analytics-mock";
 import {
