@@ -120,7 +120,7 @@ export function DiscountCampaignBanner({
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-[#3cff5f]" />
               </span>
               <span className="rounded-md border border-[#3cff5f]/40 bg-[#3cff5f]/15 px-2.5 py-0.5 text-xs font-black uppercase tracking-wider text-[#3cff5f]">
-                {info.isUpcoming ? "⚡ Friday Flash Deal" : "🔥 30-Day Launch Sale"}
+                {info.isUpcoming ? "⚡ Friday Flash Deal" : "🔥 30-Day Mega Sale"}
               </span>
             </div>
 
