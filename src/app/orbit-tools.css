@@ -133,6 +133,20 @@ main:has([class*="-tools"]) {
   background: #16221a !important;
 }
 
+/* Color Swatches & Custom Pickers - preserve vivid theme colors */
+.orbit-tool-page button.swatch-btn,
+.orbit-tool-page button[data-swatch] {
+  padding: 2px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.orbit-tool-page button.swatch-btn:hover,
+.orbit-tool-page button[data-swatch]:hover {
+  transform: scale(1.08);
+}
+
 /* Number Step Circles (1, 2, 3) */
 .orbit-tool-page span:is(.bg-amber-600, .bg-emerald-600, .bg-blue-600, .bg-indigo-600) {
   background: #16361e !important;

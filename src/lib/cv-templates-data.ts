@@ -456,3 +456,4 @@ export const BLANK_CV_DATA: CvData = {
   certificates: [],
   languages: [{ id: "lang-1", language: "English", proficiency: "Native" }],
 };
+

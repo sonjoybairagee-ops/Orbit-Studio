@@ -295,15 +295,21 @@ export default function InvoiceGeneratorTool() {
                   <button
                     key={th.hex}
                     type="button"
+                    data-swatch="true"
                     onClick={() => setInvoice((prev) => ({ ...prev, themeColor: th.hex }))}
-                    className={`h-5 w-5 rounded-full border transition-all cursor-pointer ${
+                    className={`swatch-btn no-btn-override h-5 w-5 rounded-full border transition-all cursor-pointer p-0 flex items-center justify-center relative ${
                       invoice.themeColor === th.hex
-                        ? "ring-2 ring-[#3cff5f] ring-offset-2 ring-offset-[#0c1510] scale-110"
-                        : "border-[#213026] opacity-75"
+                        ? "ring-2 ring-[#3cff5f] ring-offset-2 ring-offset-[#0c1510] scale-110 border-white/60"
+                        : "border-[#213026] opacity-75 hover:opacity-100"
                     }`}
                     style={{ backgroundColor: th.hex }}
                     title={th.label}
-                  />
+                  >
+                    <span
+                      className="w-full h-full rounded-full block pointer-events-none shadow-sm"
+                      style={{ backgroundColor: th.hex }}
+                    />
+                  </button>
                 ))}
               </div>
             </div>

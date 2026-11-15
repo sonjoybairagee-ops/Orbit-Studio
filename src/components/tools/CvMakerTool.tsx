@@ -414,23 +414,61 @@ export default function CvMakerTool() {
 
           {/* Accent Color Palette */}
           <div>
-            <label className="block text-[11px] font-bold text-[#8da096] uppercase mb-1.5 flex items-center gap-1.5">
-              <Palette className="w-3.5 h-3.5 text-[#3cff5f]" />
-              Accent Theme Color:
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-[11px] font-bold text-[#8da096] uppercase flex items-center gap-1.5">
+                <Palette className="w-3.5 h-3.5 text-[#3cff5f]" />
+                Accent Theme Color:
+              </label>
+              <span className="text-[10px] font-mono text-[#3cff5f] uppercase tracking-wider font-semibold">
+                {cv.themeColor}
+              </span>
+            </div>
             <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-xl bg-[#080d0a] border border-[#1e2d24]">
-              {THEME_COLORS.map((c) => (
-                <button
-                  key={c.hex}
-                  type="button"
-                  onClick={() => setCv((prev) => ({ ...prev, themeColor: c.hex }))}
-                  className={`w-7 h-7 rounded-lg transition-transform cursor-pointer relative ${
-                    cv.themeColor === c.hex ? "scale-110 ring-2 ring-white ring-offset-2 ring-offset-[#080d0a]" : "hover:scale-105"
-                  }`}
-                  style={{ backgroundColor: c.hex }}
-                  title={c.name}
-                />
-              ))}
+              {THEME_COLORS.map((c) => {
+                const isSelected = cv.themeColor.toLowerCase() === c.hex.toLowerCase();
+                return (
+                  <button
+                    key={c.hex}
+                    type="button"
+                    data-swatch="true"
+                    onClick={() => setCv((prev) => ({ ...prev, themeColor: c.hex }))}
+                    className={`swatch-btn no-btn-override w-7 h-7 rounded-lg transition-all cursor-pointer relative p-0.5 border flex items-center justify-center ${
+                      isSelected
+                        ? "ring-2 ring-white ring-offset-2 ring-offset-[#080d0a] scale-110 border-white/60"
+                        : "border-transparent hover:scale-105 opacity-90 hover:opacity-100"
+                    }`}
+                    style={{ backgroundColor: c.hex }}
+                    title={c.name}
+                  >
+                    <span
+                      className="w-full h-full rounded-md block pointer-events-none shadow-sm"
+                      style={{ backgroundColor: c.hex }}
+                    />
+                    {isSelected && (
+                      <Check className="w-3.5 h-3.5 text-white absolute drop-shadow-md pointer-events-none stroke-[3]" />
+                    )}
+                  </button>
+                );
+              })}
+
+              {/* Custom Color Input */}
+              <div className="relative flex items-center ml-1 pl-2 border-l border-[#1e2d24]">
+                <label
+                  title="Pick Custom Color"
+                  className="w-7 h-7 rounded-lg border border-[#2a3f32] bg-[#111a14] hover:border-[#3cff5f] flex items-center justify-center cursor-pointer transition-colors relative"
+                >
+                  <input
+                    type="color"
+                    value={cv.themeColor}
+                    onChange={(e) => setCv((prev) => ({ ...prev, themeColor: e.target.value }))}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <span
+                    className="w-4 h-4 rounded-full border border-white/50 shadow-sm"
+                    style={{ backgroundColor: cv.themeColor }}
+                  />
+                </label>
+              </div>
             </div>
           </div>
 
