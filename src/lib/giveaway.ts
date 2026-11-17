@@ -89,20 +89,46 @@ export async function saveGiveawayClaim(entry: {
   };
 
   try {
-    // 1. Try upserting into public.giveaway_entries table
-    const { data, error } = await adminClient
+    // 1. Check if table exists and if entry with this email already exists
+    const { data: existing, error: selectErr } = await adminClient
       .from("giveaway_entries")
-      .upsert(payload, { onConflict: "email" })
       .select("id")
-      .single();
+      .ilike("email", normalizedEmail)
+      .limit(1)
+      .maybeSingle();
 
-    if (!error && data?.id) {
-      return { ok: true, entryId: data.id };
+    if (!selectErr) {
+      if (existing?.id) {
+        // Update existing record
+        const { error: updateErr } = await adminClient
+          .from("giveaway_entries")
+          .update(payload)
+          .eq("id", existing.id);
+
+        if (!updateErr) {
+          return { ok: true, entryId: existing.id };
+        }
+        console.error("[GIVEAWAY] Update error:", updateErr);
+        return { ok: false, error: updateErr.message };
+      } else {
+        // Insert new record
+        const { data: inserted, error: insertErr } = await adminClient
+          .from("giveaway_entries")
+          .insert(payload)
+          .select("id")
+          .single();
+
+        if (!insertErr && inserted?.id) {
+          return { ok: true, entryId: inserted.id };
+        }
+        console.error("[GIVEAWAY] Insert error:", insertErr);
+        return { ok: false, error: insertErr?.message || "Failed to save entry" };
+      }
     }
 
-    // If table doesn't exist (error code 42P01) or other schema error, fallback to admin_logs
-    if (error && (error.code === "42P01" || error.message?.includes("schema cache") || error.message?.includes("relation"))) {
-      console.warn("[GIVEAWAY] Table giveaway_entries not found, storing in admin_logs fallback:", error.message);
+    // 2. If table doesn't exist (error code 42P01) or other schema error, fallback to admin_logs
+    if (selectErr && (selectErr.code === "42P01" || selectErr.message?.includes("schema cache") || selectErr.message?.includes("relation"))) {
+      console.warn("[GIVEAWAY] Table giveaway_entries not found, storing in admin_logs fallback:", selectErr.message);
       const fallbackId = `gw_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
       const logPayload = {
         admin_id: "00000000-0000-0000-0000-000000000000",
@@ -123,9 +149,9 @@ export async function saveGiveawayClaim(entry: {
       return { ok: true, entryId: fallbackId };
     }
 
-    if (error) {
-      console.error("[GIVEAWAY] Upsert error:", error);
-      return { ok: false, error: error.message };
+    if (selectErr) {
+      console.error("[GIVEAWAY] Query error:", selectErr);
+      return { ok: false, error: selectErr.message };
     }
 
     return { ok: true };

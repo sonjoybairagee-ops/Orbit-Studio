@@ -24,6 +24,13 @@ create table if not exists public.giveaway_entries (
 create unique index if not exists giveaway_entries_email_lower_idx
   on public.giveaway_entries (lower(email));
 
+-- Explicit unique constraint on email
+alter table public.giveaway_entries
+  drop constraint if exists giveaway_entries_email_key;
+
+alter table public.giveaway_entries
+  add constraint giveaway_entries_email_key unique (email);
+
 create index if not exists giveaway_entries_status_idx
   on public.giveaway_entries (status);
 
