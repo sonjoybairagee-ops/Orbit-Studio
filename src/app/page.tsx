@@ -6,6 +6,7 @@ import { StoryGraphVisual } from "@/components/StoryGraphVisual";
 import { LayerExploder3D } from "@/components/LayerExploder3D";
 import { PremiereShowcase } from "@/components/PremiereShowcase";
 import { DiscountCampaignBanner } from "@/components/DiscountCampaignBanner";
+import { GiveawayClaimSection } from "@/components/GiveawayClaimSection";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -105,6 +106,12 @@ export default async function Home() {
             <div className="home-hero__kicker">
               <span><i /> Orbit Studio 3.0.0</span>
               <span>After Effects + Premiere Pro</span>
+              <a
+                href="#giveaway"
+                className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-[#102a16] px-2.5 py-0.5 text-[11px] font-bold text-[#3cff5f] border border-[#2a5234] hover:bg-[#16381e] hover:border-[#3cff5f] transition-all cursor-pointer shadow-sm"
+              >
+                <span>🎉 50 Free Licenses Giveaway</span>
+              </a>
             </div>
             <h1>
               Stay in flow.<br />
@@ -159,6 +166,9 @@ export default async function Home() {
           <span>UNIVERSAL LIBRARY</span>
         </div>
       </section>
+
+      {/* ── 50 Free Extension Licenses 30-Day Giveaway Campaign ── */}
+      <GiveawayClaimSection id="giveaway" />
 
       <section id="features" className="shell workspace-section scroll-mt-24">
         <div className="section-heading section-heading--split">
