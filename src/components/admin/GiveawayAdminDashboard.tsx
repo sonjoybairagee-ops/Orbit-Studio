@@ -389,8 +389,8 @@ export function GiveawayAdminDashboard({ initialEntries }: GiveawayAdminDashboar
                 <th className="px-4 py-3.5">
                   <span className="text-[#3cff5f]">Clickable Email</span> (Inspect)
                 </th>
-                <th className="px-4 py-3.5">Social Share Link</th>
-                <th className="px-4 py-3.5">Host App</th>
+                <th className="px-4 py-3.5">Facebook Share Link</th>
+                <th className="px-4 py-3.5">Prize Bundle</th>
                 <th className="px-4 py-3.5">Submitted</th>
                 <th className="px-4 py-3.5">Status</th>
                 <th className="px-4 py-3.5 text-right">Actions</th>
@@ -451,9 +451,9 @@ export function GiveawayAdminDashboard({ initialEntries }: GiveawayAdminDashboar
                       </div>
                     </td>
 
-                    {/* Preferred App */}
-                    <td className="px-4 py-3.5 whitespace-nowrap font-mono text-[11px] text-[#afbeb4]">
-                      {item.preferred_app === "BOTH" ? "AE + PR (Combo)" : item.preferred_app === "AEFT" ? "After Effects" : "Premiere Pro"}
+                    {/* Prize Bundle */}
+                    <td className="px-4 py-3.5 whitespace-nowrap font-mono text-[11px] text-[#3cff5f] font-semibold">
+                      Combo (AE + PR)
                     </td>
 
                     {/* Submitted Date */}
@@ -554,13 +554,9 @@ export function GiveawayAdminDashboard({ initialEntries }: GiveawayAdminDashboar
                   </a>
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-[#8da194] font-bold">Preferred Software:</span>
-                  <span className="font-mono text-white">
-                    {selectedEntry.preferred_app === "BOTH"
-                      ? "After Effects + Premiere Pro"
-                      : selectedEntry.preferred_app === "AEFT"
-                      ? "After Effects"
-                      : "Premiere Pro"}
+                  <span className="text-[#8da194] font-bold">Prize Bundle:</span>
+                  <span className="font-mono text-[#3cff5f] font-semibold">
+                    Both (After Effects + Premiere Pro) Combo Bundle
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs">

@@ -3,13 +3,11 @@
 import React, { useState, useEffect } from "react";
 import {
   Gift,
-  Share2,
   CheckCircle2,
   Sparkles,
   ExternalLink,
   Copy,
   Clock,
-  Send,
   ShieldCheck,
   Award,
   AlertCircle,
@@ -22,7 +20,6 @@ export function GiveawayClaimSection({ id = "giveaway" }: { id?: string }) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [socialShareUrl, setSocialShareUrl] = useState("");
-  const [preferredApp, setPreferredApp] = useState<"BOTH" | "AEFT" | "PPRO">("BOTH");
 
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -62,26 +59,10 @@ export function GiveawayClaimSection({ id = "giveaway" }: { id?: string }) {
     }
   };
 
-  const handleShare = (platform: "facebook" | "twitter" | "linkedin" | "whatsapp") => {
+  const handleShareFacebook = () => {
     const shareUrl = encodeURIComponent(GIVEAWAY_CONFIG.SITE_URL);
-    const text = encodeURIComponent(
-      "🚀 CompX Orbit Studio is giving away 50 FREE Lifetime Extension Licenses for Adobe After Effects & Premiere Pro! Enter the lucky draw now:"
-    );
-
-    let url = "";
-    if (platform === "facebook") {
-      url = `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`;
-    } else if (platform === "twitter") {
-      url = `https://twitter.com/intent/tweet?text=${text}&url=${shareUrl}`;
-    } else if (platform === "linkedin") {
-      url = `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`;
-    } else if (platform === "whatsapp") {
-      url = `https://api.whatsapp.com/send?text=${text}%20${shareUrl}`;
-    }
-
-    if (url) {
-      window.open(url, "_blank", "width=600,height=500,scrollbars=yes,resizable=yes");
-    }
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`;
+    window.open(url, "_blank", "width=600,height=500,scrollbars=yes,resizable=yes");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -97,7 +78,7 @@ export function GiveawayClaimSection({ id = "giveaway" }: { id?: string }) {
       return;
     }
     if (!socialShareUrl.trim()) {
-      setErrorMessage("Please enter your social media post link where you shared Orbit.");
+      setErrorMessage("Please enter the link to your shared Facebook post.");
       return;
     }
 
@@ -111,7 +92,7 @@ export function GiveawayClaimSection({ id = "giveaway" }: { id?: string }) {
           fullName,
           email,
           socialShareUrl,
-          preferredApp,
+          preferredApp: "BOTH", // All 50 winners automatically receive the full Combo Bundle
         }),
       });
 
@@ -146,7 +127,7 @@ export function GiveawayClaimSection({ id = "giveaway" }: { id?: string }) {
             Win Orbit Studio <span className="text-[#3cff5f]">Lifetime License</span>
           </h2>
           <p className="mt-3 text-sm sm:text-base text-[#8da194] leading-relaxed">
-            We are giving away <b>50 Full Lifetime Access Licenses</b> (worth $200+) to creators and editors! Share CompX Orbit on your social media, submit your link below, and enter the lucky draw.
+            We are giving away <b>50 Full Lifetime Access Licenses</b> (worth $200+) to creators and editors! Share CompX Orbit on Facebook, submit your post link below, and enter the lucky draw.
           </p>
 
           {/* 30-Day Digital Countdown Timer */}
@@ -185,116 +166,106 @@ export function GiveawayClaimSection({ id = "giveaway" }: { id?: string }) {
               </div>
             </div>
             <p className="text-[11px] text-[#6b8273] mt-2">
-              Winners will be announced on <b>18 Dec 2026</b> & activation keys sent to 50 lucky emails.
+              Winners will be announced on <b>18 Dec 2026</b> &amp; activation keys sent to 50 lucky emails.
             </p>
           </div>
         </div>
 
         {/* 3 Step Process Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          {/* Step 1 */}
-          <div className="rounded-2xl border border-[#1b3122] bg-[#0c1910] p-6 relative">
-            <div className="flex items-center gap-3 mb-3">
-              <span className="h-8 w-8 rounded-lg bg-[#142e1b] border border-[#2a5d37] text-[#3cff5f] font-black text-sm flex items-center justify-center">
-                1
-              </span>
-              <h3 className="text-base font-bold text-white">Share on Social Media</h3>
+          {/* Step 1: Facebook Share */}
+          <div className="rounded-2xl border border-[#1b3122] bg-[#0c1910] p-6 relative flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <span className="h-8 w-8 rounded-lg bg-[#142e1b] border border-[#2a5d37] text-[#3cff5f] font-black text-sm flex items-center justify-center">
+                  1
+                </span>
+                <h3 className="text-base font-bold text-white">Share on Facebook</h3>
+              </div>
+              <p className="text-xs text-[#8da194] leading-relaxed mb-4">
+                Share CompX Orbit on your Facebook timeline, profile, or any video editing / motion graphics Facebook group.
+              </p>
             </div>
-            <p className="text-xs text-[#8da194] leading-relaxed mb-4">
-              Post about CompX Orbit on your Facebook timeline, Twitter/X, LinkedIn, WhatsApp group, or Reddit.
-            </p>
-            {/* Quick Share Buttons */}
-            <div className="grid grid-cols-2 gap-2">
+
+            <div className="space-y-2.5">
+              {/* Facebook Share Button */}
               <button
                 type="button"
-                onClick={() => handleShare("facebook")}
-                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#1877F2]/15 border border-[#1877F2]/40 text-xs font-bold text-[#4c9bfd] hover:bg-[#1877F2]/25 transition-colors cursor-pointer"
+                onClick={handleShareFacebook}
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#1877F2] hover:bg-[#166fe5] text-xs sm:text-sm font-bold text-white transition-all cursor-pointer shadow-lg shadow-[#1877F2]/25 hover:scale-[1.01]"
               >
-                <span>Share Facebook</span>
+                <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                </svg>
+                <span>Share on Facebook Now</span>
               </button>
+
+              {/* Copy pre-written link */}
               <button
                 type="button"
-                onClick={() => handleShare("twitter")}
-                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-xs font-bold text-white hover:bg-white/20 transition-colors cursor-pointer"
+                onClick={copyPromoText}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-[#264730] bg-[#0f2416] px-3 py-2 text-xs font-semibold text-[#8bf7a3] hover:border-[#3cff5f] transition-all cursor-pointer"
               >
-                <span>Post on X</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleShare("linkedin")}
-                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#0A66C2]/15 border border-[#0A66C2]/40 text-xs font-bold text-[#45a4ff] hover:bg-[#0A66C2]/25 transition-colors cursor-pointer"
-              >
-                <span>LinkedIn</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleShare("whatsapp")}
-                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#25D366]/15 border border-[#25D366]/40 text-xs font-bold text-[#45ec82] hover:bg-[#25D366]/25 transition-colors cursor-pointer"
-              >
-                <span>WhatsApp</span>
+                {copiedPromo ? (
+                  <>
+                    <Check className="h-3.5 w-3.5 text-[#3cff5f]" />
+                    <span>Post Text &amp; Link Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-3.5 w-3.5" />
+                    <span>Copy Ready Post &amp; Link</span>
+                  </>
+                )}
               </button>
             </div>
-            {/* Copy pre-written link */}
-            <button
-              type="button"
-              onClick={copyPromoText}
-              className="w-full mt-3 inline-flex items-center justify-center gap-2 rounded-xl border border-[#264730] bg-[#0f2416] px-3 py-2 text-xs font-semibold text-[#8bf7a3] hover:border-[#3cff5f] transition-all cursor-pointer"
-            >
-              {copiedPromo ? (
-                <>
-                  <Check className="h-3.5 w-3.5 text-[#3cff5f]" />
-                  <span>Promo Text Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="h-3.5 w-3.5" />
-                  <span>Copy Ready Post &amp; Link</span>
-                </>
-              )}
-            </button>
           </div>
 
-          {/* Step 2 */}
-          <div className="rounded-2xl border border-[#1b3122] bg-[#0c1910] p-6 relative">
-            <div className="flex items-center gap-3 mb-3">
-              <span className="h-8 w-8 rounded-lg bg-[#142e1b] border border-[#2a5d37] text-[#3cff5f] font-black text-sm flex items-center justify-center">
-                2
-              </span>
-              <h3 className="text-base font-bold text-white">Submit Your Share Link</h3>
+          {/* Step 2: Submit Facebook Link */}
+          <div className="rounded-2xl border border-[#1b3122] bg-[#0c1910] p-6 relative flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <span className="h-8 w-8 rounded-lg bg-[#142e1b] border border-[#2a5d37] text-[#3cff5f] font-black text-sm flex items-center justify-center">
+                  2
+                </span>
+                <h3 className="text-base font-bold text-white">Submit Facebook Link</h3>
+              </div>
+              <p className="text-xs text-[#8da194] leading-relaxed mb-4">
+                Copy the URL of your shared Facebook post and submit it along with your name and email in the form below.
+              </p>
             </div>
-            <p className="text-xs text-[#8da194] leading-relaxed mb-4">
-              Copy the URL of your shared post and submit it along with your name and email in the form below.
-            </p>
             <div className="rounded-xl border border-[#1e3826] bg-[#07130a] p-3 text-xs text-[#6e8576] space-y-1.5 font-mono">
               <div className="flex items-center gap-1 text-[#3cff5f]">
                 <CheckCircle2 className="h-3 w-3" />
-                <span>Valid post link examples:</span>
+                <span>Valid Facebook post examples:</span>
               </div>
-              <p className="truncate">• https://facebook.com/user/posts/123...</p>
-              <p className="truncate">• https://x.com/user/status/123...</p>
-              <p className="truncate">• https://linkedin.com/feed/update/...</p>
+              <p className="truncate">• https://facebook.com/username/posts/123...</p>
+              <p className="truncate">• https://facebook.com/groups/.../permalink/...</p>
+              <p className="truncate">• https://fb.watch/... or m.facebook.com/...</p>
             </div>
           </div>
 
-          {/* Step 3 */}
-          <div className="rounded-2xl border border-[#1b3122] bg-[#0c1910] p-6 relative">
-            <div className="flex items-center gap-3 mb-3">
-              <span className="h-8 w-8 rounded-lg bg-[#142e1b] border border-[#2a5d37] text-[#3cff5f] font-black text-sm flex items-center justify-center">
-                3
-              </span>
-              <h3 className="text-base font-bold text-white">50 Winners Lucky Draw</h3>
+          {/* Step 3: Win Both Extensions */}
+          <div className="rounded-2xl border border-[#1b3122] bg-[#0c1910] p-6 relative flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <span className="h-8 w-8 rounded-lg bg-[#142e1b] border border-[#2a5d37] text-[#3cff5f] font-black text-sm flex items-center justify-center">
+                  3
+                </span>
+                <h3 className="text-base font-bold text-white">50 Winners Lucky Draw</h3>
+              </div>
+              <p className="text-xs text-[#8da194] leading-relaxed mb-4">
+                After 30 days, 50 lucky participants will be randomly selected from verified entries to receive a free license.
+              </p>
             </div>
-            <p className="text-xs text-[#8da194] leading-relaxed mb-4">
-              After 30 days, 50 lucky participants will be randomly selected from verified entries to receive a free license.
-            </p>
             <div className="rounded-xl border border-[#3cff5f]/30 bg-[#122e1b] p-3 text-xs text-[#8bf7a3] space-y-1">
               <div className="flex items-center gap-1.5 font-bold text-white">
                 <Award className="h-4 w-4 text-[#3cff5f]" />
-                <span>What each winner gets:</span>
+                <span>What all 50 winners get:</span>
               </div>
-              <p>• Lifetime License Key ($480 ৳ value)</p>
-              <p>• 7 Docked Workspaces for AE + PR</p>
-              <p>• Offline Activation + Lifetime Updates</p>
+              <p className="font-semibold text-white">• Both Extensions Included (Combo Bundle)</p>
+              <p>• 7 Docked Workspaces (AE + PR)</p>
+              <p>• Lifetime License Key ($480 ৳ Value)</p>
             </div>
           </div>
         </div>
@@ -308,14 +279,18 @@ export function GiveawayClaimSection({ id = "giveaway" }: { id?: string }) {
               </div>
               <h3 className="text-2xl font-black text-white">You&apos;re Officially in the Draw! 🎉</h3>
               <p className="text-sm text-[#8bf7a3] mt-2 max-w-lg mx-auto">
-                Thank you <b>{fullName}</b>! Your social share link has been recorded.
+                Thank you <b>{fullName}</b>! Your Facebook share post link has been recorded.
               </p>
-              <div className="mt-4 rounded-xl border border-[#214a2c] bg-[#08150c] p-4 text-xs text-[#aabdb1] text-left max-w-md mx-auto space-y-1 font-mono">
+              <div className="mt-4 rounded-xl border border-[#214a2c] bg-[#08150c] p-4 text-xs text-[#aabdb1] text-left max-w-md mx-auto space-y-1.5 font-mono">
                 <p>
                   <strong className="text-white">Email:</strong> {email}
                 </p>
                 <p className="truncate">
-                  <strong className="text-white">Share Post:</strong> {socialShareUrl}
+                  <strong className="text-white">Facebook Post:</strong> {socialShareUrl}
+                </p>
+                <p>
+                  <strong className="text-white">Prize:</strong>{" "}
+                  <span className="text-[#3cff5f] font-bold">Orbit Combo (After Effects + Premiere Pro)</span>
                 </p>
                 <p>
                   <strong className="text-white">Status:</strong>{" "}
@@ -341,7 +316,7 @@ export function GiveawayClaimSection({ id = "giveaway" }: { id?: string }) {
               <div className="flex items-center gap-2 mb-2 pb-3 border-b border-[#1b3122]">
                 <Sparkles className="h-5 w-5 text-[#3cff5f]" />
                 <h3 className="text-lg font-bold text-white">Giveaway Entry Form</h3>
-                <span className="ml-auto text-[11px] text-[#6b8273]">Free Entry · No Purchase Needed</span>
+                <span className="ml-auto text-[11px] text-[#6b8273]">Free Entry · Both Extensions Included</span>
               </div>
 
               {errorMessage && (
@@ -383,8 +358,8 @@ export function GiveawayClaimSection({ id = "giveaway" }: { id?: string }) {
 
               <div>
                 <label className="block text-xs font-bold text-[#8da194] uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                  <span>Social Media Post Link * (Where you shared Orbit)</span>
-                  <span className="text-[10px] text-[#3cff5f]">Facebook / X / LinkedIn / Reddit</span>
+                  <span>Facebook Post Link * (Where you shared Orbit)</span>
+                  <span className="text-[10px] text-[#4c9bfd] font-bold">Facebook Timeline / Group</span>
                 </label>
                 <div className="relative">
                   <input
@@ -392,56 +367,22 @@ export function GiveawayClaimSection({ id = "giveaway" }: { id?: string }) {
                     required
                     value={socialShareUrl}
                     onChange={(e) => setSocialShareUrl(e.target.value)}
-                    placeholder="https://facebook.com/... or https://x.com/... (public post link)"
+                    placeholder="https://facebook.com/... (public post link)"
                     className="w-full px-3.5 py-2.5 pl-9 rounded-xl bg-[#060e08] border border-[#1b3623] text-sm text-white placeholder-[#506657] focus:outline-none focus:border-[#3cff5f] focus:ring-1 focus:ring-[#3cff5f]"
                   />
                   <ExternalLink className="absolute left-3 top-3 h-4 w-4 text-[#506657]" />
                 </div>
                 <p className="text-[11px] text-[#6b8273] mt-1">
-                  Ensure the post is set to &ldquo;Public&rdquo; or visible so our team can verify it.
+                  Ensure the post is set to &ldquo;Public&rdquo; so our team can verify your share.
                 </p>
               </div>
 
-              {/* Preferred Host App */}
-              <div>
-                <label className="block text-xs font-bold text-[#8da194] uppercase tracking-wider mb-1.5">
-                  Which Extension do you want if you win?
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPreferredApp("BOTH")}
-                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                      preferredApp === "BOTH"
-                        ? "bg-[#14331d] border-[#3cff5f] text-[#3cff5f] ring-1 ring-[#3cff5f]"
-                        : "bg-[#060e08] border-[#1b3623] text-[#8da194] hover:text-white"
-                    }`}
-                  >
-                    Both (Combo)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPreferredApp("AEFT")}
-                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                      preferredApp === "AEFT"
-                        ? "bg-[#14331d] border-[#3cff5f] text-[#3cff5f] ring-1 ring-[#3cff5f]"
-                        : "bg-[#060e08] border-[#1b3623] text-[#8da194] hover:text-white"
-                    }`}
-                  >
-                    After Effects
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPreferredApp("PPRO")}
-                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                      preferredApp === "PPRO"
-                        ? "bg-[#14331d] border-[#3cff5f] text-[#3cff5f] ring-1 ring-[#3cff5f]"
-                        : "bg-[#060e08] border-[#1b3623] text-[#8da194] hover:text-white"
-                    }`}
-                  >
-                    Premiere Pro
-                  </button>
-                </div>
+              {/* Informative Note: Both Extensions Guaranteed */}
+              <div className="rounded-xl border border-[#1f4228] bg-[#0c2214] p-3 text-xs text-[#8bf7a3] flex items-center gap-2">
+                <Gift className="h-4 w-4 text-[#3cff5f] shrink-0" />
+                <span>
+                  <strong>Included Prize:</strong> Every winner receives the complete <strong>Combo Bundle (After Effects + Premiere Pro)</strong> with lifetime activation.
+                </span>
               </div>
 
               {/* Submit CTA */}
