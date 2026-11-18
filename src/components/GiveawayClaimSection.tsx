@@ -12,6 +12,8 @@ import {
   Award,
   AlertCircle,
   Check,
+  Play,
+  Video,
 } from "lucide-react";
 import { GIVEAWAY_CONFIG } from "@/lib/giveaway";
 
@@ -168,6 +170,58 @@ export function GiveawayClaimSection({ id = "giveaway" }: { id?: string }) {
             <p className="text-[11px] text-[#6b8273] mt-2">
               Winners will be announced on <b>18 Dec 2026</b> &amp; activation keys sent to 50 lucky emails.
             </p>
+          </div>
+        </div>
+
+        {/* Step-by-Step Video Tutorial Guide */}
+        <div className="max-w-4xl mx-auto mb-14">
+          <div className="text-center mb-5">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#102a16] px-3.5 py-1 text-xs font-bold text-[#3cff5f] border border-[#2a5234] mb-2">
+              <Play className="h-3.5 w-3.5 fill-[#3cff5f]" />
+              <span>Step-by-Step Video Tutorial</span>
+            </span>
+            <h3 className="text-xl sm:text-2xl font-black text-white">
+              How to Participate &amp; Claim Your Free License
+            </h3>
+            <p className="text-xs sm:text-sm text-[#8da194] mt-1 max-w-xl mx-auto">
+              Watch this quick video tutorial to learn how to share CompX Orbit on Facebook, copy your public post link, and enter the lucky draw.
+            </p>
+          </div>
+
+          <div className="relative">
+            {/* Ambient emerald backlight glow */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-[#3cff5f]/30 via-[#3cff5f]/10 to-[#3cff5f]/30 blur-2xl opacity-50 rounded-3xl" />
+
+            <div className="relative rounded-2xl border border-[#3cff5f]/40 bg-[#08130b] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.8)]">
+              {/* Top video title bar */}
+              <div className="flex items-center justify-between px-4 py-2.5 bg-[#0a1a0f] border-b border-[#1b3824] text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse" />
+                  <span className="font-bold text-white">Orbit Studio Giveaway — Video Guide</span>
+                </div>
+                <a
+                  href="https://youtu.be/wLxPWqRVGlQ"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#8bf7a3] hover:text-[#3cff5f] transition-colors"
+                >
+                  <span>Watch on YouTube</span>
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+
+              {/* 16:9 Video Embed Player */}
+              <div className="aspect-video relative w-full bg-black">
+                <iframe
+                  className="absolute inset-0 w-full h-full"
+                  src="https://www.youtube.com/embed/wLxPWqRVGlQ?rel=0"
+                  title="Orbit Studio লাইফটাইম Extension লাইসেন্স গিভঅ্যাওয়ে! — Video Tutorial"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  loading="lazy"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
