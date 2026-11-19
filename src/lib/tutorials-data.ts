@@ -168,27 +168,50 @@ export const TUTORIAL_SECTIONS: TutorialSectionMeta[] = [
 // All Tutorial Videos (Ready Live Videos + Upcoming Section Videos)
 // ----------------------------------------------------------------------------
 export const TUTORIAL_VIDEOS: TutorialVideo[] = [
-  // 1. TOOLS TAB (LIVE)
+  // 1. TOOLS TAB (LIVE DEDICATED TUTORIAL)
+  {
+    id: "tools-tab-tutorial",
+    sectionKey: "tools",
+    sectionName: "Tools Tab",
+    title: "Orbit Studio Tools Tab Tutorial | Explore Powerful Creative Tools in After Effects",
+    banglaTitle: "অরবিট স্টুডিও টুলস ট্যাব টিউটোরিয়াল: ক্রিয়েটিভ টুলস ও পাওয়ারফুল ওয়ার্কফ্লো",
+    description:
+      "Deep dive into the Orbit Studio Tools Tab. Learn how to work 10x faster with 9-point anchor point snapping, 1-click alignments, keyframe reversal, timeline in/out trimming, and project cleaning inside Adobe After Effects.",
+    youtubeId: "wv4jzxJoqK0",
+    duration: "13:02",
+    level: "Beginner",
+    isReady: true,
+    featured: true,
+    badge: "Tools Masterclass",
+    topics: [
+      "9-Point Anchor Point Instant Snap & Center",
+      "1-Click Layer Alignments, Distribution & Spacing",
+      "Reverse Keyframes with Exact Velocity Preservation",
+      "Timeline In/Out Quick Trimming at Playhead",
+      "Smart Project Cleaner & Unused Layer Purge",
+    ],
+  },
+
+  // 1B. FULL EXTENSION OVERVIEW (v2.6.1)
   {
     id: "tools-master",
     sectionKey: "tools",
     sectionName: "Tools Tab",
     title: "COMPX ORBIT STUDIO v2.6.1 — EXTENSION TUTORIAL IS HERE!",
-    banglaTitle: "কম্পএক্স অরবিট স্টুডিও v2.6.1 — সম্পূর্ণ টুলস ট্যাব ওয়াকথ্রু",
+    banglaTitle: "কম্পএক্স অরবিট স্টুডিও v2.6.1 — সম্পূর্ণ এক্সটেনশন ওয়াকথ্রু",
     description:
       "The complete walkthrough of CompX Orbit Studio v2.6.1 extension — learn how to master all the essential workflow tools, 9-point anchor points, timeline utilities, and speed up your After Effects production.",
     youtubeId: "Ia66YvWO6JI",
     duration: "16:20",
     level: "Beginner",
     isReady: true,
-    featured: true,
-    badge: "Master Overview",
+    badge: "v2.6.1 Full Tour",
     topics: [
-      "9-Point Anchor Point Instant Snap",
-      "1-Click Layer Alignments & Spacing",
-      "Reverse Keyframes with 1 Click",
-      "Timeline In/Out Trimming at Playhead",
-      "Project Cleaner & Unused Layer Purge",
+      "Complete Orbit Studio v2.6.1 Overview",
+      "Workspace Navigation & Docking in After Effects",
+      "9-Point Anchor Point & Alignment Operations",
+      "Layer Trimming, Split & Reverse Keyframes",
+      "Native FX, Studio & Motion Lab Quick Look",
     ],
   },
 
