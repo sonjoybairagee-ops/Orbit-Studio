@@ -11,6 +11,7 @@
 
 export type TutorialSectionKey =
   | "all"
+  | "complete"
   | "tools"
   | "studio"
   | "motion-lab"
@@ -41,19 +42,28 @@ export interface TutorialVideo {
   title: string;
   banglaTitle?: string;
   description: string;
-  youtubeId?: string; // YouTube video ID (e.g. "Ia66YvWO6JI")
-  duration?: string; // e.g. "16:20" or "Coming Soon"
+  youtubeId?: string; // YouTube video ID (e.g. "wv4jzxJoqK0")
+  duration?: string; // e.g. "13:02" or "Coming Soon"
   level: "Beginner" | "Intermediate" | "Advanced" | "All Levels";
   isReady: boolean; // Set true when video is recorded and live on YouTube
   featured?: boolean; // Highlight as main/recommended video
   topics: string[]; // Key feature bullet points covered
-  badge?: string; // e.g. "Latest v2.6.1", "Must Watch", "In Production"
+  badge?: string; // e.g. "Tools Masterclass", "Complete Guide", "In Production"
 }
 
 // ----------------------------------------------------------------------------
-// 11 Core Extension Sections Metadata + License Setup
+// Complete Tutorials + 11 Extension Sections Metadata + License Setup
 // ----------------------------------------------------------------------------
 export const TUTORIAL_SECTIONS: TutorialSectionMeta[] = [
+  {
+    id: "complete",
+    name: "Complete Tutorials",
+    banglaName: "কমপ্লিট টিউটোরিয়াল",
+    iconName: "GraduationCap",
+    badgeColor: "from-emerald-500/20 to-emerald-500/5 text-emerald-400 border-emerald-500/30",
+    tagline: "All-in-One Extension Walkthroughs",
+    description: "অরবিট স্টুডিওর আগের সকল ফুল ও কমপ্লিট ওভারভিউ টিউটোরিয়াল। পুরো এক্সটেনশন কিভাবে একসাথে কাজ করে তা বিস্তারিত শিখুন।",
+  },
   {
     id: "tools",
     name: "Tools Tab",
@@ -165,10 +175,80 @@ export const TUTORIAL_SECTIONS: TutorialSectionMeta[] = [
 ];
 
 // ----------------------------------------------------------------------------
-// All Tutorial Videos (Ready Live Videos + Upcoming Section Videos)
+// All Tutorial Videos (Single Video per Tab + Complete Tutorials Section)
 // ----------------------------------------------------------------------------
 export const TUTORIAL_VIDEOS: TutorialVideo[] = [
-  // 1. TOOLS TAB (LIVE DEDICATED TUTORIAL)
+  // ==========================================================================
+  // COMPLETE TUTORIALS SECTION (Previous Full Overviews & Masterclasses)
+  // ==========================================================================
+  {
+    id: "complete-v261-master",
+    sectionKey: "complete",
+    sectionName: "Complete Tutorials",
+    title: "COMPX ORBIT STUDIO v2.6.1 — EXTENSION TUTORIAL IS HERE!",
+    banglaTitle: "কম্পএক্স অরবিট স্টুডিও v2.6.1 — সম্পূর্ণ এক্সটেনশন ওয়াকথ্রু",
+    description:
+      "The complete walkthrough of CompX Orbit Studio v2.6.1 extension — learn how to master all the essential workflow tools, 9-point anchor points, timeline utilities, and speed up your After Effects production.",
+    youtubeId: "Ia66YvWO6JI",
+    duration: "16:20",
+    level: "All Levels",
+    isReady: true,
+    featured: true,
+    badge: "v2.6.1 Full Tour",
+    topics: [
+      "Complete Orbit Studio v2.6.1 Overview",
+      "Workspace Navigation & Docking in After Effects",
+      "9-Point Anchor Point & Alignment Operations",
+      "Layer Trimming, Split & Reverse Keyframes",
+      "Native FX, Studio & Motion Lab Quick Look",
+    ],
+  },
+  {
+    id: "complete-deep-glow-shadow",
+    sectionKey: "complete",
+    sectionName: "Complete Tutorials",
+    title: "Orbit Studio Complete Tutorial | Deep Glow, Shadow & Native FX",
+    banglaTitle: "ডিপ গ্লো, শ্যাডো স্টুডিও এবং সম্পূর্ণ ওয়ার্কফ্লো গাইড",
+    description:
+      "In-depth complete video walkthrough of Orbit Studio core tools including Deep Glow 2, Shadow Studio 3, dynamic number counters, and overall workflow optimization.",
+    youtubeId: "9fnTG_5MDBQ",
+    duration: "14:15",
+    level: "Beginner",
+    isReady: true,
+    badge: "Full Walkthrough",
+    topics: [
+      "Deep Glow 2 & Optical Glow Presets",
+      "Shadow Studio 3 Realistic Drop Shadows",
+      "Dynamic Number Counters with Auto Commas",
+      "Text Exploder by Word and Character",
+      "Quick FX: Gradient, Glow, Fill & Blur",
+    ],
+  },
+  {
+    id: "complete-master-feature-guide",
+    sectionKey: "complete",
+    sectionName: "Complete Tutorials",
+    title: "Orbit Studio Complete Tutorial | Master Every Feature in After Effects",
+    banglaTitle: "মাস্টার এভরি ফিচার গাইড: কমপ্লিট আফটার ইফেক্টস ওয়ার্কফ্লো",
+    description:
+      "Comprehensive full overview of every single feature in Orbit Studio to speed up your creative workflow in Adobe After Effects.",
+    youtubeId: "xalYhDRnOh8",
+    duration: "18:40",
+    level: "All Levels",
+    isReady: true,
+    badge: "Master Overview",
+    topics: [
+      "Visual Bezier Graph Editor with Interactive Handles",
+      "Speed & Influence Curve Tweaking",
+      "Elastic & Bounce Physics Presets",
+      "Project Setup & Workspace Efficiency",
+      "Copy & Paste Easing Curves Across Multiple Layers",
+    ],
+  },
+
+  // ==========================================================================
+  // 1. TOOLS TAB (ONLY 1 DEDICATED VIDEO)
+  // ==========================================================================
   {
     id: "tools-tab-tutorial",
     sectionKey: "tools",
@@ -182,7 +262,7 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
     level: "Beginner",
     isReady: true,
     featured: true,
-    badge: "Tools Masterclass",
+    badge: "Tools Tab Only",
     topics: [
       "9-Point Anchor Point Instant Snap & Center",
       "1-Click Layer Alignments, Distribution & Spacing",
@@ -192,66 +272,47 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
     ],
   },
 
-  // 1B. FULL EXTENSION OVERVIEW (v2.6.1)
+  // ==========================================================================
+  // 2. STUDIO TAB (UPCOMING DEDICATED VIDEO)
+  // ==========================================================================
   {
-    id: "tools-master",
-    sectionKey: "tools",
-    sectionName: "Tools Tab",
-    title: "COMPX ORBIT STUDIO v2.6.1 — EXTENSION TUTORIAL IS HERE!",
-    banglaTitle: "কম্পএক্স অরবিট স্টুডিও v2.6.1 — সম্পূর্ণ এক্সটেনশন ওয়াকথ্রু",
-    description:
-      "The complete walkthrough of CompX Orbit Studio v2.6.1 extension — learn how to master all the essential workflow tools, 9-point anchor points, timeline utilities, and speed up your After Effects production.",
-    youtubeId: "Ia66YvWO6JI",
-    duration: "16:20",
-    level: "Beginner",
-    isReady: true,
-    badge: "v2.6.1 Full Tour",
-    topics: [
-      "Complete Orbit Studio v2.6.1 Overview",
-      "Workspace Navigation & Docking in After Effects",
-      "9-Point Anchor Point & Alignment Operations",
-      "Layer Trimming, Split & Reverse Keyframes",
-      "Native FX, Studio & Motion Lab Quick Look",
-    ],
-  },
-
-  // 2. STUDIO TAB (LIVE)
-  {
-    id: "studio-native-fx",
+    id: "studio-tab-dedicated",
     sectionKey: "studio",
     sectionName: "Studio Tab",
-    title: "Orbit Studio Complete Tutorial | Deep Glow, Shadow & Native FX",
-    banglaTitle: "ডিপ গ্লো, শ্যাডো স্টুডিও এবং স্টুডিও ট্যাব মাস্টারক্লাস",
+    title: "Studio Tab Tutorial: Auto Captions, Dynamic Counters & Kinetic Text",
+    banglaTitle: "স্টুডিও ট্যাব টিউটোরিয়াল: ক্যাপশন, কাউন্টার ও টেক্সট মোশন",
     description:
-      "Deep dive into the Studio Tab — discover how to leverage built-in Native FX like Deep Glow 2, Shadow Studio 3, dynamic number counters, and text exploding kinetic workflows.",
-    youtubeId: "9fnTG_5MDBQ",
-    duration: "14:15",
+      "Dedicated single video tutorial for the Studio Tab. Auto word captions, SRT subtitles, animated dynamic number counters, and text exploding kinetic workflows.",
+    youtubeId: "", // 💡 Paste your YouTube ID here when recorded
+    duration: "Coming Soon",
     level: "Beginner",
-    isReady: true,
-    badge: "Native FX",
+    isReady: false,
+    badge: "In Production",
     topics: [
-      "Deep Glow 2 & Optical Glow Presets",
-      "Shadow Studio 3 Realistic Drop Shadows",
       "Dynamic Number Counters with Auto Commas",
       "Text Exploder by Word and Character",
-      "Quick FX: Gradient, Glow, Fill & Blur",
+      "SRT & Word Caption Subtitle Automation",
+      "Native FX: Deep Glow, Shadow Studio & Blurs",
+      "1-Click Kinetic Typography Presets",
     ],
   },
 
-  // 3. MOTION LAB (LIVE)
+  // ==========================================================================
+  // 3. MOTION LAB (UPCOMING DEDICATED VIDEO)
+  // ==========================================================================
   {
-    id: "motion-lab-curves",
+    id: "motion-lab-dedicated",
     sectionKey: "motion-lab",
     sectionName: "Motion Lab",
-    title: "Orbit Studio Complete Tutorial | Master Motion & Curve Editor",
-    banglaTitle: "ভিজুয়াল গ্রাফ এডিটর ও কার্ভ কন্ট্রোল টিউটোরিয়াল",
+    title: "Motion Lab Tutorial: Visual Graph Editor & Interactive Bezier Curves",
+    banglaTitle: "মোশন ল্যাব টিউটোরিয়াল: ভিজুয়াল গ্রাফ ও কার্ভ এডিটর",
     description:
-      "Master the Motion Lab visual graph editor. Say goodbye to frustrating default After Effects graph editor handles and create snappy, bouncy, cinematic motion curves with visual handles.",
-    youtubeId: "xalYhDRnOh8",
-    duration: "18:40",
+      "Dedicated single video tutorial for the Motion Lab workspace. Master visual curve handles, speed/influence graphs, and custom easing curves without touching AE default graph handles.",
+    youtubeId: "", // 💡 Paste your YouTube ID here when recorded
+    duration: "Coming Soon",
     level: "Intermediate",
-    isReady: true,
-    badge: "Curves & Easing",
+    isReady: false,
+    badge: "In Production",
     topics: [
       "Visual Bezier Graph Editor with Interactive Handles",
       "Instant Speed & Influence Curve Tweaking",
@@ -261,7 +322,9 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
     ],
   },
 
-  // 4. MORPH ENGINE (IN PRODUCTION - READY FOR YOUTUBE ID)
+  // ==========================================================================
+  // 4. MORPH ENGINE (UPCOMING DEDICATED VIDEO)
+  // ==========================================================================
   {
     id: "morph-engine-guide",
     sectionKey: "morph",
@@ -284,7 +347,9 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
     ],
   },
 
-  // 5. COLOR PALETTES (IN PRODUCTION - READY FOR YOUTUBE ID)
+  // ==========================================================================
+  // 5. COLOR PALETTES (UPCOMING DEDICATED VIDEO)
+  // ==========================================================================
   {
     id: "color-palettes-guide",
     sectionKey: "color",
@@ -307,7 +372,9 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
     ],
   },
 
-  // 6. ANIMATION PRESETS (IN PRODUCTION - READY FOR YOUTUBE ID)
+  // ==========================================================================
+  // 6. ANIMATION PRESETS (UPCOMING DEDICATED VIDEO)
+  // ==========================================================================
   {
     id: "animation-presets-guide",
     sectionKey: "animation",
@@ -330,7 +397,9 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
     ],
   },
 
-  // 7. ARROW & POINTERS (IN PRODUCTION - READY FOR YOUTUBE ID)
+  // ==========================================================================
+  // 7. ARROW & POINTERS (UPCOMING DEDICATED VIDEO)
+  // ==========================================================================
   {
     id: "arrow-pointers-guide",
     sectionKey: "arrow",
@@ -353,7 +422,9 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
     ],
   },
 
-  // 8. CAROUSEL & SLIDERS (IN PRODUCTION - READY FOR YOUTUBE ID)
+  // ==========================================================================
+  // 8. CAROUSEL & SLIDERS (UPCOMING DEDICATED VIDEO)
+  // ==========================================================================
   {
     id: "carousel-sliders-guide",
     sectionKey: "carousel",
@@ -376,7 +447,9 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
     ],
   },
 
-  // 9. COMPS UTILITIES (IN PRODUCTION - READY FOR YOUTUBE ID)
+  // ==========================================================================
+  // 9. COMPS UTILITIES (UPCOMING DEDICATED VIDEO)
+  // ==========================================================================
   {
     id: "comps-utilities-guide",
     sectionKey: "comps",
@@ -399,7 +472,9 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
     ],
   },
 
-  // 10. SFX LIBRARY (IN PRODUCTION - READY FOR YOUTUBE ID)
+  // ==========================================================================
+  // 10. SFX LIBRARY (UPCOMING DEDICATED VIDEO)
+  // ==========================================================================
   {
     id: "sfx-library-guide",
     sectionKey: "sfx",
@@ -422,7 +497,9 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
     ],
   },
 
-  // 11. MOGRT TEMPLATES (IN PRODUCTION - READY FOR YOUTUBE ID)
+  // ==========================================================================
+  // 11. MOGRT TEMPLATES (UPCOMING DEDICATED VIDEO)
+  // ==========================================================================
   {
     id: "mogrt-templates-guide",
     sectionKey: "mogrt",
@@ -445,7 +522,9 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
     ],
   },
 
+  // ==========================================================================
   // 12. LICENSE & GIVEAWAY SETUP (LIVE)
+  // ==========================================================================
   {
     id: "giveaway-license-setup",
     sectionKey: "license",

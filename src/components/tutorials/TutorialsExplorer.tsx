@@ -24,6 +24,7 @@ import {
   Video,
   ChevronRight,
   MessageCircle,
+  GraduationCap,
 } from "lucide-react";
 import {
   TUTORIAL_SECTIONS,
@@ -33,6 +34,7 @@ import {
 } from "@/lib/tutorials-data";
 
 const SECTION_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  complete: GraduationCap,
   tools: Wrench,
   studio: Sparkles,
   "motion-lab": Activity,
@@ -102,7 +104,7 @@ export default function TutorialsExplorer() {
             Workspace Video Guides
           </span>
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-2">
-            11 Core Extension Workspaces
+            Workspaces & Complete Tutorials
           </h2>
           <p className="text-[#8da096] text-sm md:text-base max-w-2xl">
             বামপাশের ট্যাব থেকে যেকোনো সেকশন সিলেক্ট করুন এবং সরাসরি ভিডিও টিউটোরিয়াল দেখে মাস্টার করুন।
@@ -178,7 +180,7 @@ export default function TutorialsExplorer() {
                 Select Workspace Tab
               </span>
               <span className="text-[10px] font-mono text-[#45c66d] bg-[#45c66d]/10 px-2 py-0.5 rounded border border-[#45c66d]/20">
-                11 Tabs
+                {TUTORIAL_SECTIONS.length} Tabs
               </span>
             </div>
 
