@@ -37,13 +37,13 @@ export default function TutorialsPage() {
           </p>
         </div>
 
-        {/* Featured Master Walkthrough Video */}
+        {/* Main Featured Video: Giveaway & License Setup Guide */}
         <div className="mb-20">
           <div className="flex items-center justify-between mb-4">
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/70 tracking-wide uppercase">
-              ⭐ Featured Master Walkthrough (Start Here)
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#45c66d] bg-[#45c66d]/15 px-3.5 py-1 rounded-full border border-[#45c66d]/30 tracking-wide">
+              🎁 50 Free Licenses Giveaway & Setup Guide
             </span>
-            <span className="text-xs text-[#8da096] font-mono">v2.6.1 Master Guide</span>
+            <span className="text-xs text-[#8da096] font-mono">Official Campaign Guide</span>
           </div>
 
           <div className="relative">
@@ -52,8 +52,8 @@ export default function TutorialsPage() {
               <div className="aspect-video relative w-full">
                 <iframe
                   className="absolute top-0 left-0 w-full h-full"
-                  src="https://www.youtube.com/embed/Ia66YvWO6JI"
-                  title="COMPX ORBIT STUDIO v2.6.1 — EXTENSION TUTORIAL IS HERE!"
+                  src="https://www.youtube.com/embed/wLxPWqRVGlQ"
+                  title="Orbit Studio লাইফটাইম Extension লাইসেন্স গিভঅ্যাওয়ে!"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   referrerPolicy="strict-origin-when-cross-origin"
@@ -63,20 +63,28 @@ export default function TutorialsPage() {
               <div className="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-xl md:text-2xl font-bold mb-1.5 text-white">
-                    COMPX ORBIT STUDIO v2.6.1 — EXTENSION TUTORIAL IS HERE!
+                    Orbit Studio লাইফটাইম Extension লাইসেন্স গিভঅ্যাওয়ে & সেটআপ গাইড
                   </h2>
                   <p className="text-[#8da096] text-xs md:text-sm max-w-3xl leading-relaxed">
-                    The complete walkthrough of CompX Orbit Studio v2.6.1 extension — learn how to master all the new features, 9-point anchor snap, timeline utilities, and speed up your After Effects workflow.
+                    ৫০ জন ভাগ্যবান ব্যবহারকারী পাচ্ছেন সম্পুর্ণ ফ্রিতে Orbit Studio Lifetime Combo Bundle (After Effects + Premiere Pro)। ভিডিওটি দেখে ফেসবুকে শেয়ার করুন এবং আপনার গিভঅ্যাওয়ে স্পট ক্লেইম করুন।
                   </p>
                 </div>
-                <a
-                  href="https://youtu.be/Ia66YvWO6JI"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="shrink-0 text-xs font-semibold text-[#45c66d] bg-[#45c66d]/10 hover:bg-[#45c66d]/20 border border-[#45c66d]/30 px-4 py-2.5 rounded-xl transition-all inline-flex items-center gap-1.5 self-start md:self-auto"
-                >
-                  Watch on YouTube ↗
-                </a>
+                <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start md:self-auto">
+                  <Link
+                    href="/#giveaway"
+                    className="text-xs font-semibold text-black bg-[#45c66d] hover:bg-[#52e880] px-4 py-2.5 rounded-xl transition-all inline-flex items-center gap-1.5 shadow-[0_0_15px_rgba(69,198,109,0.3)]"
+                  >
+                    Claim Giveaway Spot →
+                  </Link>
+                  <a
+                    href="https://youtu.be/wLxPWqRVGlQ"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-semibold text-[#8da096] hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-3.5 py-2.5 rounded-xl transition-all inline-flex items-center gap-1.5"
+                  >
+                    Watch on YouTube ↗
+                  </a>
+                </div>
               </div>
             </div>
           </div>

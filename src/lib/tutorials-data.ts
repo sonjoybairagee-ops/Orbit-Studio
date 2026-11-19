@@ -450,15 +450,15 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
     id: "giveaway-license-setup",
     sectionKey: "license",
     sectionName: "License & Setup",
-    title: "Orbit Studio Lifetime Extension License Giveaway & Setup Guide",
+    title: "Orbit Studio লাইফটাইম Extension লাইসেন্স গিভঅ্যাওয়ে!",
     banglaTitle: "অরবিট স্টুডিও লাইফটাইম এক্সটেনশন লাইসেন্স গিভঅ্যাওয়ে ও সেটআপ",
     description:
       "Everything you need to know about setting up CompX Orbit Studio, offline/online license activation, and how to participate in the 50 Free Extension Licenses 30-Day Lucky Draw.",
     youtubeId: "wLxPWqRVGlQ",
-    duration: "10:05",
+    duration: "02:05",
     level: "All Levels",
     isReady: true,
-    badge: "Giveaway & Guide",
+    badge: "Giveaway Guide",
     topics: [
       "How to Install CompX Orbit Studio in After Effects",
       "Entering the 50 Free Lifetime Licenses Giveaway",
