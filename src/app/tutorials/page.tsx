@@ -23,7 +23,7 @@ export default function TutorialsPage() {
       {/* Background ambient glow */}
       <div className="absolute top-40 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-[#45c66d]/10 blur-[140px] rounded-[100%] pointer-events-none" />
 
-      <div className="shell max-w-6xl mx-auto px-6 relative z-10">
+      <div className="shell max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Page Header */}
         <div className="text-center mb-14">
           <div className="inline-flex items-center gap-2 bg-[#45c66d]/15 text-[#45c66d] text-xs font-semibold px-3.5 py-1 rounded-full border border-[#45c66d]/30 mb-4">
