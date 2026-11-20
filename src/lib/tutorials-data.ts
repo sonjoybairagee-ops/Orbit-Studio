@@ -284,7 +284,7 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
     description:
       "In this tutorial, explore the Studio Tab in Orbit Studio and discover how it helps you manage and access your creative workflow directly inside Adobe After Effects. Learn how to navigate the Studio interface and work smarter.",
     youtubeId: "x2JNyPrv5Mg",
-    duration: "Studio Guide",
+    duration: "07:04",
     level: "Beginner",
     isReady: true,
     featured: true,

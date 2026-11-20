@@ -455,14 +455,23 @@ export default function TutorialsExplorer() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div
+              className={
+                filteredVideos.length === 1
+                  ? "grid grid-cols-1 gap-6"
+                  : "grid grid-cols-1 xl:grid-cols-2 gap-6"
+              }
+            >
               {filteredVideos.map((video) => {
                 const isPlaying = playingVideoId === video.id;
+                const isSingle = filteredVideos.length === 1;
 
                 return (
                   <div
                     key={video.id}
-                    className="group relative bg-[#0b110d] border border-white/10 hover:border-[#45c66d]/40 rounded-2xl overflow-hidden shadow-2xl flex flex-col justify-between transition-all duration-300"
+                    className={`group relative bg-[#0b110d] border border-white/10 hover:border-[#45c66d]/40 rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col justify-between transition-all duration-300 ${
+                      isSingle ? "w-full ring-1 ring-[#45c66d]/20" : ""
+                    }`}
                   >
                     {/* VIDEO PLAYER / PLACEHOLDER TOP */}
                     <div className="aspect-video relative w-full bg-black/60 overflow-hidden">
@@ -492,36 +501,68 @@ export default function TutorialsExplorer() {
 
                             {/* Play button overlay */}
                             <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="w-14 h-14 rounded-full bg-[#45c66d] text-black flex items-center justify-center shadow-[0_0_25px_rgba(69,198,109,0.6)] group-hover/thumb:scale-110 transition-transform duration-300">
-                                <Play className="w-6 h-6 fill-black ml-0.5" />
+                              <div
+                                className={`rounded-full bg-[#45c66d] text-black flex items-center justify-center shadow-[0_0_35px_rgba(69,198,109,0.7)] group-hover/thumb:scale-110 transition-transform duration-300 ${
+                                  isSingle ? "w-20 h-20 md:w-24 md:h-24" : "w-14 h-14"
+                                }`}
+                              >
+                                <Play
+                                  className={`fill-black ml-0.5 ${
+                                    isSingle ? "w-9 h-9 md:w-10 md:h-10" : "w-6 h-6"
+                                  }`}
+                                />
                               </div>
                             </div>
 
                             {/* Duration badge */}
                             {video.duration && (
-                              <div className="absolute bottom-2.5 right-2.5 bg-black/85 backdrop-blur-md text-white text-[11px] font-mono font-semibold px-2 py-0.5 rounded border border-white/10">
+                              <div
+                                className={`absolute bottom-3 right-3 bg-black/85 backdrop-blur-md text-white font-mono font-semibold px-2.5 py-1 rounded-md border border-white/10 ${
+                                  isSingle ? "text-xs md:text-sm" : "text-[11px]"
+                                }`}
+                              >
                                 {video.duration}
                               </div>
                             )}
 
                             {/* Ready Pill */}
-                            <div className="absolute top-2.5 left-2.5 bg-[#45c66d]/90 backdrop-blur-md text-black text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-md">
-                              <span className="w-1.5 h-1.5 rounded-full bg-black animate-ping" />
+                            <div
+                              className={`absolute top-3 left-3 bg-[#45c66d]/90 backdrop-blur-md text-black font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-md ${
+                                isSingle ? "text-xs" : "text-[10px]"
+                              }`}
+                            >
+                              <span className="w-2 h-2 rounded-full bg-black animate-ping" />
                               Ready to Watch
                             </div>
                           </div>
                         )
                       ) : (
                         /* IN PRODUCTION PLACEHOLDER */
-                        <div className="relative w-full h-full flex flex-col items-center justify-center p-5 text-center bg-gradient-to-br from-[#0e1611] to-[#070b08] border-b border-white/5">
-                          <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mb-2.5 text-amber-400">
-                            <Video className="w-6 h-6" />
+                        <div
+                          className={`relative w-full h-full flex flex-col items-center justify-center text-center bg-gradient-to-br from-[#0e1611] to-[#070b08] border-b border-white/5 ${
+                            isSingle ? "p-12 md:p-16 min-h-[340px]" : "p-5"
+                          }`}
+                        >
+                          <div
+                            className={`rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mb-3 text-amber-400 ${
+                              isSingle ? "w-16 h-16" : "w-12 h-12"
+                            }`}
+                          >
+                            <Video className={isSingle ? "w-8 h-8" : "w-6 h-6"} />
                           </div>
-                          <span className="inline-flex items-center gap-1.5 bg-amber-500/15 text-amber-400 text-[10px] font-semibold px-2.5 py-0.5 rounded-full border border-amber-500/30 mb-1.5">
-                            <Clock className="w-3 h-3" />
+                          <span
+                            className={`inline-flex items-center gap-1.5 bg-amber-500/15 text-amber-400 font-semibold px-3 py-1 rounded-full border border-amber-500/30 mb-2 ${
+                              isSingle ? "text-xs" : "text-[10px]"
+                            }`}
+                          >
+                            <Clock className="w-3.5 h-3.5" />
                             Recording in Progress / শীঘ্রই আসছে
                           </span>
-                          <p className="text-white/60 text-[11px] max-w-xs leading-relaxed">
+                          <p
+                            className={`text-white/60 leading-relaxed ${
+                              isSingle ? "text-xs md:text-sm max-w-md" : "text-[11px] max-w-xs"
+                            }`}
+                          >
                             এই সেকশনের স্পেসিফিক ভিডিও টিউটোরিয়াল দ্রুত আপলোড করা হবে।
                           </p>
                         </div>
@@ -529,57 +570,93 @@ export default function TutorialsExplorer() {
                     </div>
 
                     {/* CARD BODY */}
-                    <div className="p-5 flex-1 flex flex-col justify-between">
+                    <div className={`flex-1 flex flex-col justify-between ${isSingle ? "p-6 md:p-8" : "p-5"}`}>
                       <div>
                         {/* Tags row */}
-                        <div className="flex items-center justify-between gap-2 mb-2">
-                          <span className="text-[10px] font-semibold text-[#45c66d] bg-[#45c66d]/10 px-2 py-0.5 rounded border border-[#45c66d]/20">
+                        <div className="flex items-center justify-between gap-2 mb-3">
+                          <span
+                            className={`font-semibold text-[#45c66d] bg-[#45c66d]/10 rounded-md border border-[#45c66d]/20 ${
+                              isSingle ? "text-xs px-3 py-1" : "text-[10px] px-2 py-0.5"
+                            }`}
+                          >
                             {video.sectionName}
                           </span>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-2">
                             {video.badge && (
-                              <span className="text-[10px] font-semibold text-white/70 bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                              <span
+                                className={`font-semibold text-white/80 bg-white/5 rounded border border-white/10 ${
+                                  isSingle ? "text-xs px-2.5 py-1" : "text-[10px] px-2 py-0.5"
+                                }`}
+                              >
                                 {video.badge}
                               </span>
                             )}
-                            <span className="text-[10px] font-medium text-[#8da096] bg-black/40 px-2 py-0.5 rounded border border-white/5">
+                            <span
+                              className={`font-medium text-[#8da096] bg-black/40 rounded border border-white/5 ${
+                                isSingle ? "text-xs px-2.5 py-1" : "text-[10px] px-2 py-0.5"
+                              }`}
+                            >
                               {video.level}
                             </span>
                           </div>
                         </div>
 
                         {/* Title */}
-                        <h3 className="text-base font-bold text-white mb-1 group-hover:text-[#45c66d] transition-colors leading-snug line-clamp-2">
+                        <h3
+                          className={`font-bold text-white mb-1.5 group-hover:text-[#45c66d] transition-colors leading-snug ${
+                            isSingle ? "text-xl md:text-2xl" : "text-base line-clamp-2"
+                          }`}
+                        >
                           {video.title}
                         </h3>
                         {video.banglaTitle && (
-                          <h4 className="text-[11px] text-[#8da096] mb-2 font-medium line-clamp-1">
+                          <h4
+                            className={`text-[#8da096] mb-3 font-medium ${
+                              isSingle ? "text-xs md:text-sm" : "text-[11px] line-clamp-1"
+                            }`}
+                          >
                             {video.banglaTitle}
                           </h4>
                         )}
 
                         {/* Description */}
-                        <p className="text-xs text-[#8da096] leading-relaxed mb-3 line-clamp-2">
+                        <p
+                          className={`text-[#8da096] leading-relaxed mb-5 ${
+                            isSingle ? "text-xs md:text-sm max-w-4xl" : "text-xs line-clamp-2"
+                          }`}
+                        >
                           {video.description}
                         </p>
 
                         {/* Feature Topics Checklist */}
-                        <div className="pt-2.5 border-t border-white/5">
-                          <p className="text-[10px] font-semibold text-white/50 uppercase tracking-wider mb-1.5">
-                            {video.isReady ? "Topics Covered:" : "What You Will Learn:"}
+                        <div className="pt-4 border-t border-white/5">
+                          <p
+                            className={`font-semibold text-white/50 uppercase tracking-wider mb-2.5 ${
+                              isSingle ? "text-xs" : "text-[10px]"
+                            }`}
+                          >
+                            {video.isReady ? "Topics Covered in This Video:" : "What You Will Learn:"}
                           </p>
-                          <ul className="space-y-1">
-                            {video.topics.slice(0, 4).map((topic, idx) => (
+                          <ul
+                            className={
+                              isSingle
+                                ? "grid grid-cols-1 sm:grid-cols-2 gap-2.5"
+                                : "space-y-1"
+                            }
+                          >
+                            {(isSingle ? video.topics : video.topics.slice(0, 4)).map((topic, idx) => (
                               <li
                                 key={idx}
-                                className="text-xs text-white/80 flex items-start gap-1.5"
+                                className={`text-white/85 flex items-start gap-2 ${
+                                  isSingle ? "text-xs md:text-sm" : "text-xs"
+                                }`}
                               >
                                 <CheckCircle2
-                                  className={`w-3 h-3 shrink-0 mt-0.5 ${
-                                    video.isReady ? "text-[#45c66d]" : "text-amber-400/80"
-                                  }`}
+                                  className={`shrink-0 mt-0.5 ${
+                                    isSingle ? "w-4 h-4" : "w-3 h-3"
+                                  } ${video.isReady ? "text-[#45c66d]" : "text-amber-400/80"}`}
                                 />
-                                <span className="line-clamp-1">{topic}</span>
+                                <span className={isSingle ? "" : "line-clamp-1"}>{topic}</span>
                               </li>
                             ))}
                           </ul>
@@ -587,40 +664,50 @@ export default function TutorialsExplorer() {
                       </div>
 
                       {/* BOTTOM ACTION BAR */}
-                      <div className="pt-3.5 mt-4 border-t border-white/10 flex items-center justify-between">
+                      <div className={`mt-6 border-t border-white/10 flex items-center justify-between ${isSingle ? "pt-5" : "pt-3.5"}`}>
                         {video.isReady && video.youtubeId ? (
                           <>
                             <button
                               onClick={() => setPlayingVideoId(video.id)}
-                              className="text-xs font-semibold text-black bg-[#45c66d] hover:bg-[#52e880] px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 shadow-[0_0_15px_rgba(69,198,109,0.3)]"
+                              className={`font-bold text-black bg-[#45c66d] hover:bg-[#52e880] rounded-xl transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(69,198,109,0.35)] ${
+                                isSingle ? "text-sm px-6 py-3" : "text-xs px-3.5 py-1.5"
+                              }`}
                             >
-                              <Play className="w-3 h-3 fill-black" />
+                              <Play className={`fill-black ${isSingle ? "w-4 h-4" : "w-3 h-3"}`} />
                               {isPlaying ? "Replay Video" : "Play Video"}
                             </button>
                             <a
                               href={`https://youtu.be/${video.youtubeId}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-xs text-[#8da096] hover:text-white flex items-center gap-1 transition-colors"
+                              className={`text-[#8da096] hover:text-white flex items-center gap-1.5 transition-colors ${
+                                isSingle
+                                  ? "text-xs md:text-sm bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2.5 rounded-xl"
+                                  : "text-xs"
+                              }`}
                             >
                               <span>Watch on YouTube</span>
-                              <ExternalLink className="w-3 h-3" />
+                              <ExternalLink className={isSingle ? "w-4 h-4" : "w-3 h-3"} />
                             </a>
                           </>
                         ) : (
                           <>
-                            <span className="text-[11px] text-amber-400 font-medium flex items-center gap-1.5">
-                              <Clock className="w-3 h-3" />
+                            <span className="text-xs text-amber-400 font-medium flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5" />
                               Upcoming Recording
                             </span>
                             <a
                               href="https://chat.whatsapp.com/Fzpmh27mRBa2QODckm2uuc"
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-xs text-[#8da096] hover:text-white flex items-center gap-1 transition-colors"
+                              className={`text-[#8da096] hover:text-white flex items-center gap-1.5 transition-colors ${
+                                isSingle
+                                  ? "text-xs md:text-sm bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2.5 rounded-xl"
+                                  : "text-xs"
+                              }`}
                             >
                               <span>Request Topic</span>
-                              <ExternalLink className="w-3 h-3" />
+                              <ExternalLink className={isSingle ? "w-4 h-4" : "w-3 h-3"} />
                             </a>
                           </>
                         )}
