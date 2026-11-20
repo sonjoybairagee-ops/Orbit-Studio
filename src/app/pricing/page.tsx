@@ -55,6 +55,7 @@ export default async function PricingPage() {
     name: "Orbit Flow",
     unit_price_usd: 5,
     unit_price_bdt: 599,
+    paddle_price_id: "pri_01m7wtssewa7m5xmzh1sfxrgcz",
   };
 
   const singlePlanRaw = allPlans.find(

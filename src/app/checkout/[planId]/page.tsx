@@ -50,6 +50,7 @@ export default async function CheckoutPage({
       max_devices: 1,
       unit_price_usd: Number(plan.unit_price_usd) > 0 ? Number(plan.unit_price_usd) : 5,
       unit_price_bdt: Number(plan.unit_price_bdt) > 0 ? Number(plan.unit_price_bdt) : 599,
+      paddle_price_id: plan.paddle_price_id || "pri_01m7wtssewa7m5xmzh1sfxrgcz",
     };
   } else {
     const isMulti = plan.max_devices > 1 || requestedSeats > 1;

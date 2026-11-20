@@ -27,7 +27,7 @@ on conflict (slug) do update
 
 -- 2. Add Orbit Flow standalone plan (Single 1 Device: 599 BDT / $5 USD)
 insert into public.plans
-  (slug, name, price, currency, unit_price_usd, unit_price_bdt, billing_type, max_devices, grace_days, features, is_public, is_active, sort_order)
+  (slug, name, price, currency, unit_price_usd, unit_price_bdt, paddle_price_id, billing_type, max_devices, grace_days, features, is_public, is_active, sort_order)
 values
   (
     'orbit-flow',
@@ -36,6 +36,7 @@ values
     'USD',
     5.00,
     599.00,
+    'pri_01m7wtssewa7m5xmzh1sfxrgcz',
     'lifetime',
     1,
     7,
@@ -50,6 +51,7 @@ on conflict (slug) do update
       currency = excluded.currency,
       unit_price_usd = excluded.unit_price_usd,
       unit_price_bdt = excluded.unit_price_bdt,
+      paddle_price_id = excluded.paddle_price_id,
       billing_type = excluded.billing_type,
       max_devices = excluded.max_devices,
       grace_days = excluded.grace_days,
