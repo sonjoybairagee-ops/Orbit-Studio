@@ -273,27 +273,28 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
   },
 
   // ==========================================================================
-  // 2. STUDIO TAB (UPCOMING DEDICATED VIDEO)
+  // 2. STUDIO TAB (LIVE DEDICATED TUTORIAL)
   // ==========================================================================
   {
     id: "studio-tab-dedicated",
     sectionKey: "studio",
     sectionName: "Studio Tab",
-    title: "Studio Tab Tutorial: Auto Captions, Dynamic Counters & Kinetic Text",
-    banglaTitle: "স্টুডিও ট্যাব টিউটোরিয়াল: ক্যাপশন, কাউন্টার ও টেক্সট মোশন",
+    title: "Orbit Studio – Studio Tab Tutorial | Explore Your Creative Workspace in After Effect",
+    banglaTitle: "অরবিট স্টুডিও – স্টুডিও ট্যাব টিউটোরিয়াল: ক্রিয়েটিভ ওয়ার্কস্পেস ও টুলস",
     description:
-      "Dedicated single video tutorial for the Studio Tab. Auto word captions, SRT subtitles, animated dynamic number counters, and text exploding kinetic workflows.",
-    youtubeId: "", // 💡 Paste your YouTube ID here when recorded
-    duration: "Coming Soon",
+      "In this tutorial, explore the Studio Tab in Orbit Studio and discover how it helps you manage and access your creative workflow directly inside Adobe After Effects. Learn how to navigate the Studio interface and work smarter.",
+    youtubeId: "x2JNyPrv5Mg",
+    duration: "Studio Guide",
     level: "Beginner",
-    isReady: false,
-    badge: "In Production",
+    isReady: true,
+    featured: true,
+    badge: "Studio Tab Only",
     topics: [
+      "Studio Tab Workspace Navigation & Interface",
       "Dynamic Number Counters with Auto Commas",
       "Text Exploder by Word and Character",
       "SRT & Word Caption Subtitle Automation",
-      "Native FX: Deep Glow, Shadow Studio & Blurs",
-      "1-Click Kinetic Typography Presets",
+      "Native FX: Deep Glow, Shadow Studio & Fast Blur",
     ],
   },
 
