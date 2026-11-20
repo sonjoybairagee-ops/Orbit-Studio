@@ -73,6 +73,10 @@ export function LicenseCard({ license }: { license: LicenseView }) {
     .replace(/compX\s*/gi, "")
     .trim() || "Orbit Suite Pro";
 
+  const isFlow =
+    license.products.some((p) => p.slug === "orbit-flow" || /flow/i.test(p.slug)) ||
+    (license.planName || "").toLowerCase().includes("flow");
+
   // Determine primary last seen
   const lastActiveIso = license.activations[0]?.last_seen;
 
@@ -312,39 +316,6 @@ export function LicenseCard({ license }: { license: LicenseView }) {
         </div>
       )}
 
-      {/* ── Orbit Flow Dual Download Box (Shown when order approved) ── */}
-      {license.products.some((p) => p.slug === "orbit-flow" || /flow/i.test(p.slug)) && (
-        <div className="mt-4 rounded-xl border border-sky-500/25 bg-gradient-to-r from-sky-950/30 to-black/30 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-black uppercase tracking-wider text-sky-400">⚡ Orbit Flow Downloads</span>
-                <span className="rounded bg-sky-500/20 px-2 py-0.5 text-[10px] font-bold text-sky-300">v2.5.0 Included</span>
-              </div>
-              <p className="mt-1 text-xs text-[#aab0bd]">
-                Download both the After Effects Extension and the Claude AI Skill for prompt-to-AE motion:
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                className="flex items-center gap-1.5 rounded-lg bg-[#0ea5e9] px-3.5 py-2 text-xs font-black text-black shadow-md hover:bg-[#38bdf8] transition-all disabled:opacity-60"
-                disabled={busy !== null}
-                onClick={() => download("orbit-flow")}
-              >
-                <span>⬇ Extension (.zxp)</span>
-              </button>
-              <button
-                className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3.5 py-2 text-xs font-black text-white shadow-md hover:brightness-110 transition-all disabled:opacity-60"
-                disabled={busy !== null}
-                onClick={() => download("orbit-motion")}
-              >
-                <span>⚡ Claude Skill: Orbit Motion (.zip)</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ── Device Bindings Section ── */}
       <div className="mt-5 rounded-xl border border-white/[0.05] bg-black/20 p-4">
         <div className="flex items-center justify-between text-xs pb-3 border-b border-white/[0.04]">
@@ -355,7 +326,9 @@ export function LicenseCard({ license }: { license: LicenseView }) {
             </span>
           </span>
           <span className="text-[11px] text-[#697485]">
-            {license.products.some((p) => p.slug === "creatorlens") && license.products.every((p) => p.slug === "creatorlens")
+            {isFlow
+              ? "After Effects only"
+              : license.products.some((p) => p.slug === "creatorlens") && license.products.every((p) => p.slug === "creatorlens")
               ? "Chrome side panel"
               : "Shared by AE & PR"}
           </span>
@@ -363,7 +336,9 @@ export function LicenseCard({ license }: { license: LicenseView }) {
 
         {seatsUsed === 0 ? (
           <p className="mt-3 text-xs text-[#717b8c] italic">
-            {license.products.some((p) => p.slug === "creatorlens") && license.products.every((p) => p.slug === "creatorlens")
+            {isFlow
+              ? "No devices bound yet. Paste your key in Orbit Flow inside After Effects to activate."
+              : license.products.some((p) => p.slug === "creatorlens") && license.products.every((p) => p.slug === "creatorlens")
               ? "No devices bound yet. Paste your key in the Compx Creator Chrome side panel to activate."
               : "No devices bound yet. Paste your key in After Effects or Premiere Pro to activate."}
           </p>
