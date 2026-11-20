@@ -119,13 +119,68 @@ export async function GET(req: Request) {
       event: "download",
       ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
       user_agent: req.headers.get("user-agent"),
-      meta: { slug: "orbit-flow", version: "2.5.0", channel, source: "public:assets" },
+      meta: { slug: "orbit-flow", version: "2.5.0", channel, source: "r2:compx-assets" },
     });
 
-    return NextResponse.json({
-      url: "/assets/OrbitFlow-v2.5.0.zxp",
-      version: "2.5.0",
+    try {
+      const r2Url = await getR2DownloadUrl("OrbitFlow-v2.5.0.zxp", 300);
+      return NextResponse.json({
+        url: r2Url || "https://assets.compxorbit.com/OrbitFlow-v2.5.0.zxp",
+        version: "2.5.0",
+      });
+    } catch {
+      return NextResponse.json({
+        url: "https://assets.compxorbit.com/OrbitFlow-v2.5.0.zxp",
+        version: "2.5.0",
+      });
+    }
+  }
+
+  // Claude Skill: Orbit Motion download (.zip)
+  if (slug === "orbit-motion" || slug === "orbit-flow-skill" || slug === "claude-skill") {
+    const { data: extRecord } = await svc
+      .from("extensions")
+      .select("id")
+      .eq("slug", "orbit-flow")
+      .maybeSingle();
+
+    const { data: entitled } = await svc
+      .from("licenses")
+      .select("id, plan_id, plans!inner(plan_extensions!inner(extension_id))")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .eq("plans.plan_extensions.extension_id", extRecord?.id)
+      .limit(1)
+      .maybeSingle();
+
+    if (!entitled) {
+      return NextResponse.json(
+        { error: "Your account does not have an active Orbit Flow license.", code: "NOT_ENTITLED" },
+        { status: 403 },
+      );
+    }
+
+    await svc.from("license_events").insert({
+      license_id: entitled.id,
+      user_id: user.id,
+      event: "download",
+      ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
+      user_agent: req.headers.get("user-agent"),
+      meta: { slug: "orbit-motion", version: "1.0.0", channel, source: "r2:compx-assets" },
     });
+
+    try {
+      const r2Url = await getR2DownloadUrl("orbit-motion.zip", 300);
+      return NextResponse.json({
+        url: r2Url || "https://assets.compxorbit.com/orbit-motion.zip",
+        version: "1.0.0",
+      });
+    } catch {
+      return NextResponse.json({
+        url: "https://assets.compxorbit.com/orbit-motion.zip",
+        version: "1.0.0",
+      });
+    }
   }
 
   // Orbit Studio / Premiere ZXP downloads

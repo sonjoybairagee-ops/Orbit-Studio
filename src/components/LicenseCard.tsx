@@ -181,28 +181,52 @@ export function LicenseCard({ license }: { license: LicenseView }) {
                   const isChrome = p.slug === "creatorlens";
                   const isPr = /premiere|[-_]pr$/i.test(p.slug);
                   const isFlow = p.slug === "orbit-flow" || /flow/i.test(p.slug);
-                  const label = isFlow
-                    ? "Orbit Flow (.zxp)"
-                    : isChrome
-                    ? "Compx Creator (.zip)"
-                    : isPr
-                    ? "Orbit Premiere (.zxp)"
-                    : "Orbit Studio (.zxp)";
+
+                  if (isFlow) {
+                    return (
+                      <div key={p.slug} className="flex flex-wrap items-center gap-2">
+                        <button
+                          className="flex items-center gap-2 rounded-xl bg-[#0ea5e9] px-4 py-2 text-xs font-black text-black shadow-[0_0_20px_rgba(14,165,233,0.35)] transition-all hover:bg-[#38bdf8] hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
+                          disabled={busy !== null}
+                          title="Download Orbit Flow v2.5.0 Extension (.zxp)"
+                          onClick={() => download("orbit-flow")}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                          </svg>
+                          <span>{busy === "dl-orbit-flow" ? "Preparing…" : "Orbit Flow (.zxp)"}</span>
+                        </button>
+                        <button
+                          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-xs font-black text-white shadow-[0_0_20px_rgba(139,92,246,0.35)] transition-all hover:from-violet-500 hover:to-indigo-500 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
+                          disabled={busy !== null}
+                          title="Download Claude Skill — Orbit Motion (.zip)"
+                          onClick={() => download("orbit-motion")}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                          </svg>
+                          <span>{busy === "dl-orbit-motion" ? "Preparing…" : "Claude Skill (.zip)"}</span>
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  const label = isChrome ? "Compx Creator (.zip)" : isPr ? "Orbit Premiere (.zxp)" : "Orbit Studio (.zxp)";
                   return (
                     <button
                       key={p.slug}
                       className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 ${
-                        isFlow
-                          ? "bg-[#0ea5e9] text-black shadow-[0_0_20px_rgba(14,165,233,0.35)] hover:bg-[#38bdf8]"
-                          : isPr && !isChrome
+                        isPr && !isChrome
                           ? "bg-[#18231c] text-[#45c66d] border border-[#45c66d]/40 hover:bg-[#45c66d]/20"
                           : "bg-[#45c66d] text-black shadow-[0_0_20px_rgba(69,198,109,0.3)] hover:bg-[#38b55e]"
                       }`}
                       disabled={busy !== null}
                       title={
-                        isFlow
-                          ? "Download Orbit Flow v2.5.0 (.zxp)"
-                          : isPr
+                        isPr
                           ? "Download CompX Orbit Premiere v2.5.0 (.zxp)"
                           : isChrome
                           ? "Download Compx Creator (.zip)"
@@ -285,6 +309,39 @@ export function LicenseCard({ license }: { license: LicenseView }) {
           }`}
         >
           {note.text}
+        </div>
+      )}
+
+      {/* ── Orbit Flow Dual Download Box (Shown when order approved) ── */}
+      {license.products.some((p) => p.slug === "orbit-flow" || /flow/i.test(p.slug)) && (
+        <div className="mt-4 rounded-xl border border-sky-500/25 bg-gradient-to-r from-sky-950/30 to-black/30 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black uppercase tracking-wider text-sky-400">⚡ Orbit Flow Downloads</span>
+                <span className="rounded bg-sky-500/20 px-2 py-0.5 text-[10px] font-bold text-sky-300">v2.5.0 Included</span>
+              </div>
+              <p className="mt-1 text-xs text-[#aab0bd]">
+                Download both the After Effects Extension and the Claude AI Skill for prompt-to-AE motion:
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                className="flex items-center gap-1.5 rounded-lg bg-[#0ea5e9] px-3.5 py-2 text-xs font-black text-black shadow-md hover:bg-[#38bdf8] transition-all disabled:opacity-60"
+                disabled={busy !== null}
+                onClick={() => download("orbit-flow")}
+              >
+                <span>⬇ Extension (.zxp)</span>
+              </button>
+              <button
+                className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3.5 py-2 text-xs font-black text-white shadow-md hover:brightness-110 transition-all disabled:opacity-60"
+                disabled={busy !== null}
+                onClick={() => download("orbit-motion")}
+              >
+                <span>⚡ Claude Skill: Orbit Motion (.zip)</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

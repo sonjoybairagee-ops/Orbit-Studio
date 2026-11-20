@@ -108,7 +108,29 @@ export function DashboardView({ user, licenses, verified }: DashboardViewProps) 
                   Download the bonus packs included with your active license.
                 </p>
 
-                <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Claude Skill - Orbit Motion */}
+                  <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 p-4 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xl">⚡</span>
+                        <span className="text-[10px] font-mono text-sky-400 font-bold bg-sky-500/10 px-2 py-0.5 rounded">
+                          18.6 KB
+                        </span>
+                      </div>
+                      <h4 className="mt-3 text-xs font-black text-white">Claude Skill — Orbit Motion</h4>
+                      <p className="mt-1 text-[11px] text-[#8c97a8]">
+                        AI motion skill for Claude: screenshot/prompt to native AE composition.
+                      </p>
+                    </div>
+                    <a
+                      href={`/api/download-asset?file=${encodeURIComponent("orbit-motion.zip")}`}
+                      className="mt-4 flex items-center justify-center gap-2 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 border border-sky-500/30 py-2 text-xs font-bold transition-all"
+                    >
+                      <span>⬇ Download Skill (.zip)</span>
+                    </a>
+                  </div>
+
                   {/* 50 MOGRTs */}
                   <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 flex flex-col justify-between">
                     <div>
