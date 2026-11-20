@@ -180,17 +180,34 @@ export function LicenseCard({ license }: { license: LicenseView }) {
                 .map((p) => {
                   const isChrome = p.slug === "creatorlens";
                   const isPr = /premiere|[-_]pr$/i.test(p.slug);
-                  const label = isChrome ? "Compx Creator (.zip)" : isPr ? "Orbit Premiere (.zxp)" : "Orbit Studio (.zxp)";
+                  const isFlow = p.slug === "orbit-flow" || /flow/i.test(p.slug);
+                  const label = isFlow
+                    ? "Orbit Flow (.zxp)"
+                    : isChrome
+                    ? "Compx Creator (.zip)"
+                    : isPr
+                    ? "Orbit Premiere (.zxp)"
+                    : "Orbit Studio (.zxp)";
                   return (
                     <button
                       key={p.slug}
                       className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 ${
-                        isPr && !isChrome
+                        isFlow
+                          ? "bg-[#0ea5e9] text-black shadow-[0_0_20px_rgba(14,165,233,0.35)] hover:bg-[#38bdf8]"
+                          : isPr && !isChrome
                           ? "bg-[#18231c] text-[#45c66d] border border-[#45c66d]/40 hover:bg-[#45c66d]/20"
                           : "bg-[#45c66d] text-black shadow-[0_0_20px_rgba(69,198,109,0.3)] hover:bg-[#38b55e]"
                       }`}
                       disabled={busy !== null}
-                      title={isPr ? "Download CompX Orbit Premiere v2.5.0 (.zxp)" : isChrome ? "Download Compx Creator (.zip)" : "Download CompX Orbit Studio v3.0.0 (.zxp)"}
+                      title={
+                        isFlow
+                          ? "Download Orbit Flow v2.5.0 (.zxp)"
+                          : isPr
+                          ? "Download CompX Orbit Premiere v2.5.0 (.zxp)"
+                          : isChrome
+                          ? "Download Compx Creator (.zip)"
+                          : "Download CompX Orbit Studio v3.0.0 (.zxp)"
+                      }
                       onClick={() => download(p.slug)}
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

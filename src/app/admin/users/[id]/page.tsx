@@ -103,7 +103,8 @@ export default async function UserProfilePage({ params }: { params: { id: string
                 .map((pe: any) => pe.extensions)
                 .filter(Boolean);
 
-              const hasAe = allowedExtensions.some((e: any) => e.host_app === "AEFT" || e.slug === "orbit-studio");
+              const isFlow = allowedExtensions.some((e: any) => e.slug === "orbit-flow") || lic.plans?.slug === "orbit-flow";
+              const hasAe = allowedExtensions.some((e: any) => (e.host_app === "AEFT" && e.slug !== "orbit-flow") || e.slug === "orbit-studio");
               const hasPr = allowedExtensions.some((e: any) => e.host_app === "PPRO" || e.slug === "orbit-premiere");
               const isCombo = (hasAe && hasPr) || lic.plans?.slug === "orbit-bundle";
 
@@ -117,7 +118,9 @@ export default async function UserProfilePage({ params }: { params: { id: string
                     <div>
                       <div className="flex items-center gap-2">
                         <b className="text-base text-white">{lic.plans?.name ?? "Custom License"}</b>
-                        {isCombo ? (
+                        {isFlow ? (
+                          <span className="badge bg-[#0ea5e9]/20 text-[#38bdf8] border border-[#0ea5e9]/40 text-[10px] font-bold">ORBIT FLOW (AI &amp; WEB)</span>
+                        ) : isCombo ? (
                           <span className="badge badge-amber text-[10px] font-black">AE + PR COMBO</span>
                         ) : hasPr ? (
                           <span className="badge bg-[#3ddc6e]/20 text-[#3ddc6e] border border-[#3ddc6e]/40 text-[10px] font-bold">PREMIERE ONLY</span>
