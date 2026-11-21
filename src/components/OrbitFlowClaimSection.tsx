@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Zap,
@@ -19,6 +19,7 @@ import {
 const FB_CAMPAIGN_POST_URL = "https://www.facebook.com/share/v/1d7ykUAHyH/";
 
 export function OrbitFlowClaimSection({ id = "claim-flow" }: { id?: string }) {
+  const [mounted, setMounted] = useState(false);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [socialShareUrl, setSocialShareUrl] = useState("");
@@ -28,6 +29,31 @@ export function OrbitFlowClaimSection({ id = "claim-flow" }: { id?: string }) {
     alreadyPending?: boolean;
     message?: string;
   } | null>(null);
+
+  // Digital countdown to 01 December 2026 23:59:59 GMT+6 (Giveaway Result Announcement)
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+
+  const DEC_01_TARGET = new Date("2026-12-01T23:59:59+06:00").getTime();
+
+  useEffect(() => {
+    setMounted(true);
+    function updateClock() {
+      const diff = Math.max(0, DEC_01_TARGET - Date.now());
+      const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const m = Math.floor((diff / (1000 * 60)) % 60);
+      const s = Math.floor((diff / 1000) % 60);
+      setTimeLeft({ days: d, hours: h, minutes: m, seconds: s });
+    }
+    updateClock();
+    const interval = setInterval(updateClock, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleShareFacebook = () => {
     const shareUrl = encodeURIComponent(FB_CAMPAIGN_POST_URL);
@@ -102,6 +128,46 @@ export function OrbitFlowClaimSection({ id = "claim-flow" }: { id?: string }) {
           <p className="mt-3 text-sm sm:text-base text-[#94a3b8] leading-relaxed">
             Convert web designs, CSS keyframes, and AI-generated GSAP animations into <b>100% native editable After Effects shape layers and timelines</b>. Fill in your details below to request your lifetime license.
           </p>
+
+          {/* Digital Countdown Timer to Dec 01 Giveaway Result */}
+          <div className="mt-7 inline-flex flex-col items-center">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#38bdf8] mb-2.5 flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5" />
+              Giveaway Result &amp; License Announcement · 01 December 2026
+            </span>
+            <div className="flex items-center gap-2 sm:gap-3 bg-black/60 border border-[#0ea5e9]/30 rounded-2xl p-2.5 sm:p-3 shadow-inner">
+              <div className="flex flex-col items-center min-w-[54px] sm:min-w-[64px] bg-[#071924] border border-[#0ea5e9]/40 rounded-xl py-2">
+                <span className="text-xl sm:text-3xl font-black text-white font-mono">
+                  {mounted ? String(timeLeft.days).padStart(2, "0") : "09"}
+                </span>
+                <span className="text-[9px] font-bold text-[#8da194] uppercase tracking-wider">Days</span>
+              </div>
+              <span className="text-xl font-bold text-[#38bdf8]">:</span>
+              <div className="flex flex-col items-center min-w-[54px] sm:min-w-[64px] bg-[#071924] border border-[#0ea5e9]/40 rounded-xl py-2">
+                <span className="text-xl sm:text-3xl font-black text-white font-mono">
+                  {mounted ? String(timeLeft.hours).padStart(2, "0") : "00"}
+                </span>
+                <span className="text-[9px] font-bold text-[#8da194] uppercase tracking-wider">Hours</span>
+              </div>
+              <span className="text-xl font-bold text-[#38bdf8]">:</span>
+              <div className="flex flex-col items-center min-w-[54px] sm:min-w-[64px] bg-[#071924] border border-[#0ea5e9]/40 rounded-xl py-2">
+                <span className="text-xl sm:text-3xl font-black text-white font-mono">
+                  {mounted ? String(timeLeft.minutes).padStart(2, "0") : "00"}
+                </span>
+                <span className="text-[9px] font-bold text-[#8da194] uppercase tracking-wider">Mins</span>
+              </div>
+              <span className="text-xl font-bold text-[#38bdf8]">:</span>
+              <div className="flex flex-col items-center min-w-[54px] sm:min-w-[64px] bg-[#071924] border border-[#0ea5e9]/40 rounded-xl py-2">
+                <span className="text-xl sm:text-3xl font-black text-[#38bdf8] font-mono">
+                  {mounted ? String(timeLeft.seconds).padStart(2, "0") : "00"}
+                </span>
+                <span className="text-[9px] font-bold text-[#8da194] uppercase tracking-wider">Secs</span>
+              </div>
+            </div>
+            <p className="text-[11px] text-[#64748b] mt-2">
+              Winners will be approved and lifetime licenses will be available in your dashboard on December 01.
+            </p>
+          </div>
         </div>
 
         {/* Two-Column Showcase + Claim Form Grid */}
