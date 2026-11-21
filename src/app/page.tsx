@@ -7,6 +7,7 @@ import { LayerExploder3D } from "@/components/LayerExploder3D";
 import { PremiereShowcase } from "@/components/PremiereShowcase";
 import { DiscountCampaignBanner } from "@/components/DiscountCampaignBanner";
 import { GiveawayClaimSection } from "@/components/GiveawayClaimSection";
+import { OrbitFlowClaimSection } from "@/components/OrbitFlowClaimSection";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -112,6 +113,12 @@ export default async function Home() {
               >
                 <span>🎉 50 Free Licenses Giveaway</span>
               </a>
+              <a
+                href="#claim-flow"
+                className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-[#081f2c] px-2.5 py-0.5 text-[11px] font-bold text-[#38bdf8] border border-[#0ea5e9]/40 hover:bg-[#0c2a3b] hover:border-[#38bdf8] transition-all cursor-pointer shadow-sm"
+              >
+                <span>⚡ Claim Free Orbit Flow</span>
+              </a>
             </div>
             <h1>
               Stay in flow.<br />
@@ -169,6 +176,9 @@ export default async function Home() {
 
       {/* ── 50 Free Extension Licenses 30-Day Giveaway Campaign ── */}
       <GiveawayClaimSection id="giveaway" />
+
+      {/* ── Orbit Flow Lifetime License Claim Section ── */}
+      <OrbitFlowClaimSection id="claim-flow" />
 
       <section id="features" className="shell workspace-section scroll-mt-24">
         <div className="section-heading section-heading--split">

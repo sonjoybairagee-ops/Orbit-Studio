@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { type LicenseView } from "@/components/LicenseCard";
 import { DashboardView } from "@/components/DashboardView";
 
@@ -15,6 +16,20 @@ export default async function DashboardPage({
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  // Auto-bind any unattached licenses matching user's email
+  if (user.email) {
+    try {
+      const adminClient = createAdminClient();
+      await adminClient
+        .from("licenses")
+        .update({ user_id: user.id })
+        .ilike("legacy_email", user.email.toLowerCase())
+        .is("user_id", null);
+    } catch (bindErr) {
+      console.error("Auto-bind licenses error:", bindErr);
+    }
+  }
 
   // Licenses -> plan -> bundled extensions, plus every active seat.
   const { data: rows } = await supabase
