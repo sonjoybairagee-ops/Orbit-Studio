@@ -7,6 +7,7 @@ create table if not exists public.orbit_flow_claims (
   id uuid primary key default gen_random_uuid(),
   full_name text not null,
   email text not null,
+  social_share_url text,
   status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
   license_key text,
   license_id uuid references public.licenses(id) on delete set null,
@@ -17,6 +18,10 @@ create table if not exists public.orbit_flow_claims (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Ensure social_share_url column exists if table was already created
+alter table if exists public.orbit_flow_claims
+  add column if not exists social_share_url text;
 
 -- Case-insensitive unique index on email
 create unique index if not exists orbit_flow_claims_email_lower_idx

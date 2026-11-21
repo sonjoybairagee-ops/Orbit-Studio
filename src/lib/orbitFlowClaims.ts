@@ -6,6 +6,7 @@ export interface OrbitFlowClaim {
   id: string;
   full_name: string;
   email: string;
+  social_share_url?: string | null;
   status: "pending" | "approved" | "rejected";
   license_key?: string | null;
   license_id?: string | null;
@@ -44,6 +45,7 @@ async function getDefaultAdminId(adminClient: any): Promise<string> {
 export async function saveOrbitFlowClaim(entry: {
   fullName: string;
   email: string;
+  socialShareUrl?: string | null;
   ipAddress?: string | null;
   userAgent?: string | null;
 }): Promise<{
@@ -60,6 +62,7 @@ export async function saveOrbitFlowClaim(entry: {
   const payload = {
     full_name: fullName,
     email: normalizedEmail,
+    social_share_url: entry.socialShareUrl?.trim() || null,
     status: "pending" as const,
     ip_address: entry.ipAddress || null,
     user_agent: entry.userAgent || null,
@@ -213,6 +216,7 @@ export async function getAllOrbitFlowClaims(): Promise<OrbitFlowClaim[]> {
         id: c.id,
         full_name: c.full_name || "Community Member",
         email: (c.email || "").toLowerCase(),
+        social_share_url: c.social_share_url || null,
         status: c.status || "pending",
         license_key: c.license_key || null,
         license_id: c.license_id || null,
@@ -247,6 +251,7 @@ export async function getAllOrbitFlowClaims(): Promise<OrbitFlowClaim[]> {
         id: details.id || log.id,
         full_name: details.full_name || "Community Member",
         email,
+        social_share_url: details.social_share_url || null,
         status: details.status || "pending",
         license_key: details.license_key || null,
         license_id: details.license_id || null,

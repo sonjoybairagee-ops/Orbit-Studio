@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const { fullName, email } = body;
+    const { fullName, email, socialShareUrl } = body;
 
     if (!fullName || typeof fullName !== "string" || fullName.trim().length < 2) {
       return NextResponse.json(
@@ -23,6 +23,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!socialShareUrl || typeof socialShareUrl !== "string" || !socialShareUrl.trim()) {
+      return NextResponse.json(
+        { error: "Please provide the link to your shared Facebook post." },
+        { status: 400 }
+      );
+    }
+
+    let trimmedUrl = socialShareUrl.trim();
+    if (!trimmedUrl.startsWith("http://") && !trimmedUrl.startsWith("https://")) {
+      trimmedUrl = "https://" + trimmedUrl;
+    }
+
+    try {
+      new URL(trimmedUrl);
+    } catch {
+      return NextResponse.json(
+        { error: "Please provide a valid Facebook post link (e.g. https://facebook.com/...)" },
+        { status: 400 }
+      );
+    }
+
     const ipAddress =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       req.headers.get("x-real-ip") ||
@@ -32,6 +53,7 @@ export async function POST(req: NextRequest) {
     const result = await saveOrbitFlowClaim({
       fullName: fullName.trim(),
       email: email.trim(),
+      socialShareUrl: trimmedUrl,
       ipAddress,
       userAgent,
     });

@@ -18,12 +18,19 @@ import {
 export function OrbitFlowClaimSection({ id = "claim-flow" }: { id?: string }) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [socialShareUrl, setSocialShareUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successData, setSuccessData] = useState<{
     alreadyPending?: boolean;
     message?: string;
   } | null>(null);
+
+  const handleShareFacebook = () => {
+    const shareUrl = encodeURIComponent("https://compxorbit.com/#claim-flow");
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`;
+    window.open(url, "_blank", "width=600,height=500,scrollbars=yes,resizable=yes");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +45,10 @@ export function OrbitFlowClaimSection({ id = "claim-flow" }: { id?: string }) {
       setErrorMessage("Please enter a valid email address.");
       return;
     }
+    if (!socialShareUrl.trim()) {
+      setErrorMessage("Please enter the link to your shared Facebook post.");
+      return;
+    }
 
     setLoading(true);
 
@@ -48,6 +59,7 @@ export function OrbitFlowClaimSection({ id = "claim-flow" }: { id?: string }) {
         body: JSON.stringify({
           fullName: fullName.trim(),
           email: email.trim(),
+          socialShareUrl: socialShareUrl.trim(),
         }),
       });
 
@@ -237,6 +249,30 @@ export function OrbitFlowClaimSection({ id = "claim-flow" }: { id?: string }) {
                   )}
 
                   <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Facebook Share Action Prompt */}
+                    <div className="rounded-xl border border-[#1877F2]/30 bg-[#1877F2]/10 p-3 sm:p-3.5">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                          <p className="text-xs font-bold text-white flex items-center gap-1.5">
+                            <span className="text-[#38bdf8]">Step 1:</span> Share on Facebook
+                          </p>
+                          <p className="text-[11px] text-[#93c5fd] mt-0.5">
+                            Share CompX Orbit on your timeline or group, then submit the post link below.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleShareFacebook}
+                          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#1877F2] hover:bg-[#166fe5] px-4 py-2 text-xs font-bold text-white transition-all shadow-md shadow-[#1877F2]/30 active:scale-95"
+                        >
+                          <svg className="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24">
+                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                          </svg>
+                          <span>Share Now</span>
+                        </button>
+                      </div>
+                    </div>
+
                     <div>
                       <label className="block text-xs font-bold text-white uppercase tracking-wider mb-1.5">
                         Full Name <span className="text-[#38bdf8]">*</span>
@@ -267,6 +303,24 @@ export function OrbitFlowClaimSection({ id = "claim-flow" }: { id?: string }) {
                       />
                       <p className="mt-1 text-[11px] text-[#6e7a8a]">
                         Use the email you intend to sign in with at compxorbit.com/dashboard.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-white uppercase tracking-wider mb-1.5">
+                        Facebook Share Post Link <span className="text-[#38bdf8]">*</span>
+                      </label>
+                      <input
+                        type="url"
+                        value={socialShareUrl}
+                        onChange={(e) => setSocialShareUrl(e.target.value)}
+                        placeholder="https://facebook.com/your-name/posts/..."
+                        disabled={loading}
+                        required
+                        className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs sm:text-sm text-white placeholder-[#5d6778] focus:border-[#0ea5e9] focus:outline-none transition-all disabled:opacity-50"
+                      />
+                      <p className="mt-1 text-[11px] text-[#6e7a8a]">
+                        Paste the direct link to your shared Facebook post for admin verification.
                       </p>
                     </div>
 

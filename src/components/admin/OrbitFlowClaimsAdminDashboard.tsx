@@ -193,10 +193,11 @@ export function OrbitFlowClaimsAdminDashboard({
 
   // Export CSV
   const handleExportCSV = () => {
-    const headers = ["Full Name", "Email", "Status", "License Key", "Submitted At", "Approved At"];
+    const headers = ["Full Name", "Email", "Facebook Share URL", "Status", "License Key", "Submitted At", "Approved At"];
     const rows = filteredClaims.map((c) => [
       `"${c.full_name.replace(/"/g, '""')}"`,
       `"${c.email}"`,
+      `"${(c.social_share_url || "").replace(/"/g, '""')}"`,
       c.status,
       c.license_key || "",
       c.created_at,
@@ -396,6 +397,7 @@ export function OrbitFlowClaimsAdminDashboard({
             <thead className="border-b border-white/[0.08] bg-black/40 text-[11px] font-bold uppercase tracking-wider text-[#8c97a8]">
               <tr>
                 <th className="py-3 px-4">Applicant</th>
+                <th className="py-3 px-4">Facebook Post</th>
                 <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-4">License Key</th>
                 <th className="py-3 px-4">Submitted At</th>
@@ -405,7 +407,7 @@ export function OrbitFlowClaimsAdminDashboard({
             <tbody className="divide-y divide-white/[0.04] text-[#afbeb4]">
               {filteredClaims.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-[#8c97a8]">
+                  <td colSpan={6} className="py-12 text-center text-[#8c97a8]">
                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.03] text-xl">
                       🔍
                     </div>
@@ -437,6 +439,27 @@ export function OrbitFlowClaimsAdminDashboard({
                             {claim.email}
                           </span>
                         </div>
+                      </td>
+
+                      {/* Facebook Share Post Link */}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        {claim.social_share_url ? (
+                          <a
+                            href={claim.social_share_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-[#1877F2]/40 bg-[#1877F2]/10 px-2.5 py-1 text-[11px] font-bold text-[#1877F2] hover:bg-[#1877F2]/20 transition-all"
+                            title={claim.social_share_url}
+                          >
+                            <svg className="h-3 w-3 fill-current" viewBox="0 0 24 24">
+                              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                            </svg>
+                            <span>View Post</span>
+                            <ExternalLink className="h-2.5 w-2.5" />
+                          </a>
+                        ) : (
+                          <span className="text-[11px] text-[#6e7a8a] italic">None</span>
+                        )}
                       </td>
 
                       {/* Status */}
@@ -593,6 +616,21 @@ export function OrbitFlowClaimsAdminDashboard({
                 <span className="text-[#8c97a8] block text-[11px] uppercase tracking-wider font-bold">Email:</span>
                 <span className="font-mono text-white text-sm">{selectedClaim.email}</span>
               </div>
+
+              {selectedClaim.social_share_url && (
+                <div>
+                  <span className="text-[#8c97a8] block text-[11px] uppercase tracking-wider font-bold">Facebook Post Link:</span>
+                  <a
+                    href={selectedClaim.social_share_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-[#1877F2] hover:underline mt-0.5 font-mono break-all"
+                  >
+                    <span>{selectedClaim.social_share_url}</span>
+                    <ExternalLink className="h-3 w-3 shrink-0" />
+                  </a>
+                </div>
+              )}
 
               <div>
                 <span className="text-[#8c97a8] block text-[11px] uppercase tracking-wider font-bold">Current Status:</span>
