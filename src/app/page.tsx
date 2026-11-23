@@ -107,12 +107,13 @@ export default async function Home() {
             <div className="home-hero__kicker">
               <span><i /> Orbit Studio 3.0.0</span>
               <span>After Effects + Premiere Pro</span>
-              <a
+              {/* Temporarily hidden per user request */}
+              {/* <a
                 href="#giveaway"
                 className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-[#102a16] px-2.5 py-0.5 text-[11px] font-bold text-[#3cff5f] border border-[#2a5234] hover:bg-[#16381e] hover:border-[#3cff5f] transition-all cursor-pointer shadow-sm"
               >
                 <span>🎉 50 Free Licenses Giveaway</span>
-              </a>
+              </a> */}
               <a
                 href="#claim-flow"
                 className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-[#081f2c] px-2.5 py-0.5 text-[11px] font-bold text-[#38bdf8] border border-[#0ea5e9]/40 hover:bg-[#0c2a3b] hover:border-[#38bdf8] transition-all cursor-pointer shadow-sm"
@@ -174,8 +175,8 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ── 50 Free Extension Licenses 30-Day Giveaway Campaign ── */}
-      <GiveawayClaimSection id="giveaway" />
+      {/* ── 50 Free Extension Licenses 30-Day Giveaway Campaign (Temporarily disabled) ── */}
+      {/* <GiveawayClaimSection id="giveaway" /> */}
 
       {/* ── Orbit Flow Lifetime License Claim Section ── */}
       <OrbitFlowClaimSection id="claim-flow" />
