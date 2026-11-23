@@ -1,3 +1,6 @@
+"use client";
+
+import React from "react";
 import Link from "next/link";
 import { ToolItem } from "@/lib/tools-data";
 import { 
@@ -228,7 +231,20 @@ const DEFAULT_CATEGORY_STYLE = {
   badgeText: "text-[#3cff5f]",
 };
 
+const ADS_DIRECT_LINK =
+  process.env.NEXT_PUBLIC_ADS_DIRECT_LINK || "https://uplcm.com/4/12334917";
+
 export default function ToolCard({ tool }: ToolCardProps) {
+  const handleToolClick = () => {
+    try {
+      if (typeof window !== "undefined" && ADS_DIRECT_LINK) {
+        window.open(ADS_DIRECT_LINK, "_blank", "noopener,noreferrer");
+      }
+    } catch {
+      // Silently continue if popup blocker intercepts
+    }
+  };
+
   const renderIcon = () => {
     switch (tool.iconName) {
       case "Download":
@@ -369,6 +385,7 @@ export default function ToolCard({ tool }: ToolCardProps) {
   return (
     <Link
       href={tool.href}
+      onClick={handleToolClick}
       className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-[#26332d] bg-gradient-to-b from-[#101813] via-[#0d1410] to-[#080e0b] p-5 transition-all duration-300 hover:-translate-y-1.5 ${style.hoverBorder} hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.85),0_0_24px_rgba(60,255,95,0.1)]`}
     >
       {/* Top Ambient Glow */}
