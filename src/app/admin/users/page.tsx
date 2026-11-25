@@ -19,10 +19,10 @@ function getUserSourceInfo(user: any) {
   );
 
   const orders = (user.orders ?? []).filter(Boolean);
-  const approvedOrders = orders.filter((o: any) => o.status === "approved");
-  const refundedOrders = orders.filter((o: any) => o.status === "refunded");
-  const paidOrders = orders.filter((o: any) => o.status === "approved" || Number(o.amount) > 0);
-  const isPaid = paidOrders.length > 0 || licenses.some((l: any) => l.license_type === "paid" && !isPromo && !isLegacy);
+  const approvedOrders = orders.filter((o: any) => o.status === "approved" && !(typeof o.hold_reason === "string" && o.hold_reason.startsWith("[REFUNDED")));
+  const refundedOrders = orders.filter((o: any) => o.status === "refunded" || (typeof o.hold_reason === "string" && o.hold_reason.startsWith("[REFUNDED")));
+  const paidOrders = orders.filter((o: any) => (o.status === "approved" && !(typeof o.hold_reason === "string" && o.hold_reason.startsWith("[REFUNDED"))) || Number(o.amount) > 0);
+  const isPaid = (approvedOrders.length > 0) || (paidOrders.length > 0 && refundedOrders.length === 0) || licenses.some((l: any) => l.license_type === "paid" && l.status !== "revoked" && !isPromo && !isLegacy);
 
   let badgeLabel = "⚪ No License";
   let badgeCls = "badge bg-gray-600/20 text-gray-400 border border-gray-500/30 text-[10px]";
@@ -63,9 +63,9 @@ export default async function UsersPage({
   // Fetch all plans for the dropdown
   const { data: allPlans } = await s.from("plans").select("id,name").order("name");
 
-  let selectStr = "id,full_name,email,role,legacy_source,created_at,is_banned,orders:orders!orders_user_id_fkey(id,method,amount,currency,status,txn_ref,plans(name)),licenses(id,license_type,notes,status,created_at,plans(name))";
+  let selectStr = "id,full_name,email,role,legacy_source,created_at,is_banned,orders:orders!orders_user_id_fkey(id,method,amount,currency,status,hold_reason,txn_ref,plans(name)),licenses(id,license_type,notes,status,created_at,plans(name))";
   if (plan) {
-    selectStr = "id,full_name,email,role,legacy_source,created_at,is_banned,orders:orders!orders_user_id_fkey(id,method,amount,currency,status,txn_ref,plans(name)),licenses!inner(id,license_type,notes,status,created_at,plans(name))";
+    selectStr = "id,full_name,email,role,legacy_source,created_at,is_banned,orders:orders!orders_user_id_fkey(id,method,amount,currency,status,hold_reason,txn_ref,plans(name)),licenses!inner(id,license_type,notes,status,created_at,plans(name))";
   }
 
   let query = s

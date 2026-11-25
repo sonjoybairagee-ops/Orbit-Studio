@@ -288,87 +288,90 @@ export default async function UserProfilePage({ params }: { params: { id: string
             </h2>
 
             <div className="space-y-3">
-              {orders.map((o: any) => (
-                <div key={o.id} className="rounded-2xl border border-white/10 bg-[#0c100e] p-4 sm:p-5 shadow-xl space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <b className="text-sm text-white block">{o.plans?.name ?? "Order"}</b>
-                      <p className="text-xs text-[#717b8c] mt-0.5">
-                        {new Date(o.created_at).toLocaleString()}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <b className="text-sm text-white block font-mono">
-                        {o.currency} {o.amount}
-                      </b>
-                      <span className={`badge mt-1 text-[10px] ${o.status === "approved" ? "badge-green" : o.status === "pending" ? "badge-amber" : o.status === "refunded" ? "bg-rose-500/20 text-rose-300 border border-rose-500/30" : "badge-red"}`}>
-                        {o.status === "refunded" ? "REFUNDED" : o.status.toUpperCase()}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/5 text-xs">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[#717b8c]">Method:</span>
-                      <span className="badge bg-white/5 border-white/10 text-[10px] uppercase font-bold text-white">
-                        {o.method}
-                      </span>
+              {orders.map((o: any) => {
+                const isRefunded = o.status === "refunded" || (typeof o.hold_reason === "string" && o.hold_reason.startsWith("[REFUNDED"));
+                return (
+                  <div key={o.id} className="rounded-2xl border border-white/10 bg-[#0c100e] p-4 sm:p-5 shadow-xl space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <b className="text-sm text-white block">{o.plans?.name ?? "Order"}</b>
+                        <p className="text-xs text-[#717b8c] mt-0.5">
+                          {new Date(o.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <b className="text-sm text-white block font-mono">
+                          {o.currency} {o.amount}
+                        </b>
+                        <span className={`badge mt-1 text-[10px] ${isRefunded ? "bg-rose-500/20 text-rose-300 border border-rose-500/30" : o.status === "approved" ? "badge-green" : o.status === "pending" ? "badge-amber" : "badge-red"}`}>
+                          {isRefunded ? "REFUNDED" : o.status.toUpperCase()}
+                        </span>
+                      </div>
                     </div>
 
-                    {o.txn_ref && (
-                      <div className="flex items-center gap-1 font-mono text-xs">
-                        <span className="text-[#717b8c]">Txn:</span>
-                        <code className="text-[#45c66d] bg-black/40 px-1.5 py-0.5 rounded border border-white/5">
-                          {o.txn_ref}
-                        </code>
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/5 text-xs">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[#717b8c]">Method:</span>
+                        <span className="badge bg-white/5 border-white/10 text-[10px] uppercase font-bold text-white">
+                          {o.method}
+                        </span>
+                      </div>
+
+                      {o.txn_ref && (
+                        <div className="flex items-center gap-1 font-mono text-xs">
+                          <span className="text-[#717b8c]">Txn:</span>
+                          <code className="text-[#45c66d] bg-black/40 px-1.5 py-0.5 rounded border border-white/5">
+                            {o.txn_ref}
+                          </code>
+                        </div>
+                      )}
+                    </div>
+
+                    {o.receipt_path && (
+                      <div className="pt-2">
+                        <a
+                          href={`/api/admin/receipt?path=${encodeURIComponent(o.receipt_path)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-cyan-400 hover:underline inline-flex items-center gap-1"
+                        >
+                          <span>🧾</span> View Payment Receipt
+                        </a>
+                      </div>
+                    )}
+
+                    {o.status === "approved" && !isRefunded && (
+                      <div className="pt-2 border-t border-white/5 flex items-center justify-between">
+                        <span className="text-[11px] text-[#717b8c]">Customer refund request?</span>
+                        <RefundButton
+                          order={{
+                            id: o.id,
+                            amount: Number(o.amount),
+                            currency: o.currency,
+                            method: o.method,
+                            txn_ref: o.txn_ref,
+                            profiles: { email: profile.email, full_name: profile.full_name },
+                            plans: { name: o.plans?.name },
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    {isRefunded && (
+                      <div className="pt-2 border-t border-white/5 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <span className="badge bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-bold">
+                          ↩ Refunded: {o.currency || "BDT"} {o.refund_amount || o.amount} via {o.refund_account || (o.hold_reason?.match(/via\s+(\w+)/i)?.[1]) || o.method}
+                        </span>
+                        {(o.refund_reason || o.hold_reason) && (
+                          <span className="text-[#8c97a8] text-[11px] italic">
+                            "{o.refund_reason || o.hold_reason}"
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
-
-                  {o.receipt_path && (
-                    <div className="pt-2">
-                      <a
-                        href={`/api/admin/receipt?path=${encodeURIComponent(o.receipt_path)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-cyan-400 hover:underline inline-flex items-center gap-1"
-                      >
-                        <span>🧾</span> View Payment Receipt
-                      </a>
-                    </div>
-                  )}
-
-                  {o.status === "approved" && (
-                    <div className="pt-2 border-t border-white/5 flex items-center justify-between">
-                      <span className="text-[11px] text-[#717b8c]">Customer refund request?</span>
-                      <RefundButton
-                        order={{
-                          id: o.id,
-                          amount: Number(o.amount),
-                          currency: o.currency,
-                          method: o.method,
-                          txn_ref: o.txn_ref,
-                          profiles: { email: profile.email, full_name: profile.full_name },
-                          plans: { name: o.plans?.name },
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  {o.status === "refunded" && (
-                    <div className="pt-2 border-t border-white/5 flex flex-wrap items-center justify-between gap-2 text-xs">
-                      <span className="badge bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-bold">
-                        ↩ Refunded: {o.currency || "BDT"} {o.refund_amount || o.amount} via {o.refund_account || o.method}
-                      </span>
-                      {o.refund_reason && (
-                        <span className="text-[#8c97a8] text-[11px] italic">
-                          "{o.refund_reason}"
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
 
               {orders.length === 0 && (
                 <div className="rounded-2xl border border-white/10 bg-[#0c100e] p-6 text-center text-sm text-[#717b8c]">

@@ -25,8 +25,8 @@ export async function GET() {
   // Fetch approved & refunded system orders to auto-collect as revenue
   const { data: approvedOrders } = await supabase
     .from("orders")
-    .select("id, amount, currency, method, status, created_at, txn_ref, plans(name)")
-    .in("status", ["approved", "refunded"])
+    .select("id, amount, currency, method, status, hold_reason, created_at, txn_ref, plans(name)")
+    .or("status.in.(approved,refunded),hold_reason.ilike.[REFUNDED%")
     .order("created_at", { ascending: false });
 
   // Map method to display account name

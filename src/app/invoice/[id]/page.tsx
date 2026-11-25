@@ -29,7 +29,7 @@ export default async function InvoicePage({ params }: Props) {
   const { data: order } = await supabase
     .from("orders")
     .select(`
-      id, amount, currency, method, status, txn_ref, created_at, reviewed_at, user_id,
+      id, amount, currency, method, status, hold_reason, txn_ref, created_at, reviewed_at, user_id,
       profiles ( email, full_name ),
       plans ( name, billing_type, price ),
       licenses ( key, max_devices )
@@ -117,7 +117,7 @@ export default async function InvoicePage({ params }: Props) {
           </div>
 
           <div className="text-right">
-            {order.status === "refunded" ? (
+            {(order.status === "refunded" || (typeof (order as any).hold_reason === "string" && (order as any).hold_reason.startsWith("[REFUNDED"))) ? (
               <span className="inline-block px-3 py-1 bg-rose-100 text-rose-800 text-xs font-extrabold tracking-wider uppercase rounded-full border border-rose-300">
                 ↩ REFUNDED
               </span>

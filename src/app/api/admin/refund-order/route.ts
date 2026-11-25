@@ -41,7 +41,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
 
-  if (order.status === "refunded") {
+  const isAlreadyRefunded =
+    order.status === "refunded" ||
+    (typeof order.hold_reason === "string" && order.hold_reason.startsWith("[REFUNDED"));
+
+  if (isAlreadyRefunded) {
     return NextResponse.json(
       { error: "This order has already been refunded" },
       { status: 409 },
@@ -88,7 +92,7 @@ export async function POST(req: Request) {
       .in("id", licenseIds);
   }
 
-  // 3. Deduct from Ledger: Record expense transaction under selected account
+  // 3. Deduct from Ledger: Record expense transaction under selected account (with idempotency guard)
   const customerEmail =
     (order.profiles as any)?.email || (order.profiles as any)?.[0]?.email || "Customer";
   const planName =
@@ -96,22 +100,33 @@ export async function POST(req: Request) {
 
   const currency = order.currency || (account === "Paddle" ? "USD" : "BDT");
 
-  const { error: ledgerErr } = await svc.from("ledger_transactions").insert([
-    {
-      date: now,
-      type: "expense",
-      category: "Refund",
-      account: account,
-      source: "Website",
-      amount: Number(amount),
-      currency: currency,
-      description: `Refund for Order #${order.id.slice(0, 8)} (${customerEmail}) — ${planName}${reason ? ` [${reason}]` : ""}`,
-      orders_count: 1,
-    },
-  ]);
+  const refundDescPrefix = `Refund for Order #${order.id.slice(0, 8)}`;
+  const { data: existingLedger } = await svc
+    .from("ledger_transactions")
+    .select("id")
+    .ilike("description", `${refundDescPrefix}%`)
+    .limit(1);
 
-  if (ledgerErr) {
-    console.error("Failed to insert refund into ledger_transactions:", ledgerErr);
+  if (!existingLedger || existingLedger.length === 0) {
+    const { error: ledgerErr } = await svc.from("ledger_transactions").insert([
+      {
+        date: now,
+        type: "expense",
+        category: "Refund",
+        account: account,
+        source: "Website",
+        amount: Number(amount),
+        currency: currency,
+        description: `Refund for Order #${order.id.slice(0, 8)} (${customerEmail}) — ${planName}${reason ? ` [${reason}]` : ""}`,
+        orders_count: 1,
+      },
+    ]);
+
+    if (ledgerErr) {
+      console.error("Failed to insert refund into ledger_transactions:", ledgerErr);
+    }
+  } else {
+    console.log("Ledger entry already exists for this order refund, skipping duplicate deduction.");
   }
 
   // 4. Update order status and record refund metadata
@@ -127,7 +142,7 @@ export async function POST(req: Request) {
     })
     .eq("id", orderId);
 
-  // Fallback if migration columns are not yet applied on remote database
+  // Fallback 1: if migration columns are not yet applied on remote database
   if (
     orderUpdate.error &&
     (orderUpdate.error.message.includes("column") || orderUpdate.error.code === "42703")
@@ -139,6 +154,29 @@ export async function POST(req: Request) {
     orderUpdate = await svc
       .from("orders")
       .update({ status: "refunded" })
+      .eq("id", orderId);
+  }
+
+  // Fallback 2: if Postgres check constraint 'orders_status_check' forbids 'refunded'
+  // We record status = 'rejected' and store refund details in hold_reason so the operation NEVER fails
+  if (
+    orderUpdate.error &&
+    (orderUpdate.error.message.includes("orders_status_check") ||
+      orderUpdate.error.message.includes("check constraint") ||
+      orderUpdate.error.code === "23514")
+  ) {
+    console.warn(
+      "orders_status_check forbids 'refunded'. Falling back to 'rejected' with [REFUNDED] marker in hold_reason:",
+      orderUpdate.error.message,
+    );
+    orderUpdate = await svc
+      .from("orders")
+      .update({
+        status: "rejected",
+        reviewed_at: now,
+        reviewed_by: admin.id,
+        hold_reason: `[REFUNDED via ${account} (${currency} ${amount})]: ${reason || "Refund processed"}`,
+      })
       .eq("id", orderId);
   }
 

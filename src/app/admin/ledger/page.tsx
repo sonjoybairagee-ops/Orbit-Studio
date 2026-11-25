@@ -20,8 +20,8 @@ export default async function AdminLedgerPage() {
   // Fetch approved and refunded orders (preserves original sales revenue while refunds are recorded as ledger expenses)
   const { data: approvedOrders } = await supabase
     .from("orders")
-    .select("id, amount, currency, method, status, created_at, txn_ref, plans(name)")
-    .in("status", ["approved", "refunded"])
+    .select("id, amount, currency, method, status, hold_reason, created_at, txn_ref, plans(name)")
+    .or("status.in.(approved,refunded),hold_reason.ilike.[REFUNDED%")
     .order("created_at", { ascending: false });
 
   // Map method to display account name

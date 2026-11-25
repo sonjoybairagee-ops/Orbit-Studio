@@ -16,8 +16,15 @@ export default async function PaymentsPage({
   let query = s
     .from("orders")
     .select("*,profiles!orders_user_id_fkey(email),plans(name)")
-    .eq("status", status)
     .order(orderBy, { ascending: false });
+
+  if (status === "refunded") {
+    query = query.or("status.eq.refunded,hold_reason.ilike.[REFUNDED%");
+  } else if (status === "rejected") {
+    query = query.eq("status", "rejected").not("hold_reason", "ilike", "[REFUNDED%");
+  } else {
+    query = query.eq("status", status);
+  }
 
   if (q) {
     query = query.or(`txn_ref.ilike.%${q}%,profiles.email.ilike.%${q}%`);

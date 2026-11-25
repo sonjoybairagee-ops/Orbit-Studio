@@ -68,6 +68,7 @@ export function BulkPaymentList({ orders }: { orders: any[] }) {
       )}
 
       {orders.map((o) => {
+        const isRefunded = o.status === "refunded" || (typeof o.hold_reason === "string" && o.hold_reason.startsWith("[REFUNDED"));
         const normalizedTxn = o.txn_ref?.trim().toUpperCase();
         const isDuplicateTxn = normalizedTxn && (txnCounts[normalizedTxn] || 0) > 1;
         const isSuspiciousLength = normalizedTxn && (normalizedTxn.length < 8 || normalizedTxn.length > 12);
@@ -81,7 +82,7 @@ export function BulkPaymentList({ orders }: { orders: any[] }) {
             } ${isDuplicateTxn ? "border-red-500/50 bg-red-500/[0.03]" : ""}`}
           >
             <div className="flex items-start gap-4">
-              {(o.status === "pending" || o.status === "on_hold") && (
+              {(o.status === "pending" || o.status === "on_hold") && !isRefunded && (
                 <input
                   type="checkbox"
                   className="mt-1.5 h-5 w-5 accent-[#45c66d]"
@@ -94,18 +95,18 @@ export function BulkPaymentList({ orders }: { orders: any[] }) {
                   <b>{o.plans?.name}</b>
                   <span
                     className={`badge ${
-                      o.status === "approved"
-                        ? "badge-green"
-                        : o.status === "pending"
-                          ? "badge-amber"
-                          : o.status === "on_hold"
-                            ? "bg-orange-500/20 text-orange-400 border border-orange-500/30"
-                            : o.status === "refunded"
-                              ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                      isRefunded
+                        ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                        : o.status === "approved"
+                          ? "badge-green"
+                          : o.status === "pending"
+                            ? "badge-amber"
+                            : o.status === "on_hold"
+                              ? "bg-orange-500/20 text-orange-400 border border-orange-500/30"
                               : ""
                     }`}
                   >
-                    {o.status === "on_hold" ? "On Hold" : o.status === "refunded" ? "Refunded" : o.status}
+                    {isRefunded ? "Refunded" : o.status === "on_hold" ? "On Hold" : o.status}
                   </span>
                   {isDuplicateTxn && (
                     <span className="badge bg-red-600/20 text-red-400 border border-red-500/40 text-[10px] font-black animate-pulse">
@@ -140,12 +141,12 @@ export function BulkPaymentList({ orders }: { orders: any[] }) {
                   <span className="badge bg-white/5 border border-white/10 text-white/60">
                     Submitted: {new Date(o.created_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                   </span>
-                  {o.status === "approved" && o.reviewed_at && (
+                  {o.status === "approved" && o.reviewed_at && !isRefunded && (
                     <span className="badge bg-[#45c66d]/10 text-[#45c66d] border border-[#45c66d]/30">
                       Approved: {new Date(o.reviewed_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                     </span>
                   )}
-                  {o.status === "rejected" && o.reviewed_at && (
+                  {o.status === "rejected" && o.reviewed_at && !isRefunded && (
                     <span className="badge bg-red-500/10 text-red-400 border border-red-500/20">
                       Rejected: {new Date(o.reviewed_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                     </span>
@@ -166,27 +167,27 @@ export function BulkPaymentList({ orders }: { orders: any[] }) {
                       View receipt ↗
                     </a>
                   )}
-                  {o.status === "on_hold" && o.hold_reason && (
+                  {o.status === "on_hold" && o.hold_reason && !isRefunded && (
                     <span className="badge bg-orange-500/10 text-orange-400 border border-orange-500/20">
                       ⏸ {o.hold_reason}
                     </span>
                   )}
-                  {o.status === "refunded" && (
+                  {isRefunded && (
                     <span className="badge bg-rose-500/15 text-rose-300 border border-rose-500/30 font-semibold">
-                      ↩ Refunded: {o.currency || "BDT"} {o.refund_amount || o.amount} via {o.refund_account || o.method}
+                      ↩ Refunded: {o.currency || "BDT"} {o.refund_amount || o.amount} via {o.refund_account || (o.hold_reason?.match(/via\s+(\w+)/i)?.[1]) || o.method}
                     </span>
                   )}
-                  {o.status === "refunded" && o.refunded_at && (
+                  {isRefunded && (o.refunded_at || (o.status === "rejected" && o.reviewed_at)) && (
                     <span className="badge bg-white/5 border border-white/10 text-white/60">
-                      At: {new Date(o.refunded_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      At: {new Date(o.refunded_at || o.reviewed_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                     </span>
                   )}
-                  {o.status === "refunded" && o.refund_reason && (
+                  {isRefunded && (o.refund_reason || o.hold_reason) && (
                     <span className="badge bg-white/5 border border-white/10 text-white/70">
-                      Note: {o.refund_reason}
+                      Note: {o.refund_reason || o.hold_reason}
                     </span>
                   )}
-                  {o.status === "approved" && (
+                  {o.status === "approved" && !isRefunded && (
                     <a
                       className="badge badge-green hover:text-white"
                       href={`/invoice/${o.id}`}
@@ -200,7 +201,7 @@ export function BulkPaymentList({ orders }: { orders: any[] }) {
                 </div>
               </div>
             </div>
-            {o.status === "approved" && (
+            {o.status === "approved" && !isRefunded && (
               <div onClick={(e) => e.preventDefault()} className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
@@ -216,7 +217,7 @@ export function BulkPaymentList({ orders }: { orders: any[] }) {
                 </button>
               </div>
             )}
-            {o.status === "refunded" && (
+            {isRefunded && (
               <div onClick={(e) => e.preventDefault()} className="flex items-center gap-2 shrink-0">
                 <span className="badge bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold">
                   ✓ Refunded
@@ -232,7 +233,7 @@ export function BulkPaymentList({ orders }: { orders: any[] }) {
                 </a>
               </div>
             )}
-            {(o.status === "pending" || o.status === "on_hold") && (
+            {(o.status === "pending" || o.status === "on_hold") && !isRefunded && (
               <div onClick={(e) => e.preventDefault()} className="flex items-center gap-2 shrink-0">
                 <ReviewButtons
                   endpoint="/api/admin/approve-order"
