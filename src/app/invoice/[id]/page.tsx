@@ -117,9 +117,15 @@ export default async function InvoicePage({ params }: Props) {
           </div>
 
           <div className="text-right">
-            <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-extrabold tracking-wider uppercase rounded-full border border-emerald-300">
-              ✓ PAID & VERIFIED
-            </span>
+            {order.status === "refunded" ? (
+              <span className="inline-block px-3 py-1 bg-rose-100 text-rose-800 text-xs font-extrabold tracking-wider uppercase rounded-full border border-rose-300">
+                ↩ REFUNDED
+              </span>
+            ) : (
+              <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-extrabold tracking-wider uppercase rounded-full border border-emerald-300">
+                ✓ PAID &amp; VERIFIED
+              </span>
+            )}
             <h1 className="text-2xl font-black text-gray-900 mt-2">INVOICE</h1>
             <p className="text-xs font-mono text-gray-600 font-bold mt-1">{invoiceNumber}</p>
             <p className="text-xs text-gray-500 mt-1">Date: {issueDate}</p>

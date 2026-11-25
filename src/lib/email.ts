@@ -161,3 +161,33 @@ export function resetApprovedEmail(extensionName: string): string {
   `;
   return createPremiumTemplate("Device reset approved \u2705", content);
 }
+
+export function refundProcessedEmail({
+  productName,
+  amount,
+  currency,
+  account,
+  reason,
+}: {
+  productName: string;
+  amount: number;
+  currency: string;
+  account: string;
+  reason?: string;
+}): string {
+  const content = `
+    <p style="margin-top: 0;">Your refund for <b>${productName}</b> has been processed.</p>
+    
+    <div style="margin: 25px 0; padding: 20px; background-color: rgba(244, 63, 94, 0.05); border: 1px solid rgba(244, 63, 94, 0.2); border-radius: 10px; text-align: center;">
+      <p style="margin: 0 0 6px 0; font-size: 11px; font-weight: 700; color: #fb7185; text-transform: uppercase; letter-spacing: 1px;">Refunded Amount</p>
+      <p style="margin: 0; font-size: 22px; font-weight: 800; color: #fff;">${currency} ${amount}</p>
+      <p style="margin: 8px 0 0 0; font-size: 12px; color: #94a3b8;">Refunded via <b>${account}</b></p>
+      ${reason ? `<p style="margin: 8px 0 0 0; font-size: 11px; color: #cbd5e1; font-style: italic;">Note: ${reason}</p>` : ""}
+    </div>
+
+    <p style="margin-bottom: 20px; font-size: 13px; color: #94a3b8;">
+      The license associated with this order has been deactivated and removed from your dashboard. If you have questions or need further assistance, please reach out to our support team.
+    </p>
+  `;
+  return createPremiumTemplate("Refund Processed", content);
+}

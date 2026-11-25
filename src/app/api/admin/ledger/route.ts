@@ -22,11 +22,11 @@ export async function GET() {
     console.error("Ledger query error:", ledgerError.message);
   }
 
-  // Fetch approved system orders to auto-collect as revenue
+  // Fetch approved & refunded system orders to auto-collect as revenue
   const { data: approvedOrders } = await supabase
     .from("orders")
     .select("id, amount, currency, method, status, created_at, txn_ref, plans(name)")
-    .eq("status", "approved")
+    .in("status", ["approved", "refunded"])
     .order("created_at", { ascending: false });
 
   // Map method to display account name

@@ -45,7 +45,10 @@ export default async function DashboardPage({
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
-  const licenses: LicenseView[] = (rows ?? []).map((r: any) => ({
+  // Hide revoked and refunded licenses from the customer dashboard
+  const visibleRows = (rows ?? []).filter((r: any) => r.status !== "revoked");
+
+  const licenses: LicenseView[] = visibleRows.map((r: any) => ({
     id: r.id,
     order_id: r.order_id,
     key: r.key,

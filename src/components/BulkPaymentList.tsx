@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ReviewButtons } from "./ReviewButtons";
+import { RefundOrderModal, type RefundableOrder } from "./admin/RefundOrderModal";
 
 export function BulkPaymentList({ orders }: { orders: any[] }) {
   const router = useRouter();
   const [selected, setSelected] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [results, setResults] = useState<{ approved: number; failed: number } | null>(null);
+  const [refundingOrder, setRefundingOrder] = useState<RefundableOrder | null>(null);
 
   const toggle = (id: string) => {
     setSelected((prev) =>
@@ -98,10 +100,12 @@ export function BulkPaymentList({ orders }: { orders: any[] }) {
                           ? "badge-amber"
                           : o.status === "on_hold"
                             ? "bg-orange-500/20 text-orange-400 border border-orange-500/30"
-                            : ""
+                            : o.status === "refunded"
+                              ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                              : ""
                     }`}
                   >
-                    {o.status === "on_hold" ? "On Hold" : o.status}
+                    {o.status === "on_hold" ? "On Hold" : o.status === "refunded" ? "Refunded" : o.status}
                   </span>
                   {isDuplicateTxn && (
                     <span className="badge bg-red-600/20 text-red-400 border border-red-500/40 text-[10px] font-black animate-pulse">
@@ -167,6 +171,21 @@ export function BulkPaymentList({ orders }: { orders: any[] }) {
                       ⏸ {o.hold_reason}
                     </span>
                   )}
+                  {o.status === "refunded" && (
+                    <span className="badge bg-rose-500/15 text-rose-300 border border-rose-500/30 font-semibold">
+                      ↩ Refunded: {o.currency || "BDT"} {o.refund_amount || o.amount} via {o.refund_account || o.method}
+                    </span>
+                  )}
+                  {o.status === "refunded" && o.refunded_at && (
+                    <span className="badge bg-white/5 border border-white/10 text-white/60">
+                      At: {new Date(o.refunded_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  )}
+                  {o.status === "refunded" && o.refund_reason && (
+                    <span className="badge bg-white/5 border border-white/10 text-white/70">
+                      Note: {o.refund_reason}
+                    </span>
+                  )}
                   {o.status === "approved" && (
                     <a
                       className="badge badge-green hover:text-white"
@@ -181,13 +200,58 @@ export function BulkPaymentList({ orders }: { orders: any[] }) {
                 </div>
               </div>
             </div>
+            {o.status === "approved" && (
+              <div onClick={(e) => e.preventDefault()} className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setRefundingOrder(o);
+                  }}
+                  className="rounded-xl border border-rose-500/40 bg-rose-500/10 px-3 py-1.5 text-xs font-bold text-rose-400 hover:bg-rose-500/20 transition-all flex items-center gap-1.5 shadow-sm"
+                  title="Refund this order and revoke customer license"
+                >
+                  <span>↩</span> Refund
+                </button>
+              </div>
+            )}
+            {o.status === "refunded" && (
+              <div onClick={(e) => e.preventDefault()} className="flex items-center gap-2 shrink-0">
+                <span className="badge bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold">
+                  ✓ Refunded
+                </span>
+                <a
+                  className="badge bg-white/5 border border-white/10 text-white/60 hover:text-white"
+                  href={`/invoice/${o.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  📄 Invoice ↗
+                </a>
+              </div>
+            )}
             {(o.status === "pending" || o.status === "on_hold") && (
-              <div onClick={(e) => e.preventDefault()}>
+              <div onClick={(e) => e.preventDefault()} className="flex items-center gap-2 shrink-0">
                 <ReviewButtons
                   endpoint="/api/admin/approve-order"
                   payloadKey="orderId"
                   id={o.id}
                 />
+                {o.status === "on_hold" && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setRefundingOrder(o);
+                    }}
+                    className="rounded border border-rose-500/40 bg-rose-500/10 px-2.5 py-1 text-xs font-semibold text-rose-400 hover:bg-rose-500/20 transition-all"
+                  >
+                    Refund
+                  </button>
+                )}
               </div>
             )}
           </label>
@@ -227,6 +291,14 @@ export function BulkPaymentList({ orders }: { orders: any[] }) {
           </div>
         </div>
       )}
+
+      {/* Refund Order Modal */}
+      <RefundOrderModal
+        order={refundingOrder}
+        isOpen={!!refundingOrder}
+        onClose={() => setRefundingOrder(null)}
+        onSuccess={() => router.refresh()}
+      />
     </div>
   );
 }

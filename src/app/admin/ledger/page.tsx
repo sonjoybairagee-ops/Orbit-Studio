@@ -17,11 +17,11 @@ export default async function AdminLedgerPage() {
     .select("*")
     .order("date", { ascending: false });
 
-  // Fetch approved orders (auto-revenue from system)
+  // Fetch approved and refunded orders (preserves original sales revenue while refunds are recorded as ledger expenses)
   const { data: approvedOrders } = await supabase
     .from("orders")
     .select("id, amount, currency, method, status, created_at, txn_ref, plans(name)")
-    .eq("status", "approved")
+    .in("status", ["approved", "refunded"])
     .order("created_at", { ascending: false });
 
   // Map method to display account name
