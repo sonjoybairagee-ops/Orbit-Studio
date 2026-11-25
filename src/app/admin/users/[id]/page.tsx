@@ -79,7 +79,7 @@ export default async function UserProfilePage({ params }: { params: { id: string
 
           <div className="flex flex-wrap gap-2">
             <span className="badge bg-white/5 border border-white/10 text-xs px-3 py-1.5 text-white font-mono">
-              {licenses.length} License{licenses.length !== 1 ? "s" : ""}
+              {licenses.filter((l: any) => l.status === "active").length} Active / {licenses.length} Total License{licenses.length !== 1 ? "s" : ""}
             </span>
             <span className="badge bg-white/5 border border-white/10 text-xs px-3 py-1.5 text-white font-mono">
               {orders.length} Order{orders.length !== 1 ? "s" : ""}
@@ -131,53 +131,80 @@ export default async function UserProfilePage({ params }: { params: { id: string
                       </div>
                       <div className="mt-2 flex items-center gap-2">
                         <span className="text-xs font-bold text-[#717b8c]">KEY:</span>
-                        <code className="font-mono text-sm font-bold text-[#45c66d] bg-black/40 px-2 py-0.5 rounded border border-white/5 select-all">
+                        <code className={`font-mono text-sm font-bold px-2 py-0.5 rounded border select-all ${lic.status === "active" ? "text-[#45c66d] bg-black/40 border-white/5" : "text-rose-400 bg-rose-950/20 border-rose-500/20 line-through"}`}>
                           {lic.key}
                         </code>
+                        {lic.status !== "active" && (
+                          <span className="text-[10px] text-rose-400 font-bold uppercase">(Deactivated)</span>
+                        )}
                       </div>
                     </div>
-                    <span className={`badge ${lic.status === "active" ? "badge-green" : "badge-amber"}`}>
-                      {lic.status.toUpperCase()}
+                    <span
+                      className={`badge font-bold text-xs ${
+                        lic.status === "active"
+                          ? "badge-green"
+                          : lic.status === "revoked"
+                            ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                            : "badge-amber"
+                      }`}
+                    >
+                      {lic.status === "revoked" ? "REVOKED / REFUNDED" : lic.status.toUpperCase()}
                     </span>
                   </div>
 
                   {/* ── System Entitlement & Dashboard Simulator ── */}
-                  <div className="rounded-xl border border-white/[0.06] bg-black/30 p-4 space-y-3">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-[#45c66d]">
-                      🖥️ What User Dashboard Is Showing (Downloads &amp; Access):
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-                      {/* After Effects Plugin */}
-                      <div className={`rounded-lg p-3 border ${hasAe ? "bg-purple-950/20 border-purple-500/30 text-purple-200" : "bg-white/[0.02] border-white/5 text-[#555] opacity-50"}`}>
-                        <div className="flex items-center justify-between font-bold">
-                          <span>✨ Orbit Studio (AE)</span>
-                          {hasAe ? <span className="text-purple-400 font-bold">✓ ENABLED</span> : <span>✕ NOT IN PLAN</span>}
-                        </div>
-                        <p className="text-[10px] text-[#aab0bd] mt-1 font-mono">
-                          {hasAe ? "CompX-Orbit-Studio-v3.0.0.zxp" : "Download button hidden"}
-                        </p>
+                  {lic.status !== "active" ? (
+                    <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 space-y-2">
+                      <div className="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wider">
+                        <span>🚫</span> License {lic.status === "revoked" ? "Revoked / Refunded" : lic.status.toUpperCase()} — User Access Terminated
                       </div>
-
-                      {/* Premiere Pro Plugin */}
-                      <div className={`rounded-lg p-3 border ${hasPr ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-200" : "bg-white/[0.02] border-white/5 text-[#555] opacity-50"}`}>
-                        <div className="flex items-center justify-between font-bold">
-                          <span>🎬 Orbit Premiere (PR)</span>
-                          {hasPr ? <span className="text-[#45c66d] font-bold">✓ ENABLED</span> : <span>✕ NOT IN PLAN</span>}
-                        </div>
-                        <p className="text-[10px] text-[#aab0bd] mt-1 font-mono">
-                          {hasPr ? "CompX-Orbit-Premiere-v2.4.46.zxp" : "Download button hidden"}
-                        </p>
+                      <p className="text-xs text-rose-200/90">
+                        Customer dashboard currently shows <b>"No licenses found"</b>. Extension downloads, bonus assets, and license keys are completely hidden and locked.
+                      </p>
+                      <div className="flex flex-wrap gap-2 pt-1 text-[11px] font-mono">
+                        <span className="badge bg-rose-950/60 border border-rose-500/40 text-rose-300">✕ Orbit Studio (AE): LOCKED &amp; HIDDEN</span>
+                        <span className="badge bg-rose-950/60 border border-rose-500/40 text-rose-300">✕ Orbit Premiere (PR): LOCKED &amp; HIDDEN</span>
+                        <span className="badge bg-rose-950/60 border border-rose-500/40 text-rose-300">✕ Adobe In-App Validation: BLOCKED</span>
                       </div>
                     </div>
+                  ) : (
+                    <div className="rounded-xl border border-white/[0.06] bg-black/30 p-4 space-y-3">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-[#45c66d]">
+                        🖥️ What User Dashboard Is Showing (Downloads &amp; Access):
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                        {/* After Effects Plugin */}
+                        <div className={`rounded-lg p-3 border ${hasAe ? "bg-purple-950/20 border-purple-500/30 text-purple-200" : "bg-white/[0.02] border-white/5 text-[#555] opacity-50"}`}>
+                          <div className="flex items-center justify-between font-bold">
+                            <span>✨ Orbit Studio (AE)</span>
+                            {hasAe ? <span className="text-purple-400 font-bold">✓ ENABLED</span> : <span>✕ NOT IN PLAN</span>}
+                          </div>
+                          <p className="text-[10px] text-[#aab0bd] mt-1 font-mono">
+                            {hasAe ? "CompX-Orbit-Studio-v3.0.0.zxp" : "Download button hidden"}
+                          </p>
+                        </div>
 
-                    {/* Bonus Assets */}
-                    <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[10px] text-[#717b8c]">
-                      <span>Included Shelf Assets:</span>
-                      <span className="badge bg-white/5 text-white/70 border-white/10 text-[9px]">50 Mogrt pack.zip</span>
-                      <span className="badge bg-white/5 text-white/70 border-white/10 text-[9px]">Sfx Part 1.zip</span>
-                      <span className="badge bg-white/5 text-white/70 border-white/10 text-[9px]">Sfx Part 2.zip</span>
+                        {/* Premiere Pro Plugin */}
+                        <div className={`rounded-lg p-3 border ${hasPr ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-200" : "bg-white/[0.02] border-white/5 text-[#555] opacity-50"}`}>
+                          <div className="flex items-center justify-between font-bold">
+                            <span>🎬 Orbit Premiere (PR)</span>
+                            {hasPr ? <span className="text-[#45c66d] font-bold">✓ ENABLED</span> : <span>✕ NOT IN PLAN</span>}
+                          </div>
+                          <p className="text-[10px] text-[#aab0bd] mt-1 font-mono">
+                            {hasPr ? "CompX-Orbit-Premiere-v2.4.46.zxp" : "Download button hidden"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Bonus Assets */}
+                      <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[10px] text-[#717b8c]">
+                        <span>Included Shelf Assets:</span>
+                        <span className="badge bg-white/5 text-white/70 border-white/10 text-[9px]">50 Mogrt pack.zip</span>
+                        <span className="badge bg-white/5 text-white/70 border-white/10 text-[9px]">Sfx Part 1.zip</span>
+                        <span className="badge bg-white/5 text-white/70 border-white/10 text-[9px]">Sfx Part 2.zip</span>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* ── Live Device & Host App Activation Inspector ── */}
                   <div className="space-y-2">
