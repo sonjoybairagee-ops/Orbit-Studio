@@ -18,14 +18,7 @@ function getUserSourceInfo(user: any) {
     (l.notes || "").toLowerCase().includes("promotion")
   );
 
-  const licenseOrders = licenses.flatMap((l: any) => l.orders ?? []).filter(Boolean);
-  const directOrders = (user.orders ?? []).filter(Boolean);
-  const allOrdersMap = new Map<string, any>();
-  [...directOrders, ...licenseOrders].forEach((o) => {
-    if (o && o.id) allOrdersMap.set(o.id, o);
-  });
-  const orders = Array.from(allOrdersMap.values());
-
+  const orders = (user.orders ?? []).filter(Boolean);
   const approvedOrders = orders.filter((o: any) => o.status === "approved");
   const refundedOrders = orders.filter((o: any) => o.status === "refunded");
   const paidOrders = orders.filter((o: any) => o.status === "approved" || Number(o.amount) > 0);
@@ -70,9 +63,9 @@ export default async function UsersPage({
   // Fetch all plans for the dropdown
   const { data: allPlans } = await s.from("plans").select("id,name").order("name");
 
-  let selectStr = "id,full_name,email,role,legacy_source,created_at,is_banned,orders(id,method,amount,currency,status,txn_ref,plans(name)),licenses(id,license_type,notes,status,created_at,orders(id,method,amount,currency,status,txn_ref),plans(name))";
+  let selectStr = "id,full_name,email,role,legacy_source,created_at,is_banned,orders:orders!orders_user_id_fkey(id,method,amount,currency,status,txn_ref,plans(name)),licenses(id,license_type,notes,status,created_at,plans(name))";
   if (plan) {
-    selectStr = "id,full_name,email,role,legacy_source,created_at,is_banned,orders(id,method,amount,currency,status,txn_ref,plans(name)),licenses!inner(id,license_type,notes,status,created_at,orders(id,method,amount,currency,status,txn_ref),plans(name))";
+    selectStr = "id,full_name,email,role,legacy_source,created_at,is_banned,orders:orders!orders_user_id_fkey(id,method,amount,currency,status,txn_ref,plans(name)),licenses!inner(id,license_type,notes,status,created_at,plans(name))";
   }
 
   let query = s
