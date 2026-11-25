@@ -53,23 +53,45 @@ export async function POST(req: Request) {
   }
 
   // 2. Find and revoke linked license(s)
-  const { data: licenses } = await svc
+  const licenseIds: string[] = [];
+
+  // Query 1: by direct order_id
+  const { data: licensesByOrder } = await svc
     .from("licenses")
     .select("id, key, status")
     .eq("order_id", orderId);
 
-  const licenseIds: string[] = [];
-  if (licenses && licenses.length > 0) {
-    licenseIds.push(...licenses.map((l) => l.id));
-  } else if (order.user_id && order.plan_id) {
-    // Fallback: search by user_id and plan_id if order_id was unpopulated
+  if (licensesByOrder && licensesByOrder.length > 0) {
+    licenseIds.push(...licensesByOrder.map((l) => l.id));
+  }
+
+  // Query 2: by user_id and plan_id
+  if (order.user_id && order.plan_id) {
     const { data: userLicenses } = await svc
       .from("licenses")
       .select("id, key, status")
       .eq("user_id", order.user_id)
       .eq("plan_id", order.plan_id);
+
     if (userLicenses && userLicenses.length > 0) {
-      licenseIds.push(...userLicenses.map((l) => l.id));
+      for (const l of userLicenses) {
+        if (!licenseIds.includes(l.id)) {
+          licenseIds.push(l.id);
+        }
+      }
+    }
+  }
+
+  // Query 3: if still no licenses found by exact plan, check any active/non-revoked licenses for this customer
+  if (licenseIds.length === 0 && order.user_id) {
+    const { data: anyUserLicenses } = await svc
+      .from("licenses")
+      .select("id, key, status")
+      .eq("user_id", order.user_id)
+      .neq("status", "revoked");
+
+    if (anyUserLicenses && anyUserLicenses.length > 0) {
+      licenseIds.push(...anyUserLicenses.map((l) => l.id));
     }
   }
 
@@ -78,8 +100,7 @@ export async function POST(req: Request) {
     await svc
       .from("activations")
       .update({ status: "blocked", released_at: now })
-      .in("license_id", licenseIds)
-      .eq("status", "active");
+      .in("license_id", licenseIds);
 
     // Revoke license(s)
     await svc

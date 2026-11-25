@@ -27,6 +27,24 @@ export async function GET(req: Request) {
 
   const svc = createAdminClient();
 
+  // Block refunded or non-active users from downloading any files
+  const { data: activeUserLic } = await svc
+    .from("licenses")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .limit(1);
+
+  if (!activeUserLic || activeUserLic.length === 0) {
+    return NextResponse.json(
+      {
+        error: "Active license required. Your license has been revoked or refunded.",
+        code: "NOT_ENTITLED",
+      },
+      { status: 403 },
+    );
+  }
+
   // Special fallback for Legacy CompX (v1.1.2 and v1.1.1)
   if (slug === "compx-v111") {
     // Try v1.1.2 first with exact uploaded filename

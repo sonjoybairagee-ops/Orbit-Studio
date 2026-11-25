@@ -99,8 +99,13 @@ export async function POST(req: Request) {
   }
 
   if (action === "suspend") {
+    await svc
+      .from("activations")
+      .update({ status: "blocked", released_at: now })
+      .eq("license_id", licenseId);
+
     await svc.from("licenses").update({ status: "suspended" }).eq("id", licenseId);
-    message = "License suspended. The panel will lock at the next check-in.";
+    message = "License suspended and active devices blocked.";
   }
 
   if (action === "reactivate") {

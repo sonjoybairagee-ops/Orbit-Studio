@@ -31,22 +31,69 @@ export default async function DashboardPage({
     }
   }
 
-  // Licenses -> plan -> bundled extensions, plus every active seat.
-  const { data: rows } = await supabase
-    .from("licenses")
-    .select(
-      `id, order_id, key, status, license_type, max_devices, grace_days, expires_at,
-       last_reset_at, revoked_reason, created_at,
-       plans ( name, slug, plan_extensions ( extensions ( slug, name ) ) ),
-       activations ( id, device_label, os, host_apps, app_version,
-                     first_seen, last_seen, status ),
-       device_reset_requests ( id, status )`,
-    )
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+  // Licenses -> plan -> bundled extensions, plus every active seat and user orders
+  const [{ data: rows }, { data: userOrders }] = await Promise.all([
+    supabase
+      .from("licenses")
+      .select(
+        `id, order_id, plan_id, key, status, license_type, max_devices, grace_days, expires_at,
+         last_reset_at, revoked_reason, created_at,
+         plans ( name, slug, plan_extensions ( extensions ( slug, name ) ) ),
+         activations ( id, device_label, os, host_apps, app_version,
+                       first_seen, last_seen, status ),
+         device_reset_requests ( id, status )`,
+      )
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("orders")
+      .select("id, plan_id, status, hold_reason")
+      .eq("user_id", user.id),
+  ]);
 
-  // Hide revoked and refunded licenses from the customer dashboard
-  const visibleRows = (rows ?? []).filter((r: any) => r.status !== "revoked");
+  // Identify refunded orders
+  const refundedOrderIds = new Set(
+    (userOrders ?? [])
+      .filter(
+        (o: any) =>
+          o.status === "refunded" ||
+          (typeof o.hold_reason === "string" && o.hold_reason.startsWith("[REFUNDED")),
+      )
+      .map((o: any) => o.id),
+  );
+
+  const approvedOrderPlanIds = new Set(
+    (userOrders ?? [])
+      .filter(
+        (o: any) =>
+          o.status === "approved" &&
+          !(typeof o.hold_reason === "string" && o.hold_reason.startsWith("[REFUNDED")),
+      )
+      .map((o: any) => o.plan_id),
+  );
+
+  // STRICT FILTER: Completely hide revoked, suspended, and refunded licenses from customer dashboard
+  const visibleRows = (rows ?? []).filter((r: any) => {
+    // 1. Must be active (revoked, suspended, expired are completely hidden)
+    if (r.status !== "active") return false;
+
+    // 2. Must not have a revocation reason
+    if (r.revoked_reason) return false;
+
+    // 3. Must not be linked to a refunded order
+    if (r.order_id && refundedOrderIds.has(r.order_id)) return false;
+
+    // 4. If user has refunded orders and this license was paid (not promo/legacy), ensure they have a separate approved order
+    if (
+      refundedOrderIds.size > 0 &&
+      r.license_type === "paid" &&
+      !approvedOrderPlanIds.has(r.plan_id)
+    ) {
+      return false;
+    }
+
+    return true;
+  });
 
   const licenses: LicenseView[] = visibleRows.map((r: any) => ({
     id: r.id,

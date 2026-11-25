@@ -99,6 +99,20 @@ export function DashboardView({ user, licenses, verified }: DashboardViewProps) 
           {/* TAB 2: BONUS ASSETS (MOGRTs & SFX) */}
           {activeTab === "assets" && (
             <div className="space-y-6">
+              {activeCount === 0 ? (
+                <div className="rounded-2xl border border-white/10 bg-[#0c100e]/90 p-10 text-center">
+                  <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl border border-amber-500/25 bg-amber-500/10 text-2xl text-amber-400">
+                    🔒
+                  </div>
+                  <h3 className="mt-4 text-xl font-black text-white">Active License Required</h3>
+                  <p className="mt-2 text-xs text-[#8c97a8] max-w-sm mx-auto">
+                    Bonus assets, MOGRTs, and media packs are only accessible to accounts with an active, unrefunded license.
+                  </p>
+                  <Link href="/pricing" className="btn-primary mt-6 inline-flex px-6 py-2.5 text-xs font-bold">
+                    Browse Pricing →
+                  </Link>
+                </div>
+              ) : (
               <div className="rounded-2xl border border-white/[0.08] bg-[#0c100e]/90 p-6 shadow-xl">
                 <div className="flex items-center gap-2 text-amber-400">
                   
@@ -198,6 +212,7 @@ export function DashboardView({ user, licenses, verified }: DashboardViewProps) 
                   </div>
                 </div>
               </div>
+              )}
             </div>
           )}
 

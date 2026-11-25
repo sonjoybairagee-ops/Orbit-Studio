@@ -162,92 +162,94 @@ export function LicenseCard({ license }: { license: LicenseView }) {
           )}
         </div>
 
-        {/* ── Prominent Download Button (Top Right) ── */}
+        {/* ── Prominent Download Button (Top Right) - Only shown if license is strictly ACTIVE ── */}
         <div className="flex flex-wrap items-center gap-2">
-          {isLegacy ? (
-            <button
-              className="flex items-center gap-2 rounded-xl bg-[#45c66d] px-4 py-2 text-xs font-black text-black shadow-[0_0_20px_rgba(69,198,109,0.3)] transition-all hover:bg-[#38b55e] hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
-              disabled={busy !== null}
-              onClick={() => download("compx-v111")}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-              <span>{busy === "dl-compx-v111" ? "Preparing…" : "DOWNLOAD (.ZXP)"}</span>
-            </button>
-          ) : (
-            <>
-              {license.products
-                .filter((p) => !/compx/i.test(p.slug))
-                .map((p) => {
-                  const isChrome = p.slug === "creatorlens";
-                  const isPr = /premiere|[-_]pr$/i.test(p.slug);
-                  const isFlow = p.slug === "orbit-flow" || /flow/i.test(p.slug);
+          {license.status === "active" && (
+            isLegacy ? (
+              <button
+                className="flex items-center gap-2 rounded-xl bg-[#45c66d] px-4 py-2 text-xs font-black text-black shadow-[0_0_20px_rgba(69,198,109,0.3)] transition-all hover:bg-[#38b55e] hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
+                disabled={busy !== null}
+                onClick={() => download("compx-v111")}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                <span>{busy === "dl-compx-v111" ? "Preparing…" : "DOWNLOAD (.ZXP)"}</span>
+              </button>
+            ) : (
+              <>
+                {license.products
+                  .filter((p) => !/compx/i.test(p.slug))
+                  .map((p) => {
+                    const isChrome = p.slug === "creatorlens";
+                    const isPr = /premiere|[-_]pr$/i.test(p.slug);
+                    const isFlow = p.slug === "orbit-flow" || /flow/i.test(p.slug);
 
-                  if (isFlow) {
+                    if (isFlow) {
+                      return (
+                        <div key={p.slug} className="flex flex-wrap items-center gap-2">
+                          <button
+                            className="flex items-center gap-2 rounded-xl bg-[#0ea5e9] px-4 py-2 text-xs font-black text-black shadow-[0_0_20px_rgba(14,165,233,0.35)] transition-all hover:bg-[#38bdf8] hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
+                            disabled={busy !== null}
+                            title="Download Orbit Flow v2.5.0 Extension (.zxp)"
+                            onClick={() => download("orbit-flow")}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                              <polyline points="7 10 12 15 17 10" />
+                              <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                            <span>{busy === "dl-orbit-flow" ? "Preparing…" : "Orbit Flow (.zxp)"}</span>
+                          </button>
+                          <button
+                            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-xs font-black text-white shadow-[0_0_20px_rgba(139,92,246,0.35)] transition-all hover:from-violet-500 hover:to-indigo-500 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
+                            disabled={busy !== null}
+                            title="Download Claude Skill — Orbit Motion (.zip)"
+                            onClick={() => download("orbit-motion")}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                              <polyline points="7 10 12 15 17 10" />
+                              <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                            <span>{busy === "dl-orbit-motion" ? "Preparing…" : "Claude Skill (.zip)"}</span>
+                          </button>
+                        </div>
+                      );
+                    }
+
+                    const label = isChrome ? "Compx Creator (.zip)" : isPr ? "Orbit Premiere (.zxp)" : "Orbit Studio (.zxp)";
                     return (
-                      <div key={p.slug} className="flex flex-wrap items-center gap-2">
-                        <button
-                          className="flex items-center gap-2 rounded-xl bg-[#0ea5e9] px-4 py-2 text-xs font-black text-black shadow-[0_0_20px_rgba(14,165,233,0.35)] transition-all hover:bg-[#38bdf8] hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
-                          disabled={busy !== null}
-                          title="Download Orbit Flow v2.5.0 Extension (.zxp)"
-                          onClick={() => download("orbit-flow")}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="7 10 12 15 17 10" />
-                            <line x1="12" y1="15" x2="12" y2="3" />
-                          </svg>
-                          <span>{busy === "dl-orbit-flow" ? "Preparing…" : "Orbit Flow (.zxp)"}</span>
-                        </button>
-                        <button
-                          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-xs font-black text-white shadow-[0_0_20px_rgba(139,92,246,0.35)] transition-all hover:from-violet-500 hover:to-indigo-500 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60"
-                          disabled={busy !== null}
-                          title="Download Claude Skill — Orbit Motion (.zip)"
-                          onClick={() => download("orbit-motion")}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="7 10 12 15 17 10" />
-                            <line x1="12" y1="15" x2="12" y2="3" />
-                          </svg>
-                          <span>{busy === "dl-orbit-motion" ? "Preparing…" : "Claude Skill (.zip)"}</span>
-                        </button>
-                      </div>
+                      <button
+                        key={p.slug}
+                        className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 ${
+                          isPr && !isChrome
+                            ? "bg-[#18231c] text-[#45c66d] border border-[#45c66d]/40 hover:bg-[#45c66d]/20"
+                            : "bg-[#45c66d] text-black shadow-[0_0_20px_rgba(69,198,109,0.3)] hover:bg-[#38b55e]"
+                        }`}
+                        disabled={busy !== null}
+                        title={
+                          isPr
+                            ? "Download CompX Orbit Premiere v2.5.0 (.zxp)"
+                            : isChrome
+                            ? "Download Compx Creator (.zip)"
+                            : "Download CompX Orbit Studio v3.0.0 (.zxp)"
+                        }
+                        onClick={() => download(p.slug)}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="7 10 12 15 17 10" />
+                          <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        <span>{busy === `dl-${p.slug}` ? "Preparing…" : label}</span>
+                      </button>
                     );
-                  }
-
-                  const label = isChrome ? "Compx Creator (.zip)" : isPr ? "Orbit Premiere (.zxp)" : "Orbit Studio (.zxp)";
-                  return (
-                    <button
-                      key={p.slug}
-                      className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 ${
-                        isPr && !isChrome
-                          ? "bg-[#18231c] text-[#45c66d] border border-[#45c66d]/40 hover:bg-[#45c66d]/20"
-                          : "bg-[#45c66d] text-black shadow-[0_0_20px_rgba(69,198,109,0.3)] hover:bg-[#38b55e]"
-                      }`}
-                      disabled={busy !== null}
-                      title={
-                        isPr
-                          ? "Download CompX Orbit Premiere v2.5.0 (.zxp)"
-                          : isChrome
-                          ? "Download Compx Creator (.zip)"
-                          : "Download CompX Orbit Studio v3.0.0 (.zxp)"
-                      }
-                      onClick={() => download(p.slug)}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                      </svg>
-                      <span>{busy === `dl-${p.slug}` ? "Preparing…" : label}</span>
-                    </button>
-                  );
-                })}
-            </>
+                  })}
+              </>
+            )
           )}
 
           {license.order_id && (
@@ -265,43 +267,49 @@ export function LicenseCard({ license }: { license: LicenseView }) {
         </div>
       </div>
 
-      {/* ── Key Display Row ── */}
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-black/40 border border-white/[0.05] p-3.5">
-        <div className="flex items-center gap-3 min-w-0">
-          <span className="text-xs font-bold uppercase tracking-wider text-[#6c788a]">Key:</span>
-          <code className="font-mono text-sm sm:text-base font-bold tracking-widest text-[#45c66d] break-all select-all">
-            {license.key}
-          </code>
+      {/* ── Key Display Row or Deactivated Notice ── */}
+      {license.status !== "active" ? (
+        <div className="mt-4 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs font-semibold text-rose-300">
+          ⚠️ This license is <b>{license.status === "revoked" ? "Refunded / Revoked" : license.status.toUpperCase()}</b>. License key and extension downloads have been permanently removed.
         </div>
-        <button
-          className="flex items-center gap-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 px-3 py-1.5 text-xs font-bold text-white transition-all active:scale-95"
-          onClick={async () => {
-            setCopied(false);
-            try {
-              await navigator.clipboard.writeText(license.key);
-              setCopied(true);
-              setTimeout(() => setCopied(false), 1800);
-            } catch {
-              setNote({ kind: "err", text: "Could not copy the key. Select the key and copy it manually." });
-            }
-          }}
-        >
-          {copied ? (
-            <>
-              <span className="text-[#45c66d]">✓</span>
-              <span className="text-[#45c66d]">Copied</span>
-            </>
-          ) : (
-            <>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-              </svg>
-              <span>Copy</span>
-            </>
-          )}
-        </button>
-      </div>
+      ) : (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-black/40 border border-white/[0.05] p-3.5">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#6c788a]">Key:</span>
+            <code className="font-mono text-sm sm:text-base font-bold tracking-widest text-[#45c66d] break-all select-all">
+              {license.key}
+            </code>
+          </div>
+          <button
+            className="flex items-center gap-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 px-3 py-1.5 text-xs font-bold text-white transition-all active:scale-95"
+            onClick={async () => {
+              setCopied(false);
+              try {
+                await navigator.clipboard.writeText(license.key);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1800);
+              } catch {
+                setNote({ kind: "err", text: "Could not copy the key. Select the key and copy it manually." });
+              }
+            }}
+          >
+            {copied ? (
+              <>
+                <span className="text-[#45c66d]">✓</span>
+                <span className="text-[#45c66d]">Copied</span>
+              </>
+            ) : (
+              <>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+                <span>Copy</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* ── Feedback Message ── */}
       {note && (
