@@ -4,6 +4,7 @@ import Link from "next/link";
 import { LicenseAdminActions } from "@/components/LicenseAdminActions";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { RefundButton } from "@/components/admin/RefundButton";
 
 export const dynamic = "force-dynamic";
 
@@ -300,8 +301,8 @@ export default async function UserProfilePage({ params }: { params: { id: string
                       <b className="text-sm text-white block font-mono">
                         {o.currency} {o.amount}
                       </b>
-                      <span className={`badge mt-1 text-[10px] ${o.status === "approved" ? "badge-green" : o.status === "pending" ? "badge-amber" : "badge-red"}`}>
-                        {o.status.toUpperCase()}
+                      <span className={`badge mt-1 text-[10px] ${o.status === "approved" ? "badge-green" : o.status === "pending" ? "badge-amber" : o.status === "refunded" ? "bg-rose-500/20 text-rose-300 border border-rose-500/30" : "badge-red"}`}>
+                        {o.status === "refunded" ? "REFUNDED" : o.status.toUpperCase()}
                       </span>
                     </div>
                   </div>
@@ -334,6 +335,36 @@ export default async function UserProfilePage({ params }: { params: { id: string
                       >
                         <span>🧾</span> View Payment Receipt
                       </a>
+                    </div>
+                  )}
+
+                  {o.status === "approved" && (
+                    <div className="pt-2 border-t border-white/5 flex items-center justify-between">
+                      <span className="text-[11px] text-[#717b8c]">Customer refund request?</span>
+                      <RefundButton
+                        order={{
+                          id: o.id,
+                          amount: Number(o.amount),
+                          currency: o.currency,
+                          method: o.method,
+                          txn_ref: o.txn_ref,
+                          profiles: { email: profile.email, full_name: profile.full_name },
+                          plans: { name: o.plans?.name },
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {o.status === "refunded" && (
+                    <div className="pt-2 border-t border-white/5 flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <span className="badge bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-bold">
+                        ↩ Refunded: {o.currency || "BDT"} {o.refund_amount || o.amount} via {o.refund_account || o.method}
+                      </span>
+                      {o.refund_reason && (
+                        <span className="text-[#8c97a8] text-[11px] italic">
+                          "{o.refund_reason}"
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>

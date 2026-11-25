@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BanUserButton } from "@/components/BanUserButton";
+import { RefundButton } from "@/components/admin/RefundButton";
 
 function getUserSourceInfo(user: any) {
   const licenses = user.licenses ?? [];
@@ -17,7 +18,16 @@ function getUserSourceInfo(user: any) {
     (l.notes || "").toLowerCase().includes("promotion")
   );
 
-  const orders = licenses.flatMap((l: any) => l.orders ?? []).filter(Boolean);
+  const licenseOrders = licenses.flatMap((l: any) => l.orders ?? []).filter(Boolean);
+  const directOrders = (user.orders ?? []).filter(Boolean);
+  const allOrdersMap = new Map<string, any>();
+  [...directOrders, ...licenseOrders].forEach((o) => {
+    if (o && o.id) allOrdersMap.set(o.id, o);
+  });
+  const orders = Array.from(allOrdersMap.values());
+
+  const approvedOrders = orders.filter((o: any) => o.status === "approved");
+  const refundedOrders = orders.filter((o: any) => o.status === "refunded");
   const paidOrders = orders.filter((o: any) => o.status === "approved" || Number(o.amount) > 0);
   const isPaid = paidOrders.length > 0 || licenses.some((l: any) => l.license_type === "paid" && !isPromo && !isLegacy);
 
@@ -27,9 +37,12 @@ function getUserSourceInfo(user: any) {
   if (isPromo) {
     badgeLabel = "🎁 Free Promo";
     badgeCls = "badge badge-purple text-[10px]";
-  } else if (isPaid) {
+  } else if (isPaid && approvedOrders.length > 0) {
     badgeLabel = "💳 Paid User";
     badgeCls = "badge badge-green text-[10px]";
+  } else if (refundedOrders.length > 0 && approvedOrders.length === 0) {
+    badgeLabel = "↩ Refunded User";
+    badgeCls = "badge bg-rose-600/20 text-rose-300 border border-rose-500/30 text-[10px]";
   } else if (isLegacy) {
     badgeLabel = "📦 Legacy User";
     badgeCls = "badge badge-amber text-[10px]";
@@ -41,7 +54,7 @@ function getUserSourceInfo(user: any) {
     ...(isLegacy ? ["legacy"] : [])
   ]));
 
-  return { isLegacy, isPromo, isPaid, badgeLabel, badgeCls, paymentMethods };
+  return { isLegacy, isPromo, isPaid, badgeLabel, badgeCls, paymentMethods, approvedOrders };
 }
 
 export default async function UsersPage({
@@ -57,9 +70,9 @@ export default async function UsersPage({
   // Fetch all plans for the dropdown
   const { data: allPlans } = await s.from("plans").select("id,name").order("name");
 
-  let selectStr = "id,full_name,email,role,legacy_source,created_at,is_banned,licenses(id,license_type,notes,status,created_at,orders(id,method,amount,currency,status),plans(name))";
+  let selectStr = "id,full_name,email,role,legacy_source,created_at,is_banned,orders(id,method,amount,currency,status,txn_ref,plans(name)),licenses(id,license_type,notes,status,created_at,orders(id,method,amount,currency,status,txn_ref),plans(name))";
   if (plan) {
-    selectStr = "id,full_name,email,role,legacy_source,created_at,is_banned,licenses!inner(id,license_type,notes,status,created_at,orders(id,method,amount,currency,status),plans(name))";
+    selectStr = "id,full_name,email,role,legacy_source,created_at,is_banned,orders(id,method,amount,currency,status,txn_ref,plans(name)),licenses!inner(id,license_type,notes,status,created_at,orders(id,method,amount,currency,status,txn_ref),plans(name))";
   }
 
   let query = s
@@ -259,6 +272,19 @@ export default async function UsersPage({
                         >
                           Details
                         </Link>
+                        {info.approvedOrders && info.approvedOrders.length > 0 && (
+                          <RefundButton
+                            order={{
+                              id: info.approvedOrders[0].id,
+                              amount: Number(info.approvedOrders[0].amount),
+                              currency: info.approvedOrders[0].currency,
+                              method: info.approvedOrders[0].method,
+                              txn_ref: info.approvedOrders[0].txn_ref,
+                              profiles: { email: x.email, full_name: x.full_name },
+                              plans: { name: info.approvedOrders[0].plans?.name || x.licenses?.[0]?.plans?.name || "License" },
+                            }}
+                          />
+                        )}
                         {x.role !== "admin" && (
                           <BanUserButton userId={x.id} isBanned={x.is_banned} />
                         )}
